@@ -18,7 +18,6 @@ export enum SyntaxState {
     ENUM_NON_EMPTY_BODY,
     ENUM_ENTRY_STARTED,
     ENUM_ENTRY_ENDED
-
 }
 
 export enum Meaning {
@@ -200,7 +199,7 @@ export const syntaxRules: SyntaxRule[] = [
     [SyntaxState.ENUM_STARTED, transitionsTo(SyntaxState.ENUM_NAMED).onVars(EnumNamed)],
     [SyntaxState.ENUM_NAMED, transitionsTo(SyntaxState.ENUM_OPENED).onInsignificantSyms(Symbol.OPEN_BRACKET)],
     [SyntaxState.ENUM_OPENED, transitionsTo(SyntaxState.ENUM_ENTRY_STARTED).onVars(EnumEntryNamed)],
-    [SyntaxState.ENUM_ENTRY_STARTED, transitionsTo(SyntaxState.ENUM_NON_EMPTY_BODY).onSyms(EnumFieldEnded, Symbol.SEMI)],
+    [SyntaxState.ENUM_ENTRY_STARTED, transitionsTo(SyntaxState.ENUM_NON_EMPTY_BODY).onSyms(EnumFieldEnded, Symbol.COMMA)],
     [SyntaxState.ENUM_NON_EMPTY_BODY, [
         ...transitionsTo(SyntaxState.ENUM_ENTRY_STARTED).onVars(EnumEntryNamed),
         ...transitionsTo(SyntaxState.NEUTRAL_FILE_STATE).onSyms(EnumEnded, Symbol.CLOSE_BRACKET)

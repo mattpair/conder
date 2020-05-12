@@ -87,11 +87,11 @@ protoCompileTest("should allow the specification of required fields", `
 
 protoCompileTest("should allow enums",`
     enum PurchaseCategory {
-        UNCATEGORIZED;
-        GAS;
-        DINING;
-        TRAVEL;
-        GROCERY;
-        ENTERTAINMENT;
+        UNCATEGORIZED,
+        GAS,
+        DINING,
+        TRAVEL,
+        GROCERY,
+        ENTERTAINMENT,
     }
     `)
