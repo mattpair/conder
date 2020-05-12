@@ -6,6 +6,7 @@ export enum Symbol {
     SEMI=";",
     OPEN_BRACKET="{",
     CLOSE_BRACKET="}",
+    COMMA=",",
     double="double",
     float="float",
     int32="int32",
@@ -26,13 +27,16 @@ export enum Symbol {
 export type OperatorSet = [Symbol.CLOSE_BRACKET, 
 Symbol.OPEN_BRACKET, 
 Symbol.SEMI, 
-Symbol.EQ]
+Symbol.EQ,
+Symbol.COMMA
+]
 
 export const Operators: OperatorSet = [
     Symbol.CLOSE_BRACKET, 
     Symbol.OPEN_BRACKET, 
     Symbol.SEMI, 
-    Symbol.EQ
+    Symbol.EQ,
+    Symbol.COMMA
 ]
 
 export type PrimitiveUnion = 

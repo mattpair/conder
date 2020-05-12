@@ -189,7 +189,7 @@ export const syntaxRules: SyntaxRule[] = [
     // Message field creation
     [SyntaxState.FIELD_PRIMITIVE_GIVEN, canNameMessageField],
     [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, canNameMessageField],
-    [SyntaxState.FIELD_NAME_GIVEN, transitionsTo(SyntaxState.NEUTRAL_MESSAGE_BODY).onSyms(FieldEnded, Symbol.SEMI)],
+    [SyntaxState.FIELD_NAME_GIVEN, transitionsTo(SyntaxState.NEUTRAL_MESSAGE_BODY).onSyms(FieldEnded, Symbol.COMMA)],
 
     [SyntaxState.NEUTRAL_MESSAGE_BODY, [
         ...canStartField,
