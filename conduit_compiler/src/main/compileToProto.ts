@@ -34,6 +34,6 @@ ${fields}
 
 function printFields(fields: Field[]): string {
     return fields
-    .map((f) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.val} ${f.name} = ${f.num};`)
+    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.val} ${f.name} = ${index + 1};`)
     .join("\n")
 }

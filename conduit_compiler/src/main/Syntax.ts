@@ -11,8 +11,6 @@ export enum SyntaxState {
     FIELD_PRIMITIVE_GIVEN,
     FIELD_CUSTOM_TYPE_GIVEN,
     FIELD_NAME_GIVEN,
-    FIELD_EQUAL_TO,
-    FIELD_NUMBERED,
     NEUTRAL_MESSAGE_BODY,
     ENUM_STARTED,
     ENUM_NAMED,
@@ -34,8 +32,8 @@ export enum Meaning {
     FIELD_TYPE_PRIMITIVE,
     FIELD_TYPE_CUSTOM,
     FIELD_NAME,
-    FIELD_NUMBER,
     FIELD_END,
+
 
     ENUM_NAME,
     ENUM_ENTRY_NAME,
@@ -45,7 +43,6 @@ export enum Meaning {
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
-const FieldNumbered = LazyClassification<number>(Meaning.FIELD_NUMBER)
 const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
@@ -56,8 +53,8 @@ const FieldTypedCustom = LazyClassification<string>(Meaning.FIELD_TYPE_CUSTOM)
 export type SemanticTokenUnion = Classified<Meaning.MESSAGE_START>
 | Classified<Meaning.MESSAGE_END>
 | Classified<Meaning.FIELD_END>
+
 | Classified<Meaning.FIELD_TYPE_PRIMITIVE, PrimitiveUnion>
-| Classified<Meaning.FIELD_NUMBER, number>
 | Classified<Meaning.FIELD_NAME, string>
 | Classified<Meaning.MESSAGE_NAME, string>
 | Classified<Meaning.FIELD_REQUIRED>
@@ -197,9 +194,7 @@ export const syntaxRules: SyntaxRule[] = [
     // Message field creation
     [SyntaxState.FIELD_PRIMITIVE_GIVEN, canNameMessageField],
     [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, canNameMessageField],
-    [SyntaxState.FIELD_NAME_GIVEN, transitionsTo(SyntaxState.FIELD_EQUAL_TO).onInsignificantSyms(Symbol.EQ)],
-    [SyntaxState.FIELD_EQUAL_TO, transitionsTo(SyntaxState.FIELD_NUMBERED).onNums(FieldNumbered)],
-    [SyntaxState.FIELD_NUMBERED, transitionsTo(SyntaxState.NEUTRAL_MESSAGE_BODY).onSyms(FieldEnded, Symbol.SEMI)],
+    [SyntaxState.FIELD_NAME_GIVEN, transitionsTo(SyntaxState.NEUTRAL_MESSAGE_BODY).onSyms(FieldEnded, Symbol.SEMI)],
 
     [SyntaxState.NEUTRAL_MESSAGE_BODY, [
         ...canStartField,

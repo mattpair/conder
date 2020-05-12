@@ -1,7 +1,6 @@
 import { Classified } from './util/classifying';
-import { ValidToken, StringToken, IntToken } from './tokenizer';
-import { SyntaxState, SemanticTokenUnion, Meaning } from './Syntax';
-import { Primitives, OperatorSet, PrimitiveUnion, Symbol } from './lexicon';
+import { SemanticTokenUnion, Meaning } from './Syntax';
+import { PrimitiveUnion} from './lexicon';
 
 /**
  * Compaction
@@ -28,7 +27,6 @@ interface MutableField {
     isRequired: boolean
     name: string
     fType: FieldType
-    num: number
 }
 
 interface BaseEnum {
@@ -77,11 +75,6 @@ export function collapseTokens(t: SemanticTokenUnion[]): [Message[], Enum[]] {
                 
             case Meaning.FIELD_TYPE_PRIMITIVE:                
                 field.fType = {kind: FieldKind.PRIMITIVE, val: semanticToken.val}
-                break
-
-            case Meaning.FIELD_NUMBER:
-                field.num = semanticToken.val
-
                 break
         
             case Meaning.MESSAGE_NAME:

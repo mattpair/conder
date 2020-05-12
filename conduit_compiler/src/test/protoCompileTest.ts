@@ -1,4 +1,4 @@
-import compile from "../main/compile"
+import compile from "../main/compileToProto"
 
 
 function protoCompileTest(description, file: string) {
@@ -10,78 +10,78 @@ function protoCompileTest(description, file: string) {
 protoCompileTest("should convert simple conduit into proto2",
 `
     message MyMessage {
-        double d = 1;
-        float f = 2;
-        int32 i32 = 3;
-        int64 I = 4;
-        uint32 u32 = 5;
-        uint64 u64 = 6;
-        sint32 s32 = 7;
-        sint64 s64 = 8;
-        fixed32 f32 = 9;
-        fixed64 f64 = 10;
-        sfixed32 sf32 = 11;
-        sfixed64 sf64 = 12;
-        bool b = 13;
-        string s = 14;
-        bytes bs = 15;
+        double d;
+        float f;
+        int32 i32;
+        int64 I;
+        uint32 u32;
+        uint64 u64;
+        sint32 s32;
+        sint64 s64;
+        fixed32 f32;
+        fixed64 f64;
+        sfixed32 sf32;
+        sfixed64 sf64;
+        bool b;
+        string s;
+        bytes bs;
     }`
 )
 
 protoCompileTest("should convert multiple conduit into proto2", `
     message m1 {
-        double d = 1;
-        float f = 2;
-        int32 i32 = 3;
-        int64 I = 4;
-        uint32 u32 = 5;
-        uint64 u64 = 6;
+        double d;
+        float f;
+        int32 i32;
+        int64 I;
+        uint32 u32;
+        uint64 u64;
     }
     message m2{
-        sint32 s32 = 7;
-        sint64 s64 = 8;
-        fixed32 f32 = 9;
-        fixed64 f64 = 10;
-        sfixed32 sf32 = 11;
-        sfixed64 sf64 = 12;
-        bool b = 13;
-        string s = 14;
-        bytes bs = 15;
+        sint32 s32;
+        sint64 s64;
+        fixed32 f32;
+        fixed64 f64;
+        sfixed32 sf32;
+        sfixed64 sf64;
+        bool b;
+        string s;
+        bytes bs;
     }
     `)
 
 protoCompileTest("should allow one message to reference another", `
     message m1 {
-        double d = 1;
-        float f = 2;
-        int32 i32 = 3;
-        int64 I = 4;
-        uint32 u32 = 5;
-        uint64 u64 = 6;
+        double d;
+        float f;
+        int32 i32;
+        int64 I;
+        uint32 u32;
+        uint64 u64;
     }
     message m2{
-        sint32 s32 = 7;
-        m1 myMessage =1;
+        sint32 s32;
+        m1 myMessag;
     }
     `)
 
 protoCompileTest("should allow the specification of required fields", `
     message MyMessage {
-        required double d = 1;
-        required float f = 2;
-        required int32 i32 = 3;
-        required int64 I = 4;
-        required uint32 u32 = 5;
-        required uint64 u64 = 6;
-        required sint32 s32 = 7;
-        required sint64 s64 = 8;
-        required fixed32 f32 = 9;
-        required fixed64 f64 = 10;
-        required sfixed32 sf32 = 11;
-        required sfixed64 sf64 = 12;
-        required bool b = 13;
-        required string s = 14;
-        required bytes bs = 15;
+        required double d;
+        required float f;
+        required int32 i32;
+        required int64 I;
+        required uint32 u32;
+        required uint64 u64;
+        required sint32 s32;
+        required sint64 s64;
+        required fixed32 f32;
+        required fixed64 f64;
+        required sfixed32 sf32;
+        required sfixed64 sf64;
+        required bool b;
+        required string s;
+        required bytes bs;
     }
     `)
 
