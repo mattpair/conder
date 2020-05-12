@@ -85,6 +85,26 @@ protoCompileTest("should allow the specification of required fields", `
     }
     `)
 
+protoCompileTest("should allow new line to end field", `
+    message MyMessage {
+        required double d
+        float f
+        required int32 i32
+        required int64 I
+        required uint32 u32
+        required uint64 u64
+        sint32 s32
+        required sint64 s64
+        required fixed32 f32
+        required fixed64 f64
+        required sfixed32 sf32
+        required sfixed64 sf64
+        required bool b
+        required string s
+        required bytes bs
+    }
+    `)
+
 protoCompileTest("should allow enums",`
     enum PurchaseCategory {
         UNCATEGORIZED,
@@ -93,5 +113,16 @@ protoCompileTest("should allow enums",`
         TRAVEL,
         GROCERY,
         ENTERTAINMENT,
+    }
+    `)
+
+protoCompileTest("should allow enums separated by whitespace",`
+    enum PurchaseCategory {
+        UNCATEGORIZED
+        GAS
+        DINING
+        TRAVEL
+        GROCERY
+        ENTERTAINMENT
     }
     `)

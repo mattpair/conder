@@ -29,7 +29,8 @@ export type OperatorSet = [Symbol.CLOSE_BRACKET,
 Symbol.OPEN_BRACKET, 
 Symbol.SEMI, 
 Symbol.EQ,
-Symbol.COMMA
+Symbol.COMMA,
+Symbol.NEW_LINE
 ]
 
 export const Operators: OperatorSet = [
@@ -37,7 +38,8 @@ export const Operators: OperatorSet = [
     Symbol.OPEN_BRACKET, 
     Symbol.SEMI, 
     Symbol.EQ,
-    Symbol.COMMA
+    Symbol.COMMA,
+    Symbol.NEW_LINE
 ]
 
 export type PrimitiveUnion = 

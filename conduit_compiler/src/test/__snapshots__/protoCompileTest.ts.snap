@@ -16,6 +16,46 @@ enum PurchaseCategory {
     "
 `;
 
+exports[`should allow enums separated by whitespace 1`] = `
+"
+    
+enum PurchaseCategory {
+	UNCATEGORIZED = 1;
+	GAS = 2;
+	DINING = 3;
+	TRAVEL = 4;
+	GROCERY = 5;
+	ENTERTAINMENT = 6;
+}
+    
+    
+    "
+`;
+
+exports[`should allow new line to end field 1`] = `
+"
+    
+    
+message MyMessage {
+	required double d = 1;
+	optional float f = 2;
+	required int32 i32 = 3;
+	required int64 I = 4;
+	required uint32 u32 = 5;
+	required uint64 u64 = 6;
+	optional sint32 s32 = 7;
+	required sint64 s64 = 8;
+	required fixed32 f32 = 9;
+	required fixed64 f64 = 10;
+	required sfixed32 sf32 = 11;
+	required sfixed64 sf64 = 12;
+	required bool b = 13;
+	required string s = 14;
+	required bytes bs = 15;
+}
+    "
+`;
+
 exports[`should allow one message to reference another 1`] = `
 "
     

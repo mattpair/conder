@@ -81,7 +81,7 @@ const applicableSyntaxRules: ApplicableSyntaxRules = (curWord: ValidToken, curSt
 
 export function tagTokens(words: ValidToken[]): SemanticTokenUnion[] {
     let currenctState = SyntaxState.FILE_START
-    // // console.log(JSON.stringify(words, null, 2))
+    console.log(JSON.stringify(words, null, 2))
     return words.map((token: ValidToken) => {
         const s = applicableSyntaxRules(token, currenctState)
         currenctState = s[0]

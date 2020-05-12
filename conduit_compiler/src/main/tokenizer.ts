@@ -54,10 +54,6 @@ function tokenize(s: string): ValidToken  {
         return PrimitiveToken(prim[0])
     }
 
-    if (s === Symbol.NEW_LINE) {
-        return {kind: TagType.Symbol, val: Symbol.NEW_LINE}
-    }
-
     // TODO: deduplicate the following
     
     const variable = VariableDefinition[1].test(s)
@@ -70,7 +66,7 @@ function tokenize(s: string): ValidToken  {
         return IntToken(Number.parseInt(s))
     }
 
-    throw Error(`Cannot identify token: ${s} ${s === "\n" ? "new line" : ""} ${Symbol.NEW_LINE}`)
+    throw Error(`Cannot identify token: ${JSON.stringify(s)}`)
 }
 
 const anySymbol = `(${OperatorRegexes.map(r => r[1].source).join("|")})`
