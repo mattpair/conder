@@ -1,0 +1,114 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`should allow enums 1`] = `
+"
+    
+enum PurchaseCategory {
+	UNCATEGORIZED = 0;
+	GAS = 1;
+	DINING = 2;
+	TRAVEL = 3;
+	GROCERY = 4;
+	ENTERTAINMENT = 5;
+}
+    
+    
+    "
+`;
+
+exports[`should allow one message to reference another 1`] = `
+"
+    
+    
+message m1 {
+	optional double d = 1;
+	optional float f = 2;
+	optional int32 i32 = 3;
+	optional int64 I = 4;
+	optional uint32 u32 = 5;
+	optional uint64 u64 = 6;
+}
+
+
+message m2 {
+	optional sint32 s32 = 7;
+	optional m1 myMessage = 1;
+}
+    "
+`;
+
+exports[`should allow the specification of required fields 1`] = `
+"
+    
+    
+message MyMessage {
+	required double d = 1;
+	required float f = 2;
+	required int32 i32 = 3;
+	required int64 I = 4;
+	required uint32 u32 = 5;
+	required uint64 u64 = 6;
+	required sint32 s32 = 7;
+	required sint64 s64 = 8;
+	required fixed32 f32 = 9;
+	required fixed64 f64 = 10;
+	required sfixed32 sf32 = 11;
+	required sfixed64 sf64 = 12;
+	required bool b = 13;
+	required string s = 14;
+	required bytes bs = 15;
+}
+    "
+`;
+
+exports[`should convert multiple conduit into proto2 1`] = `
+"
+    
+    
+message m1 {
+	optional double d = 1;
+	optional float f = 2;
+	optional int32 i32 = 3;
+	optional int64 I = 4;
+	optional uint32 u32 = 5;
+	optional uint64 u64 = 6;
+}
+
+
+message m2 {
+	optional sint32 s32 = 7;
+	optional sint64 s64 = 8;
+	optional fixed32 f32 = 9;
+	optional fixed64 f64 = 10;
+	optional sfixed32 sf32 = 11;
+	optional sfixed64 sf64 = 12;
+	optional bool b = 13;
+	optional string s = 14;
+	optional bytes bs = 15;
+}
+    "
+`;
+
+exports[`should convert simple conduit into proto2 1`] = `
+"
+    
+    
+message MyMessage {
+	optional double d = 1;
+	optional float f = 2;
+	optional int32 i32 = 3;
+	optional int64 I = 4;
+	optional uint32 u32 = 5;
+	optional uint64 u64 = 6;
+	optional sint32 s32 = 7;
+	optional sint64 s64 = 8;
+	optional fixed32 f32 = 9;
+	optional fixed64 f64 = 10;
+	optional sfixed32 sf32 = 11;
+	optional sfixed64 sf64 = 12;
+	optional bool b = 13;
+	optional string s = 14;
+	optional bytes bs = 15;
+}
+    "
+`;
