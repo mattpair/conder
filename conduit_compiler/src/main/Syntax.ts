@@ -17,8 +17,6 @@ export enum SyntaxState {
     ENUM_OPENED,
     ENUM_NON_EMPTY_BODY,
     ENUM_ENTRY_STARTED,
-    ENUM_ENTRY_EQUALS,
-    ENUM_ENTRY_NUMBERED,
     ENUM_ENTRY_ENDED
 
 }
@@ -37,7 +35,6 @@ export enum Meaning {
 
     ENUM_NAME,
     ENUM_ENTRY_NAME,
-    ENUM_ENTRY_NUMBER,
     ENUM_ENTRY_ENDED,
     ENUM_ENDED,
 }
@@ -47,7 +44,6 @@ const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
 const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
-const EnumEntryNumbered = LazyClassification<number>(Meaning.ENUM_ENTRY_NUMBER)
 const FieldTypedCustom = LazyClassification<string>(Meaning.FIELD_TYPE_CUSTOM)
 
 export type SemanticTokenUnion = Classified<Meaning.MESSAGE_START>
@@ -60,7 +56,6 @@ export type SemanticTokenUnion = Classified<Meaning.MESSAGE_START>
 | Classified<Meaning.FIELD_REQUIRED>
 | Classified<Meaning.ENUM_NAME, string>
 | Classified<Meaning.ENUM_ENTRY_NAME, string>
-| Classified<Meaning.ENUM_ENTRY_NUMBER, number>
 | Classified<Meaning.ENUM_ENTRY_ENDED>
 | Classified<Meaning.ENUM_ENDED>
 | Classified<Meaning.FIELD_TYPE_CUSTOM>
@@ -205,9 +200,7 @@ export const syntaxRules: SyntaxRule[] = [
     [SyntaxState.ENUM_STARTED, transitionsTo(SyntaxState.ENUM_NAMED).onVars(EnumNamed)],
     [SyntaxState.ENUM_NAMED, transitionsTo(SyntaxState.ENUM_OPENED).onInsignificantSyms(Symbol.OPEN_BRACKET)],
     [SyntaxState.ENUM_OPENED, transitionsTo(SyntaxState.ENUM_ENTRY_STARTED).onVars(EnumEntryNamed)],
-    [SyntaxState.ENUM_ENTRY_STARTED, transitionsTo(SyntaxState.ENUM_ENTRY_EQUALS).onInsignificantSyms(Symbol.EQ)],
-    [SyntaxState.ENUM_ENTRY_EQUALS, transitionsTo(SyntaxState.ENUM_ENTRY_NUMBERED).onNums(EnumEntryNumbered)],
-    [SyntaxState.ENUM_ENTRY_NUMBERED, transitionsTo(SyntaxState.ENUM_NON_EMPTY_BODY).onSyms(EnumFieldEnded, Symbol.SEMI)],
+    [SyntaxState.ENUM_ENTRY_STARTED, transitionsTo(SyntaxState.ENUM_NON_EMPTY_BODY).onSyms(EnumFieldEnded, Symbol.SEMI)],
     [SyntaxState.ENUM_NON_EMPTY_BODY, [
         ...transitionsTo(SyntaxState.ENUM_ENTRY_STARTED).onVars(EnumEntryNamed),
         ...transitionsTo(SyntaxState.NEUTRAL_FILE_STATE).onSyms(EnumEnded, Symbol.CLOSE_BRACKET)

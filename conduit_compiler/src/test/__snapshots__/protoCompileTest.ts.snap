@@ -4,12 +4,12 @@ exports[`should allow enums 1`] = `
 "
     
 enum PurchaseCategory {
-	UNCATEGORIZED = 0;
-	GAS = 1;
-	DINING = 2;
-	TRAVEL = 3;
-	GROCERY = 4;
-	ENTERTAINMENT = 5;
+	UNCATEGORIZED = 1;
+	GAS = 2;
+	DINING = 3;
+	TRAVEL = 4;
+	GROCERY = 5;
+	ENTERTAINMENT = 6;
 }
     
     

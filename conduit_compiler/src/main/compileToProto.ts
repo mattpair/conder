@@ -20,7 +20,7 @@ ${mems}
 }
 
 function printMembers(m: EnumMember[]): string {
-    return m.map((e) => `\t${e.name} = ${e.number};`).join("\n")
+    return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
 }
 
 function printMessage(m: Message): string {

@@ -36,7 +36,6 @@ interface BaseEnum {
 
 interface BaseEnumMember {
     name: string
-    number: number 
 }
 
 export type Field = Readonly<MutableField>
@@ -108,9 +107,7 @@ export function collapseTokens(t: SemanticTokenUnion[]): [Message[], Enum[]] {
             case Meaning.ENUM_ENTRY_NAME:
                 enumMember = {name: semanticToken.val}
                 break
-            case Meaning.ENUM_ENTRY_NUMBER:
-                enumMember.number = semanticToken.val
-                break
+
             case Meaning.ENUM_ENTRY_ENDED:
                 enm.members.push(enumMember as EnumMember)
                 enumMember = {}
