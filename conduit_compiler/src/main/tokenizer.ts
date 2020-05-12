@@ -39,7 +39,6 @@ const regexes: SymbolRegexTuple[][] = [
     KeywordRegexes,   
 ]
 
-
 function tokenize(s: string): ValidToken  {
     for (let i=0; i < regexes.length; ++i) {
         const hit = regexes[i].find((d) => {
@@ -49,9 +48,14 @@ function tokenize(s: string): ValidToken  {
             return {kind: TagType.Symbol, val: hit[0]}
         }
     }
+    
     const prim = PrimitiveRegexes.find((a) => a[1].test(s))
     if (prim) {
         return PrimitiveToken(prim[0])
+    }
+
+    if (s === Symbol.NEW_LINE) {
+        return {kind: TagType.Symbol, val: Symbol.NEW_LINE}
     }
 
     // TODO: deduplicate the following
@@ -66,7 +70,7 @@ function tokenize(s: string): ValidToken  {
         return IntToken(Number.parseInt(s))
     }
 
-    throw Error(`Cannot identify token: ${s}`)
+    throw Error(`Cannot identify token: ${s} ${s === "\n" ? "new line" : ""} ${Symbol.NEW_LINE}`)
 }
 
 const anySymbol = `(${OperatorRegexes.map(r => r[1].source).join("|")})`
@@ -74,11 +78,11 @@ const spaceBeforeAndAfterSymbol = new RegExp(`${anySymbol}`, "g")
 
 
 export function tokenizePage(s: String): ValidToken[] {
-    const strs = s.replace(spaceBeforeAndAfterSymbol, " $& ").replace(/\s+/g, " ").split(" ")
+    const strs = s.replace(spaceBeforeAndAfterSymbol, " $& ").replace(/[\r\t\f\v ]+/g, " ").split(" ")
     const a = strs.reduce((prev, current) => {
         return [...prev, current]
     }, [])
-    .map(t => t.trim()).filter(t => t)
+    .map(t => t.replace(" ", "")).filter(t => t)
     
     // console.log(JSON.stringify(a, null, 2))
 

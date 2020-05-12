@@ -71,8 +71,12 @@ const applicableSyntaxRules: ApplicableSyntaxRules = (curWord: ValidToken, curSt
     try {
         return router.tryMatch(curWord)
     } catch(e) {
-        throw new Error(`Cannot transition from state: ${SyntaxState[curState]}\n\n ${e}`)
+        if (curWord.val !== Symbol.NEW_LINE) {
+            throw new Error(`Cannot transition from state: ${SyntaxState[curState]}\n\n ${e}`)
+        }
     }
+    // Chew up newlines if they don't mean anything.
+    return [curState, undefined]
 }
 
 export function tagTokens(words: ValidToken[]): SemanticTokenUnion[] {

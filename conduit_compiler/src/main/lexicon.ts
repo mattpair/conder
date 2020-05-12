@@ -22,6 +22,7 @@ export enum Symbol {
     bool="bool",
     string="string",
     bytes="bytes",
+    NEW_LINE="\n"
 }
 
 export type OperatorSet = [Symbol.CLOSE_BRACKET, 
