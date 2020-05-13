@@ -1,4 +1,4 @@
-import { Classified } from './util/classifying';
+import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
 import { PrimitiveUnion} from './lexicon';
 
@@ -15,12 +15,6 @@ interface BaseEnumMember {
 export type Enum = Readonly<BaseEnum>
 
 export type EnumMember = Readonly<BaseEnumMember>
-
-
-function assertNever(x: never): never {
-    throw new Error("Unexpected object: " + x);
-}
-
 
 export namespace Unresolved {
     /**
