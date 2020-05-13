@@ -1,16 +1,17 @@
 import { tokenizePage } from "./tokenizer";
-import { Message, collapseTokens, Field, Enum, EnumMember, FieldType } from "./parseStep2";
+
 import { tagTokens } from "./parseStep1";
+import {Unresolved} from "./parseStep2"
 
 export default function compile(file: string): string {
-    const m: [Message[], Enum[]] = collapseTokens(tagTokens(tokenizePage(file)))
+    const m: [Unresolved.Message[], Unresolved.Enum[]] = Unresolved.collapseTokens(tagTokens(tokenizePage(file)))
     return `
     ${m[1].map(printEnum).join("\n\n")}
     ${m[0].map(printMessage).join("\n\n")}
     `
 }
 
-function printEnum(e: Enum): string {
+function printEnum(e: Unresolved.Enum): string {
     const mems = printMembers(e.members)
     return `
 enum ${e.name} {
@@ -19,11 +20,11 @@ ${mems}
     `
 }
 
-function printMembers(m: EnumMember[]): string {
+function printMembers(m: Unresolved.EnumMember[]): string {
     return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
 }
 
-function printMessage(m: Message): string {
+function printMessage(m: Unresolved.Message): string {
     const fields = printFields(m.fields)
 
     return `
@@ -32,7 +33,7 @@ ${fields}
 }`
 }
 
-function printFields(fields: Field[]): string {
+function printFields(fields: Unresolved.Field[]): string {
     return fields
     .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.val} ${f.name} = ${index + 1};`)
     .join("\n")
