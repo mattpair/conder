@@ -1,17 +1,21 @@
 import { tokenizePage } from "./tokenizer";
 
 import { tagTokens } from "./parseStep1";
-import {Unresolved, Enum, EnumMember} from "./parseStep2"
+import {collapseTokens} from "./parseStep2"
+import { Resolved, Unresolved } from "./entities";
+import { resolve } from "./resolveDependencies";
+
 
 export default function compile(file: string): string {
-    const m: [Unresolved.Message[], Enum[]] = Unresolved.collapseTokens(tagTokens(tokenizePage(file)))
+    const m: [Unresolved.Message[], Resolved.Enum[]] = collapseTokens(tagTokens(tokenizePage(file)))
+    resolve(...m)
     return `
     ${m[1].map(printEnum).join("\n\n")}
     ${m[0].map(printMessage).join("\n\n")}
     `
 }
 
-function printEnum(e: Enum): string {
+function printEnum(e: Resolved.Enum): string {
     const mems = printMembers(e.members)
     return `
 enum ${e.name} {
@@ -20,7 +24,7 @@ ${mems}
     `
 }
 
-function printMembers(m: EnumMember[]): string {
+function printMembers(m: Resolved.EnumMember[]): string {
     return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
 }
 

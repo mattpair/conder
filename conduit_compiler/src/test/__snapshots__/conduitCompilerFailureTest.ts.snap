@@ -1,0 +1,3 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`dependent message is not in scope  1`] = `"Unable to resolve field type: M2 in message m1"`;

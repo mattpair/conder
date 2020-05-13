@@ -1,124 +1,84 @@
 import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
-import { PrimitiveUnion} from './lexicon';
+import { Unresolved, Resolved } from './entities';
 
-
-interface BaseEnum {
-    name: string
-    members: EnumMember[]
-}
-
-interface BaseEnumMember {
-    name: string
-}
-
-export type Enum = Readonly<BaseEnum>
-
-export type EnumMember = Readonly<BaseEnumMember>
-
-export namespace Unresolved {
-    /**
-     * Should find a more immutable way to do this as complexity grows
-     * TBF, we check that receive all expected fields in syntax validation.
-     * We should be able to make assumptions here.
-     */
-    interface MutableMessage {
-        fields: Field[]
-        name?: string
-    }
-
-    export enum FieldKind {
-        PRIMITIVE,
-        CUSTOM
-    }
-
-    export type FieldType = Classified<FieldKind.PRIMITIVE, PrimitiveUnion> | Classified<FieldKind.CUSTOM, string>
-
-    interface MutableField {
-        isRequired: boolean
-        name: string
-        fType: FieldType
-    }
-
-    export type Field = Readonly<MutableField>
-    export type Message = Readonly<MutableMessage>
-
-    export function collapseTokens(t: SemanticTokenUnion[]): [Message[], Enum[]] {
-        const fileContext: [Message[], Enum[]] = [[], []]
-        let message: MutableMessage = {fields: []}
-        // console.log(`${JSON.stringify(t)}`)
-        
-        let field: Partial<MutableField> = {isRequired: false}
+export function collapseTokens(t: SemanticTokenUnion[]): [Unresolved.Message[], Resolved.Enum[]] {
+    const fileContext: [Unresolved.Message[], Resolved.Enum[]] = [[], []]
+    let message: Partial<Unresolved.Message> = {fields: []}
+    // console.log(`${JSON.stringify(t)}`)
     
-        let enm: Partial<BaseEnum> = {}
-        let enumMember: Partial<BaseEnumMember> = {}
+    let field: Partial<Unresolved.Field> = {isRequired: false}
+
+    let enm: Partial<Resolved.Enum> = {}
+    let enumMember: Partial<Resolved.EnumMember> = {}
+
+    for (let i = 0; i < t.length; ++i) {
+        const semanticToken = t[i]
     
-        for (let i = 0; i < t.length; ++i) {
-            const semanticToken = t[i]
-        
-                
-            switch(semanticToken.kind) {
-                case Meaning.MESSAGE_START:
-                    message = {fields: []}
-                    break
-    
-                case Meaning.FIELD_TYPE_CUSTOM:
-                    field.fType = {kind: FieldKind.CUSTOM, val: semanticToken.val}
-                    break
-                    
-                case Meaning.FIELD_TYPE_PRIMITIVE:                
-                    field.fType = {kind: FieldKind.PRIMITIVE, val: semanticToken.val}
-                    break
             
-                case Meaning.MESSAGE_NAME:
-                    message.name = semanticToken.val
-                    break
-    
-                case Meaning.FIELD_NAME: 
-                    field.name = semanticToken.val
-                    break
+        /**
+         * TODO: make this not copy objects so much.
+         */
+        switch(semanticToken.kind) {
+            case Meaning.MESSAGE_START:
+                message = {fields: []}
+                break
+
+            case Meaning.FIELD_TYPE_CUSTOM:
+                field = {...field, fType: {kind: Unresolved.FieldKind.CUSTOM, val: semanticToken.val}}
+                break
                 
-                case Meaning.FIELD_END: 
-                    message.fields.push(field as Field)
-                    field = {isRequired: false}
-                    break
-    
-                case Meaning.FIELD_REQUIRED:
-                    field.isRequired = true
-                    break
-    
-                case Meaning.MESSAGE_END: 
-                    fileContext[0].push(message)
-                    message = {fields: []}
-                    break
+            case Meaning.FIELD_TYPE_PRIMITIVE:                
+                field = {...field, fType: {kind: Unresolved.FieldKind.PRIMITIVE, val: semanticToken.val}}
+                break
+        
+            case Meaning.MESSAGE_NAME:
+                message = {...message, name: semanticToken.val}
+                break
+
+            case Meaning.FIELD_NAME: 
+                field = {...field, name: semanticToken.val}
+                break
             
-                case Meaning.ENUM_NAME:
-                    enm = {
-                        members: [],
-                        name: semanticToken.val
-                    }
-                    break
-                case Meaning.ENUM_ENTRY_NAME:
-                    enumMember = {name: semanticToken.val}
-                    break
-    
-                case Meaning.ENUM_ENTRY_ENDED:
-                    enm.members.push(enumMember as EnumMember)
-                    enumMember = {}
-                    break
-                case Meaning.ENUM_ENDED:
-                    fileContext[1].push(enm as Enum)
-                    enm = {}
-                    break
-    
-                    
-                default: return assertNever(semanticToken)
-            }   
-        }
-    
-        return fileContext
+            case Meaning.FIELD_END: 
+                message.fields.push(field as Unresolved.Field)
+                field = {isRequired: false}
+                break
+
+            case Meaning.FIELD_REQUIRED:
+                field = {...field, isRequired: true}
+                break
+
+            case Meaning.MESSAGE_END: 
+                fileContext[0].push(message as Unresolved.Message)
+                message = {fields: []}
+                break
+        
+            case Meaning.ENUM_NAME:
+                enm = {
+                    members: [],
+                    name: semanticToken.val
+                }
+                break
+            case Meaning.ENUM_ENTRY_NAME:
+                enumMember = {name: semanticToken.val}
+                break
+
+            case Meaning.ENUM_ENTRY_ENDED:
+                enm.members.push(enumMember as Resolved.EnumMember)
+                enumMember = {}
+                break
+            case Meaning.ENUM_ENDED:
+                fileContext[1].push(enm as Resolved.Enum)
+                enm = {}
+                break
+
+                
+            default: return assertNever(semanticToken)
+        }   
     }
 
+    return fileContext
 }
 
     
