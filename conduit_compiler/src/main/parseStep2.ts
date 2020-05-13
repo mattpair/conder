@@ -3,6 +3,25 @@ import { SemanticTokenUnion, Meaning } from './Syntax';
 import { PrimitiveUnion} from './lexicon';
 
 
+interface BaseEnum {
+    name: string
+    members: EnumMember[]
+}
+
+interface BaseEnumMember {
+    name: string
+}
+
+export type Enum = Readonly<BaseEnum>
+
+export type EnumMember = Readonly<BaseEnumMember>
+
+
+function assertNever(x: never): never {
+    throw new Error("Unexpected object: " + x);
+}
+
+
 export namespace Unresolved {
     /**
      * Should find a more immutable way to do this as complexity grows
@@ -27,25 +46,8 @@ export namespace Unresolved {
         fType: FieldType
     }
 
-    interface BaseEnum {
-        name: string
-        members: EnumMember[]
-    }
-
-    interface BaseEnumMember {
-        name: string
-    }
-
     export type Field = Readonly<MutableField>
-    export type Enum = Readonly<BaseEnum>
-
-    export type EnumMember = Readonly<BaseEnumMember>
-
     export type Message = Readonly<MutableMessage>
-
-    function assertNever(x: never): never {
-        throw new Error("Unexpected object: " + x);
-    }
 
     export function collapseTokens(t: SemanticTokenUnion[]): [Message[], Enum[]] {
         const fileContext: [Message[], Enum[]] = [[], []]
@@ -53,10 +55,10 @@ export namespace Unresolved {
         // console.log(`${JSON.stringify(t)}`)
         
         let field: Partial<MutableField> = {isRequired: false}
-
+    
         let enm: Partial<BaseEnum> = {}
         let enumMember: Partial<BaseEnumMember> = {}
-
+    
         for (let i = 0; i < t.length; ++i) {
             const semanticToken = t[i]
         
@@ -65,7 +67,7 @@ export namespace Unresolved {
                 case Meaning.MESSAGE_START:
                     message = {fields: []}
                     break
-
+    
                 case Meaning.FIELD_TYPE_CUSTOM:
                     field.fType = {kind: FieldKind.CUSTOM, val: semanticToken.val}
                     break
@@ -77,7 +79,7 @@ export namespace Unresolved {
                 case Meaning.MESSAGE_NAME:
                     message.name = semanticToken.val
                     break
-
+    
                 case Meaning.FIELD_NAME: 
                     field.name = semanticToken.val
                     break
@@ -86,11 +88,11 @@ export namespace Unresolved {
                     message.fields.push(field as Field)
                     field = {isRequired: false}
                     break
-
+    
                 case Meaning.FIELD_REQUIRED:
                     field.isRequired = true
                     break
-
+    
                 case Meaning.MESSAGE_END: 
                     fileContext[0].push(message)
                     message = {fields: []}
@@ -105,7 +107,7 @@ export namespace Unresolved {
                 case Meaning.ENUM_ENTRY_NAME:
                     enumMember = {name: semanticToken.val}
                     break
-
+    
                 case Meaning.ENUM_ENTRY_ENDED:
                     enm.members.push(enumMember as EnumMember)
                     enumMember = {}
@@ -114,13 +116,15 @@ export namespace Unresolved {
                     fileContext[1].push(enm as Enum)
                     enm = {}
                     break
-
+    
                     
                 default: return assertNever(semanticToken)
             }   
         }
-
+    
         return fileContext
     }
+
 }
- 
+
+    
