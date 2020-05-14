@@ -3,7 +3,7 @@ import {compileFiles} from "../main/compileToProto"
 
 function protoCompileTest(description, file: string) {
     test(description, () => {
-        expect(compileFiles({"testFile": () => file})).toMatchSnapshot()
+        expect(compileFiles({"testFile.cdt": () => file})).toMatchSnapshot()
     })
 } 
 

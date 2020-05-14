@@ -2,14 +2,14 @@
 
 exports[`simple multi file 1`] = `
 Object {
-  "conduit_a": "
+  "conduit_a.cdt": "
         
         
 message m1 {
 	optional double d = 1;
 }
         ",
-  "conduit_b": "
+  "conduit_b.cdt": "
         
         
 message m2 {

@@ -2,7 +2,7 @@ import {compileFiles} from "../main/compileToProto"
 
 function testFailsWhen(description, file: string) {
     test(description, () => {
-        expect(() => compileFiles({"badFile": () => file})).toThrowErrorMatchingSnapshot()
+        expect(() => compileFiles({"badFile.cdt": () => file})).toThrowErrorMatchingSnapshot()
     })
 }
 

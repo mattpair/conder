@@ -14,13 +14,13 @@ function protoCompileTest(description, files: Record<string, string>) {
 
 
 protoCompileTest("simple multi file", {
-    conduit_a: `
+    "conduit_a.cdt": `
     message m1 {
         double d
     }
     `,
 
-    conduit_b: `
+    "conduit_b.cdt": `
     message m2 {
         double d
     }

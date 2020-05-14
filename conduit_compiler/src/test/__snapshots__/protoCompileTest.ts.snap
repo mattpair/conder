@@ -2,7 +2,7 @@
 
 exports[`should allow enums 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
@@ -20,7 +20,7 @@ enum PurchaseCategory {
 
 exports[`should allow enums separated by whitespace 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
@@ -38,7 +38,7 @@ enum PurchaseCategory {
 
 exports[`should allow new line to end field 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
         
 message MyMessage {
@@ -64,7 +64,7 @@ message MyMessage {
 
 exports[`should allow one message to reference another 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
         
 message m1 {
@@ -87,7 +87,7 @@ message m2 {
 
 exports[`should allow the specification of required fields 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
         
 message MyMessage {
@@ -113,7 +113,7 @@ message MyMessage {
 
 exports[`should convert multiple conduit into proto2 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
         
 message m1 {
@@ -143,7 +143,7 @@ message m2 {
 
 exports[`should convert simple conduit into proto2 1`] = `
 Object {
-  "testFile": "
+  "testFile.cdt": "
         
         
 message MyMessage {

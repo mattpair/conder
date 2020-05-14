@@ -10,8 +10,10 @@ type FileEntities = [Unresolved.Message[], Resolved.Enum[]]
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
     const collapsed: Record<string, FileEntities> = {}
     for (const file in files) {
-        collapsed[file] = collapseTokens(tagTokens(tokenizePage(files[file]())))
-        resolve(...collapsed[file])
+        if (file.endsWith(".cdt")) {
+            collapsed[file] = collapseTokens(tagTokens(tokenizePage(files[file]())))
+            resolve(...collapsed[file])
+        }
     }
 
     return toProto(collapsed)
