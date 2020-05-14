@@ -1,5 +1,5 @@
 import { Classified, LazyClassification, LazyStatelessClassification } from './util/classifying';
-import { Symbol, Keywords, Operators, Primitives, PrimitiveUnion, AnyKeyword } from './lexicon';
+import { Symbol, Operators, PrimitiveUnion, AnyKeyword } from './lexicon';
 
 export enum SyntaxState {
     FILE_START,
@@ -17,7 +17,8 @@ export enum SyntaxState {
     ENUM_OPENED,
     ENUM_NON_EMPTY_BODY,
     ENUM_ENTRY_STARTED,
-    ENUM_ENTRY_ENDED
+    ENUM_ENTRY_ENDED,
+    IMPORT_STARTED,
 }
 
 export enum Meaning {
@@ -36,6 +37,8 @@ export enum Meaning {
     ENUM_ENTRY_NAME,
     ENUM_ENTRY_ENDED,
     ENUM_ENDED,
+    
+    IMPORTS,
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
@@ -44,11 +47,12 @@ const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
 const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
 const FieldTypedCustom = LazyClassification<string>(Meaning.FIELD_TYPE_CUSTOM)
+const Imports = LazyClassification<string>(Meaning.IMPORTS)
 
 export type SemanticTokenUnion = Classified<Meaning.MESSAGE_START>
 | Classified<Meaning.MESSAGE_END>
 | Classified<Meaning.FIELD_END>
-
+| Classified<Meaning.IMPORTS, string>
 | Classified<Meaning.FIELD_TYPE_PRIMITIVE, PrimitiveUnion>
 | Classified<Meaning.FIELD_NAME, string>
 | Classified<Meaning.MESSAGE_NAME, string>
@@ -174,8 +178,12 @@ export const syntaxRules: SyntaxRule[] = [
     // Top level file state
     [SyntaxState.FILE_START, [
         ...transitionsTo(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).onKeywords([Symbol.message], MessageStarted),
-        ...transitionsTo(SyntaxState.ENUM_STARTED).onInsignificantKeyword(Symbol.enum)
+        ...transitionsTo(SyntaxState.ENUM_STARTED).onInsignificantKeyword(Symbol.enum),
+        ...transitionsTo(SyntaxState.IMPORT_STARTED).onInsignificantKeyword(Symbol.import)
     ]],
+
+    [SyntaxState.IMPORT_STARTED, transitionsTo(SyntaxState.FILE_START).onVars(Imports)],
+
     [SyntaxState.NEUTRAL_FILE_STATE, transitionsTo(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).onKeywords([Symbol.message], MessageStarted)],
 
 

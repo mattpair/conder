@@ -22,7 +22,8 @@ export enum Symbol {
     bool="bool",
     string="string",
     bytes="bytes",
-    NEW_LINE="\n"
+    NEW_LINE="\n",
+    import="import"
 }
 
 export type OperatorSet = [Symbol.CLOSE_BRACKET, 
@@ -80,12 +81,14 @@ export const Primitives: PrimitiveUnion[] = [
 export type AnyKeyword = 
 Symbol.message |
 Symbol.required | 
-Symbol.enum
+Symbol.enum |
+Symbol.import
 
 export const Keywords: AnyKeyword[] = [
     Symbol.message,
     Symbol.required,
-    Symbol.enum
+    Symbol.enum,
+    Symbol.import
 ]
 
 export enum Dynamic {

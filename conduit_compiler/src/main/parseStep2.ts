@@ -2,8 +2,12 @@ import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
 import { Unresolved, Resolved } from './entities';
 
-export function collapseTokens(t: SemanticTokenUnion[]): [Unresolved.Message[], Resolved.Enum[]] {
-    const fileContext: [Unresolved.Message[], Resolved.Enum[]] = [[], []]
+type Dependencies = string[]
+export type FileEntities = [Unresolved.Message[], Resolved.Enum[], Dependencies]
+
+
+export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
+    const fileContext: FileEntities = [[], [], []]
     let message: Partial<Unresolved.Message> = {fields: []}
     // console.log(`${JSON.stringify(t)}`)
     
@@ -73,6 +77,9 @@ export function collapseTokens(t: SemanticTokenUnion[]): [Unresolved.Message[], 
                 enm = {}
                 break
 
+            case Meaning.IMPORTS:
+                fileContext[2].push(semanticToken.val)
+                break
                 
             default: return assertNever(semanticToken)
         }   

@@ -1,18 +1,17 @@
 import { tokenizePage } from "./tokenizer";
 
 import { tagTokens } from "./parseStep1";
-import {collapseTokens} from "./parseStep2"
+import {parseEntities, FileEntities} from "./parseStep2"
 import { Resolved, Unresolved } from "./entities";
 import { resolve } from "./resolveDependencies";
-
-type FileEntities = [Unresolved.Message[], Resolved.Enum[]]
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
     const collapsed: Record<string, FileEntities> = {}
     for (const file in files) {
         if (file.endsWith(".cdt")) {
-            collapsed[file] = collapseTokens(tagTokens(tokenizePage(files[file]())))
-            resolve(...collapsed[file])
+            const entities = parseEntities(tagTokens(tokenizePage(files[file]())))
+            collapsed[file] = entities 
+            resolve(entities[0], entities[1])
         }
     }
 
