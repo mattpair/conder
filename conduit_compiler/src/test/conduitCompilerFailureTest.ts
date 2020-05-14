@@ -1,8 +1,8 @@
-import compile from "../main/compileToProto"
+import {compileFiles} from "../main/compileToProto"
 
 function testFailsWhen(description, file: string) {
     test(description, () => {
-        expect(() => compile(file)).toThrowErrorMatchingSnapshot()
+        expect(() => compileFiles({"badFile": () => file})).toThrowErrorMatchingSnapshot()
     })
 }
 

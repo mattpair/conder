@@ -1,0 +1,20 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`simple multi file 1`] = `
+Object {
+  "conduit_a": "
+        
+        
+message m1 {
+	optional double d = 1;
+}
+        ",
+  "conduit_b": "
+        
+        
+message m2 {
+	optional double d = 1;
+}
+        ",
+}
+`;

@@ -1,8 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should allow enums 1`] = `
-"
-    
+Object {
+  "testFile": "
+        
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
 	GAS = 2;
@@ -12,13 +13,15 @@ enum PurchaseCategory {
 	ENTERTAINMENT = 6;
 }
     
-    
-    "
+        
+        ",
+}
 `;
 
 exports[`should allow enums separated by whitespace 1`] = `
-"
-    
+Object {
+  "testFile": "
+        
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
 	GAS = 2;
@@ -28,14 +31,16 @@ enum PurchaseCategory {
 	ENTERTAINMENT = 6;
 }
     
-    
-    "
+        
+        ",
+}
 `;
 
 exports[`should allow new line to end field 1`] = `
-"
-    
-    
+Object {
+  "testFile": "
+        
+        
 message MyMessage {
 	required double d = 1;
 	optional float f = 2;
@@ -53,13 +58,15 @@ message MyMessage {
 	required string s = 14;
 	required bytes bs = 15;
 }
-    "
+        ",
+}
 `;
 
 exports[`should allow one message to reference another 1`] = `
-"
-    
-    
+Object {
+  "testFile": "
+        
+        
 message m1 {
 	optional double d = 1;
 	optional float f = 2;
@@ -74,13 +81,15 @@ message m2 {
 	optional sint32 s32 = 1;
 	optional m1 myMessag = 2;
 }
-    "
+        ",
+}
 `;
 
 exports[`should allow the specification of required fields 1`] = `
-"
-    
-    
+Object {
+  "testFile": "
+        
+        
 message MyMessage {
 	required double d = 1;
 	required float f = 2;
@@ -98,13 +107,15 @@ message MyMessage {
 	required string s = 14;
 	required bytes bs = 15;
 }
-    "
+        ",
+}
 `;
 
 exports[`should convert multiple conduit into proto2 1`] = `
-"
-    
-    
+Object {
+  "testFile": "
+        
+        
 message m1 {
 	optional double d = 1;
 	optional float f = 2;
@@ -126,13 +137,15 @@ message m2 {
 	optional string s = 8;
 	optional bytes bs = 9;
 }
-    "
+        ",
+}
 `;
 
 exports[`should convert simple conduit into proto2 1`] = `
-"
-    
-    
+Object {
+  "testFile": "
+        
+        
 message MyMessage {
 	optional double d = 1;
 	optional float f = 2;
@@ -150,5 +163,6 @@ message MyMessage {
 	optional string s = 14;
 	optional bytes bs = 15;
 }
-    "
+        ",
+}
 `;

@@ -1,6 +1,5 @@
 import { Resolved, Unresolved } from './entities';
-import { PrimitiveUnion } from './lexicon';
-import { Classified, assertNever } from './util/classifying';
+import { assertNever } from './util/classifying';
 
     type EntityLookup = Record<string, Resolved.MessageOrEnum>
 
@@ -30,7 +29,7 @@ import { Classified, assertNever } from './util/classifying';
                         throw Error(`Unable to resolve field type: ${t.val} in message ${m.name}`)
                     }
                     break;
-                    
+
                 default: assertNever(t)
             }
         }))

@@ -1,7 +1,6 @@
 import { SyntaxState, syntaxRules, Matcher, SyntaxRule, SemanticTokenUnion, OptionalSemanticResult } from './Syntax';
 import { Primitives, Keywords, Symbol, Dynamic } from './lexicon';
 import { ValidToken, TagType } from './tokenizer';
-import { Field } from './parseStep2';
 
 type SyntaxPair = [SyntaxState, SemanticTokenUnion?]
 

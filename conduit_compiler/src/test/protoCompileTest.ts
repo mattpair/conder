@@ -1,9 +1,9 @@
-import compile from "../main/compileToProto"
+import {compileFiles} from "../main/compileToProto"
 
 
 function protoCompileTest(description, file: string) {
     test(description, () => {
-        expect(compile(file)).toMatchSnapshot()
+        expect(compileFiles({"testFile": () => file})).toMatchSnapshot()
     })
 } 
 
