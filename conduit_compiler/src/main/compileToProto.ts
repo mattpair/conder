@@ -22,7 +22,7 @@ function toProto(files: Record<string, FileEntities>): Record<string, string> {
     const results = {}
     for (const key in files) {
         const m = files[key]
-        results[key] = `
+        results[key.replace(".cdt", ".proto")] = `
         ${m[1].map(printEnum).join("\n\n")}
         ${m[0].map(printMessage).join("\n\n")}
         `
