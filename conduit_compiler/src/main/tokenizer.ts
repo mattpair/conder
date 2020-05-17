@@ -1,5 +1,5 @@
 import { Classified, LazyClassification } from './util/classifying';
-import { Dynamic, VariableDefinition, NumberDefinition, Keywords, Symbol, Primitives, Operators, PrimitiveUnion } from './lexicon';
+import { VariableDefinition, NumberDefinition, Keywords, Symbol, Primitives, Operators, PrimitiveUnion } from './lexicon';
 
 
 function onlyStandingAlone(s: string): RegExp {
