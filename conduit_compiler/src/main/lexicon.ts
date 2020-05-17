@@ -112,7 +112,6 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     })
     r[Symbol.NUMBER_LITERAL] = new RegExp(/^\d+/)
     r[Symbol.VARIABLE_NAME] =  /^[_A-Za-z]+[\w]*/
-    console.log(r)
     return r as Record<Symbol, RegExp>
 }
 
