@@ -24,9 +24,6 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
          * TODO: make this not copy objects so much.
          */
         switch(semanticToken.kind) {
-            case Meaning.MESSAGE_START:
-                message = {fields: []}
-                break
 
             case Meaning.FIELD_TYPE_CUSTOM:
                 field = {...field, fType: {kind: Unresolved.FieldKind.CUSTOM, val: semanticToken.val}}

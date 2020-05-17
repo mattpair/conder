@@ -22,19 +22,20 @@ export enum Symbol {
     bool="bool",
     string="string",
     bytes="bytes",
-    NEW_LINE="\n",
-    import="import"
+    NEW_LINE="\\n",
+    import="import",
+    VARIABLE_NAME="VariableName",
+    NUMBER_LITERAL="NumberLiteral"
 }
 
-export type OperatorSet = [Symbol.CLOSE_BRACKET, 
-Symbol.OPEN_BRACKET, 
-Symbol.SEMI, 
-Symbol.EQ,
-Symbol.COMMA,
-Symbol.NEW_LINE
-]
-
-export const Operators: OperatorSet = [
+export const Operators: [
+    Symbol.CLOSE_BRACKET, 
+    Symbol.OPEN_BRACKET, 
+    Symbol.SEMI, 
+    Symbol.EQ,
+    Symbol.COMMA,
+    Symbol.NEW_LINE
+] = [
     Symbol.CLOSE_BRACKET, 
     Symbol.OPEN_BRACKET, 
     Symbol.SEMI, 
@@ -96,7 +97,23 @@ export enum Dynamic {
     Number
 }
 
-export type AbstractDefinition = [Dynamic, RegExp]
+const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
+    const r = {}
+    Operators.forEach(op => {
+        r[op] =  new RegExp(`^${op}`)
+    });
 
-export const VariableDefinition: AbstractDefinition = [Dynamic.Variable, /^[_A-Za-z]+[\w]*$/ ]
-export const NumberDefinition: AbstractDefinition = [ Dynamic.Number, /\d+/]
+    Primitives.forEach(p => {
+        r[p] = new RegExp(`^${p}\\s`)
+    })
+
+    Keywords.forEach(k => {
+        r[k] = new RegExp(`^${k}\\s`)
+    })
+    r[Symbol.NUMBER_LITERAL] = new RegExp(/^\d+/)
+    r[Symbol.VARIABLE_NAME] =  /^[_A-Za-z]+[\w]*/
+    console.log(r)
+    return r as Record<Symbol, RegExp>
+}
+
+export const SymbolToRegex: Record<Symbol, RegExp> = SymbolRegexesMaker()

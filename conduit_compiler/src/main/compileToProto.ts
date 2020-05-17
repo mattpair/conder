@@ -1,4 +1,3 @@
-import { tokenizePage } from "./tokenizer";
 
 import { tagTokens } from "./parseStep1";
 import {parseEntities, FileEntities} from "./parseStep2"
@@ -9,7 +8,7 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     const collapsed: Record<string, FileEntities> = {}
     for (const file in files) {
         if (file.endsWith(".cdt")) {
-            const entities = parseEntities(tagTokens(tokenizePage(files[file]())))
+            const entities = parseEntities(tagTokens(files[file]()))
             collapsed[file] = entities 
             resolve(entities[0], entities[1])
         }

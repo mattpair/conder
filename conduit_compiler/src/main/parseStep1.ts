@@ -1,89 +1,69 @@
-import { SyntaxState, syntaxRules, Matcher, SyntaxRule, SemanticTokenUnion, OptionalSemanticResult } from './Syntax';
-import { Primitives, Keywords, Symbol, Dynamic } from './lexicon';
-import { ValidToken, TagType } from './tokenizer';
+import { SyntaxState, SymbolMatcher, SemanticTokenUnion, SyntaxTransition, SymbolMatch, SyntaxParser } from './Syntax';
+import { Primitives, Keywords, Symbol, Dynamic, SymbolToRegex } from './lexicon';
 
-type SyntaxPair = [SyntaxState, SemanticTokenUnion?]
 
 /**
  * SYNTAX ANALYSIS
  */
-type ApplicableSyntaxRules = (w: ValidToken, currentState: SyntaxState) => SyntaxPair
 
+type ApplicableSyntaxRules = (state: SyntaxState, hit: SymbolMatch) => SyntaxTransition
 
-function matcherMatches(matcher: Matcher, w: ValidToken): OptionalSemanticResult {
-
-    switch (w.kind) {
-        case TagType.Symbol: {
-            return matcher.symbols(w.val)
-        }
-
-        case TagType.Primitive: {
-            return matcher.prims(w.val)
-        }
-
-        case TagType.String: {
-            return matcher.variable(w.val)
-        }
-
-        case TagType.Number: {
-            return matcher.number(w.val)
-        }
-    }
-}
-
-class Router {
-    readonly matchers: Matcher[]
-    constructor(ms: Matcher[]) {
-        this.matchers = ms
-    }
-
-    tryMatch(w: ValidToken): SyntaxPair {
-        // console.log(`searching for w${JSON.stringify(w)} ${JSON.stringify(this, null, 2)}`)
-        const match_result = this.matchers.map((m) => matcherMatches(m, w)).find((a) => a !== undefined)
-        if (match_result) {
-            return match_result
-        }
-
-        throw `Failed parsing at ${JSON.stringify(w)}`
-    }
-}
-
-type RouterLookup =  {
-    readonly [S in SyntaxState]?: Router
-}
-
-
-const loadedRules: RouterLookup = syntaxRules.map((next: SyntaxRule) => {
-    return {from: next[0], router: new Router(next[1])}
-}).reduce((prev: RouterLookup, curr) => {
-    const add = {}
-    add[curr.from] = curr.router
-    return {...prev, ...add}
-}, {})
-
-const applicableSyntaxRules: ApplicableSyntaxRules = (curWord: ValidToken, curState: SyntaxState) => {
-    const router = loadedRules[curState]
+const applicableSyntaxRules: ApplicableSyntaxRules = (state: SyntaxState, hit: SymbolMatch) => {
+    const router = SyntaxParser[state]
     if (!router) {
-        throw `Cannot find a valid state transitioner for ${curState}`
+        throw `Cannot find a valid state transitioner for ${state}`
     }
     
-    try {
-        return router.tryMatch(curWord)
-    } catch(e) {
-        if (curWord.val !== Symbol.NEW_LINE) {
-            throw new Error(`Cannot transition from state: ${SyntaxState[curState]}\n\n ${e}`)
-        }
-    }
-    // Chew up newlines if they don't mean anything.
-    return [curState, undefined]
+    if (router[hit[0]]) {
+        return router[hit[0]](hit)
+    } 
+    
+    throw new Error(`Cannot transition from state: ${SyntaxState[state]}\n\n ${JSON.stringify(hit)}`)
 }
 
-export function tagTokens(words: ValidToken[]): SemanticTokenUnion[] {
-    let currenctState = SyntaxState.FILE_START
-    // console.log(JSON.stringify(words, null, 2))
-    return words.map((token: ValidToken) => {
-        const s = applicableSyntaxRules(token, currenctState)
-        currenctState = s[0]
-        return s[1]
-    }).filter(a => a !== undefined)
+type StringCursor = [number, SyntaxState]
+
+export function tagTokens(file: string): SemanticTokenUnion[] {
+    let currentCursor: StringCursor = [0, SyntaxState.FILE_START]
+    const tokes: SemanticTokenUnion[] = []
+
+    while (currentCursor[0] < file.length) {
+        let maybeHit: RegExpExecArray | null = null
+        let hit: SymbolMatch | undefined = undefined
+        const acceptedSymbols = SyntaxParser[currentCursor[1]].acceptedSymbols
+
+        // console.log(acceptedSymbols, currentCursor)
+
+        for (let r = 0; r < acceptedSymbols.length; ++r) {
+            const consideredSymbol: Symbol = acceptedSymbols[r]
+            
+            // console.log(`SYMBOL: ${consideredSymbol} ${acceptedSymbols[r]} `)
+
+            const regex: RegExp = SymbolToRegex[consideredSymbol]
+            // console.log(`CONSIDERING: ${JSON.stringify(regex.source)}`)
+            maybeHit = regex.exec(file.slice(currentCursor[0]))
+            if (maybeHit !== null && maybeHit.length > 0) {
+                // console.log(`HIT ${JSON.stringify(consideredSymbol)}`)
+                hit = [consideredSymbol, maybeHit[0]]
+                break
+            }
+        }
+        if (hit === undefined) {
+            if (/\s/.test(file.substr(currentCursor[0], 1))) {
+                currentCursor = [currentCursor[0] + 1, currentCursor[1]]
+                continue
+            }
+            throw new Error(`Could not identify token type at ${JSON.stringify(currentCursor)}
+             ${file.slice(currentCursor[0], currentCursor[0] + 10)}
+             `)
+        }
+
+        
+        const s: SyntaxTransition = applicableSyntaxRules(currentCursor[1], hit)
+        currentCursor = [currentCursor[0] + hit[1].length, s[0]]
+        if (s[1]) {
+            tokes.push(s[1])
+        }
+    }
+    return tokes
 }
