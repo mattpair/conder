@@ -8,6 +8,6 @@ function testFailsWhen(description, file: string) {
 
 testFailsWhen("dependent message is not in scope ", `
 message m1 {
-    required M2 m2
+    M2 m2
 }
 `)

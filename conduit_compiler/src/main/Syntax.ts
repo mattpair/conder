@@ -7,7 +7,7 @@ export enum SyntaxState {
     MESSAGE_STARTED_AWAITING_NAME,
     MESSAGE_NAMED_AWAITING_OPENING,
     EMPTY_MESSAGE_BODY,
-    REQUIRED_STATED,
+    OPTIONAL_STATED,
     FIELD_PRIMITIVE_GIVEN,
     FIELD_CUSTOM_TYPE_GIVEN,
     FIELD_NAME_GIVEN,
@@ -26,7 +26,7 @@ export enum Meaning {
     MESSAGE_NAME,
     MESSAGE_END,
 
-    FIELD_REQUIRED,
+    FIELD_OPTIONAL,
     FIELD_TYPE_PRIMITIVE,
     FIELD_TYPE_CUSTOM,
     FIELD_NAME,
@@ -56,7 +56,7 @@ export type SemanticTokenUnion = Classified<Meaning.MESSAGE_START>
 | Classified<Meaning.FIELD_TYPE_PRIMITIVE, PrimitiveUnion>
 | Classified<Meaning.FIELD_NAME, string>
 | Classified<Meaning.MESSAGE_NAME, string>
-| Classified<Meaning.FIELD_REQUIRED>
+| Classified<Meaning.FIELD_OPTIONAL>
 | Classified<Meaning.ENUM_NAME, string>
 | Classified<Meaning.ENUM_ENTRY_NAME, string>
 | Classified<Meaning.ENUM_ENTRY_ENDED>
@@ -154,7 +154,7 @@ export type SyntaxRule = [SyntaxState, Matcher[]]
 const MessageStarted = LazyStatelessClassification(Meaning.MESSAGE_START)
 const MessageEnded = LazyStatelessClassification(Meaning.MESSAGE_END)
 const FieldEnded = LazyStatelessClassification(Meaning.FIELD_END)
-const FieldRequired = LazyStatelessClassification(Meaning.FIELD_REQUIRED)
+const FieldRequired = LazyStatelessClassification(Meaning.FIELD_OPTIONAL)
 const EnumEnded = LazyStatelessClassification(Meaning.ENUM_ENDED)
 const EnumFieldEnded = LazyStatelessClassification(Meaning.ENUM_ENTRY_ENDED)
 
@@ -162,7 +162,7 @@ const EnumFieldEnded = LazyStatelessClassification(Meaning.ENUM_ENTRY_ENDED)
 // common phrases:
 const canStartField = [
     ...transitionsTo(SyntaxState.FIELD_PRIMITIVE_GIVEN).onPrims(FieldTyped),
-    ...transitionsTo(SyntaxState.REQUIRED_STATED).onKeywords([Symbol.required], FieldRequired),
+    ...transitionsTo(SyntaxState.OPTIONAL_STATED).onKeywords([Symbol.optional], FieldRequired),
     ...transitionsTo(SyntaxState.FIELD_CUSTOM_TYPE_GIVEN).onVars(FieldTypedCustom)
 ]
 
@@ -192,7 +192,7 @@ export const syntaxRules: SyntaxRule[] = [
     [SyntaxState.MESSAGE_NAMED_AWAITING_OPENING,
          transitionsTo(SyntaxState.EMPTY_MESSAGE_BODY).onInsignificantSyms(Symbol.OPEN_BRACKET)],
     [SyntaxState.EMPTY_MESSAGE_BODY, canStartField],
-    [SyntaxState.REQUIRED_STATED, canProvideFieldType],
+    [SyntaxState.OPTIONAL_STATED, canProvideFieldType],
     // Message field creation
     [SyntaxState.FIELD_PRIMITIVE_GIVEN, canNameMessageField],
     [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, canNameMessageField],

@@ -1,6 +1,6 @@
 export enum Symbol {
     message="message",
-    required="required",
+    optional="optional",
     enum="enum",
     EQ="=",
     SEMI=";",
@@ -80,13 +80,13 @@ export const Primitives: PrimitiveUnion[] = [
 
 export type AnyKeyword = 
 Symbol.message |
-Symbol.required | 
+Symbol.optional | 
 Symbol.enum |
 Symbol.import
 
 export const Keywords: AnyKeyword[] = [
     Symbol.message,
-    Symbol.required,
+    Symbol.optional,
     Symbol.enum,
     Symbol.import
 ]

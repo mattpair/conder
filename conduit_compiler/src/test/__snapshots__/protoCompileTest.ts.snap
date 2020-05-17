@@ -42,21 +42,21 @@ Object {
         
         
 message MyMessage {
-	required double d = 1;
-	optional float f = 2;
-	required int32 i32 = 3;
-	required int64 I = 4;
-	required uint32 u32 = 5;
-	required uint64 u64 = 6;
-	optional sint32 s32 = 7;
-	required sint64 s64 = 8;
-	required fixed32 f32 = 9;
-	required fixed64 f64 = 10;
-	required sfixed32 sf32 = 11;
-	required sfixed64 sf64 = 12;
-	required bool b = 13;
-	required string s = 14;
-	required bytes bs = 15;
+	optional double d = 1;
+	required float f = 2;
+	optional int32 i32 = 3;
+	optional int64 I = 4;
+	optional uint32 u32 = 5;
+	optional uint64 u64 = 6;
+	required sint32 s32 = 7;
+	optional sint64 s64 = 8;
+	optional fixed32 f32 = 9;
+	optional fixed64 f64 = 10;
+	optional sfixed32 sf32 = 11;
+	optional sfixed64 sf64 = 12;
+	optional bool b = 13;
+	optional string s = 14;
+	optional bytes bs = 15;
 }
         ",
 }
@@ -68,80 +68,24 @@ Object {
         
         
 message m1 {
-	optional double d = 1;
-	optional float f = 2;
-	optional int32 i32 = 3;
-	optional int64 I = 4;
-	optional uint32 u32 = 5;
-	optional uint64 u64 = 6;
-}
-
-
-message m2 {
-	optional sint32 s32 = 1;
-	optional m1 myMessag = 2;
-}
-        ",
-}
-`;
-
-exports[`should allow the specification of required fields 1`] = `
-Object {
-  "testFile.proto": "
-        
-        
-message MyMessage {
 	required double d = 1;
 	required float f = 2;
 	required int32 i32 = 3;
 	required int64 I = 4;
 	required uint32 u32 = 5;
 	required uint64 u64 = 6;
-	required sint32 s32 = 7;
-	required sint64 s64 = 8;
-	required fixed32 f32 = 9;
-	required fixed64 f64 = 10;
-	required sfixed32 sf32 = 11;
-	required sfixed64 sf64 = 12;
-	required bool b = 13;
-	required string s = 14;
-	required bytes bs = 15;
-}
-        ",
-}
-`;
-
-exports[`should convert multiple conduit into proto2 1`] = `
-Object {
-  "testFile.proto": "
-        
-        
-message m1 {
-	optional double d = 1;
-	optional float f = 2;
-	optional int32 i32 = 3;
-	optional int64 I = 4;
-	optional uint32 u32 = 5;
-	optional uint64 u64 = 6;
 }
 
 
 message m2 {
-	optional sint32 s32 = 1;
-	optional sint64 s64 = 2;
-	optional fixed32 f32 = 3;
-	optional fixed64 f64 = 4;
-	optional sfixed32 sf32 = 5;
-	optional sfixed64 sf64 = 6;
-	optional bool b = 7;
-	optional string s = 8;
-	optional bytes bs = 9;
+	required sint32 s32 = 1;
+	required m1 myMessag = 2;
 }
         ",
 }
 `;
 
-exports[`should convert simple conduit into proto2 1`] = `
+exports[`should allow the specification of optional fields 1`] = `
 Object {
   "testFile.proto": "
         
@@ -162,6 +106,62 @@ message MyMessage {
 	optional bool b = 13;
 	optional string s = 14;
 	optional bytes bs = 15;
+}
+        ",
+}
+`;
+
+exports[`should convert multiple conduit into proto2 1`] = `
+Object {
+  "testFile.proto": "
+        
+        
+message m1 {
+	required double d = 1;
+	required float f = 2;
+	required int32 i32 = 3;
+	required int64 I = 4;
+	required uint32 u32 = 5;
+	required uint64 u64 = 6;
+}
+
+
+message m2 {
+	required sint32 s32 = 1;
+	required sint64 s64 = 2;
+	required fixed32 f32 = 3;
+	required fixed64 f64 = 4;
+	required sfixed32 sf32 = 5;
+	required sfixed64 sf64 = 6;
+	required bool b = 7;
+	required string s = 8;
+	required bytes bs = 9;
+}
+        ",
+}
+`;
+
+exports[`should convert simple conduit into proto2 1`] = `
+Object {
+  "testFile.proto": "
+        
+        
+message MyMessage {
+	required double d = 1;
+	required float f = 2;
+	required int32 i32 = 3;
+	required int64 I = 4;
+	required uint32 u32 = 5;
+	required uint64 u64 = 6;
+	required sint32 s32 = 7;
+	required sint64 s64 = 8;
+	required fixed32 f32 = 9;
+	required fixed64 f64 = 10;
+	required sfixed32 sf32 = 11;
+	required sfixed64 sf64 = 12;
+	required bool b = 13;
+	required string s = 14;
+	required bytes bs = 15;
 }
         ",
 }

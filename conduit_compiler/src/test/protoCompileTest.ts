@@ -65,43 +65,43 @@ protoCompileTest("should allow one message to reference another", `
     }
     `)
 
-protoCompileTest("should allow the specification of required fields", `
+protoCompileTest("should allow the specification of optional fields", `
     message MyMessage {
-        required double d,
-        required float f,
-        required int32 i32,
-        required int64 I,
-        required uint32 u32,
-        required uint64 u64,
-        required sint32 s32,
-        required sint64 s64,
-        required fixed32 f32,
-        required fixed64 f64,
-        required sfixed32 sf32,
-        required sfixed64 sf64,
-        required bool b,
-        required string s,
-        required bytes bs,
+        optional double d,
+        optional float f,
+        optional int32 i32,
+        optional int64 I,
+        optional uint32 u32,
+        optional uint64 u64,
+        optional sint32 s32,
+        optional sint64 s64,
+        optional fixed32 f32,
+        optional fixed64 f64,
+        optional sfixed32 sf32,
+        optional sfixed64 sf64,
+        optional bool b,
+        optional string s,
+        optional bytes bs,
     }
     `)
 
 protoCompileTest("should allow new line to end field", `
     message MyMessage {
-        required double d
+        optional double d
         float f
-        required int32 i32
-        required int64 I
-        required uint32 u32
-        required uint64 u64
+        optional int32 i32
+        optional int64 I
+        optional uint32 u32
+        optional uint64 u64
         sint32 s32
-        required sint64 s64
-        required fixed32 f32
-        required fixed64 f64
-        required sfixed32 sf32
-        required sfixed64 sf64
-        required bool b
-        required string s
-        required bytes bs
+        optional sint64 s64
+        optional fixed32 f32
+        optional fixed64 f64
+        optional sfixed32 sf32
+        optional sfixed64 sf64
+        optional bool b
+        optional string s
+        optional bytes bs
     }
     `)
 
