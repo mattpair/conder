@@ -148,7 +148,7 @@ function makeStateMatcher(): StateMatcher {
         .whenMatching(Symbol.import).to(SyntaxState.IMPORT_STARTED)
 
     transitions.from(SyntaxState.IMPORT_STARTED)
-        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FILE_START, Imports(s[1])])
+        .whenMatching(Symbol.STRING_LITERAL).causes((s: SymbolMatch) => [SyntaxState.FILE_START, Imports(s[1])])
 
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE).whenMatching(Symbol.message)
         .to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)

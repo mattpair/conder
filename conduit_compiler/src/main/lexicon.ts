@@ -25,7 +25,8 @@ export enum Symbol {
     NEW_LINE="\\n",
     import="import",
     VARIABLE_NAME="VariableName",
-    NUMBER_LITERAL="NumberLiteral"
+    NUMBER_LITERAL="NumberLiteral",
+    STRING_LITERAL="StringLiteral",
 }
 
 export const Operators: [
@@ -112,6 +113,7 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     })
     r[Symbol.NUMBER_LITERAL] = new RegExp(/^\d+/)
     r[Symbol.VARIABLE_NAME] =  /^[_A-Za-z]+[\w]*/
+    r[Symbol.STRING_LITERAL] = /'.*'/
     return r as Record<Symbol, RegExp>
 }
 
