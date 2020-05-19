@@ -124,11 +124,12 @@ class TransitionBuilder {
 
     canProvideFieldType() {
         this.whenMatching(...Primitives).causes((s: SymbolMatch) => [SyntaxState.FIELD_PRIMITIVE_GIVEN, FieldTyped(s[0] as PrimitiveUnion)])
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({type: s[1]})])
         this.whenMatching(Symbol.VARIABLE_MEMBER_ACCESS).causes((s: SymbolMatch) => {
             const spl = s[1].split(".")
             return [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({from: spl[0], type: spl[1]})]
         })
+        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({type: s[1]})])
+        
         return this
     }
 
