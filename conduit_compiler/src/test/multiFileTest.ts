@@ -21,7 +21,7 @@ protoCompileTest("simple multi file", {
     `,
 
     "conduit_b.cdt": `
-    import 'conduit_a.cdt'
+    import 'conduit_a.cdt' as A
 
     message m2 {
         double d

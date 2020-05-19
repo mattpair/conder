@@ -27,6 +27,7 @@ export enum Symbol {
     VARIABLE_NAME="VariableName",
     NUMBER_LITERAL="NumberLiteral",
     STRING_LITERAL="StringLiteral",
+    as="as",
 }
 
 export const Operators: [
@@ -84,13 +85,15 @@ export type AnyKeyword =
 Symbol.message |
 Symbol.optional | 
 Symbol.enum |
-Symbol.import
+Symbol.import |
+Symbol.as
 
 export const Keywords: AnyKeyword[] = [
     Symbol.message,
     Symbol.optional,
     Symbol.enum,
-    Symbol.import
+    Symbol.import,
+    Symbol.as
 ]
 
 export enum Dynamic {
@@ -113,7 +116,7 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     })
     r[Symbol.NUMBER_LITERAL] = new RegExp(/^\d+/)
     r[Symbol.VARIABLE_NAME] =  /^[_A-Za-z]+[\w]*/
-    r[Symbol.STRING_LITERAL] = /'.*'/
+    r[Symbol.STRING_LITERAL] = /^'.*'/
     return r as Record<Symbol, RegExp>
 }
 

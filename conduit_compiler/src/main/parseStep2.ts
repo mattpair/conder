@@ -2,13 +2,14 @@ import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
 import { Unresolved, Resolved } from './entities';
 
-type Dependencies = string[]
-export type FileEntities = [Unresolved.Message[], Resolved.Enum[], Dependencies]
+type Dependency = {fileLocation: string, alias: string}
+export type FileEntities = [Unresolved.Message[], Resolved.Enum[], Dependency[]]
 
 
 export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
     const fileContext: FileEntities = [[], [], []]
     let message: Partial<Unresolved.Message> = {fields: []}
+    let dep: Partial<Dependency> = {}
     // console.log(`${JSON.stringify(t)}`)
     
     let field: Partial<Unresolved.Field> = {isRequired: true}
@@ -18,8 +19,7 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
 
     for (let i = 0; i < t.length; ++i) {
         const semanticToken = t[i]
-    
-            
+                
         /**
          * TODO: make this not copy objects so much.
          */
@@ -74,8 +74,12 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
                 enm = {}
                 break
 
-            case Meaning.IMPORTS:
-                fileContext[2].push(semanticToken.val)
+            case Meaning.IMPORT_FILE_LOCATION:
+                dep = {fileLocation: semanticToken.val}
+                break
+            case Meaning.IMPORT_ALIAS:
+                fileContext[2].push({...dep, alias: semanticToken.val} as Dependency)
+                dep = {}
                 break
 
             default: return assertNever(semanticToken)

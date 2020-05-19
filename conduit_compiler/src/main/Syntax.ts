@@ -19,6 +19,8 @@ export enum SyntaxState {
     ENUM_ENTRY_STARTED="ENUM_ENTRY_STARTED",
     ENUM_ENTRY_ENDED="ENUM_ENTRY_ENDED",
     IMPORT_STARTED="IMPORT_STARTED",
+    IMPORT_STRING_PROVIDED="IMPORT_STRING_PROVIDED",
+    IMPORT_AS_STATED="IMPORT_AS_STATED",
 }
 
 export enum Meaning {
@@ -37,7 +39,8 @@ export enum Meaning {
     ENUM_ENTRY_ENDED,
     ENUM_ENDED,
     
-    IMPORTS,
+    IMPORT_FILE_LOCATION,
+    IMPORT_ALIAS
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
@@ -46,12 +49,14 @@ const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
 const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
 const FieldTypedCustom = LazyClassification<string>(Meaning.FIELD_TYPE_CUSTOM)
-const Imports = LazyClassification<string>(Meaning.IMPORTS)
+const ImportFileLocation = LazyClassification<string>(Meaning.IMPORT_FILE_LOCATION)
+const ImportAlias = LazyClassification<string>(Meaning.IMPORT_ALIAS)
 
 export type SemanticTokenUnion = 
 | Classified<Meaning.MESSAGE_END>
 | Classified<Meaning.FIELD_END>
-| Classified<Meaning.IMPORTS, string>
+| Classified<Meaning.IMPORT_FILE_LOCATION, string>
+| Classified<Meaning.IMPORT_ALIAS, string>
 | Classified<Meaning.FIELD_TYPE_PRIMITIVE, PrimitiveUnion>
 | Classified<Meaning.FIELD_NAME, string>
 | Classified<Meaning.MESSAGE_NAME, string>
@@ -148,7 +153,12 @@ function makeStateMatcher(): StateMatcher {
         .whenMatching(Symbol.import).to(SyntaxState.IMPORT_STARTED)
 
     transitions.from(SyntaxState.IMPORT_STARTED)
-        .whenMatching(Symbol.STRING_LITERAL).causes((s: SymbolMatch) => [SyntaxState.FILE_START, Imports(s[1])])
+        .whenMatching(Symbol.STRING_LITERAL).causes((s: SymbolMatch) => [SyntaxState.IMPORT_STRING_PROVIDED, ImportFileLocation(s[1])])
+    transitions.from(SyntaxState.IMPORT_STRING_PROVIDED)
+        .whenMatching(Symbol.as).to(SyntaxState.IMPORT_AS_STATED)
+    transitions.from(SyntaxState.IMPORT_AS_STATED)
+        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FILE_START, ImportAlias(s[1])])
+    
 
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE).whenMatching(Symbol.message)
         .to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
