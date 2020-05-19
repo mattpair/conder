@@ -53,6 +53,6 @@ ${fields}
 
 function printFields(fields: Unresolved.Field[]): string {
     return fields
-    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.val} ${f.name} = ${index + 1};`)
+    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === Unresolved.FieldKind.PRIMITIVE ? f.fType.val : f.fType.val.type} ${f.name} = ${index + 1};`)
     .join("\n")
 }

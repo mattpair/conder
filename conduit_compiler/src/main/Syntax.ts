@@ -48,7 +48,7 @@ const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
 const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
-const FieldTypedCustom = LazyClassification<string>(Meaning.FIELD_TYPE_CUSTOM)
+const FieldTypedCustom = LazyClassification<{from?: string, type: string}>(Meaning.FIELD_TYPE_CUSTOM)
 const ImportFileLocation = LazyClassification<string>(Meaning.IMPORT_FILE_LOCATION)
 const ImportAlias = LazyClassification<string>(Meaning.IMPORT_ALIAS)
 
@@ -65,7 +65,7 @@ export type SemanticTokenUnion =
 | Classified<Meaning.ENUM_ENTRY_NAME, string>
 | Classified<Meaning.ENUM_ENTRY_ENDED>
 | Classified<Meaning.ENUM_ENDED>
-| Classified<Meaning.FIELD_TYPE_CUSTOM>
+| Classified<Meaning.FIELD_TYPE_CUSTOM, {from?: string, type: string}>
 
 export type SyntaxTransition = [SyntaxState, SemanticTokenUnion?]
 export type SymbolMatch = [Symbol, string]
@@ -124,7 +124,11 @@ class TransitionBuilder {
 
     canProvideFieldType() {
         this.whenMatching(...Primitives).causes((s: SymbolMatch) => [SyntaxState.FIELD_PRIMITIVE_GIVEN, FieldTyped(s[0] as PrimitiveUnion)])
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom(s[1])])
+        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({type: s[1]})])
+        this.whenMatching(Symbol.VARIABLE_MEMBER_ACCESS).causes((s: SymbolMatch) => {
+            const spl = s[1].split(".")
+            return [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({from: spl[0], type: spl[1]})]
+        })
         return this
     }
 

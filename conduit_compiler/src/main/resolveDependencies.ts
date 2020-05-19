@@ -25,8 +25,8 @@ import { assertNever } from './util/classifying';
                 case Unresolved.FieldKind.PRIMITIVE:
                     break;
                 case Unresolved.FieldKind.CUSTOM:
-                    if (!(t.val in lookup)) {
-                        throw Error(`Unable to resolve field type: ${t.val} in message ${m.name}`)
+                    if (!(t.val.type in lookup)) {
+                        throw Error(`Unable to resolve field type: ${t.val.type} in message ${m.name}`)
                     }
                     break;
 

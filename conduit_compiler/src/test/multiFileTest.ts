@@ -28,3 +28,19 @@ protoCompileTest("simple multi file", {
     }
     `
 })
+
+protoCompileTest("dependency multi file", {
+    "conduit_a.cdt": `
+    message m1 {
+        double d
+    }
+    `,
+
+    "conduit_b.cdt": `
+    import 'conduit_a.cdt' as A
+
+    message m2 {
+        A.m1 m
+    }
+    `
+})
