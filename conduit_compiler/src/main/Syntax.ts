@@ -1,5 +1,6 @@
 import { Classified, LazyClassification, LazyStatelessClassification, StatelessClassification } from './util/classifying';
 import { Symbol, Operators, PrimitiveUnion, AnyKeyword, Primitives } from './lexicon';
+import { Unresolved } from './entities';
 
 export enum SyntaxState {
     FILE_START="FILE_START",
@@ -44,7 +45,7 @@ const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
 const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
 const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
-const FieldTypedCustom = LazyClassification<{from?: string, type: string}>(Meaning.FIELD_TYPE_CUSTOM)
+const FieldTypedCustom = LazyClassification<Unresolved.CustomType>(Meaning.FIELD_TYPE_CUSTOM)
 const ImportFileLocation = LazyClassification<string>(Meaning.IMPORT_FILE_LOCATION)
 const ImportAlias = LazyClassification<string>(Meaning.IMPORT_ALIAS)
 
@@ -61,10 +62,11 @@ export type SemanticTokenUnion =
 | Classified<Meaning.ENUM_ENTRY_NAME, string>
 | Classified<Meaning.ENUM_ENTRY_ENDED>
 | Classified<Meaning.ENUM_ENDED>
-| Classified<Meaning.FIELD_TYPE_CUSTOM, {from?: string, type: string}>
+| Classified<Meaning.FIELD_TYPE_CUSTOM, Unresolved.CustomType>
 
 export type SyntaxTransition = [SyntaxState, SemanticTokenUnion?]
-export type SymbolMatch = [Symbol, string]
+export type SymbolMatch = [Symbol, {[key: string]: string}]
+
 
 type MatchFunction = (s: SymbolMatch) => SyntaxTransition
 
@@ -132,16 +134,15 @@ class TransitionBuilder {
     canProvideFieldType() {
         this.whenMatching(...Primitives).causes((s: SymbolMatch) => [SyntaxState.FIELD_PRIMITIVE_GIVEN, FieldTyped(s[0] as PrimitiveUnion)])
         this.whenMatching(Symbol.VARIABLE_MEMBER_ACCESS).causes((s: SymbolMatch) => {
-            const spl = s[1].split(".")
-            return [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({from: spl[0], type: spl[1]})]
+            return [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom(s[1] as Unresolved.CustomType)]
         })
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({type: s[1]})])
+        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_CUSTOM_TYPE_GIVEN, FieldTypedCustom({type: s[1].val})])
         
         return this
     }
 
     canNameMessageField() {
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_NAME_GIVEN, FieldNamed(s[1])])
+        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_NAME_GIVEN, FieldNamed(s[1].val)])
         return this
     }
 
@@ -165,18 +166,18 @@ function makeStateMatcher(): StateMatcher {
         .whenMatching(Symbol.import).to(SyntaxState.IMPORT_STARTED)
 
     transitions.from(SyntaxState.IMPORT_STARTED)
-        .whenMatching(Symbol.STRING_LITERAL).causes((s: SymbolMatch) => [SyntaxState.IMPORT_STRING_PROVIDED, ImportFileLocation(s[1])])
+        .whenMatching(Symbol.STRING_LITERAL).causes((s: SymbolMatch) => [SyntaxState.IMPORT_STRING_PROVIDED, ImportFileLocation(s[1].val)])
     transitions.from(SyntaxState.IMPORT_STRING_PROVIDED)
         .whenMatching(Symbol.as).to(SyntaxState.IMPORT_AS_STATED)
     transitions.from(SyntaxState.IMPORT_AS_STATED)
-        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FILE_START, ImportAlias(s[1])])
+        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FILE_START, ImportAlias(s[1].val)])
     
 
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE).whenMatching(Symbol.message)
         .to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
 
     transitions.from(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).whenMatching(Symbol.VARIABLE_NAME)
-        .causes((s: SymbolMatch) => [SyntaxState.MESSAGE_NAMED_AWAITING_OPENING, MessagedNamed(s[1])])
+        .causes((s: SymbolMatch) => [SyntaxState.MESSAGE_NAMED_AWAITING_OPENING, MessagedNamed(s[1].val)])
 
     transitions.from(SyntaxState.MESSAGE_NAMED_AWAITING_OPENING).whenMatching(Symbol.OPEN_BRACKET).to(SyntaxState.EMPTY_MESSAGE_BODY)
 
@@ -194,12 +195,12 @@ function makeStateMatcher(): StateMatcher {
         .canStartField()
         .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, MessageEnded)
 
-    transitions.from(SyntaxState.ENUM_STARTED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_NAMED, EnumNamed(s[1])])
+    transitions.from(SyntaxState.ENUM_STARTED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_NAMED, EnumNamed(s[1].val)])
     transitions.from(SyntaxState.ENUM_NAMED).whenMatching(Symbol.OPEN_BRACKET).to(SyntaxState.ENUM_OPENED)
-    transitions.from(SyntaxState.ENUM_OPENED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1])])
+    transitions.from(SyntaxState.ENUM_OPENED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1].val)])
     transitions.from(SyntaxState.ENUM_ENTRY_STARTED).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(SyntaxState.ENUM_NON_EMPTY_BODY, EnumFieldEnded)
     transitions.from(SyntaxState.ENUM_NON_EMPTY_BODY)
-        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1])])
+        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1].val)])
         .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, EnumEnded)
 
     // console.log(transitions.stateToSymbolMap)

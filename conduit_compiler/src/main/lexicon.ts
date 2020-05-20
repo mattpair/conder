@@ -105,20 +105,23 @@ export enum Dynamic {
 const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     const r = {}
     Operators.forEach(op => {
-        r[op] =  new RegExp(`^${op}`)
+        r[op] =  new RegExp(`^(?<val>${op})`)
     });
 
     Primitives.forEach(p => {
-        r[p] = new RegExp(`^${p}\\s`)
+        r[p] = new RegExp(`^(?<val>${p})\\s`)
     })
 
     Keywords.forEach(k => {
-        r[k] = new RegExp(`^${k}\\s`)
+        r[k] = new RegExp(`^(?<val>${k})\\s`)
     })
-    r[Symbol.NUMBER_LITERAL] = new RegExp(/^\d+/)
-    r[Symbol.VARIABLE_NAME] =  /^[_A-Za-z]+[\w]*/
-    r[Symbol.STRING_LITERAL] = /^'.*'/
-    r[Symbol.VARIABLE_MEMBER_ACCESS] = /^[_A-Za-z]+[\w]*\.[_A-Za-z]+[\w]*/
+    r[Symbol.NUMBER_LITERAL] = new RegExp(/^(?<val>\d+)/)
+    r[Symbol.VARIABLE_NAME] =  /^(?<val>[_A-Za-z]+[\w]*)/
+    r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
+    r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
+    let a = /(?<mycap>[abcdef]*)/
+    let b = a.exec("a")
+    b.groups
     return r as Record<Symbol, RegExp>
 }
 

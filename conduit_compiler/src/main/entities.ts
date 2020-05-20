@@ -35,7 +35,8 @@ export namespace Unresolved {
         CUSTOM
     }
     
-    export type FieldType = Classified<FieldKind.PRIMITIVE, PrimitiveUnion> | Classified<FieldKind.CUSTOM, {from?: string, type: string}>
+    export type CustomType = {from?: string, type: string}
+    export type FieldType = Classified<FieldKind.PRIMITIVE, PrimitiveUnion> | Classified<FieldKind.CUSTOM, CustomType>
     
     
     export type Field = Readonly<{

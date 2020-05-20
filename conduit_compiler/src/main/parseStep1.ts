@@ -29,6 +29,7 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
 
     while (currentCursor.offset < file.length) {
         let maybeHit: RegExpExecArray | null = null
+        let matchLength: number = 0
         let hit: SymbolMatch | undefined = undefined
         const acceptedSymbols = SyntaxParser[currentCursor.state].acceptedSymbols
 
@@ -38,8 +39,9 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
             
             const regex: RegExp = SymbolToRegex[consideredSymbol]
             maybeHit = regex.exec(file.slice(currentCursor.offset))
-            if (maybeHit !== null && maybeHit.length > 0) {
-                hit = [consideredSymbol, maybeHit[0]]
+            if (maybeHit !== null && maybeHit.groups) {
+                matchLength = maybeHit[0].length
+                hit = [consideredSymbol, maybeHit.groups]
                 break
             }
         }
@@ -56,7 +58,7 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
 
         
         const s: SyntaxTransition = applicableSyntaxRules(currentCursor.state, hit)
-        currentCursor = {offset: currentCursor.offset + hit[1].length, state: s[0]}
+        currentCursor = {offset: currentCursor.offset + matchLength, state: s[0]}
         if (s[1]) {
             tokes.push(s[1])
         }
