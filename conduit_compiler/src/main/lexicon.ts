@@ -29,6 +29,7 @@ export enum Symbol {
     STRING_LITERAL="StringLiteral",
     VARIABLE_MEMBER_ACCESS="VarMemberAccess",
     as="as",
+    IMPORT_WITH_ALIAS="Import with alias",
 }
 
 export const Operators: [
@@ -85,16 +86,12 @@ export const Primitives: PrimitiveUnion[] = [
 export type AnyKeyword = 
 Symbol.message |
 Symbol.optional | 
-Symbol.enum |
-Symbol.import |
-Symbol.as
+Symbol.enum 
 
 export const Keywords: AnyKeyword[] = [
     Symbol.message,
     Symbol.optional,
     Symbol.enum,
-    Symbol.import,
-    Symbol.as
 ]
 
 export enum Dynamic {
@@ -119,6 +116,7 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     r[Symbol.VARIABLE_NAME] =  /^(?<val>[_A-Za-z]+[\w]*)/
     r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
     r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
+    r[Symbol.IMPORT_WITH_ALIAS] = /^import( )+'(?<location>[\w \.\/]*)'( )+as( )+(?<alias>[_A-Za-z]+[\w]*)/
     let a = /(?<mycap>[abcdef]*)/
     let b = a.exec("a")
     b.groups

@@ -35,6 +35,7 @@ export namespace Unresolved {
         CUSTOM
     }
     
+    export type Import = {location: string, alias: string}
     export type CustomType = {from?: string, type: string}
     export type FieldType = Classified<FieldKind.PRIMITIVE, PrimitiveUnion> | Classified<FieldKind.CUSTOM, CustomType>
     
