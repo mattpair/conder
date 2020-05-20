@@ -4,6 +4,16 @@ export interface Classified<D, T=undefined> {
     readonly val: T
 }
 
+export class ClassifiedClass<KIND, T> implements Classified<KIND, T>{
+    readonly kind: KIND
+    readonly val: T
+
+    constructor(kind: KIND, val: T) {
+        this.kind = kind
+        this.val = val
+    }
+}
+
 export function StatelessClassification<D>(d: D): Classified<D>  {
     return {kind: d, val: undefined}
 }

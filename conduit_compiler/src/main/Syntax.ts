@@ -1,4 +1,4 @@
-import { Classified, LazyClassification, StatelessClassification } from './util/classifying';
+import { Classified, LazyClassification, StatelessClassification, ClassifiedClass } from './util/classifying';
 import { Symbol, PrimitiveUnion, Primitives } from './lexicon';
 import { Unresolved, Resolved } from './entities';
 
@@ -32,7 +32,11 @@ export enum Meaning {
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
 const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
-const Enum = LazyClassification<Resolved.Enum>(Meaning.ENUM_DECLARATION)
+class Enum extends ClassifiedClass<Meaning.ENUM_DECLARATION, Resolved.Enum> {
+    constructor(name: string) {
+        super(Meaning.ENUM_DECLARATION, {members: [], name})
+    }
+}
 const FieldTypedCustom = LazyClassification<Unresolved.CustomType>(Meaning.FIELD_TYPE_CUSTOM)
 const Import = LazyClassification<Unresolved.Import>(Meaning.IMPORT)
 
@@ -144,7 +148,7 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.FILE_START)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
-        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, Enum({name: s[1].name, members: []})])
+        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
         .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import(s[1] as Unresolved.Import)])
             
     transitions.from(SyntaxState.ENUM_OPEN)
@@ -153,7 +157,7 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
-        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, Enum({name: s[1].name, members: []})])
+        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
 
 
     transitions.from(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).whenMatching(Symbol.VARIABLE_NAME)
