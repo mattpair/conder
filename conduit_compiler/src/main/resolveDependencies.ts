@@ -11,17 +11,14 @@ function assertNameNotYetInLookup(m: {name: string}, l: PartialLookup) {
 type MsgOrEnum = Classified<TypeKind.ENUM, Resolved.Enum> | Classified<TypeKind.MESSAGE, PartialResolved.Message>
 type PartialLookup = Record<string, MsgOrEnum>
 
-export function resolve(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
-    const resolved: Record<string, Resolved.FileEntities> = {}
-    // Assume no imports for now.
-    for (const file in files) {
-        const intralookup: PartialLookup = {}
+function resolveFile(fileEntites: Unresolved.FileEntities): Resolved.FileEntities {
+    const intralookup: PartialLookup = {}
 
-        files[file].msgs.forEach(m => {
+        fileEntites.msgs.forEach(m => {
             assertNameNotYetInLookup(m, intralookup)
             intralookup[m.name] = {val: m, kind: TypeKind.MESSAGE}
         })
-        files[file].enms.forEach(m => {
+        fileEntites.enms.forEach(m => {
             assertNameNotYetInLookup(m, intralookup)
             intralookup[m.name] = {val: m, kind: TypeKind.ENUM}
         })
@@ -68,10 +65,17 @@ export function resolve(files: Record<string, Unresolved.FileEntities>): Record<
 
             
         })
-        resolved[file] = {
+        return {
             msgs,
-            enms: files[file].enms,
+            enms: fileEntites.enms,
         }
+}
+
+export function resolve(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
+    const resolved: Record<string, Resolved.FileEntities> = {}
+    // Assume no imports for now.
+    for (const file in files) {
+        resolved[file] = resolveFile(files[file])
     }
 
     return resolved
