@@ -40,7 +40,7 @@ export namespace Resolved {
     
     export type Field = BaseField<FieldType>
 
-    export type Message = BaseMsg<Field>
+    export type Message = Readonly<BaseMsg<Field>>
 }
 
 export type BaseField<TYPE> = {
@@ -51,7 +51,7 @@ export type BaseField<TYPE> = {
 
 export type BaseMsg<FIELD_TYPE> = {
     readonly name: string
-    readonly fields: FIELD_TYPE[]
+    fields: FIELD_TYPE[]
 }
 
 
@@ -70,5 +70,5 @@ export namespace Unresolved {
     
     export type Field = BaseField<FieldType>
     
-    export type Message = BaseMsg<Field>
+    export type Message = Readonly<BaseMsg<Field>>
 }

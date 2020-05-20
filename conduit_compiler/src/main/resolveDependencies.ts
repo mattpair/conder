@@ -26,39 +26,52 @@ export function resolve(files: Record<string, Unresolved.FileEntities>): Record<
             intralookup[m.name] = {val: m, kind: TypeKind.ENUM}
         })
 
+        const msgs: Resolved.Message[] = []
+        
+         Object.values(intralookup).forEach((m: MsgOrEnum) => {
+            switch(m.kind) {
+                case TypeKind.ENUM:
+                    break;
 
-        const msgs: Resolved.Message[] = files[file].msgs.map((m: Unresolved.Message) => {
-            const resolvedFields: Resolved.Field[] = m.fields.map((f: Unresolved.Field) => {
-                let t: Resolved.FieldType
-                switch(f.fType.kind) {
+                case TypeKind.MESSAGE:
                     
-                    case TypeKind.PRIMITIVE:
-                        t = f.fType
-                        break;
-                    
-                    case TypeKind.DEFERRED:
-                        const typeName = f.fType.val.type
-                        if (!(typeName in intralookup)) {
-                            throw new Error(`Unable to resolve field type: ${f.fType.val.type} in message ${m.name}`)            
+                    m.val.fields.forEach((f: Unresolved.Field) => {
+                        let t: Resolved.FieldType
+                        // Switches on the variable so assert never works.
+                        const fieldType: Unresolved.FieldType = f.fType
+                        switch(fieldType.kind) {
+                            
+                            case TypeKind.PRIMITIVE:
+                                t = fieldType
+                                break;
+                            
+                            case TypeKind.DEFERRED:
+                                const typeName = fieldType.val.type
+                                if (!(typeName in intralookup)) {
+                                    throw new Error(`Unable to resolve field type: ${fieldType.val.type} in message ${m.val.name}`)            
+                                }
+                                t =  intralookup[typeName] as Resolved.FieldType
+                                break;
+                        
+                            default: return assertNever(fieldType)
+                            
                         }
-                        const fType: MsgOrEnum = intralookup[typeName]
-                        t =  fType as Resolved.FieldType
-                        break;
-                
-                    
-                    // default: return assertNever(f.fType.kind)
-                    
-                }
-                return {...f, fType: t}
-                
-            })
-            return {name: m.name, fields: resolvedFields}
+                        return {...f, fType: t}
+                        
+                    })
+                    msgs.push(intralookup[m.val.name].val as Resolved.Message)
+                    break;
+
+                default: return assertNever(m)
+
+            }
+
+            
         })
-        // resolved[file] = {
-        //     msgs: files[file].msgs,
-        //     enms: files[file].enms,
-        //     importTable: lookup
-        // }
+        resolved[file] = {
+            msgs,
+            enms: files[file].enms,
+        }
     }
 
     return resolved
