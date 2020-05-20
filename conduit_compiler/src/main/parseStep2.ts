@@ -1,6 +1,6 @@
 import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
-import { Unresolved, Resolved } from './entities';
+import { Unresolved, Resolved, TypeKind } from './entities';
 
 
 export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities {
@@ -19,11 +19,11 @@ export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities 
         switch(semanticToken.kind) {
 
             case Meaning.FIELD_TYPE_CUSTOM:
-                field = {...field, fType: {kind: Unresolved.FieldKind.CUSTOM, val: semanticToken.val}}
+                field = {...field, fType: {kind: TypeKind.DEFERRED, val: semanticToken.val}}
                 break
                 
             case Meaning.FIELD_TYPE_PRIMITIVE:                
-                field = {...field, fType: {kind: Unresolved.FieldKind.PRIMITIVE, val: semanticToken.val}}
+                field = {...field, fType: {kind: TypeKind.PRIMITIVE, val: semanticToken.val}}
                 break
         
             case Meaning.MESSAGE_NAME:

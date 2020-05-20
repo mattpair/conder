@@ -1,7 +1,7 @@
 
 import { tagTokens } from "./parseStep1";
 import {parseEntities} from "./parseStep2"
-import { Resolved, Unresolved } from "./entities";
+import { Resolved, Unresolved, TypeKind } from "./entities";
 import { resolve } from "./resolveDependencies";
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
@@ -53,6 +53,6 @@ ${fields}
 
 function printFields(fields: Unresolved.Field[]): string {
     return fields
-    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === Unresolved.FieldKind.PRIMITIVE ? f.fType.val : f.fType.val.type} ${f.name} = ${index + 1};`)
+    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === TypeKind.PRIMITIVE ? f.fType.val : f.fType.val.type} ${f.name} = ${index + 1};`)
     .join("\n")
 }
