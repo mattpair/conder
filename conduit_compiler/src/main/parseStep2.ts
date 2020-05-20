@@ -2,11 +2,15 @@ import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
 import { Unresolved, Resolved } from './entities';
 
-export type FileEntities = [Unresolved.Message[], Resolved.Enum[], Unresolved.Import[]]
+export class FileEntities {
+    readonly msgs: Unresolved.Message[] = [] 
+    readonly enms: Resolved.Enum[] = [] 
+    readonly imports: Unresolved.Import[] = []
+}
 
 
 export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
-    const fileContext: FileEntities = [[], [], []]
+    const fileContext = new FileEntities()
     let message: Partial<Unresolved.Message> = {fields: []}
     // console.log(t)
     
@@ -46,19 +50,19 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
                 break
 
             case Meaning.MESSAGE_END: 
-                fileContext[0].push(message as Unresolved.Message)
+                fileContext.msgs.push(message as Unresolved.Message)
                 message = {fields: []}
                 break
         
             case Meaning.ENUM_DECLARATION:
-                fileContext[1].push(semanticToken.val)
+                fileContext.enms.push(semanticToken.val)
                 break
             case Meaning.ENUM_MEMBER:
-                fileContext[1][fileContext[1].length - 1].members.push(semanticToken.val)
+                fileContext.enms[fileContext.enms.length - 1].members.push(semanticToken.val)
                 break
 
             case Meaning.IMPORT:
-                fileContext[2].push(semanticToken.val)
+                fileContext.imports.push(semanticToken.val)
                 break
             
 

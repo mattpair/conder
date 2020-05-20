@@ -10,7 +10,7 @@ export function compileFiles(files: Record<string, () => string>): Record<string
         if (file.endsWith(".cdt")) {
             const entities = parseEntities(tagTokens(files[file]()))
             collapsed[file] = entities 
-            resolve(entities[0], entities[1])
+            resolve(entities.msgs, entities.enms)
         }
     }
 
@@ -20,10 +20,10 @@ export function compileFiles(files: Record<string, () => string>): Record<string
 function toProto(files: Record<string, FileEntities>): Record<string, string> {
     const results = {}
     for (const key in files) {
-        const m = files[key]
+        const m: FileEntities = files[key]
         results[key.replace(".cdt", ".proto")] = `
-        ${m[1].map(printEnum).join("\n\n")}
-        ${m[0].map(printMessage).join("\n\n")}
+        ${m.enms.map(printEnum).join("\n\n")}
+        ${m.msgs.map(printMessage).join("\n\n")}
         `
     }
     return results
