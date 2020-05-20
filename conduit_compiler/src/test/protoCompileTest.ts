@@ -126,3 +126,21 @@ protoCompileTest("should allow enums separated by whitespace",`
         ENTERTAINMENT
     }
     `)
+
+
+protoCompileTest("should allow multiple enums separated by whitespace",`
+    enum PurchaseCategory {
+        UNCATEGORIZED
+        GAS
+        DINING
+        TRAVEL
+        GROCERY
+        ENTERTAINMENT
+    }
+    
+    enum OtherCategories {
+        A
+        B
+        C
+    }
+    `)

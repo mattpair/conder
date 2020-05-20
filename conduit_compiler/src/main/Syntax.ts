@@ -144,19 +144,17 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.FILE_START)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
-        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => {
-            return [
-            SyntaxState.ENUM_OPEN, 
-            Enum({name: s[1].name, members: []})
-        ]})
+        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, Enum({name: s[1].name, members: []})])
         .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import(s[1] as Unresolved.Import)])
-    
+            
     transitions.from(SyntaxState.ENUM_OPEN)
     .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, {kind: Meaning.ENUM_MEMBER, val: s[1].name} ])
     .whenMatching(Symbol.CLOSE_BRACKET).to(SyntaxState.NEUTRAL_FILE_STATE)
 
-    transitions.from(SyntaxState.NEUTRAL_FILE_STATE).whenMatching(Symbol.message)
-        .to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
+    transitions.from(SyntaxState.NEUTRAL_FILE_STATE)
+        .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
+        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, Enum({name: s[1].name, members: []})])
+
 
     transitions.from(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).whenMatching(Symbol.VARIABLE_NAME)
         .causes((s: SymbolMatch) => [SyntaxState.MESSAGE_NAMED_AWAITING_OPENING, MessagedNamed(s[1].val)])

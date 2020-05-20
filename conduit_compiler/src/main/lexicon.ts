@@ -114,13 +114,15 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     Keywords.forEach(k => {
         r[k] = new RegExp(`^(?<val>${k})\\s`)
     })
+
+    r[Symbol.CLOSE_BRACKET] = /^(?<val>\s*}\s*)/
     r[Symbol.NUMBER_LITERAL] = new RegExp(/^(?<val>\d+)/)
     r[Symbol.VARIABLE_NAME] =  /^(?<val>[_A-Za-z]+[\w]*)/
     r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
     r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
     r[Symbol.IMPORT_WITH_ALIAS] = /^import +'(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/
-    r[Symbol.ENUM_DECLARATION] = /^enum +(?<name>[a-zA-Z]+) *{\s*/
-    r[Symbol.ENUM_MEMBER] = /(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
+    r[Symbol.ENUM_DECLARATION] = /^\s*enum +(?<name>[a-zA-Z]+) *{\s*/
+    r[Symbol.ENUM_MEMBER] = /^(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
     
     return r as Record<Symbol, RegExp>
 }

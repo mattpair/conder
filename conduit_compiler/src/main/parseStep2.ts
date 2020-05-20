@@ -8,7 +8,7 @@ export type FileEntities = [Unresolved.Message[], Resolved.Enum[], Unresolved.Im
 export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
     const fileContext: FileEntities = [[], [], []]
     let message: Partial<Unresolved.Message> = {fields: []}
-    // console.log(`${JSON.stringify(t)}`)
+    // console.log(t)
     
     let field: Partial<Unresolved.Field> = {isRequired: true}
 
@@ -56,7 +56,7 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
             case Meaning.ENUM_MEMBER:
                 fileContext[1][fileContext[1].length - 1].members.push(semanticToken.val)
                 break
-                
+
             case Meaning.IMPORT:
                 fileContext[2].push(semanticToken.val)
                 break

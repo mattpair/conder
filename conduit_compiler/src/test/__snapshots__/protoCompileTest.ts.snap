@@ -36,6 +36,32 @@ enum PurchaseCategory {
 }
 `;
 
+exports[`should allow multiple enums separated by whitespace 1`] = `
+Object {
+  "testFile.proto": "
+        
+enum PurchaseCategory {
+	UNCATEGORIZED = 1;
+	GAS = 2;
+	DINING = 3;
+	TRAVEL = 4;
+	GROCERY = 5;
+	ENTERTAINMENT = 6;
+}
+    
+
+
+enum OtherCategories {
+	A = 1;
+	B = 2;
+	C = 3;
+}
+    
+        
+        ",
+}
+`;
+
 exports[`should allow new line to end field 1`] = `
 Object {
   "testFile.proto": "
