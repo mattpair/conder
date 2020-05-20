@@ -24,23 +24,19 @@ export enum SyntaxState {
 }
 
 export enum Meaning {
-    MESSAGE_NAME,
-    MESSAGE_END,
-
-    FIELD_OPTIONAL,
-    FIELD_TYPE_PRIMITIVE,
-    FIELD_TYPE_CUSTOM,
-    FIELD_NAME,
-    FIELD_END,
-
-
-    ENUM_NAME,
-    ENUM_ENTRY_NAME,
-    ENUM_ENTRY_ENDED,
-    ENUM_ENDED,
-    
-    IMPORT_FILE_LOCATION,
-    IMPORT_ALIAS
+    MESSAGE_NAME="MESSAGE_NAME",
+    MESSAGE_END="MESSAGE_END",
+    FIELD_OPTIONAL="FIELD_OPTIONAL",
+    FIELD_TYPE_PRIMITIVE="FIELD_TYPE_PRIMITIVE",
+    FIELD_TYPE_CUSTOM="FIELD_TYPE_CUSTOM",
+    FIELD_NAME="FIELD_NAME",
+    FIELD_END="FIELD_END",
+    ENUM_NAME="ENUM_NAME",
+    ENUM_ENTRY_NAME="ENUM_ENTRY_NAME",
+    ENUM_ENTRY_ENDED="ENUM_ENTRY_ENDED",
+    ENUM_ENDED="ENUM_ENDED",
+    IMPORT_FILE_LOCATION="IMPORT_FILE_LOCATION",
+    IMPORT_ALIAS="IMPORT_ALIAS",
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
@@ -82,6 +78,12 @@ export type StateMatcher =  {
     readonly [S in SyntaxState]?: SymbolMatcher
 }
 
+const MessageEnded = StatelessClassification(Meaning.MESSAGE_END)
+const FieldEnded = StatelessClassification(Meaning.FIELD_END)
+const FieldRequired = StatelessClassification(Meaning.FIELD_OPTIONAL)
+const EnumEnded = StatelessClassification(Meaning.ENUM_ENDED)
+const EnumFieldEnded = StatelessClassification(Meaning.ENUM_ENTRY_ENDED)
+
 class TransitionBuilder {
     readonly stateToSymbolMap: {[S in SyntaxState]?: {
         [S in Symbol]?: MatchFunction
@@ -104,6 +106,11 @@ class TransitionBuilder {
         return this
     }
 
+    indicates(syntaxState: SyntaxState, meaning: Classified<Meaning>) {
+        this.causes((a: any) => [syntaxState, meaning])
+        return this
+    }
+
     to(s: SyntaxState) {
         this.causes((a: any) => [s, undefined])
         return this
@@ -117,7 +124,7 @@ class TransitionBuilder {
 
     // common phrases
     canStartField() {
-        this.whenMatching(Symbol.optional).causes((s: any) => [SyntaxState.OPTIONAL_STATED, FieldRequired])
+        this.whenMatching(Symbol.optional).indicates(SyntaxState.OPTIONAL_STATED, FieldRequired)
         this.canProvideFieldType()
         return this
     }
@@ -181,19 +188,19 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.FIELD_CUSTOM_TYPE_GIVEN).canNameMessageField()
 
-    transitions.from(SyntaxState.FIELD_NAME_GIVEN).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).causes(() => [SyntaxState.NEUTRAL_MESSAGE_BODY, FieldEnded])
+    transitions.from(SyntaxState.FIELD_NAME_GIVEN).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(SyntaxState.NEUTRAL_MESSAGE_BODY, FieldEnded)
 
     transitions.from(SyntaxState.NEUTRAL_MESSAGE_BODY)
         .canStartField()
-        .whenMatching(Symbol.CLOSE_BRACKET).causes((s: any) => [SyntaxState.NEUTRAL_FILE_STATE, MessageEnded])
+        .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, MessageEnded)
 
     transitions.from(SyntaxState.ENUM_STARTED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_NAMED, EnumNamed(s[1])])
     transitions.from(SyntaxState.ENUM_NAMED).whenMatching(Symbol.OPEN_BRACKET).to(SyntaxState.ENUM_OPENED)
     transitions.from(SyntaxState.ENUM_OPENED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1])])
-    transitions.from(SyntaxState.ENUM_ENTRY_STARTED).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).causes((s: any) => [SyntaxState.ENUM_NON_EMPTY_BODY, EnumFieldEnded])
+    transitions.from(SyntaxState.ENUM_ENTRY_STARTED).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(SyntaxState.ENUM_NON_EMPTY_BODY, EnumFieldEnded)
     transitions.from(SyntaxState.ENUM_NON_EMPTY_BODY)
         .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1])])
-        .whenMatching(Symbol.CLOSE_BRACKET).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, EnumEnded])
+        .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, EnumEnded)
 
     // console.log(transitions.stateToSymbolMap)
     return transitions.stateToSymbolMap
@@ -201,14 +208,5 @@ function makeStateMatcher(): StateMatcher {
 
 
 export const SyntaxParser: StateMatcher = makeStateMatcher()
-
-
-const MessageEnded = StatelessClassification(Meaning.MESSAGE_END)
-const FieldEnded = StatelessClassification(Meaning.FIELD_END)
-const FieldRequired = StatelessClassification(Meaning.FIELD_OPTIONAL)
-const EnumEnded = StatelessClassification(Meaning.ENUM_ENDED)
-const EnumFieldEnded = StatelessClassification(Meaning.ENUM_ENTRY_ENDED)
-
-
 
 

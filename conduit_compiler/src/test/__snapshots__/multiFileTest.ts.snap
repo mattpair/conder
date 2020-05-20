@@ -1,5 +1,18 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`dependency multi file 1`] = `
+Object {
+  "conduit_a.proto": "
+        
+        
+        ",
+  "conduit_b.proto": "
+        
+        
+        ",
+}
+`;
+
 exports[`simple multi file 1`] = `
 Object {
   "conduit_a.proto": "
