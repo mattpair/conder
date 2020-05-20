@@ -30,6 +30,8 @@ export enum Symbol {
     VARIABLE_MEMBER_ACCESS="VarMemberAccess",
     as="as",
     IMPORT_WITH_ALIAS="Import with alias",
+    ENUM_DECLARATION="Enum declaration",
+    ENUM_MEMBER="Enum member"
 }
 
 export const Operators: [
@@ -117,9 +119,9 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
     r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
     r[Symbol.IMPORT_WITH_ALIAS] = /^import +'(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/
-    let a = /(?<mycap>[abcdef]*)/
-    let b = a.exec("a")
-    b.groups
+    r[Symbol.ENUM_DECLARATION] = /^enum +(?<name>[a-zA-Z]+) *{\s*/
+    r[Symbol.ENUM_MEMBER] = /(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
+    
     return r as Record<Symbol, RegExp>
 }
 

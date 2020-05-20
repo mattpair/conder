@@ -12,9 +12,6 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
     
     let field: Partial<Unresolved.Field> = {isRequired: true}
 
-    let enm: Partial<Resolved.Enum> = {}
-    let enumMember: Partial<Resolved.EnumMember> = {}
-
     for (let i = 0; i < t.length; ++i) {
         const semanticToken = t[i]
                 
@@ -53,25 +50,13 @@ export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
                 message = {fields: []}
                 break
         
-            case Meaning.ENUM_NAME:
-                enm = {
-                    members: [],
-                    name: semanticToken.val
-                }
+            case Meaning.ENUM_DECLARATION:
+                fileContext[1].push(semanticToken.val)
                 break
-            case Meaning.ENUM_ENTRY_NAME:
-                enumMember = {name: semanticToken.val}
+            case Meaning.ENUM_MEMBER:
+                fileContext[1][fileContext[1].length - 1].members.push(semanticToken.val)
                 break
-
-            case Meaning.ENUM_ENTRY_ENDED:
-                enm.members.push(enumMember as Resolved.EnumMember)
-                enumMember = {}
-                break
-            case Meaning.ENUM_ENDED:
-                fileContext[1].push(enm as Resolved.Enum)
-                enm = {}
-                break
-
+                
             case Meaning.IMPORT:
                 fileContext[2].push(semanticToken.val)
                 break

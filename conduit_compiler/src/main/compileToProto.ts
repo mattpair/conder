@@ -38,8 +38,8 @@ ${mems}
     `
 }
 
-function printMembers(m: Resolved.EnumMember[]): string {
-    return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
+function printMembers(m: string[]): string {
+    return m.map((e, index) => `\t${e} = ${index + 1};`).join("\n")
 }
 
 function printMessage(m: Unresolved.Message): string {

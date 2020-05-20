@@ -1,6 +1,6 @@
-import { Classified, LazyClassification, LazyStatelessClassification, StatelessClassification } from './util/classifying';
-import { Symbol, Operators, PrimitiveUnion, AnyKeyword, Primitives } from './lexicon';
-import { Unresolved } from './entities';
+import { Classified, LazyClassification, StatelessClassification } from './util/classifying';
+import { Symbol, PrimitiveUnion, Primitives } from './lexicon';
+import { Unresolved, Resolved } from './entities';
 
 export enum SyntaxState {
     FILE_START="FILE_START",
@@ -13,12 +13,7 @@ export enum SyntaxState {
     FIELD_CUSTOM_TYPE_GIVEN="FIELD_CUSTOM_TYPE_GIVEN",
     FIELD_NAME_GIVEN="FIELD_NAME_GIVEN",
     NEUTRAL_MESSAGE_BODY="NEUTRAL_MESSAGE_BODY",
-    ENUM_STARTED="ENUM_STARTED",
-    ENUM_NAMED="ENUM_NAMED",
-    ENUM_OPENED="ENUM_OPENED",
-    ENUM_NON_EMPTY_BODY="ENUM_NON_EMPTY_BODY",
-    ENUM_ENTRY_STARTED="ENUM_ENTRY_STARTED",
-    ENUM_ENTRY_ENDED="ENUM_ENTRY_ENDED",
+    ENUM_OPEN="Enum open"
 }
 
 export enum Meaning {
@@ -29,22 +24,21 @@ export enum Meaning {
     FIELD_TYPE_CUSTOM="FIELD_TYPE_CUSTOM",
     FIELD_NAME="FIELD_NAME",
     FIELD_END="FIELD_END",
-    ENUM_NAME="ENUM_NAME",
-    ENUM_ENTRY_NAME="ENUM_ENTRY_NAME",
-    ENUM_ENTRY_ENDED="ENUM_ENTRY_ENDED",
-    ENUM_ENDED="ENUM_ENDED",
+    ENUM_DECLARATION="ENUM",
     IMPORT="IMPORT",
+    ENUM_MEMBER="Enum member"
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
 const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_NAME)
-const EnumNamed = LazyClassification<string>(Meaning.ENUM_NAME)
-const EnumEntryNamed = LazyClassification<string>(Meaning.ENUM_ENTRY_NAME)
+const Enum = LazyClassification<Resolved.Enum>(Meaning.ENUM_DECLARATION)
 const FieldTypedCustom = LazyClassification<Unresolved.CustomType>(Meaning.FIELD_TYPE_CUSTOM)
 const Import = LazyClassification<Unresolved.Import>(Meaning.IMPORT)
 
 export type SemanticTokenUnion = 
+| Classified<Meaning.ENUM_DECLARATION, Resolved.Enum>
+| Classified<Meaning.ENUM_MEMBER, string>
 | Classified<Meaning.MESSAGE_END>
 | Classified<Meaning.FIELD_END>
 | Classified<Meaning.IMPORT, Unresolved.Import>
@@ -52,10 +46,6 @@ export type SemanticTokenUnion =
 | Classified<Meaning.FIELD_NAME, string>
 | Classified<Meaning.MESSAGE_NAME, string>
 | Classified<Meaning.FIELD_OPTIONAL>
-| Classified<Meaning.ENUM_NAME, string>
-| Classified<Meaning.ENUM_ENTRY_NAME, string>
-| Classified<Meaning.ENUM_ENTRY_ENDED>
-| Classified<Meaning.ENUM_ENDED>
 | Classified<Meaning.FIELD_TYPE_CUSTOM, Unresolved.CustomType>
 
 export type SyntaxTransition = [SyntaxState, SemanticTokenUnion?]
@@ -77,8 +67,6 @@ export type StateMatcher =  {
 const MessageEnded = StatelessClassification(Meaning.MESSAGE_END)
 const FieldEnded = StatelessClassification(Meaning.FIELD_END)
 const FieldRequired = StatelessClassification(Meaning.FIELD_OPTIONAL)
-const EnumEnded = StatelessClassification(Meaning.ENUM_ENDED)
-const EnumFieldEnded = StatelessClassification(Meaning.ENUM_ENTRY_ENDED)
 
 class TransitionBuilder {
     readonly stateToSymbolMap: {[S in SyntaxState]?: {
@@ -156,9 +144,16 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.FILE_START)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
-        .whenMatching(Symbol.enum).to(SyntaxState.ENUM_STARTED)
-        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.FILE_START, Import(s[1] as Unresolved.Import)])
+        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => {
+            return [
+            SyntaxState.ENUM_OPEN, 
+            Enum({name: s[1].name, members: []})
+        ]})
+        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import(s[1] as Unresolved.Import)])
     
+    transitions.from(SyntaxState.ENUM_OPEN)
+    .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, {kind: Meaning.ENUM_MEMBER, val: s[1].name} ])
+    .whenMatching(Symbol.CLOSE_BRACKET).to(SyntaxState.NEUTRAL_FILE_STATE)
 
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE).whenMatching(Symbol.message)
         .to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
@@ -181,14 +176,6 @@ function makeStateMatcher(): StateMatcher {
     transitions.from(SyntaxState.NEUTRAL_MESSAGE_BODY)
         .canStartField()
         .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, MessageEnded)
-
-    transitions.from(SyntaxState.ENUM_STARTED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_NAMED, EnumNamed(s[1].val)])
-    transitions.from(SyntaxState.ENUM_NAMED).whenMatching(Symbol.OPEN_BRACKET).to(SyntaxState.ENUM_OPENED)
-    transitions.from(SyntaxState.ENUM_OPENED).whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1].val)])
-    transitions.from(SyntaxState.ENUM_ENTRY_STARTED).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(SyntaxState.ENUM_NON_EMPTY_BODY, EnumFieldEnded)
-    transitions.from(SyntaxState.ENUM_NON_EMPTY_BODY)
-        .whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.ENUM_ENTRY_STARTED, EnumEntryNamed(s[1].val)])
-        .whenMatching(Symbol.CLOSE_BRACKET).indicates(SyntaxState.NEUTRAL_FILE_STATE, EnumEnded)
 
     // console.log(transitions.stateToSymbolMap)
     return transitions.stateToSymbolMap

@@ -21,10 +21,9 @@ export namespace Resolved {
     Classified<TypeKind.PRIMITIVE, PrimitiveUnion>
 
     export type Enum = Readonly<{
-        members: EnumMember[]
+        members: string[]
     } & Named>
     
-    export type EnumMember = Readonly<Named>
 }
 
 
