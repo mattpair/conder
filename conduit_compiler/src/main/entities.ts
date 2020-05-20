@@ -6,6 +6,15 @@ export type Named = {
 }
 
 export namespace Resolved {
+
+    export class FileEntities {
+        readonly msgs: Unresolved.Message[] = [] 
+        readonly enms: Resolved.Enum[] = [] 
+        readonly importTable: EntityLookup = {}
+    }
+
+    export type EntityLookup = Record<string, Resolved.MessageOrEnum>
+
     
     export enum TypeKind {
         MESSAGE,
@@ -32,6 +41,12 @@ export namespace Unresolved {
     export enum FieldKind {
         PRIMITIVE,
         CUSTOM
+    }
+
+    export class FileEntities {
+        readonly msgs: Unresolved.Message[] = [] 
+        readonly enms: Resolved.Enum[] = [] 
+        readonly imports: Unresolved.Import[] = []
     }
     
     export type Import = {location: string, alias: string}

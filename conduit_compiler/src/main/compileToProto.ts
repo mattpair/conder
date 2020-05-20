@@ -1,26 +1,26 @@
 
 import { tagTokens } from "./parseStep1";
-import {parseEntities, FileEntities} from "./parseStep2"
+import {parseEntities} from "./parseStep2"
 import { Resolved, Unresolved } from "./entities";
 import { resolve } from "./resolveDependencies";
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
-    const collapsed: Record<string, FileEntities> = {}
+    const collapsed: Record<string, Unresolved.FileEntities> = {}
     for (const file in files) {
         if (file.endsWith(".cdt")) {
             const entities = parseEntities(tagTokens(files[file]()))
             collapsed[file] = entities 
-            resolve(entities.msgs, entities.enms)
         }
     }
+    resolve(collapsed)
 
     return toProto(collapsed)
 } 
 
-function toProto(files: Record<string, FileEntities>): Record<string, string> {
+function toProto(files: Record<string, Unresolved.FileEntities>): Record<string, string> {
     const results = {}
     for (const key in files) {
-        const m: FileEntities = files[key]
+        const m: Unresolved.FileEntities = files[key]
         results[key.replace(".cdt", ".proto")] = `
         ${m.enms.map(printEnum).join("\n\n")}
         ${m.msgs.map(printMessage).join("\n\n")}

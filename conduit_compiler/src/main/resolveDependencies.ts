@@ -1,25 +1,27 @@
 import { Resolved, Unresolved } from './entities';
 import { assertNever } from './util/classifying';
 
-    type EntityLookup = Record<string, Resolved.MessageOrEnum>
 
 
-    export function resolve(mess: Unresolved.Message[], enums: Resolved.Enum[]): EntityLookup {
-        const lookup: EntityLookup = {}
-        mess.forEach(m => {
+export function resolve(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
+    const resolved: Record<string, Resolved.FileEntities> = {}
+    for (const file in files) {
+        const lookup: Resolved.EntityLookup = {}
+
+        files[file].msgs.forEach(m => {
             if (m.name in lookup) {
                 throw Error(`Duplicate entities in scope with name ${m.name}`)
             }
             lookup[m.name] = {val: m, kind: Resolved.TypeKind.MESSAGE}
         })
-        enums.forEach(m => {
+        files[file].enms.forEach(m => {
             if (m.name in lookup ) {
                 throw Error(`Duplicate entities in scope with name ${m.name}`)
             }
             lookup[m.name] = {val: m, kind: Resolved.TypeKind.ENUM}
         })
 
-        mess.forEach(m => m.fields.forEach(f => {
+        files[file].msgs.forEach(m => m.fields.forEach(f => {
             const t = f.fType
             switch(t.kind) {
                 case Unresolved.FieldKind.PRIMITIVE:
@@ -33,6 +35,12 @@ import { assertNever } from './util/classifying';
                 default: assertNever(t)
             }
         }))
-
-        return lookup
+        resolved[file] = {
+            msgs: files[file].msgs,
+            enms: files[file].enms,
+            importTable: lookup
+        }
     }
+
+    return resolved
+}

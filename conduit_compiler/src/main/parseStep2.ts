@@ -2,15 +2,9 @@ import { Classified, assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
 import { Unresolved, Resolved } from './entities';
 
-export class FileEntities {
-    readonly msgs: Unresolved.Message[] = [] 
-    readonly enms: Resolved.Enum[] = [] 
-    readonly imports: Unresolved.Import[] = []
-}
 
-
-export function parseEntities(t: SemanticTokenUnion[]): FileEntities {
-    const fileContext = new FileEntities()
+export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities {
+    const fileContext = new Unresolved.FileEntities()
     let message: Partial<Unresolved.Message> = {fields: []}
     // console.log(t)
     
