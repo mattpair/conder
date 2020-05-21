@@ -28,6 +28,11 @@ message m1 {
 message m2 {
 	required double d = 1;
 }
+
+
+message m1 {
+	required m2 m = 1;
+}
         ",
 }
 `;

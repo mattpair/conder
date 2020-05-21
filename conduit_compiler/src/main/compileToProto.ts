@@ -12,7 +12,12 @@ export function compileFiles(files: Record<string, () => string>): Record<string
             collapsed[file] = entities 
         }
     }
-    resolve(collapsed)
+    const r = resolve(collapsed)
+    for (const f in r) {
+        r[f].msgs.forEach(m => {
+            console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
+        })
+    }
 
     return toProto(collapsed)
 } 

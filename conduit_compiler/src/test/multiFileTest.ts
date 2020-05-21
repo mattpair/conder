@@ -26,6 +26,9 @@ protoCompileTest("simple multi file", {
     message m2 {
         double d
     }
+    message m1 {
+        m2 m
+    }
     `
 })
 

@@ -6,19 +6,10 @@ export type Named = {
 }
 
 export enum TypeKind {
-    MESSAGE,
-    ENUM,
-    PRIMITIVE,
-    DEFERRED,
-}
-
-export namespace PartialResolved {
-
-    
-    export type FieldType = Resolved.FieldType |  
-    Classified<TypeKind.DEFERRED, Unresolved.CustomType>
-
-    export type Message = BaseMsg<BaseField<FieldType>>
+    MESSAGE="MESSAGE",
+    ENUM="ENUM",
+    PRIMITIVE="PRIMITIVE",
+    DEFERRED="DEFERRED",
 }
 
 export namespace Resolved {
@@ -27,11 +18,11 @@ export namespace Resolved {
         readonly msgs: Message[] = [] 
         readonly enms: Enum[] = [] 
     }
-    
+
 
     export type FieldType = 
-    Classified<TypeKind.MESSAGE, Message> |
-    Classified<TypeKind.ENUM, Enum> |
+    Classified<TypeKind.MESSAGE, () => Message> |
+    Classified<TypeKind.ENUM, () => Enum> |
     Classified<TypeKind.PRIMITIVE, PrimitiveUnion> 
 
     export type Enum = Readonly<{
@@ -40,7 +31,7 @@ export namespace Resolved {
     
     export type Field = BaseField<FieldType>
 
-    export type Message = Readonly<BaseMsg<Field>>
+    export type Message = BaseMsg<Field>
 }
 
 export type BaseField<TYPE> = {
@@ -51,7 +42,7 @@ export type BaseField<TYPE> = {
 
 export type BaseMsg<FIELD_TYPE> = {
     readonly name: string
-    fields: FIELD_TYPE[]
+    readonly fields: FIELD_TYPE[]
 }
 
 
@@ -70,5 +61,5 @@ export namespace Unresolved {
     
     export type Field = BaseField<FieldType>
     
-    export type Message = Readonly<BaseMsg<Field>>
+    export type Message = BaseMsg<Field>
 }
