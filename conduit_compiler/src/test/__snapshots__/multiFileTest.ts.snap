@@ -1,5 +1,19 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`circular dependency 1`] = `
+"Not all files could be compiled due to circular dependency
+
+
+        All files: [
+  \\"conduit_a.cdt\\",
+  \\"conduit_b.cdt\\"
+]
+
+
+        Resolved: []
+        "
+`;
+
 exports[`dependency multi file 1`] = `
 Object {
   "conduit_a.proto": "
