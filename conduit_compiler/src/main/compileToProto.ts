@@ -2,7 +2,7 @@
 import { tagTokens } from "./parseStep1";
 import {parseEntities} from "./parseStep2"
 import { Resolved, Unresolved, TypeKind } from "./entities";
-import { resolve } from "./resolveDependencies";
+import { resolveDeps } from "./resolveDependencies";
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
     const collapsed: Record<string, Unresolved.FileEntities> = {}
@@ -12,10 +12,10 @@ export function compileFiles(files: Record<string, () => string>): Record<string
             collapsed[file] = entities 
         }
     }
-    const r = resolve(collapsed)
+    const r = resolveDeps(collapsed)
     for (const f in r) {
         r[f].msgs.forEach(m => {
-            console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
+            // console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
         })
     }
 
