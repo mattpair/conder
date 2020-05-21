@@ -117,7 +117,7 @@ class NeedsCompilation {
     }     
 }
 
-export function resolveDeps(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
+function buildNeedsCompileSet(files: Record<string, Unresolved.FileEntities>): Readonly<Record<string, NeedsCompilation>> {
     //Put all in need compile state
     const toResolve: Record<string, NeedsCompilation> = {}
     for (const file in files) {
@@ -129,7 +129,11 @@ export function resolveDeps(files: Record<string, Unresolved.FileEntities>): Rec
             toResolve[upstream].dependedOnBy.push(file)
         }) 
     }
+    return toResolve
+}
 
+export function resolveDeps(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
+    const toResolve = buildNeedsCompileSet(files)
     const resolved: Record<string, Resolved.FileEntities> = {}
 
     function tryResolve(file: string) {
