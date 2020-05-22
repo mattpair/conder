@@ -33,7 +33,7 @@ export function strToFileLocation(s: string): FileLocation {
                 pos += maybeSub.groups.val.length + 1
                 instrs.push({kind: DirKind.SUBDIR, val: maybeSub.groups.val})
             } else {
-                const maybeFile = /^(?<name>\w+)\.(?<type>[a-zA-Z]{2,4})$/.exec(front)
+                const maybeFile = /^(?<name>\w+)\.(?<type>(cdt))$/.exec(front)
                 if (maybeFile === null || maybeFile.groups === undefined) {
                     break
                 }
