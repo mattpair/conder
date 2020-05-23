@@ -3,35 +3,40 @@ import { tagTokens } from "./parseStep1";
 import {parseEntities} from "./parseStep2"
 import { Resolved, Unresolved, TypeKind } from "./entities";
 import { resolveDeps } from "./resolveDependencies";
+import { FileLocation } from "./util/filesystem";
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
-    const collapsed: Record<string, Unresolved.FileEntities> = {}
+    const conduits: Unresolved.ConduitFile[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
-            const entities = parseEntities(tagTokens(files[file]()))
-            collapsed[file] = entities 
+            const ents = parseEntities(tagTokens(files[file]()))
+            conduits.push({
+                loc: new FileLocation(file),
+                ents
+            })
         }
     }
-    const r = resolveDeps(collapsed)
-    for (const f in r) {
-        r[f].msgs.forEach(m => {
-            // console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
-        })
-    }
 
-    return toProto(collapsed)
+    const r = resolveDeps(conduits)
+    // for (const f in r) {
+    //     r[f].msgs.forEach(m => {
+    //         // console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
+    //     })
+    // }
+
+    return toProto(r)
 } 
 
-function toProto(files: Record<string, Unresolved.FileEntities>): Record<string, string> {
+function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
     const results = {}
-    for (const key in files) {
-        const m: Unresolved.FileEntities = files[key]
-        results[key.replace(".cdt", ".proto")] = `
-        ${m.enms.map(printEnum).join("\n\n")}
-        ${m.msgs.map(printMessage).join("\n\n")}
+    files.forEach(file => {
+        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
+        ${file.ents.enms.map(printEnum).join("\n\n")}
+        ${file.ents.msgs.map(printMessage).join("\n\n")}
         `
-    }
-    return results
+    })
+
+    return results       
 }
 
 function printEnum(e: Resolved.Enum): string {
@@ -47,7 +52,7 @@ function printMembers(m: string[]): string {
     return m.map((e, index) => `\t${e} = ${index + 1};`).join("\n")
 }
 
-function printMessage(m: Unresolved.Message): string {
+function printMessage(m: Resolved.Message): string {
     const fields = printFields(m.fields)
 
     return `
@@ -56,8 +61,8 @@ ${fields}
 }`
 }
 
-function printFields(fields: Unresolved.Field[]): string {
+function printFields(fields: Resolved.Field[]): string {
     return fields
-    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === TypeKind.PRIMITIVE ? f.fType.val : f.fType.val.type} ${f.name} = ${index + 1};`)
+    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === TypeKind.PRIMITIVE ? f.fType.val : f.fType.val().name} ${f.name} = ${index + 1};`)
     .join("\n")
 }

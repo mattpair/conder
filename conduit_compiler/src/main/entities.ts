@@ -1,3 +1,4 @@
+import { FileLocation } from './util/filesystem';
 import { PrimitiveUnion } from './lexicon';
 import { Classified } from './util/classifying';
 
@@ -32,6 +33,7 @@ export namespace Resolved {
     export type Field = BaseField<FieldType>
 
     export type Message = BaseMsg<Field>
+    export type ConduitFile = BaseConduitFile<FileEntities>
 }
 
 export type BaseField<TYPE> = {
@@ -45,6 +47,10 @@ export type BaseMsg<FIELD_TYPE> = {
     readonly fields: FIELD_TYPE[]
 }
 
+export type BaseConduitFile<ENTITY_TYPE> = {
+    readonly loc: FileLocation
+    readonly ents: ENTITY_TYPE
+}
 
 export namespace Unresolved {
 
@@ -54,7 +60,10 @@ export namespace Unresolved {
         readonly imports: Unresolved.Import[] = []
     }
     
-    export type Import = {location: string, alias: string}
+    export type ConduitFile = BaseConduitFile<FileEntities>
+        
+    
+    export type Import = { fromPresentDir: boolean, location: string, alias: string}
     export type CustomType = {from?: string, type: string}
     export type FieldType = Classified<TypeKind.PRIMITIVE, PrimitiveUnion> | Classified<TypeKind.DEFERRED, CustomType>
     

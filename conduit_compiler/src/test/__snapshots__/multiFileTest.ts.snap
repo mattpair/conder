@@ -33,6 +33,40 @@ message m2 {
 }
 `;
 
+exports[`dependency subdirs 1`] = `
+Object {
+  "conduit_a.proto": "
+        
+        
+message m1 {
+	required double d = 1;
+}
+        ",
+  "conduit_d.proto": "
+        
+        
+message D {
+	required m2 d = 1;
+}
+        ",
+  "sub/conduit_b.proto": "
+        
+        
+message m2 {
+	required m1 m = 1;
+}
+        ",
+  "sub/conduit_c.proto": "
+        
+        
+message m2 {
+	required m1 m1 = 1;
+	required m2 m2 = 2;
+}
+        ",
+}
+`;
+
 exports[`simple multi file 1`] = `
 Object {
   "conduit_a.proto": "
@@ -56,3 +90,5 @@ message m1 {
         ",
 }
 `;
+
+exports[`subdir isn't referenced in present dir 1`] = `"Cannot find imported file conduit_c.cdt from file conduit_b.cdt"`;

@@ -1,3 +1,4 @@
+import { FileLocation } from './util/filesystem';
 import { Resolved, Unresolved, TypeKind } from './entities';
 import { assertNever, Classified } from './util/classifying';
 
@@ -9,23 +10,23 @@ function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {
 }
 type PartialLookup = Record<string, Classified<TypeKind.ENUM, Resolved.Enum> | Classified<TypeKind.MESSAGE, Unresolved.Message>>
 
-function resolveFile(fileEntites: Unresolved.FileEntities, resolved: Record<string, Resolved.FileEntities>): Resolved.FileEntities {
+function resolveFile(toResolve: Unresolved.ConduitFile, externalResolved: Record<string, Resolved.FileEntities>): Resolved.FileEntities {
     const intralookup: PartialLookup = {}
-    const aliasToFile: Record<string, string> = {}
-    fileEntites.imports.forEach(i => {
-        assertNameNotYetInLookup({name: i.alias}, aliasToFile)
-        aliasToFile[i.alias] = i.location
+    const aliasToAbsFilename: Record<string, string> = {}
+    toResolve.ents.imports.forEach(i => {
+        assertNameNotYetInLookup({name: i.alias}, aliasToAbsFilename)
+        aliasToAbsFilename[i.alias] = i.fromPresentDir ? `${toResolve.loc.dir}${i.location}` : i.location
     })
 
 
-    fileEntites.msgs.forEach(m => {
+    toResolve.ents.msgs.forEach(m => {
         assertNameNotYetInLookup(m, intralookup)
-        assertNameNotYetInLookup(m, aliasToFile)
+        assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = {val: m, kind: TypeKind.MESSAGE}
     })
-    fileEntites.enms.forEach(m => {
+    toResolve.ents.enms.forEach(m => {
         assertNameNotYetInLookup(m, intralookup)
-        assertNameNotYetInLookup(m, aliasToFile)
+        assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = {val: m, kind: TypeKind.ENUM}
     })
     const resolvedLookup: Record<string, Classified<TypeKind.ENUM, Resolved.Enum> | Classified<TypeKind.MESSAGE, Resolved.Message>> = {}
@@ -52,13 +53,13 @@ function resolveFile(fileEntites: Unresolved.FileEntities, resolved: Record<stri
                         
                         case TypeKind.DEFERRED:
                             const entity = fieldType.val
-
                             if (entity.from) {
-                                const dependentFile = aliasToFile[entity.from]
+                                const dependentFile = aliasToAbsFilename[entity.from]
                                 if (!dependentFile) {
                                     throw new Error(`Unable to resolve alias ${entity.from} for type: ${entity.type} in message ${m.val.name}`)            
                                 }
-                                const targetFile =resolved[dependentFile]
+                                
+                                const targetFile = externalResolved[dependentFile]
 
                                 let maybeMsg = targetFile.msgs.find(msg => msg.name === entity.type)
                                 if (maybeMsg === undefined) {
@@ -75,9 +76,9 @@ function resolveFile(fileEntites: Unresolved.FileEntities, resolved: Record<stri
                             } else {
                                 if (!(entity.type in intralookup)) {
                                     throw new Error(`Unable to resolve field type: ${entity.type} in message ${m.val.name}`)            
-                                }
+                                }                                
                                 //@ts-ignore
-                                t =  {kind: intralookup[entity.type].kind , val: () => resolvedLookup[entity.type] }
+                                t =  {kind: intralookup[entity.type].kind , val: () => resolvedLookup[entity.type].val }
                             }
                             
 
@@ -87,7 +88,6 @@ function resolveFile(fileEntites: Unresolved.FileEntities, resolved: Record<stri
                         
                     }
                     return {...f, fType: t}
-                    
                 })
                 const rmsg = {name: m.val.name, fields: resolvedFields}
                 resolvedLookup[m.val.name] = {kind: TypeKind.MESSAGE, val: rmsg}
@@ -103,66 +103,79 @@ function resolveFile(fileEntites: Unresolved.FileEntities, resolved: Record<stri
     })
     return {
         msgs,
-        enms: fileEntites.enms,
+        enms: toResolve.ents.enms,
     }
 }
 
-class NeedsCompilation {
-    readonly dependencies: Unresolved.Import[]
+class FileNeedingCompilation<DATA> {
+    readonly absoluteDependencies: string[]
     readonly dependedOnBy: string[]
+    readonly location: FileLocation
+    readonly data: DATA
 
-    constructor(dependencies: Unresolved.Import[]) {
+    constructor(dependencies: Unresolved.Import[], location: FileLocation, data: DATA) {
         this.dependedOnBy = []
-        this.dependencies = dependencies
+        this.absoluteDependencies = dependencies.map(imp => imp.fromPresentDir ? `${location.dir}${imp.location}` : imp.location)
+        this.location = location
+        this.data = data
     }     
 }
 
-function buildNeedsCompileSet(files: Record<string, Unresolved.FileEntities>): Readonly<Record<string, NeedsCompilation>> {
-    //Put all in need compile state
-    const toResolve: Record<string, NeedsCompilation> = {}
-    for (const file in files) {
-        toResolve[file] = new NeedsCompilation(files[file].imports)
-    }
+type UnresolvedFileLookup = Readonly<Record<string, FileNeedingCompilation<Unresolved.ConduitFile>>>
 
-    for (const file in files) {
-        toResolve[file].dependencies.map(i => i.location).forEach(upstream => {
-            toResolve[upstream].dependedOnBy.push(file)
+function buildNeedsCompileSet(files: Unresolved.ConduitFile[]): UnresolvedFileLookup {
+    //Put all in need compile state
+    const toResolve: Record<string, FileNeedingCompilation<Unresolved.ConduitFile>> = {}
+    files.forEach(file => {
+        toResolve[file.loc.fullname] = new FileNeedingCompilation(file.ents.imports, file.loc, file)
+    })
+
+
+    files.forEach(file => {
+        toResolve[file.loc.fullname].absoluteDependencies.forEach(absDep => {
+            if (!(absDep in toResolve)) {
+                throw new Error(`Cannot find imported file ${absDep} from file ${file.loc.fullname}`)
+            }
+            toResolve[absDep].dependedOnBy.push(file.loc.fullname)
         }) 
-    }
+    })
     return toResolve
 }
 
-export function resolveDeps(files: Record<string, Unresolved.FileEntities>): Record<string, Resolved.FileEntities> {
-    const toResolve = buildNeedsCompileSet(files)
+export function resolveDeps(unresolved: Unresolved.ConduitFile[]): Resolved.ConduitFile[] {
+    const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
     const resolved: Record<string, Resolved.FileEntities> = {}
 
-    function tryResolve(file: string) {
-        const deps = toResolve[file].dependencies
+    function tryResolve(absFilename: string) {
+        const deps = toResolve[absFilename].absoluteDependencies
         
-
         for (let d = 0; d < deps.length; d++) {
             const dep = deps[d];
-            if (!(dep.location in resolved)) {
+            if (!(dep in resolved)) {
                 return
             }
         }
-        const r = resolveFile(files[file], resolved)
-        resolved[file] = r
-        toResolve[file].dependedOnBy.forEach(tryResolve)
+        const r = resolveFile(toResolve[absFilename].data, resolved)
+        resolved[absFilename] = r
+        toResolve[absFilename].dependedOnBy.forEach(tryResolve)
     }
 
     //Try compile all
-    const unresolvedKeys = Object.keys(files)
-    unresolvedKeys.forEach(tryResolve)
+    unresolved.forEach(file => tryResolve(file.loc.fullname))
 
     //All should be compiled
-    const resolvedKeys = Object.keys(resolved)
-    if (!unresolvedKeys.every(unr => resolvedKeys.includes(unr))) {
+    if (!unresolved.every(unr => unr.loc.fullname in resolved)) {
         throw new Error(`Not all files could be compiled due to circular dependency\n\n
-        All files: ${JSON.stringify(unresolvedKeys, null, 2)}\n\n
-        Resolved: ${JSON.stringify(resolvedKeys, null, 2)}
+        All files: ${JSON.stringify(unresolved.map(u => u.loc.fullname), null, 2)}\n\n
+        Resolved: ${JSON.stringify(Object.keys(resolved), null, 2)}
         `)
     }
-
-    return resolved
+    const ret: Resolved.ConduitFile[] = []
+    for (const file in resolved) {
+        ret.push({
+            loc: new FileLocation(file),
+            ents: resolved[file]
+        })
+    }
+    return ret
 }

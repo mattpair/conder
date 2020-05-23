@@ -149,7 +149,11 @@ function makeStateMatcher(): StateMatcher {
     transitions.from(SyntaxState.FILE_START)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
         .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
-        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import(s[1] as Unresolved.Import)])
+        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import({
+            fromPresentDir: s[1].presentDir !== undefined,
+            location: s[1].location,
+            alias: s[1].alias 
+        })])
             
     transitions.from(SyntaxState.ENUM_OPEN)
     .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, {kind: Meaning.ENUM_MEMBER, val: s[1].name} ])
@@ -158,6 +162,11 @@ function makeStateMatcher(): StateMatcher {
     transitions.from(SyntaxState.NEUTRAL_FILE_STATE)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
         .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
+        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import({
+            fromPresentDir: s[1].presentDir !== undefined,
+            location: s[1].location,
+            alias: s[1].alias 
+        })])
 
 
     transitions.from(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).whenMatching(Symbol.VARIABLE_NAME)
