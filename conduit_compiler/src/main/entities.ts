@@ -16,6 +16,7 @@ export enum TypeKind {
 export namespace Resolved {
 
     export class FileEntities {
+        readonly deps: string[] = []
         readonly msgs: Message[] = [] 
         readonly enms: Enum[] = [] 
     }

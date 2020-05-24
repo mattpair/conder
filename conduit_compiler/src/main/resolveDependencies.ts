@@ -104,6 +104,7 @@ function resolveFile(toResolve: Unresolved.ConduitFile, externalResolved: Record
     return {
         msgs,
         enms: toResolve.ents.enms,
+        deps: Object.values(aliasToAbsFilename)
     }
 }
 

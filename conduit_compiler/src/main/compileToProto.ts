@@ -31,6 +31,8 @@ function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
     const results = {}
     files.forEach(file => {
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
+        ${file.ents.deps.map(d => `import "${d.replace(".cdt", ".proto")}";`).join("\n")}
+
         ${file.ents.enms.map(printEnum).join("\n\n")}
         ${file.ents.msgs.map(printMessage).join("\n\n")}
         `

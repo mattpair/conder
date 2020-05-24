@@ -18,12 +18,16 @@ exports[`dependency multi file 1`] = `
 Object {
   "conduit_a.proto": "
         
+
+        
         
 message m1 {
 	required double d = 1;
 }
         ",
   "conduit_b.proto": "
+        import \\"conduit_a.proto\\";
+
         
         
 message m2 {
@@ -37,12 +41,16 @@ exports[`dependency subdirs 1`] = `
 Object {
   "conduit_a.proto": "
         
+
+        
         
 message m1 {
 	required double d = 1;
 }
         ",
   "conduit_d.proto": "
+        import \\"sub/conduit_c.proto\\";
+
         
         
 message D {
@@ -50,6 +58,8 @@ message D {
 }
         ",
   "sub/conduit_b.proto": "
+        import \\"conduit_a.proto\\";
+
         
         
 message m2 {
@@ -57,6 +67,9 @@ message m2 {
 }
         ",
   "sub/conduit_c.proto": "
+        import \\"conduit_a.proto\\";
+import \\"sub/conduit_b.proto\\";
+
         
         
 message m2 {
@@ -71,12 +84,16 @@ exports[`simple multi file 1`] = `
 Object {
   "conduit_a.proto": "
         
+
+        
         
 message m1 {
 	required double d = 1;
 }
         ",
   "conduit_b.proto": "
+        import \\"conduit_a.proto\\";
+
         
         
 message m2 {
