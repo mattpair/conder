@@ -18,7 +18,7 @@ const applicableSyntaxRules: ApplicableSyntaxRules = (state: SyntaxState, hit: S
         return router[hit[0]](hit)
     } 
     
-    throw new Error(`Cannot transition from state: ${SyntaxState[state]}\n\n ${JSON.stringify(hit)}`)
+    throw new Error(`Cannot transition from state: ${state}\n\n ${JSON.stringify(hit)}`)
 }
 
 type StringCursor = {offset: number, state: SyntaxState}

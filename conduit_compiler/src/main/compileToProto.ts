@@ -28,7 +28,7 @@ export function compileFiles(files: Record<string, () => string>): Record<string
 } 
 
 function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
-    const results = {}
+    const results: Record<string, string> = {}
     files.forEach(file => {
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
         ${file.ents.deps.map(d => `import "${d.replace(".cdt", ".proto")}";`).join("\n")}

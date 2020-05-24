@@ -102,7 +102,7 @@ export enum Dynamic {
 }
 
 const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
-    const r = {}
+    const r: Partial<Record<Symbol, RegExp>> = {}
     Operators.forEach(op => {
         r[op] =  new RegExp(`^(?<val>${op})`)
     });

@@ -1,7 +1,7 @@
 import {compileFiles} from "../main/compileToProto"
 
 
-function protoCompileTest(description, file: string) {
+function protoCompileTest(description: string, file: string) {
     test(description, () => {
         expect(compileFiles({"testFile.cdt": () => file})).toMatchSnapshot()
     })

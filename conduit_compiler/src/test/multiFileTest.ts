@@ -9,14 +9,14 @@ function makeLazy(files: Record<string, string>): Record<string, () => string> {
     return lazyFiles
 }
 
-function protoCompileTest(description, files: Record<string, string>) {
+function protoCompileTest(description: string, files: Record<string, string>) {
     test(description, () => {
 
         expect(compileFiles(makeLazy(files))).toMatchSnapshot()
     })
 } 
 
-function testFailsWhen(description, files: Record<string, string>) {
+function testFailsWhen(description: string, files: Record<string, string>) {
     test(description, () => {
         expect(() => compileFiles(makeLazy(files))).toThrowErrorMatchingSnapshot()
     })
