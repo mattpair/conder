@@ -3,7 +3,9 @@
   "version": "0.0.1",
   "description": "Universal typing",
   "scripts": {
-    "test": "jest",
+    "test:unit": "jest unit/",
+    "test:cli": "jest cli/",
+    "pretest:cli": "npm run compile",
     "compile": "tsc index.ts"
   },
   "author": "Jeremy",
