@@ -16,5 +16,13 @@
     "ts-jest": "^25.5.1",
     "typescript": "^3.9.3"
   },
-  "dependencies": {}
+  "dependencies": {},
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/test/**/*.[jt]s", 
+      "**/?(*.)+(spec|test).[tj]s"
+    ]
+  }
 }
