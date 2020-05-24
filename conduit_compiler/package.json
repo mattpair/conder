@@ -4,7 +4,7 @@
   "description": "Universal typing",
   "scripts": {
     "test": "jest",
-    "compile": "tsc index.ts"
+    "compile": "tsc --module commonjs index.ts"
   },
   "author": "Jeremy",
   "license": "ISC",
