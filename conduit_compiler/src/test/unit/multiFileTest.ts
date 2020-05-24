@@ -1,4 +1,4 @@
-import {compileFiles} from "../main/compileToProto"
+import {compileFiles} from "../../main/compileToProto"
 
 
 function makeLazy(files: Record<string, string>): Record<string, () => string> {
