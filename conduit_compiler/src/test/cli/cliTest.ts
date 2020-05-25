@@ -24,15 +24,25 @@ test("invoking compiler without dir fails", () => {
   `);
 });
 
-test("invoking compiler with empty conduit dir points out empty dir", () => {
-  child_process.execSync("mkdir conduit", { cwd: "src/test/cli/" });
-  const r = child_process.execSync("node ../../../index.js 2>&1", {
-    cwd: "src/test/cli/",
-    encoding: "utf-8",
-  });
-  expect(r).toMatchInlineSnapshot(`
-    "no files to compile
-    "
-  `);
-  child_process.execSync("rm -rf conduit", { cwd: "src/test/cli/" });
-});
+describe("empty dir test", () => {
+  beforeEach(() => {
+    child_process.execSync("mkdir conduit", { cwd: "src/test/cli/" });
+  })
+
+  afterEach(() => {
+    child_process.execSync("rm -rf conduit", { cwd: "src/test/cli/" });
+  })
+
+  it("points out empty dir", () => {
+    
+    const r = child_process.execSync("node ../../../index.js 2>&1", {
+      cwd: "src/test/cli/",
+      encoding: "utf-8",
+    });
+    expect(r).toMatchInlineSnapshot(`
+      "no files to compile
+      "
+    `);
+    
+  })  
+})
