@@ -2,7 +2,6 @@ import * as fs from 'fs';
 import {compileFiles} from "./compileToProto"
 
 function conduitToProto(conduits: string[]): Promise<void[]>  {
-    console.log("HERE", conduits)
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
     const protos = compileFiles(toCompile)
@@ -13,6 +12,9 @@ function conduitToProto(conduits: string[]): Promise<void[]>  {
         console.log(`writing ${proto}`)
         writes.push(fs.promises.writeFile(`.proto/${proto}`, protos[proto]))
     }
+    if (writes.length == 0) {
+        console.warn("Did not find any message types in conduit/")
+    }
 
     return Promise.all(writes)
 }
@@ -22,7 +24,7 @@ function main() {
     try {
         conduits = fs.readdirSync("./conduit/")
     } catch(e) {
-        console.error("Unable to find conduit files in conduit/")
+        console.error("Unable to find ./conduit/")
         return
     }
 

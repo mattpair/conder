@@ -1,5 +1,21 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`test dir: emptyConduitDir 
+protos: 
+	output: 1`] = `
+"Did not find any message types in conduit/
+done!
+"
+`;
+
+exports[`test dir: singleConduitType 
+protos: 
+	output: 1`] = `
+"writing test.proto
+done!
+"
+`;
+
 exports[`test dir: singleConduitType 
 protos: 
 	test.proto: 1`] = `
