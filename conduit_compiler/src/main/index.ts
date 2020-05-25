@@ -1,5 +1,3 @@
-/// <reference types="node" />
-
 import * as fs from 'fs';
 // import {compileFiles} from ""
 
@@ -9,8 +7,8 @@ try {
         console.warn("no files to compile")
     } else {
         console.log("HERE", conduits)
-        const toCompile = {}
-        conduits.forEach(c => toCompile[c] = fs.readFileSync(`./conduit/${c}`))
+        const toCompile: Record<string, () => string> = {}
+        conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
         fs.mkdirSync(".proto")
     }
 } catch(e) {

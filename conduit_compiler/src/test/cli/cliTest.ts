@@ -2,14 +2,14 @@ import * as child_process from "child_process";
 import * as fs from "fs";
 
 test("invoking compiler without dir fails", () => {
-  const r = child_process.execSync("node ../../../index.js 2>&1", {
+  const r = child_process.execSync("node ../../../dist/index.js 2>&1", {
     cwd: "src/test/cli/",
     encoding: "utf-8",
   });
   expect(r).toMatchInlineSnapshot(`
     "Unable to find conduit files in conduit/ Error: ENOENT: no such file or directory, scandir './conduit/'
         at Object.readdirSync (fs.js:872:3)
-        at Object.<anonymous> (/Users/jerm/MyCode/conduit/conduit_compiler/index.js:6:23)
+        at Object.<anonymous> (/Users/jerm/MyCode/conduit/conduit_compiler/dist/index.js:25:25)
         at Module._compile (internal/modules/cjs/loader.js:1133:30)
         at Object.Module._extensions..js (internal/modules/cjs/loader.js:1153:10)
         at Module.load (internal/modules/cjs/loader.js:977:32)
@@ -35,7 +35,7 @@ describe("empty dir test", () => {
   });
 
   it("points out empty dir", () => {
-    const r = child_process.execSync("node ../../../index.js 2>&1", {
+    const r = child_process.execSync("node ../../../dist/index.js 2>&1", {
       cwd: "src/test/cli/",
       encoding: "utf-8",
     });
@@ -61,14 +61,14 @@ describe("empty dir test", () => {
     `
     );
 
-    const out = child_process.execSync("node ../../../index.js", {
+    const out = child_process.execSync("node ../../../dist/index.js", {
       cwd: "src/test/cli/",
       encoding: "utf-8",
     });
-    console.log(out)
+    console.log(out);
 
     const protos = fs.readdirSync("src/test/cli/.proto");
 
-    expect(protos.length).toEqual("test.proto")
+    // expect(protos.length).toEqual(["test.proto"]);
   });
 });
