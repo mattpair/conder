@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`empty dir test can translate one file to proto 1`] = `
+"
+        
+
+        
+enum Animal {
+	Cat = 1;
+	Dog = 2;
+}
+    
+        
+message M1 {
+	required double d = 1;
+	required Animal a = 2;
+}
+        "
+`;

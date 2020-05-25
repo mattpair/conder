@@ -7,20 +7,7 @@ test("invoking compiler without dir fails", () => {
     encoding: "utf-8",
   });
   expect(r).toMatchInlineSnapshot(`
-    "Unable to find conduit files in conduit/ Error: ENOENT: no such file or directory, scandir './conduit/'
-        at Object.readdirSync (fs.js:872:3)
-        at Object.<anonymous> (/Users/jerm/MyCode/conduit/conduit_compiler/dist/index.js:25:25)
-        at Module._compile (internal/modules/cjs/loader.js:1133:30)
-        at Object.Module._extensions..js (internal/modules/cjs/loader.js:1153:10)
-        at Module.load (internal/modules/cjs/loader.js:977:32)
-        at Function.Module._load (internal/modules/cjs/loader.js:877:14)
-        at Function.executeUserEntryPoint [as runMain] (internal/modules/run_main.js:74:12)
-        at internal/main/run_main_module.js:18:47 {
-      errno: -2,
-      syscall: 'scandir',
-      code: 'ENOENT',
-      path: './conduit/'
-    }
+    "Unable to find conduit files in conduit/
     "
   `);
 });
@@ -54,7 +41,7 @@ describe("empty dir test", () => {
       Dog
     }
 
-    messsage M1 {
+    message M1 {
       double d
       Animal a
     }
@@ -69,6 +56,7 @@ describe("empty dir test", () => {
 
     const protos = fs.readdirSync("src/test/cli/.proto");
 
-    // expect(protos.length).toEqual(["test.proto"]);
+    expect(protos).toEqual(["test.proto"]);
+    protos.forEach(p => expect(fs.readFileSync(`src/test/cli/.proto/${p}`, {encoding: "utf-8"})).toMatchSnapshot())
   });
 });
