@@ -14,5 +14,7 @@
             "jest"
         ]
     },
-    "references": [{"path": "src/main/"}]
+    "references": [
+        {"path": "src/main/"}
+    ]
 }
