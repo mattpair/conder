@@ -13,9 +13,7 @@ test("invoking compiler without dir fails", () => {
 });
 
 describe("dir test", () => {
-  afterEach(() => {
-    
-  });
+  
 
   it("points out empty dir", () => {
     const r = child_process.execSync("node ../../../dist/index.js 2>&1", {
@@ -27,25 +25,33 @@ describe("dir test", () => {
       "
     `);
   });
+});
 
-  it("can translate one file to proto", () => {
+describe.each([
+  ["singleConduitType"]
+])("test dir: %s",(dirname: string) => {
+
+  const testDir = `src/test/cli/${dirname}`
+
+  afterEach(() => {
+    child_process.execSync("rm -rf .proto", { cwd: testDir });
+  });
+
+  it("\nprotos", () => {
     const out = child_process.execSync("node ../../../../dist/index.js", {
-      cwd: "src/test/cli/singleConduitType",
+      cwd: testDir,
       encoding: "utf-8",
     });
     console.log(out);
-
-    const protos = fs.readdirSync("src/test/cli/singleConduitType/.proto");
-
-    expect(protos).toEqual(["test.proto"]);
+  
+    const protos = fs.readdirSync(`${testDir}/.proto`);
+  
     protos.forEach((p) =>
       expect(
-        fs.readFileSync(`src/test/cli/singleConduitType/.proto/${p}`, {
+        fs.readFileSync(`${testDir}/.proto/${p}`, {
           encoding: "utf-8",
         })
-      ).toMatchSnapshot()
+      ).toMatchSnapshot(`\n\t${p}:`)
     );
-
-    child_process.execSync("rm -rf .proto", { cwd: "src/test/cli/singleConduitType" });
-  });
+  })
 });

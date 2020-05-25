@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`dir test can translate one file to proto 1`] = `
+exports[`test dir: singleConduitType 
+protos: 
+	test.proto: 1`] = `
 "
         
 
