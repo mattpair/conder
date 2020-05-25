@@ -1,4 +1,5 @@
 import * as child_process from "child_process";
+import * as fs from "fs";
 
 test("invoking compiler without dir fails", () => {
   const r = child_process.execSync("node ../../../index.js 2>&1", {
@@ -8,7 +9,7 @@ test("invoking compiler without dir fails", () => {
   expect(r).toMatchInlineSnapshot(`
     "Unable to find conduit files in conduit/ Error: ENOENT: no such file or directory, scandir './conduit/'
         at Object.readdirSync (fs.js:872:3)
-        at Object.<anonymous> (/Users/jerm/MyCode/conduit/conduit_compiler/index.js:6:18)
+        at Object.<anonymous> (/Users/jerm/MyCode/conduit/conduit_compiler/index.js:6:23)
         at Module._compile (internal/modules/cjs/loader.js:1133:30)
         at Object.Module._extensions..js (internal/modules/cjs/loader.js:1153:10)
         at Module.load (internal/modules/cjs/loader.js:977:32)
@@ -27,14 +28,13 @@ test("invoking compiler without dir fails", () => {
 describe("empty dir test", () => {
   beforeEach(() => {
     child_process.execSync("mkdir conduit", { cwd: "src/test/cli/" });
-  })
+  });
 
   afterEach(() => {
-    child_process.execSync("rm -rf conduit", { cwd: "src/test/cli/" });
-  })
+    child_process.execSync("rm -rf conduit .proto", { cwd: "src/test/cli/" });
+  });
 
   it("points out empty dir", () => {
-    
     const r = child_process.execSync("node ../../../index.js 2>&1", {
       cwd: "src/test/cli/",
       encoding: "utf-8",
@@ -43,6 +43,32 @@ describe("empty dir test", () => {
       "no files to compile
       "
     `);
-    
-  })  
-})
+  });
+
+  it("can translate one file to proto", () => {
+    fs.writeFileSync(
+      "src/test/cli/conduit/test.cdt",
+      `
+    enum Animal {
+      Cat
+      Dog
+    }
+
+    messsage M1 {
+      double d
+      Animal a
+    }
+    `
+    );
+
+    const out = child_process.execSync("node ../../../index.js", {
+      cwd: "src/test/cli/",
+      encoding: "utf-8",
+    });
+    console.log(out)
+
+    const protos = fs.readdirSync("src/test/cli/.proto");
+
+    expect(protos.length).toEqual("test.proto")
+  });
+});

@@ -4,7 +4,7 @@
   "description": "Universal typing",
   "scripts": {
     "test:unit": "jest unit/",
-    "test:cli": "jest cli/",
+    "test:cli": "jest cli/ --runInBand",
     "pretest:cli": "npm run compile",
     "compile": "tsc index.ts"
   },
