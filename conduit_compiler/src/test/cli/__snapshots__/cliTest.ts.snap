@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`empty dir test can translate one file to proto 1`] = `
+exports[`dir test can translate one file to proto 1`] = `
 "
         
 

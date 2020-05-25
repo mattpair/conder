@@ -12,13 +12,9 @@ test("invoking compiler without dir fails", () => {
   `);
 });
 
-describe("empty dir test", () => {
-  beforeEach(() => {
-    child_process.execSync("mkdir conduit", { cwd: "src/test/cli/" });
-  });
-
+describe("dir test", () => {
   afterEach(() => {
-    child_process.execSync("rm -rf conduit .proto", { cwd: "src/test/cli/" });
+    
   });
 
   it("points out empty dir", () => {
@@ -27,36 +23,29 @@ describe("empty dir test", () => {
       encoding: "utf-8",
     });
     expect(r).toMatchInlineSnapshot(`
-      "no files to compile
+      "Unable to find conduit files in conduit/
       "
     `);
   });
 
   it("can translate one file to proto", () => {
-    fs.writeFileSync(
-      "src/test/cli/conduit/test.cdt",
-      `
-    enum Animal {
-      Cat
-      Dog
-    }
-
-    message M1 {
-      double d
-      Animal a
-    }
-    `
-    );
-
-    const out = child_process.execSync("node ../../../dist/index.js", {
-      cwd: "src/test/cli/",
+    const out = child_process.execSync("node ../../../../dist/index.js", {
+      cwd: "src/test/cli/singleConduitType",
       encoding: "utf-8",
     });
     console.log(out);
 
-    const protos = fs.readdirSync("src/test/cli/.proto");
+    const protos = fs.readdirSync("src/test/cli/singleConduitType/.proto");
 
     expect(protos).toEqual(["test.proto"]);
-    protos.forEach(p => expect(fs.readFileSync(`src/test/cli/.proto/${p}`, {encoding: "utf-8"})).toMatchSnapshot())
+    protos.forEach((p) =>
+      expect(
+        fs.readFileSync(`src/test/cli/singleConduitType/.proto/${p}`, {
+          encoding: "utf-8",
+        })
+      ).toMatchSnapshot()
+    );
+
+    child_process.execSync("rm -rf .proto", { cwd: "src/test/cli/singleConduitType" });
   });
 });
