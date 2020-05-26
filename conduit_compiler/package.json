@@ -4,9 +4,11 @@
   "description": "Universal typing",
   "scripts": {
     "test:unit": "jest unit/",
-    "test:cli": "jest cli/ --runInBand",
-    "pretest:cli": "npm run compile",
-    "compile": "tsc -b src/main/"
+    "test:cli": "cp conduit src/test/cli/ && jest cli/ --runInBand",
+    "pretest:cli": "npm run pkg:mac",
+    "compile": "tsc -b src/main/",
+    "pkg:mac": "npm run compile && ./node_modules/pkg/lib-es5/bin.js dist/conduit.js --target macos"
+
   },
   "author": "Jeremy",
   "license": "ISC",
@@ -14,6 +16,7 @@
     "@types/jest": "^25.2.3",
     "@types/node": "^14.0.5",
     "jest": "^25.5.4",
+    "pkg": "^4.4.8",
     "prettier": "^2.0.5",
     "ts-jest": "^25.5.1",
     "typescript": "^3.9.3"
@@ -23,7 +26,7 @@
     "preset": "ts-jest",
     "testEnvironment": "node",
     "testMatch": [
-      "**/test/**/*.[jt]s", 
+      "**/test/**/*.[jt]s",
       "**/?(*.)+(spec|test).[tj]s"
     ]
   }
