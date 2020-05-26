@@ -12,10 +12,22 @@ test("invoking compiler without dir fails", () => {
   `);
 });
 
-describe.each([["singleConduitType"], ["emptyConduitDir", true]])(
+enum TestAttribute {
+  DOES_NOT_COMPILE_SUCCESSFULLY="Does not compile successfully"
+}
+
+const attributes: Map<string, TestAttribute[]> = new Map([
+  ["emptyConduitDir", [TestAttribute.DOES_NOT_COMPILE_SUCCESSFULLY]]
+])
+
+
+describe.each([["singleConduitType"], ["emptyConduitDir"]])(
   "test dir: %s",
-  (dirname: string, fails: boolean = false) => {
+  (dirname: string) => {
+
+    const testAttributes = attributes.get(dirname) ? attributes.get(dirname) : []
     const testDir = `src/test/cli/${dirname}`;
+    console.log(`Running with attributes: ${JSON.stringify(testAttributes)}`)
 
     afterEach(() => {
       child_process.execSync("rm -rf .proto", { cwd: testDir });
@@ -31,7 +43,7 @@ describe.each([["singleConduitType"], ["emptyConduitDir", true]])(
       );
       expect(out).toMatchSnapshot(`\n\toutput:`);
 
-      if (fails) {
+      if (testAttributes.includes(TestAttribute.DOES_NOT_COMPILE_SUCCESSFULLY)) {
         return;
       }
 
