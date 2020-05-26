@@ -21,9 +21,18 @@ const attributes: Map<string, TestAttribute[]> = new Map([
 ])
 
 
-describe.each([["singleConduitType"], ["emptyConduitDir"]])(
+const testDirs = fs.readdirSync("src/test/cli/", {withFileTypes: true})
+  .filter(d => d.isDirectory() && !/^(\.|__)/.test(d.name))
+
+
+const ONLY: string[] = []
+
+describe.each(testDirs.map(dir => dir.name))(
   "test dir: %s",
   (dirname: string) => {
+    if (ONLY.length > 0 && !(ONLY.includes(dirname))) {
+      return 
+    }
 
     const testAttributes = attributes.get(dirname) ? attributes.get(dirname) : []
     const testDir = `src/test/cli/${dirname}`;
