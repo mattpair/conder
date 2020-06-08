@@ -42,6 +42,21 @@ describe.each(testDirs.map(dir => dir.name))(
       child_process.execSync("rm -rf .proto python/models", { cwd: testDir });
     });
 
+    function snapshotDirTest(snapshottedDir: string) {
+      const fulldirname = `${testDir}/${snapshottedDir}`
+
+      const members = fs.readdirSync(fulldirname);
+
+      members.forEach(m =>
+        expect(
+          fs.readFileSync(`${fulldirname}/${m}`, {
+            encoding: "utf-8",
+          })
+        ).toMatchSnapshot(`\n\t${fulldirname}:\n\t\t${m}`)
+      );
+
+    }
+
     it("\nprotos", () => {
       const out = child_process.execSync(
         "../conduit 2>&1",
@@ -56,22 +71,7 @@ describe.each(testDirs.map(dir => dir.name))(
         return;
       }
 
-      const protos = fs.readdirSync(`${testDir}/.proto`);
-
-      protos.forEach((p) =>
-        expect(
-          fs.readFileSync(`${testDir}/.proto/${p}`, {
-            encoding: "utf-8",
-          })
-        ).toMatchSnapshot(`\n\t${p}:`)
-      );
-
-      const models = fs.readdirSync(`${testDir}/python/models`)
-      models.forEach(m => {
-        expect(
-          fs.readFileSync(`${testDir}/python/models/${m}`, {encoding: "utf-8"})
-        ).toMatchSnapshot(`\n\t${m}`)
-      }
-    );
+      snapshotDirTest(`.proto/`);
+      snapshotDirTest(`python/models`)
   })  
 });
