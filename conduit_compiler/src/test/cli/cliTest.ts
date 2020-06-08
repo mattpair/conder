@@ -39,7 +39,7 @@ describe.each(testDirs.map(dir => dir.name))(
     console.log(`Running with attributes: ${JSON.stringify(testAttributes)}`)
 
     afterEach(() => {
-      child_process.execSync("rm -rf .proto", { cwd: testDir });
+      child_process.execSync("rm -rf .proto python/models", { cwd: testDir });
     });
 
     it("\nprotos", () => {

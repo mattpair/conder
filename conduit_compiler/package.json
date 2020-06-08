@@ -29,8 +29,5 @@
       "**/test/**/*.[jt]s",
       "**/?(*.)+(spec|test).[tj]s"
     ]
-  },
-  "pkg": {
-    "assets": "src/main/deps/**"
   }
 }

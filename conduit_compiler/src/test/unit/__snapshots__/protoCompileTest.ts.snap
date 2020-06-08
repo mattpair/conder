@@ -3,6 +3,7 @@
 exports[`should allow enums 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -23,6 +24,7 @@ enum PurchaseCategory {
 exports[`should allow enums separated by whitespace 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -43,6 +45,7 @@ enum PurchaseCategory {
 exports[`should allow multiple enums separated by whitespace 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -71,6 +74,7 @@ enum OtherCategories {
 exports[`should allow new line to end field 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -99,6 +103,7 @@ message MyMessage {
 exports[`should allow one message to reference another 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -124,6 +129,7 @@ message m2 {
 exports[`should allow the specification of optional fields 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -152,6 +158,7 @@ message MyMessage {
 exports[`should convert multiple conduit into proto2 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         
@@ -184,6 +191,7 @@ message m2 {
 exports[`should convert simple conduit into proto2 1`] = `
 Object {
   "testFile.proto": "
+syntax=\\"proto2\\";
         
 
         

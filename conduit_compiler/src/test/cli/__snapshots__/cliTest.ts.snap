@@ -20,6 +20,7 @@ exports[`test dir: singleConduitType
 protos: 
 	test.proto: 1`] = `
 "
+syntax=\\"proto2\\";
         
 
         
