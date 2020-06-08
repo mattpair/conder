@@ -14,7 +14,6 @@ function conduitToProto(conduits: string[]): Promise<string[]>  {
     
     const writes: Promise<string>[] = []
     for (const proto in protos) {
-        console.log(`writing ${proto}`)
         writes.push(fs.promises.writeFile(`.proto/${proto}`, protos[proto]).then(r => proto))
     }
     if (writes.length == 0) {

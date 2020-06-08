@@ -65,6 +65,13 @@ describe.each(testDirs.map(dir => dir.name))(
           })
         ).toMatchSnapshot(`\n\t${p}:`)
       );
-    });
-  }
-);
+
+      const models = fs.readdirSync(`${testDir}/python/models`)
+      models.forEach(m => {
+        expect(
+          fs.readFileSync(`${testDir}/python/models/${m}`, {encoding: "utf-8"})
+        ).toMatchSnapshot(`\n\t${m}`)
+      }
+    );
+  })  
+});
