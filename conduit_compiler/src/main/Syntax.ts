@@ -1,5 +1,5 @@
-import { Classified, LazyClassification, StatelessClassification, ClassifiedClass } from './util/classifying';
-import { Symbol, PrimitiveUnion, Primitives } from './lexicon';
+import { Classified, LazyClassification, ClassifiedClass } from './util/classifying';
+import { Symbol, PrimitiveUnion, Primitives, Operators, Keywords } from './lexicon';
 import { Unresolved, Resolved } from './entities';
 
 export enum Meaning {
@@ -125,8 +125,37 @@ class TransitionBuilder {
     }
 }
 
-function makeStateMatcher(): StateMatcher {
+const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
+    const r: Partial<Record<Symbol, RegExp>> = {}
+    Operators.forEach(op => {
+        r[op] =  new RegExp(`^(?<val>${op})`)
+    });
 
+    Primitives.forEach(p => {
+        r[p] = new RegExp(`^(?<val>${p})\\s`)
+    })
+
+    Keywords.forEach(k => {
+        r[k] = new RegExp(`^(?<val>${k})\\s`)
+    })
+
+    r[Symbol.CLOSE_BRACKET] = /^(?<val>\s*}\s*)/
+    r[Symbol.NUMBER_LITERAL] = new RegExp(/^(?<val>\d+)/)
+    r[Symbol.VARIABLE_NAME] =  /^(?<val>[_A-Za-z]+[\w]*)/
+    r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
+    r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
+    r[Symbol.IMPORT_WITH_ALIAS] = /^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/
+    r[Symbol.ENUM_DECLARATION] = /^\s*enum +(?<name>[a-zA-Z]+) *{\s*/
+    r[Symbol.ENUM_MEMBER] = /^(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
+    r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
+    r[Symbol.MESSAGE_DECLARATION] = /^message +(?<name>[a-zA-Z_]\w*) *{/
+    
+    return r as Record<Symbol, RegExp>
+}
+
+export const SymbolToRegex: Record<Symbol, RegExp> = SymbolRegexesMaker()
+
+function makeStateMatcher(): StateMatcher {
 
     const transitions  = new TransitionBuilder()
 

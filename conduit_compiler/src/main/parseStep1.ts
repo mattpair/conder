@@ -1,5 +1,5 @@
-import { SymbolMatcher, SemanticTokenUnion, Meaning, SymbolMatch, SyntaxParser } from './Syntax';
-import { Primitives, Keywords, Symbol, Dynamic, SymbolToRegex } from './lexicon';
+import { SymbolMatcher, SemanticTokenUnion, Meaning, SymbolMatch, SyntaxParser,SymbolToRegex } from './Syntax';
+import { Primitives, Keywords, Symbol, Dynamic  } from './lexicon';
 
 
 /**
