@@ -77,20 +77,21 @@ class TransitionBuilder {
         [S in Symbol]?: MatchFunction
     }& {acceptedSymbols: Symbol[]}} = {}
 
-    fromState: SyntaxState
+    presentFromStates: SyntaxState[]
     symbols: Symbol[]
 
     causes(f: (s: SymbolMatch) => SyntaxTransition) {
         
         const r = this.symbols.reduce((prev: any, curr) => {
-            if (curr in this.stateToSymbolMap[this.fromState]) {
-                throw new Error(`Overwriting symbol rule ${this.fromState} ${curr}`)
+            if (this.presentFromStates.some(from => curr in this.stateToSymbolMap[from]) ) {
+                throw new Error(`Overwriting symbol rule ${this.presentFromStates} ${curr}`)
             }
             prev[curr] = f
             return prev
         }, {})
-
-        this.stateToSymbolMap[this.fromState] = {...this.stateToSymbolMap[this.fromState], ...r}
+        this.presentFromStates.forEach(from => {
+            this.stateToSymbolMap[from] = {...this.stateToSymbolMap[from], ...r}
+        })
         return this
     }
 
@@ -106,7 +107,10 @@ class TransitionBuilder {
 
     whenMatching(...symbols: Symbol[]) {
         this.symbols = symbols
-        this.stateToSymbolMap[this.fromState].acceptedSymbols.push(...symbols)
+        this.presentFromStates.forEach(from => {
+            this.stateToSymbolMap[from].acceptedSymbols.push(...symbols)
+        })
+        
         return this
     }
 
@@ -132,11 +136,18 @@ class TransitionBuilder {
         return this
     }
 
-    from(f: SyntaxState) {
-        this.fromState = f
-        this.stateToSymbolMap[f] = {
-            acceptedSymbols: []
-        }
+    from(...f: SyntaxState[]) {
+        this.presentFromStates = f
+        f.forEach(state => {
+            if (state in this.stateToSymbolMap) {
+                return
+            }
+
+            this.stateToSymbolMap[state] = {
+                acceptedSymbols: []
+            }
+        })
+        
         return this
     }
 }
@@ -146,7 +157,7 @@ function makeStateMatcher(): StateMatcher {
 
     const transitions  = new TransitionBuilder()
 
-    transitions.from(SyntaxState.FILE_START)
+    transitions.from(SyntaxState.FILE_START, SyntaxState.NEUTRAL_FILE_STATE)
         .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
         .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
         .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import({
@@ -158,16 +169,6 @@ function makeStateMatcher(): StateMatcher {
     transitions.from(SyntaxState.ENUM_OPEN)
     .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, {kind: Meaning.ENUM_MEMBER, val: s[1].name} ])
     .whenMatching(Symbol.CLOSE_BRACKET).to(SyntaxState.NEUTRAL_FILE_STATE)
-
-    transitions.from(SyntaxState.NEUTRAL_FILE_STATE)
-        .whenMatching(Symbol.message).to(SyntaxState.MESSAGE_STARTED_AWAITING_NAME)
-        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.ENUM_OPEN, new Enum(s[1].name)])
-        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => [SyntaxState.NEUTRAL_FILE_STATE, Import({
-            fromPresentDir: s[1].presentDir !== undefined,
-            location: s[1].location,
-            alias: s[1].alias 
-        })])
-
 
     transitions.from(SyntaxState.MESSAGE_STARTED_AWAITING_NAME).whenMatching(Symbol.VARIABLE_NAME)
         .causes((s: SymbolMatch) => [SyntaxState.MESSAGE_NAMED_AWAITING_OPENING, MessagedNamed(s[1].val)])
