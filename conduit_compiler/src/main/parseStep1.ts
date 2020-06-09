@@ -1,4 +1,4 @@
-import { SyntaxState, SymbolMatcher, SemanticTokenUnion, SyntaxTransition, SymbolMatch, SyntaxParser } from './Syntax';
+import { SymbolMatcher, SemanticTokenUnion, Meaning, SymbolMatch, SyntaxParser } from './Syntax';
 import { Primitives, Keywords, Symbol, Dynamic, SymbolToRegex } from './lexicon';
 
 
@@ -6,25 +6,25 @@ import { Primitives, Keywords, Symbol, Dynamic, SymbolToRegex } from './lexicon'
  * SYNTAX ANALYSIS
  */
 
-type ApplicableSyntaxRules = (state: SyntaxState, hit: SymbolMatch) => SyntaxTransition
+type ApplicableSyntaxRules = (last: Meaning, hit: SymbolMatch) => SemanticTokenUnion
 
-const applicableSyntaxRules: ApplicableSyntaxRules = (state: SyntaxState, hit: SymbolMatch) => {
-    const router = SyntaxParser[state]
+const applicableSyntaxRules: ApplicableSyntaxRules = (last: Meaning, hit: SymbolMatch) => {
+    const router = SyntaxParser[last]
     if (!router) {
-        throw `Cannot find a valid state transitioner for ${state}`
+        throw `Cannot find a valid state transitioner for ${last}`
     }
     
     if (router[hit[0]]) {
         return router[hit[0]](hit)
     } 
     
-    throw new Error(`Cannot transition from state: ${state}\n\n ${JSON.stringify(hit)}`)
+    throw new Error(`Cannot transition from previous meaning of ${last}\n\n ${JSON.stringify(hit)}`)
 }
 
-type StringCursor = {offset: number, state: SyntaxState}
+type StringCursor = {offset: number, state: Meaning}
 
 export function tagTokens(file: string): SemanticTokenUnion[] {
-    let currentCursor: StringCursor = {offset: 0, state: SyntaxState.FILE_START}
+    let currentCursor: StringCursor = {offset: 0, state: Meaning.START_OF_FILE}
     const tokes: SemanticTokenUnion[] = []
 
     while (currentCursor.offset < file.length) {
@@ -57,11 +57,9 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
         }
 
         
-        const s: SyntaxTransition = applicableSyntaxRules(currentCursor.state, hit)
-        currentCursor = {offset: currentCursor.offset + matchLength, state: s[0]}
-        if (s[1]) {
-            tokes.push(s[1])
-        }
+        const s: SemanticTokenUnion = applicableSyntaxRules(currentCursor.state, hit)
+        currentCursor = {offset: currentCursor.offset + matchLength, state: s.kind}
+        tokes.push(s)
     }
     return tokes
 }

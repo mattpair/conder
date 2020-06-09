@@ -1,15 +1,16 @@
-import { Classified, assertNever } from './util/classifying';
+import { assertNever } from './util/classifying';
 import { SemanticTokenUnion, Meaning } from './Syntax';
-import { Unresolved, Resolved, TypeKind } from './entities';
+import { Unresolved, TypeKind } from './entities';
 
+
+type LastTopLevelEntity = "enum" | "msg"
 
 export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities {
     const fileContext = new Unresolved.FileEntities()
-    let message: Partial<Unresolved.Message> = {fields: []}
-    // console.log(t)
-    
+    let lastEnt: LastTopLevelEntity | undefined = undefined
+    let message: Unresolved.Message
     let field: Partial<Unresolved.Field> = {isRequired: true}
-
+    
     for (let i = 0; i < t.length; ++i) {
         const semanticToken = t[i]
                 
@@ -26,15 +27,20 @@ export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities 
                 field = {...field, fType: {kind: TypeKind.PRIMITIVE, val: semanticToken.val}}
                 break
         
-            case Meaning.MESSAGE_NAME:
-                message = {...message, name: semanticToken.val}
+            case Meaning.MESSAGE_DECLARATION:
+                lastEnt = "msg"
+                message = {
+                    name: semanticToken.val,
+                    fields: []
+                }
+    
                 break
 
             case Meaning.FIELD_NAME: 
                 field = {...field, name: semanticToken.val}
                 break
             
-            case Meaning.FIELD_END: 
+            case Meaning.FIELD_END:
                 message.fields.push(field as Unresolved.Field)
                 field = {isRequired: true}
                 break
@@ -43,9 +49,13 @@ export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities 
                 field = {...field, isRequired: false}
                 break
 
-            case Meaning.MESSAGE_END: 
-                fileContext.msgs.push(message as Unresolved.Message)
-                message = {fields: []}
+            case Meaning.ENTITY_END: 
+                if (lastEnt === "msg") {
+                    fileContext.msgs.push(message as Unresolved.Message)
+                    message = undefined
+                }
+                // Enums are put onto the file context immediately.
+                
                 break
         
             case Meaning.ENUM_DECLARATION:

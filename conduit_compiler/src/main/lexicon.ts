@@ -31,7 +31,9 @@ export enum Symbol {
     as="as",
     IMPORT_WITH_ALIAS="Import with alias",
     ENUM_DECLARATION="Enum declaration",
-    ENUM_MEMBER="Enum member"
+    ENUM_MEMBER="Enum member",
+    FUCTION_DECLARATION="Function Declaration",
+    MESSAGE_DECLARATION="Message Declaration"
 }
 
 export const Operators: [
@@ -123,6 +125,8 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     r[Symbol.IMPORT_WITH_ALIAS] = /^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/
     r[Symbol.ENUM_DECLARATION] = /^\s*enum +(?<name>[a-zA-Z]+) *{\s*/
     r[Symbol.ENUM_MEMBER] = /^(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
+    r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
+    r[Symbol.MESSAGE_DECLARATION] = /^message +(?<name>[a-zA-Z_]\w*) *{/
     
     return r as Record<Symbol, RegExp>
 }
