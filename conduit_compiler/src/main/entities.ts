@@ -2,10 +2,6 @@ import { FileLocation } from './util/filesystem';
 import { PrimitiveUnion } from './lexicon';
 import { Classified } from './util/classifying';
 
-export type Named = {
-    readonly name: string
-}
-
 export enum TypeKind {
     MESSAGE="MESSAGE",
     ENUM="ENUM",
@@ -29,7 +25,8 @@ export namespace Resolved {
 
     export type Enum = Readonly<{
         members: string[]
-    } & Named>
+        name: string
+    }>
     
     export type Field = BaseField<FieldType>
 
