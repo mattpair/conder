@@ -131,11 +131,6 @@ class TransitionBuilder {
         return this
     }
 
-    canNameMessageField() {
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => [SyntaxState.FIELD_NAME_GIVEN, FieldNamed(s[1].val)])
-        return this
-    }
-
     from(...f: SyntaxState[]) {
         this.presentFromStates = f
         f.forEach(state => {
@@ -179,9 +174,8 @@ function makeStateMatcher(): StateMatcher {
 
     transitions.from(SyntaxState.OPTIONAL_STATED).canProvideFieldType()
 
-    transitions.from(SyntaxState.FIELD_PRIMITIVE_GIVEN).canNameMessageField()
-
-    transitions.from(SyntaxState.FIELD_CUSTOM_TYPE_GIVEN).canNameMessageField()
+    transitions.from(SyntaxState.FIELD_PRIMITIVE_GIVEN, SyntaxState.FIELD_CUSTOM_TYPE_GIVEN).whenMatching(Symbol.VARIABLE_NAME)
+    .causes((s: SymbolMatch) => [SyntaxState.FIELD_NAME_GIVEN, FieldNamed(s[1].val)])
 
     transitions.from(SyntaxState.FIELD_NAME_GIVEN).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(SyntaxState.NEUTRAL_MESSAGE_BODY, FieldEnded)
 
