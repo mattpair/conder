@@ -37,8 +37,6 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
                                 throw Error(`${maybeHit.kind} ${captureGroup} must not be equivalent to keyword`)
                             }
                         }
-                        
-
                     }
                     break
             }
