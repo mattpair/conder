@@ -45,6 +45,11 @@ export type BaseMsg<FIELD_TYPE> = {
     readonly fields: FIELD_TYPE[]
 }
 
+type BaseFunction<STEP_TYPE> = {
+    readonly name: string
+    readonly steps: STEP_TYPE[]
+}
+
 export type BaseConduitFile<ENTITY_TYPE> = {
     readonly loc: FileLocation
     readonly ents: ENTITY_TYPE
@@ -56,6 +61,7 @@ export namespace Unresolved {
         readonly msgs: Unresolved.Message[] = [] 
         readonly enms: Resolved.Enum[] = [] 
         readonly imports: Unresolved.Import[] = []
+        readonly funcs: Unresolved.Function[] = []
     }
     
     export type ConduitFile = BaseConduitFile<FileEntities>
@@ -69,4 +75,6 @@ export namespace Unresolved {
     export type Field = BaseField<FieldType>
     
     export type Message = BaseMsg<Field>
+
+    export type Function = BaseFunction<string>
 }

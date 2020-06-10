@@ -69,7 +69,10 @@ export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities 
                 fileContext.imports.push(semanticToken.val)
                 break
             
+            case Meaning.FUNCTION_DECLARATION:
+                fileContext.funcs.push({name: semanticToken.val, steps: []})
 
+                break
             default: return assertNever(semanticToken)
         }   
     }

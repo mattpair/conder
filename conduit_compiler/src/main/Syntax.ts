@@ -14,13 +14,13 @@ export enum Meaning {
     ENUM_DECLARATION="Enum declaration",
     IMPORT="IMPORT",
     ENUM_MEMBER="Enum member",
-    // FUNCTION_NAME="FUNCTION_NAME"
+    FUNCTION_DECLARATION="Function declaration"
 }
 
 const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
 const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
 const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_DECLARATION)
-// const FunctionNamed = LazyClassification<string>(Meaning.FUNCTION_NAME)
+const FunctionNamed = LazyClassification<string>(Meaning.FUNCTION_DECLARATION)
 class Enum extends ClassifiedClass<Meaning.ENUM_DECLARATION, Resolved.Enum> {
     constructor(name: string) {
         super(Meaning.ENUM_DECLARATION, {members: [], name})
@@ -40,7 +40,7 @@ export type SemanticTokenUnion =
 | Classified<Meaning.MESSAGE_DECLARATION, string>
 | Classified<Meaning.FIELD_OPTIONAL>
 | Classified<Meaning.FIELD_TYPE_CUSTOM, Unresolved.CustomType>
-// | Classified<Meaning.FUNCTION_NAME, string>
+| Classified<Meaning.FUNCTION_DECLARATION, string>
 
 type RegexCaptureType = {[key: string]: string}
 
@@ -135,7 +135,6 @@ Operators.forEach(op => {
     regexSymbolPartial[p] = new RegExp(`^${p}\\s`)
 })
 
-    // r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
     
 export const SymbolToRegex: Record<Symbol, RegExp> = regexSymbolPartial as Record<Symbol, RegExp>
 export const AnyReservedWord: RegExp = new RegExp(`^(${[...Keywords, ...Primitives].map(s => SymbolToRegex[s].source.slice(1).replace("\\s", "")).join("|")})$`)
@@ -156,13 +155,13 @@ function makeStateMatcher(): SyntaxLookup {
             location: s.location,
             alias: s.name 
         }))
-        // .whenMatching(Symbol.FUCTION_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.FUNCTION_NAMED, FunctionNamed(s[1].name)]) 
+        .matches(/^function +(?<name>[a-zA-Z_]\w*)\(\)\s*{/, (s) => FunctionNamed(s.name))
     
-            
+        
     transitions.from(Meaning.ENUM_DECLARATION, Meaning.ENUM_MEMBER)
     .matches(/^\s*(?<name>[a-zA-Z]+)(,|[\s]+)\s*/, (s) => ({kind: Meaning.ENUM_MEMBER, val: s.name}))
     
-    transitions.from(Meaning.ENUM_MEMBER)
+    transitions.from(Meaning.ENUM_MEMBER, Meaning.FIELD_END, Meaning.FUNCTION_DECLARATION)
     .symbolsMean(Meaning.ENTITY_END, Symbol.CLOSE_BRACKET)
 
     transitions.from(Meaning.MESSAGE_DECLARATION).canStartField()
@@ -176,7 +175,6 @@ function makeStateMatcher(): SyntaxLookup {
 
     transitions.from(Meaning.FIELD_END)
         .canStartField()
-        .symbolsMean(Meaning.ENTITY_END, Symbol.CLOSE_BRACKET)
 
     // console.log(transitions.stateToSymbolMap)
     return transitions.LastMeaningToNextSymbolMap

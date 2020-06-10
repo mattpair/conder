@@ -18,18 +18,13 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     }
 
     const r = resolveDeps(conduits)
-    // for (const f in r) {
-    //     r[f].msgs.forEach(m => {
-    //         // console.log(m.name, m.fields.map(field => field.fType.kind !== TypeKind.PRIMITIVE ? field.fType.val() : ""))
-    //     })
-    // }
 
     return toProto(r)
 } 
 
 function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
     const results: Record<string, string> = {}
-    files.forEach(file => {
+    files.filter(f => f.ents.msgs.length > 0 || f.ents.enms.length > 0).forEach(file => {
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
 syntax="proto2";
         ${file.ents.deps.map(d => `import "${d.replace(".cdt", ".proto")}";`).join("\n")}
