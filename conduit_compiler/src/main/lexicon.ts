@@ -25,7 +25,7 @@ export enum Symbol {
     NEW_LINE="\\n",
     import="import",
     as="as",
-    FUCTION_DECLARATION="Function Declaration",
+    function="function"
 }
 
 export const Operators: [
@@ -82,10 +82,12 @@ export const Primitives: PrimitiveUnion[] = [
 export type AnyKeyword = 
 Symbol.message |
 Symbol.optional | 
-Symbol.enum 
+Symbol.enum |
+Symbol.function
 
 export const Keywords: AnyKeyword[] = [
     Symbol.message,
     Symbol.optional,
     Symbol.enum,
+    Symbol.function
 ]

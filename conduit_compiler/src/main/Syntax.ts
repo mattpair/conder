@@ -129,19 +129,14 @@ class TransitionBuilder {
 const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     const r: Partial<Record<Symbol, RegExp>> = {}
     Operators.forEach(op => {
-        r[op] =  new RegExp(`^(?<val>${op})`)
+        r[op] =  new RegExp(`^${op}`)
     });
 
-    Primitives.forEach(p => {
-        r[p] = new RegExp(`^(?<val>${p})\\s`)
+    [...Keywords, ...Primitives].forEach(p => {
+        r[p] = new RegExp(`^${p}\\s`)
     })
 
-    Keywords.forEach(k => {
-        r[k] = new RegExp(`^(?<val>${k})\\s`)
-    })
-
-    r[Symbol.CLOSE_BRACKET] = /^(?<val>\s*}\s*)/
-    r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
+    // r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
     
     return r as Record<Symbol, RegExp>
 }
