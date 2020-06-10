@@ -42,69 +42,72 @@ export type SemanticTokenUnion =
 | Classified<Meaning.FIELD_TYPE_CUSTOM, Unresolved.CustomType>
 // | Classified<Meaning.FUNCTION_NAME, string>
 
-export type SymbolMatch = [Symbol, {[key: string]: string}]
+type RegexCaptureType = {[key: string]: string}
 
+export type SemanticTokenMaker = Classified<"symbol", SemanticTokenUnion> 
+| Classified<"regex", (s: RegexCaptureType) => SemanticTokenUnion>
 
-type MatchFunction = (s: SymbolMatch) => SemanticTokenUnion
-
-export type SymbolMatcher = {
-    readonly [S in Symbol]?: MatchFunction
-} & {
-    acceptedSymbols: Symbol[]
-}
-
-export type StateMatcher =  {
-    readonly [S in Meaning]?: SymbolMatcher
-}
+type SyntaxLookup = Map<Meaning, {regex: RegExp, make: SemanticTokenMaker}[]>
 
 class TransitionBuilder {
-    readonly LastMeaningToNextSymbolMap: {[S in Meaning]?: {
-        [S in Symbol]?: MatchFunction
-    }& {acceptedSymbols: Symbol[]}} = {}
+    readonly LastMeaningToNextSymbolMap: SyntaxLookup = new Map()
 
     presentFromMeanings: Meaning[]
     symbols: Symbol[]
 
-    causes(f: (s: SymbolMatch) => SemanticTokenUnion) {
-        
-        const r = this.symbols.reduce((prev: any, curr) => {
-            if (this.presentFromMeanings.some(from => curr in this.LastMeaningToNextSymbolMap[from]) ) {
-                throw new Error(`Overwriting symbol rule ${this.presentFromMeanings} ${curr}`)
-            }
-            prev[curr] = f
-            return prev
-        }, {})
+    matchesSymbols(maker: (s: Symbol) => SemanticTokenUnion, ...symbols: Symbol[]) {
+
         this.presentFromMeanings.forEach(from => {
-            this.LastMeaningToNextSymbolMap[from] = {...this.LastMeaningToNextSymbolMap[from], ...r}
+            this.LastMeaningToNextSymbolMap.get(from).push(...symbols.map(sym => {
+
+                const make: SemanticTokenMaker = {
+                    kind: "symbol",
+                    val: maker(sym)
+                }
+                return {
+                    regex: SymbolToRegex[sym],
+                    make
+                }
+            }))
         })
+        
         return this
     }
 
-    indicates(meaning: Meaning) {
-        this.causes((a: any) => ({kind: meaning, val: undefined} as SemanticTokenUnion))
+    symbolsMean(m: Meaning, ...s: Symbol[]) {
+        const val =  () => {
+            return {
+                kind: m
+            } as SemanticTokenUnion
+        }
+        this.matchesSymbols(val, ...s)
         return this
     }
 
-    whenMatching(...symbols: Symbol[]) {
-        this.symbols = symbols
+    matches(regex: RegExp, val: (s: {[key: string]: string}) => SemanticTokenUnion) {
         this.presentFromMeanings.forEach(from => {
-            this.LastMeaningToNextSymbolMap[from].acceptedSymbols.push(...symbols)
+            this.LastMeaningToNextSymbolMap.get(from).push({
+                regex,
+                make: {
+                    kind: "regex",
+                    val
+                }
+            })
         })
-        
         return this
     }
 
     // common phrases
     canStartField() {
-        this.whenMatching(Symbol.optional).indicates(Meaning.FIELD_OPTIONAL)
+        this.symbolsMean(Meaning.FIELD_OPTIONAL, Symbol.optional)
         this.canProvideFieldType()
         return this
     }
 
     canProvideFieldType() {
-        this.whenMatching(...Primitives).causes((s: SymbolMatch) => FieldTyped(s[0] as PrimitiveUnion))
-        this.whenMatching(Symbol.VARIABLE_MEMBER_ACCESS).causes((s: SymbolMatch) => FieldTypedCustom(s[1] as Unresolved.CustomType))
-        this.whenMatching(Symbol.VARIABLE_NAME).causes((s: SymbolMatch) => FieldTypedCustom({type: s[1].val}))
+        this.matchesSymbols((s: Symbol) => FieldTyped(s as PrimitiveUnion), ...Primitives)
+        this.matches(/^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*)/,
+        (s: RegexCaptureType) => FieldTypedCustom({type: s.type, from: s.from}))
         
         return this
     }
@@ -112,13 +115,11 @@ class TransitionBuilder {
     from(...f: Meaning[]) {
         this.presentFromMeanings = f
         f.forEach(state => {
-            if (state in this.LastMeaningToNextSymbolMap) {
+            if (this.LastMeaningToNextSymbolMap.has(state)) {
                 return
             }
 
-            this.LastMeaningToNextSymbolMap[state] = {
-                acceptedSymbols: []
-            }
+            this.LastMeaningToNextSymbolMap.set(state, [])
         })
         
         return this
@@ -140,60 +141,54 @@ const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
     })
 
     r[Symbol.CLOSE_BRACKET] = /^(?<val>\s*}\s*)/
-    r[Symbol.NUMBER_LITERAL] = new RegExp(/^(?<val>\d+)/)
-    r[Symbol.VARIABLE_NAME] =  /^(?<val>[_A-Za-z]+[\w]*)/
-    r[Symbol.STRING_LITERAL] = /^'(?<val>.*)'/
-    r[Symbol.VARIABLE_MEMBER_ACCESS] = /^(?<from>[_A-Za-z]+[\w]*)\.(?<type>[_A-Za-z]+[\w]*)/
-    r[Symbol.IMPORT_WITH_ALIAS] = /^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/
-    r[Symbol.ENUM_DECLARATION] = /^\s*enum +(?<name>[a-zA-Z]+) *{\s*/
-    r[Symbol.ENUM_MEMBER] = /^(?<name>[a-zA-Z]+)(,|[\s]+)\s*/
     r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
-    r[Symbol.MESSAGE_DECLARATION] = /^message +(?<name>[a-zA-Z_]\w*) *{/
     
     return r as Record<Symbol, RegExp>
 }
 
 export const SymbolToRegex: Record<Symbol, RegExp> = SymbolRegexesMaker()
 
-function makeStateMatcher(): StateMatcher {
+function makeStateMatcher(): SyntaxLookup {
 
     const transitions  = new TransitionBuilder()
 
+    const VariableName = /^(?<name>[_A-Za-z]+[\w]*)/
+
     transitions.from(Meaning.START_OF_FILE, Meaning.ENTITY_END, Meaning.IMPORT)
-        .whenMatching(Symbol.MESSAGE_DECLARATION).causes((s: SymbolMatch) => MessagedNamed(s[1].name))
-        .whenMatching(Symbol.ENUM_DECLARATION).causes((s: SymbolMatch) => new Enum(s[1].name))
-        // .whenMatching(Symbol.FUCTION_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.FUNCTION_NAMED, FunctionNamed(s[1].name)]) 
-        .whenMatching(Symbol.IMPORT_WITH_ALIAS).causes((s: SymbolMatch) => Import({
-            fromPresentDir: s[1].presentDir !== undefined,
-            location: s[1].location,
-            alias: s[1].alias 
+        .matches(/^message +(?<name>[a-zA-Z_]\w*) *{/, (s) => MessagedNamed(s.name))
+        .matches(/^enum +(?<name>[a-zA-Z]+) *{\s*/, (s) => new Enum(s.name))
+        .matches(/^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/, (s) => Import({
+            fromPresentDir: s.presentDir !== undefined,
+            location: s.location,
+            alias: s.alias 
         }))
+        // .whenMatching(Symbol.FUCTION_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.FUNCTION_NAMED, FunctionNamed(s[1].name)]) 
+    
             
-    transitions.from(Meaning.ENUM_DECLARATION)
-    .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => ({kind: Meaning.ENUM_MEMBER, val: s[1].name}))
+    transitions.from(Meaning.ENUM_DECLARATION, Meaning.ENUM_MEMBER)
+    .matches(/^\s*(?<name>[a-zA-Z]+)(,|[\s]+)\s*/, (s) => ({kind: Meaning.ENUM_MEMBER, val: s.name}))
     
     transitions.from(Meaning.ENUM_MEMBER)
-    .whenMatching(Symbol.ENUM_MEMBER).causes((s: SymbolMatch) => ({kind: Meaning.ENUM_MEMBER, val: s[1].name}))
-    .whenMatching(Symbol.CLOSE_BRACKET).indicates(Meaning.ENTITY_END)
+    .symbolsMean(Meaning.ENTITY_END, Symbol.CLOSE_BRACKET)
 
     transitions.from(Meaning.MESSAGE_DECLARATION).canStartField()
 
     transitions.from(Meaning.FIELD_OPTIONAL).canProvideFieldType()
 
-    transitions.from(Meaning.FIELD_TYPE_PRIMITIVE, Meaning.FIELD_TYPE_CUSTOM).whenMatching(Symbol.VARIABLE_NAME)
-    .causes((s: SymbolMatch) => FieldNamed(s[1].val))
+    transitions.from(Meaning.FIELD_TYPE_PRIMITIVE, Meaning.FIELD_TYPE_CUSTOM)
+    .matches(VariableName, (s) => FieldNamed(s.name))
 
-    transitions.from(Meaning.FIELD_NAME).whenMatching(Symbol.COMMA, Symbol.NEW_LINE).indicates(Meaning.FIELD_END)
+    transitions.from(Meaning.FIELD_NAME).symbolsMean(Meaning.FIELD_END, Symbol.COMMA, Symbol.NEW_LINE)
 
     transitions.from(Meaning.FIELD_END)
         .canStartField()
-        .whenMatching(Symbol.CLOSE_BRACKET).indicates(Meaning.ENTITY_END)
+        .symbolsMean(Meaning.ENTITY_END, Symbol.CLOSE_BRACKET)
 
     // console.log(transitions.stateToSymbolMap)
     return transitions.LastMeaningToNextSymbolMap
 }
 
 
-export const SyntaxParser: StateMatcher = makeStateMatcher()
+export const SyntaxParser: SyntaxLookup = makeStateMatcher()
 
 

@@ -24,16 +24,8 @@ export enum Symbol {
     bytes="bytes",
     NEW_LINE="\\n",
     import="import",
-    VARIABLE_NAME="VariableName",
-    NUMBER_LITERAL="NumberLiteral",
-    STRING_LITERAL="StringLiteral",
-    VARIABLE_MEMBER_ACCESS="VarMemberAccess",
     as="as",
-    IMPORT_WITH_ALIAS="Import with alias",
-    ENUM_DECLARATION="Enum declaration",
-    ENUM_MEMBER="Enum member",
     FUCTION_DECLARATION="Function Declaration",
-    MESSAGE_DECLARATION="Message Declaration"
 }
 
 export const Operators: [
@@ -97,8 +89,3 @@ export const Keywords: AnyKeyword[] = [
     Symbol.optional,
     Symbol.enum,
 ]
-
-export enum Dynamic {
-    Variable,
-    Number
-}

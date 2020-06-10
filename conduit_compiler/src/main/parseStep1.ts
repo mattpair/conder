@@ -1,25 +1,5 @@
-import { SymbolMatcher, SemanticTokenUnion, Meaning, SymbolMatch, SyntaxParser,SymbolToRegex } from './Syntax';
-import { Primitives, Keywords, Symbol, Dynamic  } from './lexicon';
+import { SemanticTokenUnion, Meaning, SyntaxParser } from './Syntax';
 
-
-/**
- * SYNTAX ANALYSIS
- */
-
-type ApplicableSyntaxRules = (last: Meaning, hit: SymbolMatch) => SemanticTokenUnion
-
-const applicableSyntaxRules: ApplicableSyntaxRules = (last: Meaning, hit: SymbolMatch) => {
-    const router = SyntaxParser[last]
-    if (!router) {
-        throw `Cannot find a valid state transitioner for ${last}`
-    }
-    
-    if (router[hit[0]]) {
-        return router[hit[0]](hit)
-    } 
-    
-    throw new Error(`Cannot transition from previous meaning of ${last}\n\n ${JSON.stringify(hit)}`)
-}
 
 type StringCursor = {offset: number, state: Meaning}
 
@@ -28,26 +8,38 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
     const tokes: SemanticTokenUnion[] = []
 
     while (currentCursor.offset < file.length) {
-        let maybeHit: RegExpExecArray | null = null
-        let matchLength: number = 0
-        let hit: SymbolMatch | undefined = undefined
-        const acceptedSymbols = SyntaxParser[currentCursor.state].acceptedSymbols
+        let maybeHit: SemanticTokenUnion | null = null
 
+        const potentialMatchers = SyntaxParser.get(currentCursor.state)
+        const head = file.slice(currentCursor.offset)
+        let found = false
 
-        for (let r = 0; r < acceptedSymbols.length; ++r) {
-            const consideredSymbol: Symbol = acceptedSymbols[r]
-            
-            const regex: RegExp = SymbolToRegex[consideredSymbol]
-            maybeHit = regex.exec(file.slice(currentCursor.offset))
-            if (maybeHit !== null && maybeHit.groups) {
-                matchLength = maybeHit[0].length
-                hit = [consideredSymbol, maybeHit.groups]
+        for (let r = 0; r < potentialMatchers.length; ++r) {
+            const m = potentialMatchers[r]
+            let match: RegExpExecArray | null 
+            switch (m.make.kind) {
+                case "symbol":
+                    match = m.regex.exec(head)
+                    if(match !== null && match.length > 0) {
+                        maybeHit = m.make.val
+                    }
+                    break
+                case "regex":
+                    match = m.regex.exec(head)
+                    if (match !== null && match.groups) {
+                        maybeHit = m.make.val(match.groups)
+                    }
+                    break
+            }
+            if (maybeHit !== null) {
+                found = true
+                currentCursor = {offset: currentCursor.offset + match[0].length, state: maybeHit.kind}
+                tokes.push(maybeHit)
                 break
             }
         }
-
-        if (hit === undefined) {
-            if (/\s/.test(file.substr(currentCursor.offset, 1))) {
+        if (!found) {
+            if (/^\s/.test(head)) {
                 currentCursor.offset +=  1
                 continue
             }
@@ -55,11 +47,6 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
              ${file.slice(currentCursor.offset, currentCursor.offset + 10)}
              `)
         }
-
-        
-        const s: SemanticTokenUnion = applicableSyntaxRules(currentCursor.state, hit)
-        currentCursor = {offset: currentCursor.offset + matchLength, state: s.kind}
-        tokes.push(s)
     }
     return tokes
 }
