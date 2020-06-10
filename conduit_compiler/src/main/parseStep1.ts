@@ -1,4 +1,4 @@
-import { SemanticTokenUnion, Meaning, SyntaxParser, AnyReservedWord } from './Syntax';
+import { SemanticTokenUnion, Meaning, SyntaxParser, AnyReservedWord, KeywordProtectionExemptedCaptureGroups } from './Syntax';
 
 
 type StringCursor = {offset: number, state: Meaning}
@@ -27,12 +27,18 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
                 case "regex":
                     match = m.regex.exec(head)
                     if (match !== null && match.groups) {
+                        for (const captureGroup in match.groups) {
+                            if (KeywordProtectionExemptedCaptureGroups.has(captureGroup)) {
+                                continue
+                            }
+                            maybeHit = m.make.val(match.groups)
 
-                        if (match.groups.name && AnyReservedWord.test(match.groups.name)) {
-                            throw Error(`Name must not be equivalent to reserved symbol: ${match.groups.name}`)
+                            if (AnyReservedWord.test(match.groups[captureGroup])) {
+                                throw Error(`${maybeHit.kind} ${captureGroup} must not be equivalent to keyword`)
+                            }
                         }
+                        
 
-                        maybeHit = m.make.val(match.groups)
                     }
                     break
             }

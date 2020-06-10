@@ -2,4 +2,4 @@
 
 exports[`dependent message is not in scope  1`] = `"Unable to resolve field type: M2 in message m1"`;
 
-exports[`naming an entity after a keyword  1`] = `"Name must not be equivalent to reserved symbol: function"`;
+exports[`naming an entity after a keyword  1`] = `"Message declaration name must not be equivalent to keyword"`;

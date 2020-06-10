@@ -4,14 +4,14 @@ import { Unresolved, Resolved } from './entities';
 
 export enum Meaning {
     START_OF_FILE="Start of File",
-    MESSAGE_DECLARATION="MESSAGE_NAME",
+    MESSAGE_DECLARATION="Message declaration",
     ENTITY_END="ENTITY_END",
     FIELD_OPTIONAL="FIELD_OPTIONAL",
     FIELD_TYPE_PRIMITIVE="FIELD_TYPE_PRIMITIVE",
     FIELD_TYPE_CUSTOM="FIELD_TYPE_CUSTOM",
     FIELD_NAME="FIELD_NAME",
     FIELD_END="FIELD_END",
-    ENUM_DECLARATION="ENUM",
+    ENUM_DECLARATION="Enum declaration",
     IMPORT="IMPORT",
     ENUM_MEMBER="Enum member",
     // FUNCTION_NAME="FUNCTION_NAME"
@@ -139,6 +139,8 @@ Operators.forEach(op => {
     
 export const SymbolToRegex: Record<Symbol, RegExp> = regexSymbolPartial as Record<Symbol, RegExp>
 export const AnyReservedWord: RegExp = new RegExp(`^(${[...Keywords, ...Primitives].map(s => SymbolToRegex[s].source.slice(1).replace("\\s", "")).join("|")})$`)
+
+export const KeywordProtectionExemptedCaptureGroups = new Set(["presentDir", "location"])
 
 function makeStateMatcher(): SyntaxLookup {
 
