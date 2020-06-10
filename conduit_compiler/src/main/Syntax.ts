@@ -126,22 +126,19 @@ class TransitionBuilder {
     }
 }
 
-const SymbolRegexesMaker: () => Record<Symbol, RegExp> = () => {
-    const r: Partial<Record<Symbol, RegExp>> = {}
-    Operators.forEach(op => {
-        r[op] =  new RegExp(`^${op}`)
-    });
+const regexSymbolPartial: Partial<Record<Symbol, RegExp>> = {}
+Operators.forEach(op => {
+    regexSymbolPartial[op] =  new RegExp(`^${op}`)
+});
 
-    [...Keywords, ...Primitives].forEach(p => {
-        r[p] = new RegExp(`^${p}\\s`)
-    })
+[...Keywords, ...Primitives].forEach(p => {
+    regexSymbolPartial[p] = new RegExp(`^${p}\\s`)
+})
 
     // r[Symbol.FUCTION_DECLARATION] = /^function +(?<name>[a-zA-Z_]\w*)\(/
     
-    return r as Record<Symbol, RegExp>
-}
-
-export const SymbolToRegex: Record<Symbol, RegExp> = SymbolRegexesMaker()
+export const SymbolToRegex: Record<Symbol, RegExp> = regexSymbolPartial as Record<Symbol, RegExp>
+export const AnyReservedWord: RegExp = new RegExp(`^(${[...Keywords, ...Primitives].map(s => SymbolToRegex[s].source.slice(1).replace("\\s", "")).join("|")})$`)
 
 function makeStateMatcher(): SyntaxLookup {
 
@@ -152,10 +149,10 @@ function makeStateMatcher(): SyntaxLookup {
     transitions.from(Meaning.START_OF_FILE, Meaning.ENTITY_END, Meaning.IMPORT)
         .matches(/^message +(?<name>[a-zA-Z_]\w*) *{/, (s) => MessagedNamed(s.name))
         .matches(/^enum +(?<name>[a-zA-Z]+) *{\s*/, (s) => new Enum(s.name))
-        .matches(/^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<alias>[_A-Za-z]+[\w]*)/, (s) => Import({
+        .matches(/^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/, (s) => Import({
             fromPresentDir: s.presentDir !== undefined,
             location: s.location,
-            alias: s.alias 
+            alias: s.name 
         }))
         // .whenMatching(Symbol.FUCTION_DECLARATION).causes((s: SymbolMatch) => [SyntaxState.FUNCTION_NAMED, FunctionNamed(s[1].name)]) 
     

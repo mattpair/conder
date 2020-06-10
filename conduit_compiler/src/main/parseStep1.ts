@@ -1,4 +1,4 @@
-import { SemanticTokenUnion, Meaning, SyntaxParser } from './Syntax';
+import { SemanticTokenUnion, Meaning, SyntaxParser, AnyReservedWord } from './Syntax';
 
 
 type StringCursor = {offset: number, state: Meaning}
@@ -27,6 +27,11 @@ export function tagTokens(file: string): SemanticTokenUnion[] {
                 case "regex":
                     match = m.regex.exec(head)
                     if (match !== null && match.groups) {
+
+                        if (match.groups.name && AnyReservedWord.test(match.groups.name)) {
+                            throw Error(`Name must not be equivalent to reserved symbol: ${match.groups.name}`)
+                        }
+
                         maybeHit = m.make.val(match.groups)
                     }
                     break

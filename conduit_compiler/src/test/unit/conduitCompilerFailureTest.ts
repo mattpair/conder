@@ -11,3 +11,9 @@ message m1 {
     M2 m2
 }
 `)
+
+testFailsWhen("naming an entity after a keyword ", `
+message function {
+    int32 i
+}
+`)
