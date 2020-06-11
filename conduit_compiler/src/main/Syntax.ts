@@ -17,18 +17,6 @@ export enum Meaning {
     FUNCTION_DECLARATION="Function declaration"
 }
 
-const FieldTyped = LazyClassification<PrimitiveUnion>(Meaning.FIELD_TYPE_PRIMITIVE)
-const FieldNamed = LazyClassification<string>(Meaning.FIELD_NAME)
-const MessagedNamed = LazyClassification<string>(Meaning.MESSAGE_DECLARATION)
-const FunctionNamed = LazyClassification<string>(Meaning.FUNCTION_DECLARATION)
-class Enum extends ClassifiedClass<Meaning.ENUM_DECLARATION, Resolved.Enum> {
-    constructor(name: string) {
-        super(Meaning.ENUM_DECLARATION, {members: [], name})
-    }
-}
-const FieldTypedCustom = LazyClassification<Unresolved.CustomType>(Meaning.FIELD_TYPE_CUSTOM)
-const Import = LazyClassification<Unresolved.Import>(Meaning.IMPORT)
-
 export type SemanticTokenUnion = 
 | Classified<Meaning.ENUM_DECLARATION, Resolved.Enum>
 | Classified<Meaning.ENUM_MEMBER, string>
@@ -105,9 +93,9 @@ class TransitionBuilder {
     }
 
     canProvideFieldType() {
-        this.matchesSymbols((s: Symbol) => FieldTyped(s as PrimitiveUnion), ...Primitives)
+        this.matchesSymbols((s: Symbol) =>({kind: Meaning.FIELD_TYPE_PRIMITIVE, val: s as PrimitiveUnion}), ...Primitives)
         this.matches(/^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*)/,
-        (s: RegexCaptureType) => FieldTypedCustom({type: s.type, from: s.from}))
+        (s: RegexCaptureType) => ({kind: Meaning.FIELD_TYPE_CUSTOM, val: {type: s.type, from: s.from}}))
         
         return this
     }
@@ -148,14 +136,14 @@ function makeStateMatcher(): SyntaxLookup {
     const VariableName = /^(?<name>[_A-Za-z]+[\w]*)/
 
     transitions.from(Meaning.START_OF_FILE, Meaning.ENTITY_END, Meaning.IMPORT)
-        .matches(/^message +(?<name>[a-zA-Z_]\w*) *{/, (s) => MessagedNamed(s.name))
-        .matches(/^enum +(?<name>[a-zA-Z]+) *{\s*/, (s) => new Enum(s.name))
-        .matches(/^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/, (s) => Import({
+        .matches(/^message +(?<name>[a-zA-Z_]\w*) *{/, (s) => ({kind: Meaning.MESSAGE_DECLARATION, val: s.name}))
+        .matches(/^enum +(?<name>[a-zA-Z]+) *{\s*/, (s) => ({kind: Meaning.ENUM_DECLARATION, val: {name: s.name, members: []}}))
+        .matches(/^import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/, (s) => ({kind: Meaning.IMPORT, val: {
             fromPresentDir: s.presentDir !== undefined,
             location: s.location,
             alias: s.name 
-        }))
-        .matches(/^function +(?<name>[a-zA-Z_]\w*)\(\)\s*{/, (s) => FunctionNamed(s.name))
+        }}))
+        .matches(/^function +(?<name>[a-zA-Z_]\w*)\(\)\s*{/, (s) => ({kind: Meaning.FUNCTION_DECLARATION, val: s.name}))
     
         
     transitions.from(Meaning.ENUM_DECLARATION, Meaning.ENUM_MEMBER)
@@ -169,7 +157,7 @@ function makeStateMatcher(): SyntaxLookup {
     transitions.from(Meaning.FIELD_OPTIONAL).canProvideFieldType()
 
     transitions.from(Meaning.FIELD_TYPE_PRIMITIVE, Meaning.FIELD_TYPE_CUSTOM)
-    .matches(VariableName, (s) => FieldNamed(s.name))
+    .matches(VariableName, (s) => ({kind: Meaning.FIELD_NAME, val: s.name}))
 
     transitions.from(Meaning.FIELD_NAME).symbolsMean(Meaning.FIELD_END, Symbol.COMMA, Symbol.NEW_LINE)
 
