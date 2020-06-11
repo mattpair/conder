@@ -1,22 +1,20 @@
+import { LabeledToken } from './parseStep1';
 import { assertNever } from './util/classifying';
-import { SemanticTokenUnion, Meaning } from './Syntax';
+import { Meaning } from './Syntax';
 import { Unresolved, TypeKind } from './entities';
 
 
 type LastTopLevelEntity = "enum" | "msg"
 
-export function parseEntities(t: SemanticTokenUnion[]): Unresolved.FileEntities {
+export function parseEntities(t: LabeledToken[]): Unresolved.FileEntities {
     const fileContext = new Unresolved.FileEntities()
     let lastEnt: LastTopLevelEntity | undefined = undefined
     let message: Unresolved.Message
     let field: Partial<Unresolved.Field> = {isRequired: true}
     
     for (let i = 0; i < t.length; ++i) {
-        const semanticToken = t[i]
+        const semanticToken = t[i].meaning
                 
-        /**
-         * TODO: make this not copy objects so much.
-         */
         switch(semanticToken.kind) {
 
             case Meaning.FIELD_TYPE_CUSTOM:
