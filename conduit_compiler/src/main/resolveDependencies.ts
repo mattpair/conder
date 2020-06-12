@@ -1,7 +1,8 @@
-import { Parse, Enum, EntityKind } from './parseStep1';
+import { Parse, } from './parseStep1';
 import { FileLocation } from './util/filesystem';
-import { Resolved } from './entities';
+import { Resolved } from './entity/resolved';
 import { assertNever } from './util/classifying';
+import { Enum, EntityKind } from './entity/basic';
 
 
 function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {

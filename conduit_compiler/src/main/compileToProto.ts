@@ -1,8 +1,9 @@
 
-import { Parse, Enum, EnumMember} from "./parseStep1";
-import { Resolved } from "./entities";
+import { Parse} from "./parseStep1";
+import { Resolved } from "./entity/resolved";
 import { resolveDeps } from "./resolveDependencies";
 import { FileLocation } from "./util/filesystem";
+import { Enum, EnumMember } from "./entity/basic";
 
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {

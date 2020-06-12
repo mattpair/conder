@@ -1,6 +1,6 @@
-import { PrimitiveUnion } from './lexicon';
-import { Classified } from './util/classifying';
-import {Parse, Enum, EntityKind, BaseField, BaseMsg, BaseConduitFile, BaseImport} from './parseStep1'
+import { PrimitiveUnion } from '../lexicon';
+import { Classified } from '../util/classifying';
+import {Enum, EntityKind, BaseField, BaseMsg, BaseConduitFile, BaseImport} from './basic'
 
 export namespace Resolved {
 
