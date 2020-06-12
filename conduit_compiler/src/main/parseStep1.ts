@@ -16,26 +16,6 @@ export namespace Parse {
         readonly fromPresentDir: boolean
         readonly filename: string
     }>
-    
-
-
-    type AnyEntity = File | Message | Import | Field | Enum | EnumMember
-    type WithChildren = Extract<AnyEntity, {children: any}>
-
-    type IsEndParseSuccessful = "success" | "fail"
-    type ParserTree<ROOT extends WithChildren> ={
-        [CHILD in keyof ROOT["children"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
-    };
-
-    type CompositeParserNode<ROOT extends WithChildren> = {
-        parseStart(c: FileCursor): ROOT | undefined
-        parseEnd(c: FileCursor): IsEndParseSuccessful
-        sub: ParserTree<ROOT>,
-    } & ParserNode<"composite">
-
-    type ParserNode<KIND> = {kind: KIND}
-    type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { parse(c: FileCursor): ROOT | undefined}
-    type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren ? CompositeParserNode<ROOT> : LeafParserNode<ROOT>
 
     type CompleteParser = ParserTreeNode<File>
     const completeParse: CompleteParser = {
@@ -256,4 +236,23 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${JSON.stringify(k, null, 2)} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
+
+
+    type AnyEntity = File | Message | Import | Field | Enum | EnumMember
+    type WithChildren = Extract<AnyEntity, {children: any}>
+
+    type IsEndParseSuccessful = "success" | "fail"
+    type ParserTree<ROOT extends WithChildren> ={
+        [CHILD in keyof ROOT["children"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
+    };
+
+    type CompositeParserNode<ROOT extends WithChildren> = {
+        parseStart(c: FileCursor): ROOT | undefined
+        parseEnd(c: FileCursor): IsEndParseSuccessful
+        sub: ParserTree<ROOT>,
+    } & ParserNode<"composite">
+
+    type ParserNode<KIND> = {kind: KIND}
+    type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { parse(c: FileCursor): ROOT | undefined}
+    type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren ? CompositeParserNode<ROOT> : LeafParserNode<ROOT>
 }
