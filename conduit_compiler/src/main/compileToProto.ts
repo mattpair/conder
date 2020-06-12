@@ -1,7 +1,7 @@
 
 import { Parse, Enum, EnumMember} from "./parseStep1";
 import { Resolved } from "./entities";
-import { resolveDeps, Return } from "./resolveDependencies";
+import { resolveDeps } from "./resolveDependencies";
 import { FileLocation } from "./util/filesystem";
 
 
@@ -18,15 +18,15 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     return toProto(r)
 } 
 
-function toProto(files: Return[]): Record<string, string> {
+function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
     const results: Record<string, string> = {}
-    files.filter(f => f.ents.msgs.length > 0 || f.ents.enms.length > 0).forEach(file => {
+    files.filter(f => f.children.Message.length > 0 || f.children.Enum.length > 0).forEach(file => {
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
 syntax="proto2";
-        ${file.ents.deps.map(d => `import "${d.replace(".cdt", ".proto")}";`).join("\n")}
+        ${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
 
-        ${file.ents.enms.map(printEnum).join("\n\n")}
-        ${file.ents.msgs.map(printMessage).join("\n\n")}
+        ${file.children.Enum.map(printEnum).join("\n\n")}
+        ${file.children.Message.map(printMessage).join("\n\n")}
         `
     })
 

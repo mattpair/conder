@@ -11,12 +11,17 @@ function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {
 }
 type PartialLookup = Record<string, Enum | Parse.Message>
 
-function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Resolved.FileEntities>): Resolved.FileEntities {
+function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
+    return i.fromPresentDir ? `${thisFileLoc.dir}${i.filename}` : i.filename
+
+}
+
+function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Resolved.ConduitFile>): Resolved.ConduitFile {
     const intralookup: PartialLookup = {}
     const aliasToAbsFilename: Record<string, string> = {}
     toResolve.children.Import.forEach(i => {
         assertNameNotYetInLookup({name: i.name}, aliasToAbsFilename)
-        aliasToAbsFilename[i.name] = i.fromPresentDir ? `${toResolve.loc.dir}${i.filename}` : i.filename
+        aliasToAbsFilename[i.name] = toFullFilename(i, toResolve.loc)
     })
 
 
@@ -62,9 +67,9 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                 
                                 const targetFile = externalResolved[dependentFile]
 
-                                let maybeMsg = targetFile.msgs.find(msg => msg.name === entity.type)
+                                let maybeMsg = targetFile.children.Message.find(msg => msg.name === entity.type)
                                 if (maybeMsg === undefined) {
-                                    let maybeEnm = targetFile.enms.find(tenm => tenm.name === entity.type)
+                                    let maybeEnm = targetFile.children.Enum.find(tenm => tenm.name === entity.type)
                                     if (maybeEnm === undefined) {
                                         throw new Error(`Unable to fine type ${entity.type} in ${entity.from}`)
                                     }
@@ -107,9 +112,18 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
         
     })
     return {
-        msgs,
-        enms: toResolve.children.Enum,
-        deps: Object.values(aliasToAbsFilename)
+        kind: EntityKind.File,
+        loc: toResolve.loc,
+        children: {
+            Message: msgs,
+            Enum: toResolve.children.Enum,
+            Import: toResolve.children.Import.map(v => ({
+                kind: EntityKind.Import, 
+                name: v.name, 
+                dep: toFullFilename(v, toResolve.loc), 
+                loc: v.loc
+            }))
+        }
     }
 }
 
@@ -148,11 +162,10 @@ function buildNeedsCompileSet(files: Parse.File[]): UnresolvedFileLookup {
     return toResolve
 }
 
-export type Return =  {loc: FileLocation, ents: Resolved.FileEntities}
 
-export function resolveDeps(unresolved: Parse.File[]): Return[] {
+export function resolveDeps(unresolved: Parse.File[]): Resolved.ConduitFile[] {
     const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
-    const resolved: Record<string, Resolved.FileEntities> = {}
+    const resolved: Record<string, Resolved.ConduitFile> = {}
 
     function tryResolve(absFilename: string) {
         const deps = toResolve[absFilename].absoluteDependencies
@@ -178,12 +191,9 @@ export function resolveDeps(unresolved: Parse.File[]): Return[] {
         Resolved: ${JSON.stringify(Object.keys(resolved), null, 2)}
         `)
     }
-    const ret: Return[] = []
+    const ret: Resolved.ConduitFile[] = []
     for (const file in resolved) {
-        ret.push({
-            loc: new FileLocation(file),
-            ents: resolved[file]
-        })
+        ret.push(resolved[file])
     }
     return ret
 }
