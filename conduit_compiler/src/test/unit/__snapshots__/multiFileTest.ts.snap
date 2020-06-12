@@ -86,8 +86,6 @@ message m2 {
 }
 `;
 
-exports[`function declaration 1`] = `Object {}`;
-
 exports[`simple multi file 1`] = `
 Object {
   "conduit_a.proto": "
