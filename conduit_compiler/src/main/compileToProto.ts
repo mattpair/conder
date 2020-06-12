@@ -1,19 +1,15 @@
 
-import { Parse, Enum, EnumMember, FileWithLocation} from "./parseStep1";
+import { Parse, Enum, EnumMember} from "./parseStep1";
 import { Resolved } from "./entities";
 import { resolveDeps, Return } from "./resolveDependencies";
 import { FileLocation } from "./util/filesystem";
 
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
-    const conduits: FileWithLocation[] = []
+    const conduits: Parse.File[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
-            const content = Parse.extractAllFileEntities(files[file]())
-            conduits.push({
-                loc: new FileLocation(file),
-                content
-            })
+            conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
         }
     }
 

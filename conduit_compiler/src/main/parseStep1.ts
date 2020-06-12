@@ -2,11 +2,6 @@ import { Primitives, PrimitiveUnion, Symbol } from './lexicon';
 import { Classified, assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
 
-export type FileWithLocation = {
-    content: Parse.File,
-    loc: FileLocation
-} 
-
 export enum EntityKind {
     EnumMember="EnumMember",
     Enum="Enum",
@@ -39,7 +34,7 @@ export type BaseConduitFile<
     MESSAGE_TYPE extends {kind: EntityKind.Message}, 
     ENUM_TYPE extends {kind: EntityKind.Enum}, 
     IMPORT_TYPE extends {kind: EntityKind.Import}> = 
-Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE>
+Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
 
 type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}} 
 
@@ -94,7 +89,7 @@ export namespace Parse {
     const completeParse: CompleteParser = {
         kind: "composite",
         parseStart(c: FileCursor): File | undefined {
-            return {kind: EntityKind.File, children: {Enum: [], Message: [], Import: []}}
+            return {kind: EntityKind.File, loc: c.filelocation, children: {Enum: [], Message: [], Import: []}}
         },
         parseEnd(c): IsEndParseSuccessful {
             return c.tryMatch(/^\s*/).hit && c.isDone() ? "success" : "fail"
@@ -201,9 +196,11 @@ export namespace Parse {
         private line=0
         private column=0
         private readonly contents: string
+        readonly filelocation: FileLocation
     
-        constructor(contents: string) {
+        constructor(contents: string, location: FileLocation) {
             this.contents = contents
+            this.filelocation = location
         }
         
         isDone(): boolean {
@@ -255,8 +252,8 @@ export namespace Parse {
     }
 
         
-    export function extractAllFileEntities(contents: string): File {
-        const cursor = new FileCursor(contents)
+    export function extractAllFileEntities(contents: string, location: FileLocation): File {
+        const cursor = new FileCursor(contents, location)
         return extractToCompositeEntity(cursor, completeParse)
     }
 

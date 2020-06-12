@@ -1,4 +1,4 @@
-import { FileWithLocation, Parse, Enum, EntityKind } from './parseStep1';
+import { Parse, Enum, EntityKind } from './parseStep1';
 import { FileLocation } from './util/filesystem';
 import { Resolved } from './entities';
 import { assertNever } from './util/classifying';
@@ -11,21 +11,21 @@ function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {
 }
 type PartialLookup = Record<string, Enum | Parse.Message>
 
-function resolveFile(toResolve: FileWithLocation, externalResolved: Record<string, Resolved.FileEntities>): Resolved.FileEntities {
+function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Resolved.FileEntities>): Resolved.FileEntities {
     const intralookup: PartialLookup = {}
     const aliasToAbsFilename: Record<string, string> = {}
-    toResolve.content.children.Import.forEach(i => {
+    toResolve.children.Import.forEach(i => {
         assertNameNotYetInLookup({name: i.name}, aliasToAbsFilename)
         aliasToAbsFilename[i.name] = i.fromPresentDir ? `${toResolve.loc.dir}${i.filename}` : i.filename
     })
 
 
-    toResolve.content.children.Message.forEach(m => {
+    toResolve.children.Message.forEach(m => {
         assertNameNotYetInLookup(m, intralookup)
         assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = m
     })
-    toResolve.content.children.Enum.forEach(m => {
+    toResolve.children.Enum.forEach(m => {
         assertNameNotYetInLookup(m, intralookup)
         assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = m
@@ -108,7 +108,7 @@ function resolveFile(toResolve: FileWithLocation, externalResolved: Record<strin
     })
     return {
         msgs,
-        enms: toResolve.content.children.Enum,
+        enms: toResolve.children.Enum,
         deps: Object.values(aliasToAbsFilename)
     }
 }
@@ -127,13 +127,13 @@ class FileNeedingCompilation<DATA> {
     }     
 }
 
-type UnresolvedFileLookup = Readonly<Record<string, FileNeedingCompilation<FileWithLocation>>>
+type UnresolvedFileLookup = Readonly<Record<string, FileNeedingCompilation<Parse.File>>>
 
-function buildNeedsCompileSet(files: FileWithLocation[]): UnresolvedFileLookup {
+function buildNeedsCompileSet(files: Parse.File[]): UnresolvedFileLookup {
     //Put all in need compile state
-    const toResolve: Record<string, FileNeedingCompilation<FileWithLocation>> = {}
+    const toResolve: Record<string, FileNeedingCompilation<Parse.File>> = {}
     files.forEach(file => {
-        toResolve[file.loc.fullname] = new FileNeedingCompilation(file.content.children.Import, file.loc, file)
+        toResolve[file.loc.fullname] = new FileNeedingCompilation(file.children.Import, file.loc, file)
     })
 
 
@@ -150,7 +150,7 @@ function buildNeedsCompileSet(files: FileWithLocation[]): UnresolvedFileLookup {
 
 export type Return =  {loc: FileLocation, ents: Resolved.FileEntities}
 
-export function resolveDeps(unresolved: FileWithLocation[]): Return[] {
+export function resolveDeps(unresolved: Parse.File[]): Return[] {
     const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
     const resolved: Record<string, Resolved.FileEntities> = {}
 
