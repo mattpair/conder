@@ -24,9 +24,6 @@ export namespace Parse {
             return {kind: EntityKind.File, children: {Enum: [], Message: [], Import: []}}
         },
         endRegex: /^\s*/,
-        parseEnd(c): IsEndParseSuccessful {
-            return c.length > 0 ? "success" : "fail"
-        },
         sub: {
             Message: {
                 kind: "composite",
@@ -41,9 +38,6 @@ export namespace Parse {
                     }
                 },
                 endRegex:/^\s*}/,
-                parseEnd(c: RegExpExecArray): IsEndParseSuccessful {
-                    return c.length > 0 ? "success" : "fail"
-                },
 
                 sub: {
                     Field: {
@@ -78,9 +72,6 @@ export namespace Parse {
                     }
                 },
                 endRegex:/^\s*}/,
-                parseEnd(c: RegExpExecArray): IsEndParseSuccessful {
-                    return c.length > 0 ? "success": "fail"
-                },
                 sub: {
                     EnumMember: {
                         kind: "leaf",
@@ -247,7 +238,6 @@ export namespace Parse {
     type CompositeParserNode<ROOT extends WithChildren> = {
         startRegex: RegExp
         parseStart(c: RegExpExecArray): WithoutLocation<ROOT> | undefined
-        parseEnd(c: RegExpExecArray): IsEndParseSuccessful
         endRegex: RegExp
         sub: ParserTree<ROOT>,
     } & ParserNode<"composite">
