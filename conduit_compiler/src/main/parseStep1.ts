@@ -219,6 +219,11 @@ export namespace Parse {
         }
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
+            if (parser.parseEnd) {
+                // Perhaps we should not treat a file as a parsed entity.
+                //@ts-ignore
+                return parser.parseEnd(end.match, k)
+            }
             return k
         }
 
@@ -230,7 +235,6 @@ export namespace Parse {
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember
     type WithChildren = Extract<AnyEntity, {children: any}>
 
-    type IsEndParseSuccessful = "success" | "fail"
     type ParserTree<ROOT extends WithChildren> ={
         [CHILD in keyof ROOT["children"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
     };
@@ -239,6 +243,8 @@ export namespace Parse {
         startRegex: RegExp
         parseStart(c: RegExpExecArray): WithoutLocation<ROOT> | undefined
         endRegex: RegExp
+        // Only include if parsing the end includes relevant details
+        parseEnd?: (c: RegExpExecArray, wip: WithoutLocation<ROOT>)=> WithoutLocation<ROOT>
         sub: ParserTree<ROOT>,
     } & ParserNode<"composite">
 
