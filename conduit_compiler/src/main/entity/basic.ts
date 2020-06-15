@@ -18,14 +18,14 @@ export type EntityLocation = {
 
 type Entity<KIND extends EntityKind> = {readonly kind: KIND}
 
-export type BaseField<TYPE> = NamedIntrafile<EntityKind.Field> & {
+export type BaseField<TYPE> = NamedIntrafile<EntityKind.Field, {
     readonly isRequired: boolean
     readonly fType: TYPE
-}
+}> 
 
-export type BaseMsg<FIELD_TYPE extends {kind: EntityKind.Field}> = NamedIntrafile<EntityKind.Message> & ParentOfMany<FIELD_TYPE>
+export type BaseMsg<FIELD_TYPE extends {kind: EntityKind.Field}> = NamedIntrafile<EntityKind.Message, ParentOfMany<FIELD_TYPE>> 
 
-export type BaseImport<T> = NamedIntrafile<EntityKind.Import> & T
+export type BaseImport<T> = NamedIntrafile<EntityKind.Import, T>
 
 export type BaseConduitFile<
     MESSAGE_TYPE extends {kind: EntityKind.Message}, 
@@ -35,16 +35,16 @@ Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> 
 
 type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}} 
 
-type IntrafileEntity<KIND extends EntityKind> = {
+type IntrafileEntity<KIND extends EntityKind, DATA extends any> = {
     readonly loc: EntityLocation
-} & Entity<KIND>
+} & Entity<KIND> & DATA
 
-type NamedIntrafile<KIND extends EntityKind> = IntrafileEntity<KIND> & {
+type NamedIntrafile<KIND extends EntityKind, DATA extends any> = IntrafileEntity<KIND, DATA & {
     readonly name: string
-}
+}> 
 
-export type EnumMember = NamedIntrafile<EntityKind.EnumMember>
-export type Enum = NamedIntrafile<EntityKind.Enum> & ParentOfMany<EnumMember>
+export type EnumMember = NamedIntrafile<EntityKind.EnumMember, {}>
+export type Enum = NamedIntrafile<EntityKind.Enum, ParentOfMany<EnumMember>> 
 
 
 
