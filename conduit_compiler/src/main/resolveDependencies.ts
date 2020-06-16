@@ -51,11 +51,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: Resolved.FieldType
                     // Switches on the variable so assert never works.
-                    const fieldType = f.the.Type.val
+                    const fieldType = f.peer.val
                     switch(fieldType.kind) {
                         
                         case "primitive":
-                            t = {val: fieldType, loc: f.the.Type.loc, kind: EntityKind.Type}
+                            t = {val: fieldType, loc: f.peer.loc, kind: EntityKind.Type}
                             break;
                         
                         case "deferred":
@@ -74,9 +74,9 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                     if (maybeEnm === undefined) {
                                         throw new Error(`Unable to find type ${entity.type} in ${entity.from}`)
                                     }
-                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.the.Type.loc, kind: EntityKind.Type}
+                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.peer.loc, kind: EntityKind.Type}
                                 } else {
-                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.the.Type.loc, kind: EntityKind.Type}
+                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.peer.loc, kind: EntityKind.Type}
                                 }
 
 
@@ -99,7 +99,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                         default: return assertNever(fieldType)
                         
                     }
-                    return {...f, the: {Type: t}}
+                    return {...f, peer: t}
                 })
                 const rmsg: Resolved.Message = {
                     kind: EntityKind.Message, 

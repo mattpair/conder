@@ -121,14 +121,13 @@ export namespace Parse {
     }
 
 
-    type NonfileComposite = Exclude<WithChildren, {kind: EntityKind.File}>
-    function extractToCompositeEntity<K extends NonfileComposite>(cursor: FileCursor, parser: CompositeParserV2<K>, parserSet: CompleteParserV2): K | undefined {
+    function extractToCompositeEntity(cursor: FileCursor, parser: CompositeParserV2<WithChildren>, parserSet: CompleteParserV2): WithChildren | undefined {
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
         }
         const prek = parser.parseStart(m.match) 
-        const k = attachChildren(cursor, parserSet, Object.assign(prek, {loc: m.loc} as Omit<K, "children">), parser.hasMany)
+        const k = attachChildren(cursor, parserSet, Object.assign(prek, {loc: m.loc} as Omit<WithChildren, "children">), parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return k
@@ -139,16 +138,18 @@ export namespace Parse {
 
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember | Type
     type WithChildren = Extract<AnyEntity, {children: any}>
-    type WithDependentClause= Extract<AnyEntity, {the: any}>
+    type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "the" >
-    type AnyParser = LeafParserV2<any> | CompositeParserV2<any> | ChainParserV2<any>
+    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" >
+    type AnyParser = LeafParserV2<Exclude<AnyEntity, WithChildren | WithDependentClause>> 
+    | CompositeParserV2<WithChildren> 
+    | ChainParserV2<WithDependentClause>
 
     function tryExtractEntity(cursor: FileCursor, parser: AnyParser, parserSet: CompleteParserV2): AnyEntity | undefined {
         switch(parser.kind) {
             case "composite":
-    
+                
                 return extractToCompositeEntity(cursor, parser, parserSet)
             case "leaf":
                 const match = cursor.tryMatch(parser.regex)
@@ -164,8 +165,7 @@ export namespace Parse {
                     return undefined
                 }
 
-                // TODO: Fix this hard code
-                const depMatch = tryExtractEntity(cursor, parserSet["Type"], parserSet)
+                const depMatch = tryExtractEntity(cursor, parserSet[parser.requiresA], parserSet)
                 if (depMatch === undefined) {
                     throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
                 }
@@ -175,7 +175,7 @@ export namespace Parse {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
                 const prek = parser.assemble(start.match, end.match)
-                return Object.assign({loc: start.loc, the: {Type: depMatch}}, prek) as AnyEntity
+                return Object.assign({loc: start.loc, peer: depMatch}, prek) as AnyEntity
 
             default: assertNever(parser)
 
@@ -185,28 +185,26 @@ export namespace Parse {
 
     type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
 
-    type CompositeParserV2<K extends WithChildren> = {
+    type CompositeParserV2<K extends WithChildren> = Readonly<{
         kind: "composite"
         startRegex: RegExp
         parseStart(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
-    }
+    }>
 
-    type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = {
+    type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = Readonly<{
         kind: "leaf"
         regex: RegExp
         parse(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
-    }
-    type ChainParserV2<K extends WithDependentClause> = {
+    }>
+    type ChainParserV2<K extends WithDependentClause> = Readonly<{
         kind: "chain"
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
         endRegex: RegExp
-        needsA: {
-            [P in keyof K["the"]]: true
-        },
-    }
+        requiresA: K["peer"]["kind"]
+    }>
 
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? CompositeParserV2<E> : (
@@ -282,7 +280,7 @@ export namespace Parse {
                     isRequired: start.groups.optional === undefined,
                 }
             },
-            needsA: {Type: true},
+            requiresA: EntityKind.Type,
         },
 
         Message: {

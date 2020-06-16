@@ -36,7 +36,7 @@ export type BaseConduitFile<
 Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
 
 type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}}
-type DependsOnA<K extends Entity<EntityKind>> = {the: {readonly [P in K["kind"]]: K}}
+type DependsOnA<K extends Entity<EntityKind>> = {readonly peer: K}
 
 export type IntrafileEntity<KIND extends EntityKind, DATA extends any> = {
     readonly loc: EntityLocation
