@@ -171,8 +171,6 @@ export namespace Parse {
         throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
-    type ChildOf<K extends WithChildren, CHILD_TYPE extends AnyEntity> = Extract<CHILD_TYPE, {kind: keyof K["children"]}>
-
     function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, prek: Omit<K, "children">): K {
         let tryExtractChild = true 
         const children: any = {}
@@ -185,11 +183,9 @@ export namespace Parse {
         while (tryExtractChild) {
             tryExtractChild = false
             for (const key in parser.sub) {
-                //@ts-ignore
-                const c: CompositeParserNode<ChildOf<K, WithChildren>> | LeafParserNode<ChildOf<K, Exclude<AnyEntity, WithChildren>>> = parser.sub[key]
+                const c: CompositeParserNode<any> | LeafParserNode<any> = parser.sub[key]
                 switch(c.kind) {
                     case "composite":
-                        //@ts-ignore
                         const comp = extractToCompositeEntity(cursor, c)
                         if (comp !== undefined) {
                             //@ts-ignore
