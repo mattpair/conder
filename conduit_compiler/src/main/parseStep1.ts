@@ -152,13 +152,12 @@ export namespace Parse {
 
     type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" | "kind">
 
-    function tryExtractEntity(cursor: FileCursor, kind: Exclude<AnyEntity, File>["kind"], parserSet: CompleteParserV2): AnyEntity | undefined {
-        const parser = parserSet[kind]
+    function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
+        const parser: CompositeParserV2<any> | LeafParserV2<any> | ChainParserV2<any> = parserSet[kind]
         switch(parser.kind) {
             case "composite":
-                
-                return extractToCompositeEntity(cursor, 
-                    //@ts-ignore we know this kind is a composite because it gave us a composite parser.
+                //@ts-ignore
+                return extractToCompositeEntity<K>(cursor, 
                     kind, 
                     parserSet)
             case "leaf":
@@ -184,8 +183,7 @@ export namespace Parse {
                 if (!end.hit) {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
-                const prek = parser.assemble(start.match, end.match)
-                return Object.assign({loc: start.loc, peer: depMatch, kind}, prek) as AnyEntity
+                return parser.assemble(start.match, end.match, start.loc, depMatch)
 
             default: assertNever(parser)
 
@@ -211,7 +209,7 @@ export namespace Parse {
     type ChainParserV2<K extends WithDependentClause> = Readonly<{
         kind: "chain"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, peer: K["peer"]): K | undefined
         endRegex: RegExp
         requiresA: K["peer"]["kind"]
     }>
@@ -285,10 +283,13 @@ export namespace Parse {
             kind: "chain",
             startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-            assemble(start, end): OnlyCustomFieldsOf<Field> | undefined {
+            assemble(start, end, loc, peer): Field | undefined {
                 return {
+                    kind: EntityKind.Field,
                     name: end.groups.name,
                     isRequired: start.groups.optional === undefined,
+                    loc,
+                    peer
                 }
             },
             requiresA: EntityKind.Type,
