@@ -20,21 +20,18 @@ export namespace Parse {
     const completeParse: CompleteParser = {
         kind: "composite",
         startRegex: /^/,
-        parseStart(c: RegExpExecArray): WithoutLocation<File> | undefined {
-            return {kind: EntityKind.File, children: {Enum: [], Message: [], Import: []}}
+        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<File> | undefined {
+            return {kind: EntityKind.File}
         },
         endRegex: /^\s*/,
         sub: {
             Message: {
                 kind: "composite",
                 startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-                parseStart(c: RegExpExecArray): WithoutLocation<Message> | undefined {
+                parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Message> | undefined {
                     return {
                         kind: EntityKind.Message,
                         name: c.groups.name,
-                        children: {
-                            Field: []
-                        }
                     }
                 },
                 endRegex:/^\s*}/,
@@ -43,7 +40,7 @@ export namespace Parse {
                     Field: {
                         kind: "leaf",
                         regex: /^\s*(?<optional>optional)? +((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-                        parse(c: RegExpExecArray): WithoutLocation<Field> | undefined {
+                        parse(c: RegExpExecArray): WithoutAutoFilledFields<Field> | undefined {
 
                             const prim = Primitives.find(p => p === c.groups.type)
                             return {
@@ -62,13 +59,10 @@ export namespace Parse {
             Enum: {
                 kind: "composite",
                 startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-                parseStart(c: RegExpExecArray): WithoutLocation<Enum> | undefined {
+                parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Enum> | undefined {
                     return {
                         kind: EntityKind.Enum,
                         name: c.groups.name,
-                        children: {
-                            EnumMember: []
-                        }
                     }
                 },
                 endRegex:/^\s*}/,
@@ -76,7 +70,7 @@ export namespace Parse {
                     EnumMember: {
                         kind: "leaf",
                         regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-                        parse(c: RegExpExecArray): WithoutLocation<EnumMember> | undefined {
+                        parse(c: RegExpExecArray): WithoutAutoFilledFields<EnumMember> | undefined {
                             return{
                                 kind: EntityKind.EnumMember,
                                 name: c.groups.name
@@ -88,7 +82,7 @@ export namespace Parse {
             Import: {
                 kind: "leaf",
                 regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
-                parse(c: RegExpExecArray): WithoutLocation<Import> | undefined {
+                parse(c: RegExpExecArray): WithoutAutoFilledFields<Import> | undefined {
                     return {
                         kind: EntityKind.Import,
                         fromPresentDir: c.groups.presentDir !== undefined,
@@ -166,11 +160,11 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const pref = completeParse.parseStart(undefined)
-        const f = Object.assign(pref, {
+        const prepref = completeParse.parseStart(undefined)
+        const pref = Object.assign(prepref, {
             loc: cursor.filelocation
         })
-        attachChildren(cursor, completeParse, f)
+        const f = attachChildren(cursor, completeParse, pref)
         if (cursor.tryMatch(completeParse.endRegex).hit && cursor.isDone) {
             return f
         }
@@ -179,10 +173,15 @@ export namespace Parse {
 
     type ChildOf<K extends WithChildren, CHILD_TYPE extends AnyEntity> = Extract<CHILD_TYPE, {kind: keyof K["children"]}>
 
-    type W = ChildOf<File, WithChildren>
-
-    function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, k: K): K {
+    function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, prek: Omit<K, "children">): K {
         let tryExtractChild = true 
+        const children: any = {}
+        for (const k in parser.sub) {
+            children[k] = []
+        }
+
+        const k = Object.assign(prek, {children}) as K
+
         while (tryExtractChild) {
             tryExtractChild = false
             for (const key in parser.sub) {
@@ -218,15 +217,14 @@ export namespace Parse {
     }
 
 
-    function extractToCompositeEntity<K extends Exclude<WithChildren, {kind: EntityKind.File}>>(cursor: FileCursor, parser: CompositeParserNode<K>): K | undefined {
+    type NonfileComposite = Exclude<WithChildren, {kind: EntityKind.File}>
+    function extractToCompositeEntity<K extends NonfileComposite>(cursor: FileCursor, parser: CompositeParserNode<K>): K | undefined {
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
         }
-        const withoutLoc = parser.parseStart(m.match)
-        const k = Object.assign(withoutLoc, {loc: m.loc}) as K
-        
-        attachChildren(cursor, parser, k)
+        const prek = parser.parseStart(m.match) 
+        const k = attachChildren(cursor, parser, Object.assign(prek, {loc: m.loc} as Omit<K, "children">))
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return k
@@ -246,7 +244,7 @@ export namespace Parse {
 
     type CompositeParserNode<ROOT extends WithChildren> = {
         startRegex: RegExp
-        parseStart(c: RegExpExecArray): WithoutLocation<ROOT> | undefined
+        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
         endRegex: RegExp
         sub: ParserTree<ROOT>,
     } & ParserNode<"composite">
@@ -254,8 +252,8 @@ export namespace Parse {
     type ParserNode<KIND> = {kind: KIND}
     type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { 
         regex: RegExp
-        parse(c: RegExpExecArray): WithoutLocation<ROOT> | undefined
+        parse(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
     }
     type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren ? CompositeParserNode<ROOT> : LeafParserNode<ROOT>
-    type WithoutLocation<K extends AnyEntity> = Omit<K, "loc">
+    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children">
 }
