@@ -108,7 +108,7 @@ export namespace Parse {
             tryExtractChild = false
             for (const key in accepts) {
                 //@ts-ignore
-                const c: SelectParserType<any> = parserSet[key]
+                const c: AnyParser = parserSet[key]
                 const child = tryExtractEntity(cursor, c, parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
@@ -145,8 +145,9 @@ export namespace Parse {
 
 
     type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "the" >
+    type AnyParser = LeafParserV2<any> | CompositeParserV2<any> | ChainParserV2<any>
 
-    function tryExtractEntity<K extends AnyEntity>(cursor: FileCursor, parser: SelectParserType<any>, parserSet: CompleteParserV2): K | undefined {
+    function tryExtractEntity(cursor: FileCursor, parser: AnyParser, parserSet: CompleteParserV2): AnyEntity | undefined {
         switch(parser.kind) {
             case "composite":
     
@@ -154,7 +155,7 @@ export namespace Parse {
             case "leaf":
                 const match = cursor.tryMatch(parser.regex)
                 if (match.hit) {
-                    return Object.assign(parser.parse(match.match), {loc: match.loc}) as K
+                    return Object.assign(parser.parse(match.match), {loc: match.loc}) as AnyEntity
                 }
                 return undefined
 
@@ -176,7 +177,9 @@ export namespace Parse {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
                 const prek = parser.assemble(start.match, end.match)
-                return Object.assign({loc: start.loc, the: {Type: depMatch}}, prek) as K
+                return Object.assign({loc: start.loc, the: {Type: depMatch}}, prek) as AnyEntity
+
+            default: assertNever(parser)
 
         }
         
