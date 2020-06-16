@@ -166,26 +166,22 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const f: WithoutLocation<File> = extractToCompositeEntity(cursor, completeParse)
-        return Object.assign(f, {
+        const pref = completeParse.parseStart(undefined)
+        const f = Object.assign(pref, {
             loc: cursor.filelocation
         })
+        attachChildren(cursor, completeParse, f)
+        if (cursor.tryMatch(completeParse.endRegex).hit && cursor.isDone) {
+            return f
+        }
+        throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
     type ChildOf<K extends WithChildren, CHILD_TYPE extends AnyEntity> = Extract<CHILD_TYPE, {kind: keyof K["children"]}>
 
     type W = ChildOf<File, WithChildren>
 
-
-    function extractToCompositeEntity<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>): K extends File ? WithoutLocation<File> : K | undefined {
-        const m = cursor.tryMatch(parser.startRegex)
-        if (!m.hit) {
-            return undefined
-        }
-        const withoutLoc = parser.parseStart(m.match)
-        // @ts-ignore
-        const k: K extends File ? WithoutLocation<File> : K = withoutLoc.kind === EntityKind.File ? withoutLoc : Object.assign(withoutLoc, {loc: m.loc})
-        
+    function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, k: K): K {
         let tryExtractChild = true 
         while (tryExtractChild) {
             tryExtractChild = false
@@ -194,6 +190,7 @@ export namespace Parse {
                 const c: CompositeParserNode<ChildOf<K, WithChildren>> | LeafParserNode<ChildOf<K, Exclude<AnyEntity, WithChildren>>> = parser.sub[key]
                 switch(c.kind) {
                     case "composite":
+                        //@ts-ignore
                         const comp = extractToCompositeEntity(cursor, c)
                         if (comp !== undefined) {
                             //@ts-ignore
@@ -217,13 +214,21 @@ export namespace Parse {
                 }
             }
         }
+        return k
+    }
+
+
+    function extractToCompositeEntity<K extends Exclude<WithChildren, {kind: EntityKind.File}>>(cursor: FileCursor, parser: CompositeParserNode<K>): K | undefined {
+        const m = cursor.tryMatch(parser.startRegex)
+        if (!m.hit) {
+            return undefined
+        }
+        const withoutLoc = parser.parseStart(m.match)
+        const k = Object.assign(withoutLoc, {loc: m.loc}) as K
+        
+        attachChildren(cursor, parser, k)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
-            if (parser.parseEnd) {
-                // Perhaps we should not treat a file as a parsed entity.
-                //@ts-ignore
-                return parser.parseEnd(end.match, k)
-            }
             return k
         }
 
@@ -243,8 +248,6 @@ export namespace Parse {
         startRegex: RegExp
         parseStart(c: RegExpExecArray): WithoutLocation<ROOT> | undefined
         endRegex: RegExp
-        // Only include if parsing the end includes relevant details
-        parseEnd?: (c: RegExpExecArray, wip: WithoutLocation<ROOT>)=> WithoutLocation<ROOT>
         sub: ParserTree<ROOT>,
     } & ParserNode<"composite">
 
