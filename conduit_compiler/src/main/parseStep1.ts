@@ -82,27 +82,26 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const pref: Omit<File, "children"> = {
-            kind: EntityKind.File,
-            loc: cursor.filelocation
-        }
-        const f = attachChildren(cursor, completeParserV2, pref, {Enum: true, Message: true, Import: true})
+        const children = extractChildren(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
-            return f
+            return {
+                kind: EntityKind.File,
+                loc: cursor.filelocation,
+                //@ts-ignore
+                children
+            }
         }
         throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
     
-    function attachChildren<K extends WithChildren>(cursor: FileCursor, parserSet: CompleteParserV2, prek: Omit<K, "children">, accepts: ChildrenDescription<K>): K {
+    function extractChildren<K extends WithChildren>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<K>): Pick<K, "children"> {
         let tryExtractChild = true 
         const children: any = {}
         for (const k in accepts) {
             children[k] = []
         }
-        
-        const k = Object.assign(prek, {children}) as K
-
+    
         while (tryExtractChild) {
             tryExtractChild = false
             for (const key in accepts) {
@@ -111,13 +110,13 @@ export namespace Parse {
                 const child = tryExtractEntity(cursor, c, parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
-                    //@ts-ignore
-                    k.children[key].push(child)
+                    
+                    children[key].push(child)
                     break
                 }
             }
         }
-        return k
+        return children
     }
 
 
@@ -127,13 +126,18 @@ export namespace Parse {
             return undefined
         }
         const prek = parser.parseStart(m.match) 
-        const k = attachChildren(cursor, parserSet, Object.assign(prek, {loc: m.loc} as Omit<WithChildren, "children">), parser.hasMany)
+        const children = extractChildren(cursor, parserSet, parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
-            return k
+            return {
+                loc: m.loc,
+                ...prek,
+                //@ts-ignore
+                children
+            }
         }
 
-        throw new Error(`Unable to parse end for entity: ${JSON.stringify(k, null, 2)} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
+        throw new Error(`Unable to parse end for entity: ${prek.kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember | Type
@@ -141,7 +145,7 @@ export namespace Parse {
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" >
+    type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" >
     type AnyParser = LeafParserV2<Exclude<AnyEntity, WithChildren | WithDependentClause>> 
     | CompositeParserV2<WithChildren> 
     | ChainParserV2<WithDependentClause>
@@ -188,7 +192,7 @@ export namespace Parse {
     type CompositeParserV2<K extends WithChildren> = Readonly<{
         kind: "composite"
         startRegex: RegExp
-        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+        parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
     }>
@@ -196,12 +200,12 @@ export namespace Parse {
     type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = Readonly<{
         kind: "leaf"
         regex: RegExp
-        parse(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+        parse(c: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
     }>
     type ChainParserV2<K extends WithDependentClause> = Readonly<{
         kind: "chain"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
         endRegex: RegExp
         requiresA: K["peer"]["kind"]
     }>
@@ -220,7 +224,7 @@ export namespace Parse {
         Enum: {
             kind: "composite",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Enum> | undefined {
+            parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Enum> | undefined {
                 return {
                     kind: EntityKind.Enum,
                     name: c.groups.name,
@@ -233,7 +237,7 @@ export namespace Parse {
         EnumMember: {
             kind: "leaf",
             regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-            parse(c: RegExpExecArray): WithoutAutoFilledFields<EnumMember> | undefined {
+            parse(c: RegExpExecArray): OnlyCustomFieldsOf<EnumMember> | undefined {
                 return{
                     kind: EntityKind.EnumMember,
                     name: c.groups.name
@@ -244,7 +248,7 @@ export namespace Parse {
         Import: {
             kind: "leaf",
             regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
-            parse(c: RegExpExecArray): WithoutAutoFilledFields<Import> | undefined {
+            parse(c: RegExpExecArray): OnlyCustomFieldsOf<Import> | undefined {
                 return {
                     kind: EntityKind.Import,
                     fromPresentDir: c.groups.presentDir !== undefined,
@@ -257,7 +261,7 @@ export namespace Parse {
         Type: {
             kind: 'leaf',
             regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-            parse(c): WithoutAutoFilledFields<Type> | undefined {
+            parse(c): OnlyCustomFieldsOf<Type> | undefined {
                 const prim = Primitives.find(p => p === c.groups.type)
                 const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
@@ -273,7 +277,7 @@ export namespace Parse {
             kind: "chain",
             startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-            assemble(start, end): WithoutAutoFilledFields<Field> | undefined {
+            assemble(start, end): OnlyCustomFieldsOf<Field> | undefined {
                 return {
                     kind: EntityKind.Field,
                     name: end.groups.name,
@@ -286,7 +290,7 @@ export namespace Parse {
         Message: {
             kind: "composite",
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-            parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Message> | undefined {
+            parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Message> | undefined {
                 return {
                     kind: EntityKind.Message,
                     name: c.groups.name,
