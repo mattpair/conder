@@ -105,9 +105,11 @@ export namespace Parse {
         while (tryExtractChild) {
             tryExtractChild = false
             for (const key in accepts) {
-                //@ts-ignore
-                const c: AnyParser = parserSet[key]
-                const child = tryExtractEntity(cursor, c, parserSet)
+                
+                const child = tryExtractEntity(cursor, 
+                    //@ts-ignore
+                    key, 
+                    parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
                     
@@ -120,7 +122,8 @@ export namespace Parse {
     }
 
 
-    function extractToCompositeEntity(cursor: FileCursor, parser: CompositeParserV2<WithChildren>, parserSet: CompleteParserV2): WithChildren | undefined {
+    function extractToCompositeEntity(cursor: FileCursor, kind: Exclude<WithChildren, File>["kind"], parserSet: CompleteParserV2): WithChildren | undefined {
+        const parser = parserSet[kind]
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
@@ -130,6 +133,7 @@ export namespace Parse {
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return {
+                kind,
                 loc: m.loc,
                 ...prek,
                 //@ts-ignore
@@ -137,7 +141,7 @@ export namespace Parse {
             }
         }
 
-        throw new Error(`Unable to parse end for entity: ${prek.kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
+        throw new Error(`Unable to parse end for entity: ${kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember | Type
@@ -145,20 +149,24 @@ export namespace Parse {
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" >
+    type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" | "kind">
     type AnyParser = LeafParserV2<Exclude<AnyEntity, WithChildren | WithDependentClause>> 
     | CompositeParserV2<WithChildren> 
     | ChainParserV2<WithDependentClause>
 
-    function tryExtractEntity(cursor: FileCursor, parser: AnyParser, parserSet: CompleteParserV2): AnyEntity | undefined {
+    function tryExtractEntity(cursor: FileCursor, kind: Exclude<AnyEntity, File>["kind"], parserSet: CompleteParserV2): AnyEntity | undefined {
+        const parser = parserSet[kind]
         switch(parser.kind) {
             case "composite":
                 
-                return extractToCompositeEntity(cursor, parser, parserSet)
+                return extractToCompositeEntity(cursor, 
+                    //@ts-ignore we know this kind is a composite because it gave us a composite parser.
+                    kind, 
+                    parserSet)
             case "leaf":
                 const match = cursor.tryMatch(parser.regex)
                 if (match.hit) {
-                    return Object.assign(parser.parse(match.match), {loc: match.loc}) as AnyEntity
+                    return Object.assign(parser.parse(match.match), {loc: match.loc, kind}) as AnyEntity
                 }
                 return undefined
 
@@ -169,7 +177,7 @@ export namespace Parse {
                     return undefined
                 }
 
-                const depMatch = tryExtractEntity(cursor, parserSet[parser.requiresA], parserSet)
+                const depMatch = tryExtractEntity(cursor, parser.requiresA, parserSet)
                 if (depMatch === undefined) {
                     throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
                 }
@@ -179,7 +187,7 @@ export namespace Parse {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
                 const prek = parser.assemble(start.match, end.match)
-                return Object.assign({loc: start.loc, peer: depMatch}, prek) as AnyEntity
+                return Object.assign({loc: start.loc, peer: depMatch, kind}, prek) as AnyEntity
 
             default: assertNever(parser)
 
@@ -226,7 +234,6 @@ export namespace Parse {
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
             parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Enum> | undefined {
                 return {
-                    kind: EntityKind.Enum,
                     name: c.groups.name,
                 }
             },
@@ -239,7 +246,6 @@ export namespace Parse {
             regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
             parse(c: RegExpExecArray): OnlyCustomFieldsOf<EnumMember> | undefined {
                 return{
-                    kind: EntityKind.EnumMember,
                     name: c.groups.name
                 }   
             }
@@ -250,7 +256,6 @@ export namespace Parse {
             regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
             parse(c: RegExpExecArray): OnlyCustomFieldsOf<Import> | undefined {
                 return {
-                    kind: EntityKind.Import,
                     fromPresentDir: c.groups.presentDir !== undefined,
                     name: c.groups.name,
                     filename: c.groups.location
@@ -279,7 +284,6 @@ export namespace Parse {
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
             assemble(start, end): OnlyCustomFieldsOf<Field> | undefined {
                 return {
-                    kind: EntityKind.Field,
                     name: end.groups.name,
                     isRequired: start.groups.optional === undefined,
                 }
@@ -292,7 +296,6 @@ export namespace Parse {
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
             parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Message> | undefined {
                 return {
-                    kind: EntityKind.Message,
                     name: c.groups.name,
                 }
             },
