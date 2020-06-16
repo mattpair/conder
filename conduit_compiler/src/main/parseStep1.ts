@@ -101,7 +101,6 @@ export namespace Parse {
             children[k] = []
         }
         
-        // TODO: get rid of casted assigns.
         const k = Object.assign(prek, {children}) as K
 
         while (tryExtractChild) {
@@ -129,7 +128,6 @@ export namespace Parse {
             return undefined
         }
         const prek = parser.parseStart(m.match) 
-        // TODO: remove casted assigns
         const k = attachChildren(cursor, parserSet, Object.assign(prek, {loc: m.loc} as Omit<K, "children">), parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
