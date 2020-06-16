@@ -128,14 +128,14 @@ export namespace Parse {
         if (!m.hit) {
             return undefined
         }
-        const prek = parser.parseStart(m.match) 
+        
         const children = extractChildren(cursor, parserSet, parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return {
                 kind,
                 loc: m.loc,
-                ...prek,
+                ...parser.assemble(m.match, end.match) ,
                 //@ts-ignore
                 children
             }
@@ -150,9 +150,6 @@ export namespace Parse {
 
 
     type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" | "kind">
-    type AnyParser = LeafParserV2<Exclude<AnyEntity, WithChildren | WithDependentClause>> 
-    | CompositeParserV2<WithChildren> 
-    | ChainParserV2<WithDependentClause>
 
     function tryExtractEntity(cursor: FileCursor, kind: Exclude<AnyEntity, File>["kind"], parserSet: CompleteParserV2): AnyEntity | undefined {
         const parser = parserSet[kind]
@@ -200,7 +197,7 @@ export namespace Parse {
     type CompositeParserV2<K extends WithChildren> = Readonly<{
         kind: "composite"
         startRegex: RegExp
-        parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
     }>
@@ -232,9 +229,9 @@ export namespace Parse {
         Enum: {
             kind: "composite",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Enum> | undefined {
+            assemble(start, end): OnlyCustomFieldsOf<Enum> | undefined {
                 return {
-                    name: c.groups.name,
+                    name: start.groups.name,
                 }
             },
             endRegex:/^\s*}/,
@@ -294,9 +291,9 @@ export namespace Parse {
         Message: {
             kind: "composite",
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-            parseStart(c: RegExpExecArray): OnlyCustomFieldsOf<Message> | undefined {
+            assemble(start, end): OnlyCustomFieldsOf<Message> | undefined {
                 return {
-                    name: c.groups.name,
+                    name: start.groups.name,
                 }
             },
             endRegex:/^\s*}/,
