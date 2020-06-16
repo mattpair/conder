@@ -16,96 +16,6 @@ export namespace Parse {
         readonly filename: string
     }>
 
-    type CompleteParser = ParserTreeNode<File>
-    const completeParse: CompleteParser = {
-        kind: "composite",
-        startRegex: /^/,
-        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<File> | undefined {
-            return {kind: EntityKind.File}
-        },
-        endRegex: /^\s*/,
-        sub: {
-            Message: {
-                kind: "composite",
-                startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-                parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Message> | undefined {
-                    return {
-                        kind: EntityKind.Message,
-                        name: c.groups.name,
-                    }
-                },
-                endRegex:/^\s*}/,
-
-                sub: {
-                    Field: {
-                        kind: "with dependency",
-                        startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
-                        endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-                        assemble(start, end): WithoutAutoFilledFields<Field> | undefined {
-                            return {
-                                kind: EntityKind.Field,
-                                name: end.groups.name,
-                                isRequired: start.groups.optional === undefined,
-                            }
-                        },
-                        sub: {
-                            Type: {
-                                kind: 'leaf',
-                                regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-                                parse(c): WithoutAutoFilledFields<Type> | undefined {
-                                    const prim = Primitives.find(p => p === c.groups.type)
-                                    const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
-
-                                    return {
-                                        kind: EntityKind.Type,
-                                        // @ts-ignore
-                                        val 
-                                    }
-                                }
-                            }
-
-                        }
-                    }
-                }
-            },
-            Enum: {
-                kind: "composite",
-                startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-                parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Enum> | undefined {
-                    return {
-                        kind: EntityKind.Enum,
-                        name: c.groups.name,
-                    }
-                },
-                endRegex:/^\s*}/,
-                sub: {
-                    EnumMember: {
-                        kind: "leaf",
-                        regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-                        parse(c: RegExpExecArray): WithoutAutoFilledFields<EnumMember> | undefined {
-                            return{
-                                kind: EntityKind.EnumMember,
-                                name: c.groups.name
-                            }   
-                        }
-                    }
-                }
-            },
-            Import: {
-                kind: "leaf",
-                regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
-                parse(c: RegExpExecArray): WithoutAutoFilledFields<Import> | undefined {
-                    return {
-                        kind: EntityKind.Import,
-                        fromPresentDir: c.groups.presentDir !== undefined,
-                        name: c.groups.name,
-                        filename: c.groups.location
-                    }
-                }
-            }
-        }
-    }
-
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
     type MatchResult = {hit: true, match: RegExpExecArray, loc: EntityLocation} | {hit: false}
@@ -172,32 +82,34 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const prepref = completeParse.parseStart(undefined)
-        const pref = Object.assign(prepref, {
+        const pref: Omit<File, "children"> = {
+            kind: EntityKind.File,
             loc: cursor.filelocation
-        })
-        const f = attachChildren(cursor, completeParse, pref)
-        if (cursor.tryMatch(completeParse.endRegex).hit && cursor.isDone) {
+        }
+        const f = attachChildren(cursor, completeParserV2, pref, {Enum: true, Message: true, Import: true})
+        if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
             return f
         }
         throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
     
-    function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, prek: Omit<K, "children">): K {
+    function attachChildren<K extends WithChildren>(cursor: FileCursor, parserSet: CompleteParserV2, prek: Omit<K, "children">, accepts: ChildrenDescription<K>): K {
         let tryExtractChild = true 
         const children: any = {}
-        for (const k in parser.sub) {
+        for (const k in accepts) {
             children[k] = []
         }
-
+        
+        // TODO: get rid of casted assigns.
         const k = Object.assign(prek, {children}) as K
 
         while (tryExtractChild) {
             tryExtractChild = false
-            for (const key in parser.sub) {
-                const c: CompositeParserNode<any> | LeafParserNode<any> | SingleDependencyParserNode<any> = parser.sub[key]
-                const child = tryExtractEntity(cursor, c)
+            for (const key in accepts) {
+                //@ts-ignore
+                const c: SelectParserType<any> = parserSet[key]
+                const child = tryExtractEntity(cursor, c, parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
                     //@ts-ignore
@@ -211,13 +123,14 @@ export namespace Parse {
 
 
     type NonfileComposite = Exclude<WithChildren, {kind: EntityKind.File}>
-    function extractToCompositeEntity<K extends NonfileComposite>(cursor: FileCursor, parser: CompositeParserNode<K>): K | undefined {
+    function extractToCompositeEntity<K extends NonfileComposite>(cursor: FileCursor, parser: CompositeParserV2<K>, parserSet: CompleteParserV2): K | undefined {
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
         }
         const prek = parser.parseStart(m.match) 
-        const k = attachChildren(cursor, parser, Object.assign(prek, {loc: m.loc} as Omit<K, "children">))
+        // TODO: remove casted assigns
+        const k = attachChildren(cursor, parserSet, Object.assign(prek, {loc: m.loc} as Omit<K, "children">), parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return k
@@ -230,80 +143,158 @@ export namespace Parse {
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {the: any}>
 
-    type CompositeParserTree<ROOT extends WithChildren> ={
-        [CHILD in keyof ROOT["children"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
-    };
-    
-    type DependentClauseParserTree<ROOT extends WithDependentClause> = {
-        [CHILD in keyof ROOT["the"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
-    }
-
-    type CompositeParserNode<ROOT extends WithChildren> = {
-        startRegex: RegExp
-        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
-        endRegex: RegExp
-        sub: CompositeParserTree<ROOT>,
-    } & ParserNode<"composite">
-
-    type SingleDependencyParserNode<ROOT extends WithDependentClause> = {
-        startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
-        endRegex: RegExp
-        sub: DependentClauseParserTree<ROOT>,
-
-    } & ParserNode<"with dependency">
-
-    type ParserNode<KIND> = {kind: KIND}
-    //TODO: Fix leaf so it is only for non-parent nodes.
-    type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { 
-        regex: RegExp
-        parse(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
-    }
-    type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren 
-    ? CompositeParserNode<ROOT> 
-    : ROOT extends WithDependentClause ? SingleDependencyParserNode<ROOT> : LeafParserNode<ROOT>
-
 
     type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "the" >
 
-    function tryExtractEntity<K extends AnyEntity>(cursor: FileCursor, parser: ParserTreeNode<K>): K | undefined {
+    function tryExtractEntity<K extends AnyEntity>(cursor: FileCursor, parser: SelectParserType<any>, parserSet: CompleteParserV2): K | undefined {
         switch(parser.kind) {
             case "composite":
-                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
-                return extractToCompositeEntity(cursor, parser)
+    
+                return extractToCompositeEntity(cursor, parser, parserSet)
             case "leaf":
-                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
-                const leaf: LeafParserNode<K> = parser
-                const match = cursor.tryMatch(leaf.regex)
+                const match = cursor.tryMatch(parser.regex)
                 if (match.hit) {
-                    return Object.assign(leaf.parse(match.match), {loc: match.loc}) as K
+                    return Object.assign(parser.parse(match.match), {loc: match.loc}) as K
                 }
                 return undefined
 
-            case "with dependency":
-                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
-                const depParser: SingleDependencyParserNode<K> = parser 
-                const start = cursor.tryMatch(depParser.startRegex)
+            case "chain":
+                
+                const start = cursor.tryMatch(parser.startRegex)
                 if (!start.hit) {
                     return undefined
                 }
-                //@ts-ignore TODO: fix single dep interface
-                const depMatch = cursor.tryMatch(depParser.sub.Type.regex)
-                if (!depMatch.hit) {
+
+                // TODO: Fix this hard code
+                const depMatch = tryExtractEntity(cursor, parserSet["Type"], parserSet)
+                if (depMatch === undefined) {
                     throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
                 }
-                //@ts-ignore
-                const predep = depParser.sub.Type.parse(depMatch.match)
-                const dep = Object.assign({loc: depMatch.loc}, predep)
-                const end = cursor.tryMatch(depParser.endRegex)
+
+                const end = cursor.tryMatch(parser.endRegex)
                 if (!end.hit) {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
-                const prek = depParser.assemble(start.match, end.match)
-                return Object.assign({loc: start.loc, the: {Type: dep}}, prek) as K
+                const prek = parser.assemble(start.match, end.match)
+                return Object.assign({loc: start.loc, the: {Type: depMatch}}, prek) as K
 
-            default: assertNever(parser.kind)
         }
         
+    }
+
+    type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
+
+    type CompositeParserV2<K extends WithChildren> = {
+        kind: "composite"
+        startRegex: RegExp
+        parseStart(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+        endRegex: RegExp
+        hasMany: ChildrenDescription<K>,
+    }
+
+    type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = {
+        kind: "leaf"
+        regex: RegExp
+        parse(c: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+    }
+    type ChainParserV2<K extends WithDependentClause> = {
+        kind: "chain"
+        startRegex: RegExp
+        assemble(start: RegExpExecArray, end: RegExpExecArray): WithoutAutoFilledFields<K> | undefined
+        endRegex: RegExp
+        needsA: {
+            [P in keyof K["the"]]: true
+        },
+    }
+
+    type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
+    type SelectParserType<E extends AnyEntity> = E extends WithChildren ? CompositeParserV2<E> : (
+        E extends WithDependentClause ? ChainParserV2<E> : (
+            E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never)
+    )
+    
+    type CompleteParserV2 = {
+        [P in Exclude<AnyEntity, File>["kind"]]:  SelectParserType<ToFullEntity<P>>
+    }
+
+    const completeParserV2: CompleteParserV2 = {
+        Enum: {
+            kind: "composite",
+            startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
+            parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Enum> | undefined {
+                return {
+                    kind: EntityKind.Enum,
+                    name: c.groups.name,
+                }
+            },
+            endRegex:/^\s*}/,
+            hasMany: {EnumMember: true}
+        },
+        
+        EnumMember: {
+            kind: "leaf",
+            regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
+            parse(c: RegExpExecArray): WithoutAutoFilledFields<EnumMember> | undefined {
+                return{
+                    kind: EntityKind.EnumMember,
+                    name: c.groups.name
+                }   
+            }
+        },
+
+        Import: {
+            kind: "leaf",
+            regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
+            parse(c: RegExpExecArray): WithoutAutoFilledFields<Import> | undefined {
+                return {
+                    kind: EntityKind.Import,
+                    fromPresentDir: c.groups.presentDir !== undefined,
+                    name: c.groups.name,
+                    filename: c.groups.location
+                }
+            }
+        },
+
+        Type: {
+            kind: 'leaf',
+            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
+            parse(c): WithoutAutoFilledFields<Type> | undefined {
+                const prim = Primitives.find(p => p === c.groups.type)
+                const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
+
+                return {
+                    kind: EntityKind.Type,
+                    // @ts-ignore
+                    val 
+                }
+            }
+        },
+
+        Field: {
+            kind: "chain",
+            startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
+            endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
+            assemble(start, end): WithoutAutoFilledFields<Field> | undefined {
+                return {
+                    kind: EntityKind.Field,
+                    name: end.groups.name,
+                    isRequired: start.groups.optional === undefined,
+                }
+            },
+            needsA: {Type: true},
+        },
+
+        Message: {
+            kind: "composite",
+            startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
+            parseStart(c: RegExpExecArray): WithoutAutoFilledFields<Message> | undefined {
+                return {
+                    kind: EntityKind.Message,
+                    name: c.groups.name,
+                }
+            },
+            endRegex:/^\s*}/,
+            hasMany: {Field: true}
+        },
     }
 }
