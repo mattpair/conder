@@ -268,7 +268,6 @@ export namespace Parse {
                 const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
                 return {
-                    kind: EntityKind.Type,
                     // @ts-ignore
                     val 
                 }
