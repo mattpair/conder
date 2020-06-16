@@ -7,6 +7,7 @@ export enum EntityKind {
     Field="Field",
     Import="Import",
     File="File",
+    Type="Type"
 }
 
 export type EntityLocation = {
@@ -18,10 +19,11 @@ export type EntityLocation = {
 
 type Entity<KIND extends EntityKind> = {readonly kind: KIND}
 
-export type BaseField<TYPE> = NamedIntrafile<EntityKind.Field, {
+export type BaseType<DATA> = IntrafileEntity<EntityKind.Type, DATA>
+
+export type BaseField<TYPE extends Entity<EntityKind.Type>> = NamedIntrafile<EntityKind.Field, {
     readonly isRequired: boolean
-    readonly fType: TYPE
-}> 
+} & DependsOnA<TYPE>> 
 
 export type BaseMsg<FIELD_TYPE extends {kind: EntityKind.Field}> = NamedIntrafile<EntityKind.Message, ParentOfMany<FIELD_TYPE>> 
 
@@ -33,9 +35,10 @@ export type BaseConduitFile<
     IMPORT_TYPE extends {kind: EntityKind.Import}> = 
 Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
 
-type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}} 
+type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}}
+type DependsOnA<K extends Entity<EntityKind>> = {the: {readonly [P in K["kind"]]: K}}
 
-type IntrafileEntity<KIND extends EntityKind, DATA extends any> = {
+export type IntrafileEntity<KIND extends EntityKind, DATA extends any> = {
     readonly loc: EntityLocation
 } & Entity<KIND> & DATA
 

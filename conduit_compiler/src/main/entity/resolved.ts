@@ -1,13 +1,13 @@
 import { PrimitiveUnion } from '../lexicon';
 import { Classified } from '../util/classifying';
-import {Enum, EntityKind, BaseField, BaseMsg, BaseConduitFile, BaseImport} from './basic'
+import {Enum, EntityKind, BaseField, BaseMsg, BaseConduitFile, BaseImport, BaseType} from './basic'
 
 export namespace Resolved {
 
-    export type FieldType = 
+    export type FieldType =BaseType< {val: 
     Classified<EntityKind.Message, () => Message> |
     Classified<EntityKind.Enum, () => Enum> |
-    Classified<"primitive", PrimitiveUnion> 
+    Classified<"primitive", PrimitiveUnion>}>
 
     
     export type Field = BaseField<FieldType>

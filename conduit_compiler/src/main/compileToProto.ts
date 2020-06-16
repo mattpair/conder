@@ -58,6 +58,6 @@ ${fields}
 
 function printFields(fields: Resolved.Field[]): string {
     return fields
-    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.fType.kind === "primitive" ? f.fType.val : f.fType.val().name} ${f.name} = ${index + 1};`)
+    .map((f, index) => `\t${f.isRequired ? 'required' : 'optional'} ${f.the.Type.val.kind === "primitive" ? f.the.Type.val.val : f.the.Type.val.val().name} ${f.name} = ${index + 1};`)
     .join("\n")
 }

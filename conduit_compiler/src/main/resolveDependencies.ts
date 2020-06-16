@@ -1,4 +1,4 @@
-import { Parse, } from './parseStep1';
+import { Parse } from './parseStep1';
 import { FileLocation } from './util/filesystem';
 import { Resolved } from './entity/resolved';
 import { assertNever } from './util/classifying';
@@ -51,11 +51,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: Resolved.FieldType
                     // Switches on the variable so assert never works.
-                    const fieldType: Parse.FieldType = f.fType
+                    const fieldType = f.the.Type.val
                     switch(fieldType.kind) {
                         
                         case "primitive":
-                            t = fieldType
+                            t = {val: fieldType, loc: f.the.Type.loc, kind: EntityKind.Type}
                             break;
                         
                         case "deferred":
@@ -72,11 +72,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                 if (maybeMsg === undefined) {
                                     let maybeEnm = targetFile.children.Enum.find(tenm => tenm.name === entity.type)
                                     if (maybeEnm === undefined) {
-                                        throw new Error(`Unable to fine type ${entity.type} in ${entity.from}`)
+                                        throw new Error(`Unable to find type ${entity.type} in ${entity.from}`)
                                     }
-                                    t = {kind: EntityKind.Enum, val: () => maybeEnm}
+                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.the.Type.loc, kind: EntityKind.Type}
                                 } else {
-                                    t = {kind: EntityKind.Message, val: () => maybeMsg}
+                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.the.Type.loc, kind: EntityKind.Type}
                                 }
 
 
@@ -84,8 +84,13 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                 if (!(entity.type in intralookup)) {
                                     throw new Error(`Unable to resolve field type: ${entity.type} in message ${m.name}`)            
                                 }
-                                //@ts-ignore                                
-                                t =  {kind: intralookup[entity.type].kind , val: () => resolvedLookup[entity.type] }
+                                t =  {
+                                    val: {
+                                        kind: intralookup[entity.type].kind,
+                                        //@ts-ignore
+                                        val: () => resolvedLookup[entity.type]
+                                    }
+                                }
                             }
                             
 
@@ -94,7 +99,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                         default: return assertNever(fieldType)
                         
                     }
-                    return {...f, fType: t}
+                    return {...f, the: {Type: t}}
                 })
                 const rmsg: Resolved.Message = {
                     kind: EntityKind.Message, 

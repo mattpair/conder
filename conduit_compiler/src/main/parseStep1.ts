@@ -1,14 +1,14 @@
 import { Primitives, PrimitiveUnion, Symbol } from './lexicon';
 import { Classified, assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
-import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind} from './entity/basic'
+import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseType} from './entity/basic'
 
 
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
     
-    export type FieldType = Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>
-    export type Field = BaseField<FieldType>
+    export type Type = BaseType<{val: Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>}>
+    export type Field = BaseField<Type>
 
     export type Message = BaseMsg<Field>
     export type Import = BaseImport<{
@@ -38,20 +38,32 @@ export namespace Parse {
 
                 sub: {
                     Field: {
-                        kind: "leaf",
-                        regex: /^\s*(?<optional>optional)? +((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-                        parse(c: RegExpExecArray): WithoutAutoFilledFields<Field> | undefined {
-
-                            const prim = Primitives.find(p => p === c.groups.type)
+                        kind: "with dependency",
+                        startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
+                        endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
+                        assemble(start, end): WithoutAutoFilledFields<Field> | undefined {
                             return {
                                 kind: EntityKind.Field,
-                                name: c.groups.name,
-                                isRequired: c.groups.optional === undefined,
-                                fType: prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {
-                                    from: c.groups.from,
-                                    type: c.groups.type
-                                }}
+                                name: end.groups.name,
+                                isRequired: start.groups.optional === undefined,
                             }
+                        },
+                        sub: {
+                            Type: {
+                                kind: 'leaf',
+                                regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
+                                parse(c): WithoutAutoFilledFields<Type> | undefined {
+                                    const prim = Primitives.find(p => p === c.groups.type)
+                                    const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
+
+                                    return {
+                                        kind: EntityKind.Type,
+                                        // @ts-ignore
+                                        val 
+                                    }
+                                }
+                            }
+
                         }
                     }
                 }
@@ -183,7 +195,7 @@ export namespace Parse {
         while (tryExtractChild) {
             tryExtractChild = false
             for (const key in parser.sub) {
-                const c: CompositeParserNode<any> | LeafParserNode<any> = parser.sub[key]
+                const c: CompositeParserNode<any> | LeafParserNode<any> | SingleDependencyParserNode<any> = parser.sub[key]
                 switch(c.kind) {
                     case "composite":
                         const comp = extractToCompositeEntity(cursor, c)
@@ -202,6 +214,14 @@ export namespace Parse {
                             tryExtractChild = true
                         }
                         break
+                    case "with dependency":
+                        const child = extractToEntity(cursor, c)
+                        if (child !== undefined) {
+                            //@ts-ignore
+                            k.children[key].push(child)
+                            tryExtractChild = true
+                        }
+                        break;
                     default: assertNever(c)
                 }
                 if (tryExtractChild) {
@@ -210,6 +230,25 @@ export namespace Parse {
             }
         }
         return k
+    }
+
+    function extractToEntity<K extends WithDependentClause>(cursor: FileCursor, parser: SingleDependencyParserNode<K>): K | undefined {
+        const start = cursor.tryMatch(parser.startRegex)
+        if (!start.hit) {
+            return undefined
+        }
+        const depMatch = cursor.tryMatch(parser.sub.Type.regex)
+        if (!depMatch.hit) {
+            throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
+        }
+        const predep = parser.sub.Type.parse(depMatch.match)
+        const dep = Object.assign({loc: depMatch.loc}, predep)
+        const end = cursor.tryMatch(parser.endRegex)
+        if (!end.hit) {
+            throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
+        }
+        const prek = parser.assemble(start.match, end.match)
+        return Object.assign({loc: start.loc, the: {Type: dep}}, prek) as K
     }
 
 
@@ -229,27 +268,40 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${JSON.stringify(k, null, 2)} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
-
-
-    type AnyEntity = File | Message | Import | Field | Enum | EnumMember
+    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | Type
     type WithChildren = Extract<AnyEntity, {children: any}>
+    type WithDependentClause= Extract<AnyEntity, {the: any}>
 
-    type ParserTree<ROOT extends WithChildren> ={
+    type CompositeParserTree<ROOT extends WithChildren> ={
         [CHILD in keyof ROOT["children"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
     };
+    
+    type DependentClauseParserTree<ROOT extends WithDependentClause> = {
+        [CHILD in keyof ROOT["the"]]: ParserTreeNode<Extract<AnyEntity, {kind: CHILD}>>
+    }
 
     type CompositeParserNode<ROOT extends WithChildren> = {
         startRegex: RegExp
         parseStart(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
         endRegex: RegExp
-        sub: ParserTree<ROOT>,
+        sub: CompositeParserTree<ROOT>,
     } & ParserNode<"composite">
+
+    type SingleDependencyParserNode<ROOT extends WithDependentClause> = {
+        startRegex: RegExp
+        assemble(start: RegExpExecArray, end: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
+        endRegex: RegExp
+        sub: DependentClauseParserTree<ROOT>,
+
+    } & ParserNode<"with dependency">
 
     type ParserNode<KIND> = {kind: KIND}
     type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { 
         regex: RegExp
         parse(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
     }
-    type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren ? CompositeParserNode<ROOT> : LeafParserNode<ROOT>
-    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children">
+    type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren 
+    ? CompositeParserNode<ROOT> 
+    : ROOT extends WithDependentClause ? SingleDependencyParserNode<ROOT> : LeafParserNode<ROOT>
+    type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "the" >
 }
