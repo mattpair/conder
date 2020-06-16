@@ -6,8 +6,8 @@ import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, E
 
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
-    
-    export type Type = BaseType<{val: Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>}>
+    export type TypeUnion = Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>
+    export type Type = BaseType<{val: TypeUnion}>
     export type Field = BaseField<Type>
 
     export type Message = BaseMsg<Field>
@@ -164,7 +164,7 @@ export namespace Parse {
             case "leaf":
                 const match = cursor.tryMatch(parser.regex)
                 if (match.hit) {
-                    return Object.assign(parser.parse(match.match), {loc: match.loc, kind}) as AnyEntity
+                    return parser.assemble(match.match, match.loc)
                 }
                 return undefined
 
@@ -206,7 +206,7 @@ export namespace Parse {
     type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = Readonly<{
         kind: "leaf"
         regex: RegExp
-        parse(c: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
+        assemble(c: RegExpExecArray, loc: EntityLocation): K | undefined
     }>
     type ChainParserV2<K extends WithDependentClause> = Readonly<{
         kind: "chain"
@@ -242,9 +242,12 @@ export namespace Parse {
         EnumMember: {
             kind: "leaf",
             regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-            parse(c: RegExpExecArray): OnlyCustomFieldsOf<EnumMember> | undefined {
+            assemble(c, loc): EnumMember | undefined {
+
                 return{
-                    name: c.groups.name
+                    kind: EntityKind.EnumMember,
+                    name: c.groups.name,
+                    loc
                 }   
             }
         },
@@ -252,11 +255,13 @@ export namespace Parse {
         Import: {
             kind: "leaf",
             regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
-            parse(c: RegExpExecArray): OnlyCustomFieldsOf<Import> | undefined {
+            assemble(c, loc): Import | undefined {
                 return {
+                    kind: EntityKind.Import,
                     fromPresentDir: c.groups.presentDir !== undefined,
                     name: c.groups.name,
-                    filename: c.groups.location
+                    filename: c.groups.location,
+                    loc
                 }
             }
         },
@@ -264,12 +269,13 @@ export namespace Parse {
         Type: {
             kind: 'leaf',
             regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-            parse(c): OnlyCustomFieldsOf<Type> | undefined {
+            assemble(c, loc): Type | undefined {
                 const prim = Primitives.find(p => p === c.groups.type)
-                const val = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
+                const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
                 return {
-                    // @ts-ignore
+                    kind: EntityKind.Type,
+                    loc,
                     val 
                 }
             }
