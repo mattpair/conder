@@ -82,20 +82,20 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
+        const children = extractChildren<EntityKind.File>(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
             return {
                 kind: EntityKind.File,
                 loc: cursor.filelocation,
-                //@ts-ignore
                 children
             }
         }
         throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
+    type EntityOf<K extends WithChildren["kind"]> = Extract<WithChildren, {kind: K}>
     
-    function extractChildren<K extends WithChildren>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<K>): Pick<K, "children"> {
+    function extractChildren<K extends WithChildren["kind"]>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<EntityOf<K>>): EntityOf<K>["children"] {
         let tryExtractChild = true 
         const children: any = {}
         for (const k in accepts) {
@@ -122,21 +122,22 @@ export namespace Parse {
     }
 
 
-    function extractToCompositeEntity(cursor: FileCursor, kind: Exclude<WithChildren, File>["kind"], parserSet: CompleteParserV2): WithChildren | undefined {
-        const parser = parserSet[kind]
+    function extractToCompositeEntity<K extends Exclude<WithChildren, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): EntityOf<K> | undefined {
+        //@ts-ignore
+        const parser: CompositeParserV2<EntityOf<K>> = parserSet[kind]
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
         }
         
-        const children = extractChildren(cursor, parserSet, parser.hasMany)
+        const children: EntityOf<K>['children'] = extractChildren<K>(cursor, parserSet, parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
+            //@ts-ignore
             return {
                 kind,
                 loc: m.loc,
-                ...parser.assemble(m.match, end.match) ,
-                //@ts-ignore
+                ...parser.assemble(m.match, end.match),
                 children
             }
         }
