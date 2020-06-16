@@ -183,6 +183,7 @@ export namespace Parse {
         throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
     }
 
+    
     function attachChildren<K extends WithChildren>(cursor: FileCursor, parser: CompositeParserNode<K>, prek: Omit<K, "children">): K {
         let tryExtractChild = true 
         const children: any = {}
@@ -196,59 +197,16 @@ export namespace Parse {
             tryExtractChild = false
             for (const key in parser.sub) {
                 const c: CompositeParserNode<any> | LeafParserNode<any> | SingleDependencyParserNode<any> = parser.sub[key]
-                switch(c.kind) {
-                    case "composite":
-                        const comp = extractToCompositeEntity(cursor, c)
-                        if (comp !== undefined) {
-                            //@ts-ignore
-                            k.children[key].push(comp)
-                            tryExtractChild = true
-                        }
-                        break
-                    case "leaf":
-                        const match = cursor.tryMatch(c.regex)
-                        if (match.hit) {
-                            const leaf = c.parse(match.match)
-                            //@ts-ignore
-                            k.children[key].push(leaf)
-                            tryExtractChild = true
-                        }
-                        break
-                    case "with dependency":
-                        const child = extractToEntity(cursor, c)
-                        if (child !== undefined) {
-                            //@ts-ignore
-                            k.children[key].push(child)
-                            tryExtractChild = true
-                        }
-                        break;
-                    default: assertNever(c)
-                }
-                if (tryExtractChild) {
+                const child = tryExtractEntity(cursor, c)
+                if (child !== undefined) {
+                    tryExtractChild = true
+                    //@ts-ignore
+                    k.children[key].push(child)
                     break
                 }
             }
         }
         return k
-    }
-
-    function extractToEntity<K extends WithDependentClause>(cursor: FileCursor, parser: SingleDependencyParserNode<K>): K | undefined {
-        const start = cursor.tryMatch(parser.startRegex)
-        if (!start.hit) {
-            return undefined
-        }
-        const depMatch = cursor.tryMatch(parser.sub.Type.regex)
-        if (!depMatch.hit) {
-            throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
-        }
-        const predep = parser.sub.Type.parse(depMatch.match)
-        const dep = Object.assign({loc: depMatch.loc}, predep)
-        const end = cursor.tryMatch(parser.endRegex)
-        if (!end.hit) {
-            throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
-        }
-        const prek = parser.assemble(start.match, end.match)
-        return Object.assign({loc: start.loc, the: {Type: dep}}, prek) as K
     }
 
 
@@ -296,6 +254,7 @@ export namespace Parse {
     } & ParserNode<"with dependency">
 
     type ParserNode<KIND> = {kind: KIND}
+    //TODO: Fix leaf so it is only for non-parent nodes.
     type LeafParserNode<ROOT extends AnyEntity> =  ParserNode<"leaf"> & { 
         regex: RegExp
         parse(c: RegExpExecArray): WithoutAutoFilledFields<ROOT> | undefined
@@ -303,5 +262,48 @@ export namespace Parse {
     type ParserTreeNode<ROOT extends AnyEntity> = ROOT extends WithChildren 
     ? CompositeParserNode<ROOT> 
     : ROOT extends WithDependentClause ? SingleDependencyParserNode<ROOT> : LeafParserNode<ROOT>
+
+
     type WithoutAutoFilledFields<K extends AnyEntity> = Omit<K, "loc" | "children" | "the" >
+
+    function tryExtractEntity<K extends AnyEntity>(cursor: FileCursor, parser: ParserTreeNode<K>): K | undefined {
+        switch(parser.kind) {
+            case "composite":
+                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
+                return extractToCompositeEntity(cursor, parser)
+            case "leaf":
+                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
+                const leaf: LeafParserNode<K> = parser
+                const match = cursor.tryMatch(leaf.regex)
+                if (match.hit) {
+                    return Object.assign(leaf.parse(match.match), {loc: match.loc}) as K
+                }
+                return undefined
+
+            case "with dependency":
+                //@ts-ignore parser is clearly a specific parser node, but typescript can't recognize the implicit union created by ParserTreeNode
+                const depParser: SingleDependencyParserNode<K> = parser 
+                const start = cursor.tryMatch(depParser.startRegex)
+                if (!start.hit) {
+                    return undefined
+                }
+                //@ts-ignore TODO: fix single dep interface
+                const depMatch = cursor.tryMatch(depParser.sub.Type.regex)
+                if (!depMatch.hit) {
+                    throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
+                }
+                //@ts-ignore
+                const predep = depParser.sub.Type.parse(depMatch.match)
+                const dep = Object.assign({loc: depMatch.loc}, predep)
+                const end = cursor.tryMatch(depParser.endRegex)
+                if (!end.hit) {
+                    throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
+                }
+                const prek = depParser.assemble(start.match, end.match)
+                return Object.assign({loc: start.loc, the: {Type: dep}}, prek) as K
+
+            default: assertNever(parser.kind)
+        }
+        
+    }
 }
