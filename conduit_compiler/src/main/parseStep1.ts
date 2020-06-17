@@ -1,25 +1,26 @@
 import { Primitives, Symbol } from './lexicon';
 import { assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
-import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, BaseFieldType, PrimitiveEntity, IntrafileEntity, IntrafileEntityKinds, EntityKinds} from './entity/basic'
+import * as common from './entity/basic'
 
 
 export namespace Parse {
-    export type File = BaseConduitFile<Message, Enum, Import>
-    type CustomTypeEntity = IntrafileEntity<"CustomType", {from?: string, type: string}>
-    export type TypeUnion = () => PrimitiveEntity | CustomTypeEntity
-    export type FieldType = BaseFieldType<TypeUnion>
-    export type Field = BaseField<FieldType>
+    export type File = common.BaseConduitFile<Message, common.Enum, Import>
+    type CustomTypeEntity = common.IntrafileEntity<"CustomType", {from?: string, type: string}>
+    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
+    export type FieldType = common.BaseFieldType<TypeUnion>
+    export type Field = common.BaseField<FieldType>
 
-    export type Message = BaseMsg<Field>
-    export type Import = BaseImport<{
+    export type Message = common.BaseMsg<Field>
+    export type Import = common.BaseImport<{
         readonly fromPresentDir: boolean
         readonly filename: string
     }>
 
+    // export type FunctionBody = BaseFunctionBody
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
-    type MatchResult = {hit: true, match: RegExpExecArray, loc: EntityLocation} | {hit: false}
+    type MatchResult = {hit: true, match: RegExpExecArray, loc: common.EntityLocation} | {hit: false}
     class FileCursor {
         private absOffset=0
         private line=0
@@ -108,7 +109,7 @@ export namespace Parse {
             for (const key in accepts) {
                 
                 const child = tryExtractEntity(cursor, 
-                    key as IntrafileEntityKinds, 
+                    key as common.IntrafileEntityKinds, 
                     parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
@@ -137,7 +138,7 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
-    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType | CustomTypeEntity | PrimitiveEntity
+    type AnyEntity = File | Message | Import | Field | common.Enum | common.EnumMember | FieldType | CustomTypeEntity | common.PrimitiveEntity
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
 
@@ -202,7 +203,7 @@ export namespace Parse {
 
     type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
 
-    class Ordering<K extends IntrafileEntityKinds> {
+    class Ordering<K extends common.IntrafileEntityKinds> {
         readonly order: K[]
 
         constructor(priorityMap: Record<K, number>) {
@@ -214,7 +215,7 @@ export namespace Parse {
     type AggregationParserV2<K extends WithChildren> = Readonly<{
         kind: "aggregate"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, children: K["children"]): K | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, children: K["children"]): K | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
     }>
@@ -222,14 +223,14 @@ export namespace Parse {
     type LeafParserV2<K extends AnyEntity> = Readonly<{
         kind: "leaf"
         regex: RegExp
-        assemble(c: RegExpExecArray, loc: EntityLocation): K | undefined
+        assemble(c: RegExpExecArray, loc: common.EntityLocation): K | undefined
     }>
     type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
         kind: "conglomerate"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, part: K["part"]): K | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresOne: Ordering<Extract<IntrafileEntityKinds, keyof K["part"]>>
+        requiresOne: Ordering<Extract<common.IntrafileEntityKinds, keyof K["part"]>>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -242,11 +243,11 @@ export namespace Parse {
         // Typescript does not have a way to go from a union to all possible ordering of union members, which is what we would want.
         // Further reading: https://github.com/Microsoft/TypeScript/issues/13298 
         // More reading: https://github.com/microsoft/TypeScript/issues/26223#issuecomment-513187373
-        priority: Ordering<Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>>
+        priority: Ordering<Extract<common.IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>>
         groupKind: K["kind"]
     }
 
-    type ToFullEntity<K extends EntityKinds> = Extract<AnyEntity, {kind: K}>
+    type ToFullEntity<K extends common.EntityKinds> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? AggregationParserV2<E> : (
         E extends WithDependentClause ? ConglomerateParserV2<E> : 
             E extends PolymorphicEntity ? PolymorphParser<E> :
@@ -271,7 +272,7 @@ export namespace Parse {
         Enum: {
             kind: "aggregate",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end, loc, children): Enum | undefined {
+            assemble(start, end, loc, children): common.Enum | undefined {
                 return {
                     kind: "Enum",
                     name: start.groups.name,
@@ -286,7 +287,7 @@ export namespace Parse {
         EnumMember: {
             kind: "leaf",
             regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-            assemble(c, loc): EnumMember | undefined {
+            assemble(c, loc): common.EnumMember | undefined {
 
                 return{
                     kind: "EnumMember",
@@ -366,7 +367,7 @@ export namespace Parse {
         Primitive: {
             kind: "leaf",
             regex: new RegExp(`^(?<val>(${Primitives.join("|")})) +`),
-            assemble(match, loc): PrimitiveEntity | undefined {
+            assemble(match, loc): common.PrimitiveEntity | undefined {
                 return {
                     kind: "Primitive",
                     loc,
