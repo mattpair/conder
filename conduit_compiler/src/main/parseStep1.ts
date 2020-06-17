@@ -5,7 +5,7 @@ import * as common from './entity/basic'
 
 
 export namespace Parse {
-    export type File = common.BaseConduitFile<Message, common.Enum, Import>
+    export type File = common.BaseConduitFile<Message, common.Enum, Import, Function>
     type CustomTypeEntity = common.IntrafileEntity<"CustomType", {from?: string, type: string}>
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
     export type FieldType = common.BaseFieldType<TypeUnion>
@@ -87,7 +87,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Import: true, Function: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
             return {
                 kind: "File",

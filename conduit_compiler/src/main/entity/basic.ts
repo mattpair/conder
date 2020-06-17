@@ -44,10 +44,16 @@ export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"
     NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>
 
 export type BaseConduitFile<
-    MESSAGE_TYPE extends {kind: "Message"}, 
-    ENUM_TYPE extends {kind: "Enum"}, 
-    IMPORT_TYPE extends {kind: "Import"}> = 
-Entity<"File"> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
+    MESSAGE_TYPE extends EntOf<"Message">, 
+    ENUM_TYPE extends EntOf<"Enum">, 
+    IMPORT_TYPE extends EntOf<"Import">,
+    FUNCTION_TYPE extends EntOf<"Function">> = 
+Entity<"File"> & 
+ParentOfMany<MESSAGE_TYPE> &  
+ParentOfMany<ENUM_TYPE> & 
+ParentOfMany<IMPORT_TYPE> & 
+ParentOfMany<FUNCTION_TYPE> &
+{readonly loc: FileLocation}
 
 type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
 type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}

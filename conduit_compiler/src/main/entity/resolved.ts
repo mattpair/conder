@@ -1,6 +1,7 @@
 import { PrimitiveUnion } from '../lexicon';
 import { Classified } from '../util/classifying';
 import {Enum, BaseField, BaseMsg, BaseConduitFile, BaseImport, BaseFieldType, PrimitiveEntity} from './basic'
+import { Parse } from 'parseStep1';
 
 export namespace Resolved {
 
@@ -12,5 +13,5 @@ export namespace Resolved {
 
     export type Message = BaseMsg<Field>
     export type Import =BaseImport<{dep: string}>
-    export type ConduitFile = BaseConduitFile<Message, Enum, Import>
+    export type ConduitFile = BaseConduitFile<Message, Enum, Import, Parse.Function>
 }

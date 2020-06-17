@@ -125,7 +125,8 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                 name: v.name, 
                 dep: toFullFilename(v, toResolve.loc), 
                 loc: v.loc
-            }))
+            })),
+            Function: toResolve.children.Function
         }
     }
 }
