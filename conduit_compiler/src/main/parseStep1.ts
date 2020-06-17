@@ -211,7 +211,7 @@ export namespace Parse {
         hasMany: ChildrenDescription<K>,
     }>
 
-    type LeafParserV2<K extends Exclude<AnyEntity, WithChildren | WithDependentClause>> = Readonly<{
+    type LeafParserV2<K extends AnyEntity> = Readonly<{
         kind: "leaf"
         regex: RegExp
         assemble(c: RegExpExecArray, loc: EntityLocation): K | undefined
@@ -239,10 +239,19 @@ export namespace Parse {
             E extends PolymorphicEntity ? PolymorphParser<E> :
                 E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never
     )
+
+    type GetAllDependencies<E extends keyof ParserMap> = E extends WithChildren["kind"] ? keyof Extract<WithChildren, {kind: E}>["children"] :
+        E extends WithDependentClause["kind"] ? Extract<WithDependentClause, {kind: E}>["peer"]["kind"] : 
+            E extends PolymorphicEntity["kind"] ? ReturnType<Extract<Extract<PolymorphicEntity, {differentiate: any}>, {kind: E}>["differentiate"]>["kind"] : never
     
-    type CompleteParserV2 = {
+    type ParserMap = {
         [P in Exclude<AnyEntity, File>["kind"]]:  SelectParserType<ToFullEntity<P>>
-        
+    }
+
+    type CompleteParserV2 = ParserMap & {
+        [P in keyof ParserMap]: {
+            [Q in Exclude<GetAllDependencies<P>, keyof ParserMap>]: Q extends never ? {} : "This entity needs to be added to the AnyEntity union"
+        }
     }
 
     const completeParserV2: CompleteParserV2 = {
@@ -349,6 +358,6 @@ export namespace Parse {
                     val: Primitives.find(p => p === match.groups.val)
                 }
             }
-        }
+        }    
     }
 }
