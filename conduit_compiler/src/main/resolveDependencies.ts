@@ -55,7 +55,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                     switch(fieldType.kind) {
                         
                         case "primitive":
-                            t = {val: fieldType, loc: f.peer.loc, kind: EntityKind.Type}
+                            t = {val: fieldType, loc: f.peer.loc, kind: EntityKind.FieldType}
                             break;
                         
                         case "deferred":
@@ -74,9 +74,9 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                     if (maybeEnm === undefined) {
                                         throw new Error(`Unable to find type ${entity.type} in ${entity.from}`)
                                     }
-                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.peer.loc, kind: EntityKind.Type}
+                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.peer.loc, kind: EntityKind.FieldType}
                                 } else {
-                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.peer.loc, kind: EntityKind.Type}
+                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.peer.loc, kind: EntityKind.FieldType}
                                 }
 
 

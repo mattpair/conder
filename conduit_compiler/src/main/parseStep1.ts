@@ -206,6 +206,11 @@ export namespace Parse {
         requiresA: K["peer"]["kind"]
     }>
 
+    type PolymorphParser<K extends Extract<AnyEntity, {val: {kind: any}}>> = {
+        kind: "polymorph"
+
+    }
+
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? CompositeParserV2<E> : (
         E extends WithDependentClause ? ChainParserV2<E> : (
@@ -259,7 +264,7 @@ export namespace Parse {
             }
         },
 
-        Type: {
+        FieldType: {
             kind: 'leaf',
             regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
             assemble(c, loc): Type | undefined {
@@ -267,7 +272,7 @@ export namespace Parse {
                 const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
                 return {
-                    kind: EntityKind.Type,
+                    kind: EntityKind.FieldType,
                     loc,
                     val 
                 }
@@ -287,7 +292,7 @@ export namespace Parse {
                     peer
                 }
             },
-            requiresA: EntityKind.Type,
+            requiresA: EntityKind.FieldType,
         },
 
         Message: {

@@ -7,7 +7,7 @@ export enum EntityKind {
     Field="Field",
     Import="Import",
     File="File",
-    Type="Type"
+    FieldType="FieldType"
 }
 
 export type EntityLocation = {
@@ -19,9 +19,9 @@ export type EntityLocation = {
 
 type Entity<KIND extends EntityKind> = {readonly kind: KIND}
 
-export type BaseType<DATA> = IntrafileEntity<EntityKind.Type, DATA>
+export type BaseType<DATA> = IntrafileEntity<EntityKind.FieldType, DATA>
 
-export type BaseField<TYPE extends Entity<EntityKind.Type>> = NamedIntrafile<EntityKind.Field, {
+export type BaseField<TYPE extends Entity<EntityKind.FieldType>> = NamedIntrafile<EntityKind.Field, {
     readonly isRequired: boolean
 } & DependsOnA<TYPE>> 
 
