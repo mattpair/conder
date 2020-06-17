@@ -1,8 +1,5 @@
 import { PrimitiveUnion } from '../lexicon';
-import { Classified } from './../util/classifying';
 import { FileLocation } from "../util/filesystem"
-
-// export const INTRAFILE_ENTITY_KINDS: [] = 
 
 export type EntityKinds = 
 "EnumMember" |

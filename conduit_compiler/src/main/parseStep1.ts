@@ -108,8 +108,7 @@ export namespace Parse {
             for (const key in accepts) {
                 
                 const child = tryExtractEntity(cursor, 
-                    //@ts-ignore
-                    key, 
+                    key as IntrafileEntityKinds, 
                     parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
