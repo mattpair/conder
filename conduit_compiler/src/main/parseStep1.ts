@@ -1,13 +1,14 @@
 import { Primitives, PrimitiveUnion, Symbol } from './lexicon';
 import { Classified, assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
-import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseFieldType} from './entity/basic'
+import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseFieldType, PrimitiveEntity, IntrafileEntity} from './entity/basic'
 
 
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
-    export type TypeUnion = Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>
-    export type FieldType = BaseFieldType<{val: TypeUnion}>
+    type CustomTypeEntity = IntrafileEntity<EntityKind.CustomType, {from?: string, type: string}>
+    export type TypeUnion = () => PrimitiveEntity | CustomTypeEntity
+    export type FieldType = BaseFieldType<TypeUnion>
     export type Field = BaseField<FieldType>
 
     export type Message = BaseMsg<Field>
@@ -139,13 +140,13 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
-    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType
+    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType | CustomTypeEntity | PrimitiveEntity
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
     function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
-        const parser: CompositeParserV2<any> | LeafParserV2<any> | ChainParserV2<any> = parserSet[kind]
+        const parser: CompositeParserV2<any> | LeafParserV2<any> | ChainParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "composite":
                 //@ts-ignore
@@ -177,6 +178,22 @@ export namespace Parse {
                 }
                 return parser.assemble(start.match, end.match, start.loc, depMatch)
 
+            case "polymorph":
+                const o = Object.entries(parser.priority)
+                const sorted = o.sort((a, b) => a[1] - b[1]).map(a => a[0])
+                for (let i = 0; i < sorted.length; i++) {
+                    const elt = sorted[i];
+                    const ent = tryExtractEntity(cursor, 
+                        //@ts-ignore
+                        elt, 
+                        parserSet)
+                    if (ent !== undefined) {
+                        return parser.assemble(() => ent)
+                    }
+                }
+                throw new Error(`Failure parsing polymorphic entity: ${cursor.getPositionHint()}`)
+
+                
             default: assertNever(parser)
 
         }
@@ -206,19 +223,25 @@ export namespace Parse {
         requiresA: K["peer"]["kind"]
     }>
 
-    type PolymorphParser<K extends Extract<AnyEntity, {val: {kind: any}}>> = {
+    type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
+    type PolymorphParser<K extends PolymorphicEntity> = {
         kind: "polymorph"
-
+        priority: {
+            [P in ReturnType<K["differentiate"]>["kind"]]: number
+        }
+        assemble(differentiate: K["differentiate"]): K | undefined 
     }
 
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? CompositeParserV2<E> : (
-        E extends WithDependentClause ? ChainParserV2<E> : (
-            E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never)
+        E extends WithDependentClause ? ChainParserV2<E> : 
+            E extends PolymorphicEntity ? PolymorphParser<E> :
+                E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never
     )
     
     type CompleteParserV2 = {
         [P in Exclude<AnyEntity, File>["kind"]]:  SelectParserType<ToFullEntity<P>>
+        
     }
 
     const completeParserV2: CompleteParserV2 = {
@@ -265,16 +288,19 @@ export namespace Parse {
         },
 
         FieldType: {
-            kind: 'leaf',
-            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-            assemble(c, loc): FieldType | undefined {
-                const prim = Primitives.find(p => p === c.groups.type)
-                const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
+            kind: "polymorph",
+            priority: {
+                Primitive: 0,
+                CustomType: 1
+            },
+            // regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
+            assemble(differentiate): FieldType | undefined {
+                // const prim = Primitives.find(p => p === c.groups.type)
+                // const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
                 return {
                     kind: EntityKind.FieldType,
-                    loc,
-                    val 
+                    differentiate 
                 }
             }
         },
@@ -309,5 +335,28 @@ export namespace Parse {
             endRegex:/^\s*}/,
             hasMany: {Field: true}
         },
+        CustomType: {
+            kind: "leaf",
+            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
+            assemble(match, loc): CustomTypeEntity | undefined {
+                return {
+                    kind: EntityKind.CustomType,
+                    loc,
+                    from: match.groups.from,
+                    type: match.groups.type
+                }
+            }
+        },
+        Primitive: {
+            kind: "leaf",
+            regex: new RegExp(`^(?<val>(${Primitives.join("|")})) +`),
+            assemble(match, loc): PrimitiveEntity | undefined {
+                return {
+                    kind: EntityKind.Primitive,
+                    loc,
+                    val: Primitives.find(p => p === match.groups.val)
+                }
+            }
+        }
     }
 }

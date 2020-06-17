@@ -1,3 +1,5 @@
+import { PrimitiveUnion } from '../lexicon';
+import { Classified } from './../util/classifying';
 import { FileLocation } from "../util/filesystem"
 
 export enum EntityKind {
@@ -7,7 +9,9 @@ export enum EntityKind {
     Field="Field",
     Import="Import",
     File="File",
-    FieldType="FieldType"
+    FieldType="FieldType",
+    CustomType="CustomType",
+    Primitive="Primitive",
 }
 
 export type EntityLocation = {
@@ -18,8 +22,7 @@ export type EntityLocation = {
 }
 
 type Entity<KIND extends EntityKind> = {readonly kind: KIND}
-
-export type BaseFieldType<DATA> = IntrafileEntity<EntityKind.FieldType, DATA>
+export type BaseFieldType<DATA extends () => Entity<any>> = Entity<EntityKind.FieldType> & { differentiate: DATA}
 
 export type BaseField<TYPE extends Entity<EntityKind.FieldType>> = NamedIntrafile<EntityKind.Field, {
     readonly isRequired: boolean
@@ -48,6 +51,7 @@ type NamedIntrafile<KIND extends EntityKind, DATA extends any> = IntrafileEntity
 
 export type EnumMember = NamedIntrafile<EntityKind.EnumMember, {}>
 export type Enum = NamedIntrafile<EntityKind.Enum, ParentOfMany<EnumMember>> 
+export type PrimitiveEntity = IntrafileEntity<EntityKind.Primitive, {readonly val: PrimitiveUnion}>
 
 
 

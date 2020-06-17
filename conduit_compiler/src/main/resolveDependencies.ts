@@ -51,45 +51,42 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: Resolved.FieldType
                     // Switches on the variable so assert never works.
-                    const fieldType = f.peer.val
+                    const fieldType = f.peer.differentiate()
                     switch(fieldType.kind) {
                         
-                        case "primitive":
-                            t = {val: fieldType, loc: f.peer.loc, kind: EntityKind.FieldType}
+                        case EntityKind.Primitive:
+                            t = {differentiate: () => fieldType , kind: EntityKind.FieldType}
                             break;
                         
-                        case "deferred":
-                            const entity = fieldType.val
-                            if (entity.from) {
-                                const dependentFile = aliasToAbsFilename[entity.from]
+                        case EntityKind.CustomType:
+                            if (fieldType.from) {
+                                const dependentFile = aliasToAbsFilename[fieldType.from]
                                 if (!dependentFile) {
-                                    throw new Error(`Unable to resolve alias ${entity.from} for type: ${entity.type} in message ${m.name}`)            
+                                    throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.type} in message ${m.name}`)            
                                 }
                                 
                                 const targetFile = externalResolved[dependentFile]
 
-                                let maybeMsg = targetFile.children.Message.find(msg => msg.name === entity.type)
+                                let maybeMsg = targetFile.children.Message.find(msg => msg.name === fieldType.type)
                                 if (maybeMsg === undefined) {
-                                    let maybeEnm = targetFile.children.Enum.find(tenm => tenm.name === entity.type)
+                                    let maybeEnm = targetFile.children.Enum.find(tenm => tenm.name === fieldType.type)
                                     if (maybeEnm === undefined) {
-                                        throw new Error(`Unable to find type ${entity.type} in ${entity.from}`)
+                                        throw new Error(`Unable to find type ${fieldType.type} in ${fieldType.from}`)
                                     }
-                                    t = {val: {kind: EntityKind.Enum, val: () => maybeEnm}, loc: f.peer.loc, kind: EntityKind.FieldType}
+                                    // TODO: loc should be reference location, not entity location.
+                                    t = {differentiate: () => maybeEnm,  kind: EntityKind.FieldType}
                                 } else {
-                                    t = {val: {kind: EntityKind.Message, val: () => maybeMsg}, loc: f.peer.loc, kind: EntityKind.FieldType}
+                                    t = {differentiate: () => maybeMsg, kind: EntityKind.FieldType}
                                 }
 
 
                             } else {
-                                if (!(entity.type in intralookup)) {
-                                    throw new Error(`Unable to resolve field type: ${entity.type} in message ${m.name}`)            
+                                if (!(fieldType.type in intralookup)) {
+                                    throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
                                 }
                                 t =  {
-                                    val: {
-                                        kind: intralookup[entity.type].kind,
-                                        //@ts-ignore
-                                        val: () => resolvedLookup[entity.type]
-                                    }
+                                    differentiate: () => resolvedLookup[fieldType.type],
+                                    kind: EntityKind.FieldType
                                 }
                             }
                             
