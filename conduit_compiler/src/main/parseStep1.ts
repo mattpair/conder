@@ -10,7 +10,10 @@ export namespace Parse {
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
-
+    export type FunctionBody = common.BaseFunctionBody
+    export type ParameterList = common.BaseParameterList
+    export type ReturnTypeSpec = common.BaseReturnTypeSpec
+    export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
     export type Message = common.BaseMsg<Field>
     export type Import = common.BaseImport<{
         readonly fromPresentDir: boolean
@@ -138,7 +141,21 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
-    type AnyEntity = File | Message | Import | Field | common.Enum | common.EnumMember | FieldType | CustomTypeEntity | common.PrimitiveEntity
+    type AnyEntity = 
+        File | 
+        Message | 
+        Import | 
+        Field | 
+        common.Enum | 
+        common.EnumMember | 
+        FieldType | 
+        CustomTypeEntity | 
+        common.PrimitiveEntity | 
+        Function |
+        FunctionBody |
+        ParameterList |
+        ReturnTypeSpec
+
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
 
@@ -374,6 +391,51 @@ export namespace Parse {
                     val: Primitives.find(p => p === match.groups.val)
                 }
             }
-        }    
+        },
+        Function: {
+            kind: "conglomerate",
+            startRegex: /^\s*function +(?<name>[a-zA-Z_]\w*) +{.*}/,
+            endRegex: /^/,
+            assemble(start, end, loc, part): Function | undefined {
+                return {
+                    kind: "Function",
+                    loc,
+                    name: start.groups.name,
+                    part
+                }
+            },
+            requiresOne: new Ordering({FunctionBody: 3, ParameterList: 1, ReturnTypeSpec: 2})
+        },
+        ReturnTypeSpec: {
+            kind: "leaf",
+            regex: /^/,
+            assemble(c, loc): ReturnTypeSpec | undefined {
+                return {
+                    kind: "ReturnTypeSpec",
+                    loc
+                }
+            }
+        },
+        ParameterList: {
+            kind: "leaf",
+            regex: /^/,
+            assemble(c, loc): ParameterList | undefined {
+                return {
+                    kind: "ParameterList",
+                    loc
+                }
+            }
+        },
+
+        FunctionBody: {
+            kind: "leaf",
+            regex: /^/,
+            assemble(c, loc): FunctionBody | undefined {
+                return {
+                    kind: "FunctionBody",
+                    loc
+                }
+            }
+        }
     }
 }

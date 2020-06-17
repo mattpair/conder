@@ -108,13 +108,13 @@ protoCompileTest("dependency subdirs", {
     `
 })
 
-// protoCompileTest("function declaration", {
-//     "conduit_a.cdt": `
-//     function letsGetFuncy() {
+protoCompileTest("function declaration", {
+    "conduit_a.cdt": `
+    function letsGetFuncy() {
 
-//     }
-//     `
-// })
+    }
+    `
+})
 
 testFailsWhen("subdir isn't referenced in present dir", {
     "conduit_a.cdt": `

@@ -1,4 +1,4 @@
-import { PrimitiveUnion } from '../lexicon';
+import { PrimitiveUnion as common } from '../lexicon';
 import { FileLocation } from "../util/filesystem"
 
 export type EntityKinds = 
@@ -10,7 +10,12 @@ export type EntityKinds =
 "File" |
 "FieldType" |
 "CustomType" |
-"Primitive"
+"Primitive" |
+"Function" |
+"ParameterList" |
+"ReturnTypeSpec" | 
+"FunctionBody"
+
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
 export type EntityLocation = {
@@ -19,6 +24,7 @@ export type EntityLocation = {
     readonly startColNumber: number
     readonly endColNumber: number
 }
+type EntOf<KIND extends EntityKinds> = {kind: KIND}
 
 type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
 export type BaseFieldType<DATA extends () => Entity<any>> = Entity<"FieldType"> & { differentiate: DATA}
@@ -30,6 +36,12 @@ export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field"
 export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Message", ParentOfMany<FIELD_TYPE>> 
 
 export type BaseImport<T> = NamedIntrafile<"Import", T>
+
+export type BaseFunctionBody = IntrafileEntity<"FunctionBody", {}>
+export type BaseReturnTypeSpec = IntrafileEntity<"ReturnTypeSpec", {}>
+export type BaseParameterList = IntrafileEntity<"ParameterList", {}>
+export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
+    NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>
 
 export type BaseConduitFile<
     MESSAGE_TYPE extends {kind: "Message"}, 
@@ -50,7 +62,7 @@ type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = Intra
 
 export type EnumMember = NamedIntrafile<"EnumMember", {}>
 export type Enum = NamedIntrafile<"Enum", ParentOfMany<EnumMember>> 
-export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: PrimitiveUnion}>
+export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: common}>
 
 
 
