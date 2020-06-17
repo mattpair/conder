@@ -2,7 +2,7 @@ import { Parse } from './parseStep1';
 import { FileLocation } from './util/filesystem';
 import { Resolved } from './entity/resolved';
 import { assertNever } from './util/classifying';
-import { Enum, EntityKind } from './entity/basic';
+import { Enum, EntityKinds } from './entity/basic';
 
 
 function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {
@@ -42,11 +42,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
     
     Object.values(intralookup).forEach(m => {
         switch(m.kind) {
-            case EntityKind.Enum:
+            case "Enum":
                 resolvedLookup[m.name] = m
                 break;
 
-            case EntityKind.Message:
+            case "Message":
                 
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: Resolved.FieldType
@@ -54,11 +54,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                     const fieldType = f.peer.differentiate()
                     switch(fieldType.kind) {
                         
-                        case EntityKind.Primitive:
-                            t = {differentiate: () => fieldType , kind: EntityKind.FieldType}
+                        case "Primitive":
+                            t = {differentiate: () => fieldType , kind: "FieldType"}
                             break;
                         
-                        case EntityKind.CustomType:
+                        case "CustomType":
                             if (fieldType.from) {
                                 const dependentFile = aliasToAbsFilename[fieldType.from]
                                 if (!dependentFile) {
@@ -74,9 +74,9 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                         throw new Error(`Unable to find type ${fieldType.type} in ${fieldType.from}`)
                                     }
                                     // TODO: loc should be reference location, not entity location.
-                                    t = {differentiate: () => maybeEnm,  kind: EntityKind.FieldType}
+                                    t = {differentiate: () => maybeEnm,  kind: "FieldType"}
                                 } else {
-                                    t = {differentiate: () => maybeMsg, kind: EntityKind.FieldType}
+                                    t = {differentiate: () => maybeMsg, kind: "FieldType"}
                                 }
 
 
@@ -86,7 +86,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                                 }
                                 t =  {
                                     differentiate: () => resolvedLookup[fieldType.type],
-                                    kind: EntityKind.FieldType
+                                    kind: "FieldType"
                                 }
                             }
                             
@@ -99,7 +99,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                     return {...f, peer: t}
                 })
                 const rmsg: Resolved.Message = {
-                    kind: EntityKind.Message, 
+                    kind: "Message", 
                     name: m.name, 
                     loc: m.loc,
                     children: {Field: resolvedFields}}
@@ -115,13 +115,13 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
         
     })
     return {
-        kind: EntityKind.File,
+        kind: "File",
         loc: toResolve.loc,
         children: {
             Message: msgs,
             Enum: toResolve.children.Enum,
             Import: toResolve.children.Import.map(v => ({
-                kind: EntityKind.Import, 
+                kind: "Import", 
                 name: v.name, 
                 dep: toFullFilename(v, toResolve.loc), 
                 loc: v.loc

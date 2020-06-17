@@ -2,17 +2,19 @@ import { PrimitiveUnion } from '../lexicon';
 import { Classified } from './../util/classifying';
 import { FileLocation } from "../util/filesystem"
 
-export enum EntityKind {
-    EnumMember="EnumMember",
-    Enum="Enum",
-    Message="Message",
-    Field="Field",
-    Import="Import",
-    File="File",
-    FieldType="FieldType",
-    CustomType="CustomType",
-    Primitive="Primitive",
-}
+// export const INTRAFILE_ENTITY_KINDS: [] = 
+
+export type EntityKinds = 
+"EnumMember" |
+"Enum" |
+"Message" |
+"Field" |
+"Import" |
+"File" |
+"FieldType" |
+"CustomType" |
+"Primitive"
+export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
 export type EntityLocation = {
     readonly startLineNumber: number
@@ -21,37 +23,37 @@ export type EntityLocation = {
     readonly endColNumber: number
 }
 
-type Entity<KIND extends EntityKind> = {readonly kind: KIND}
-export type BaseFieldType<DATA extends () => Entity<any>> = Entity<EntityKind.FieldType> & { differentiate: DATA}
+type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
+export type BaseFieldType<DATA extends () => Entity<any>> = Entity<"FieldType"> & { differentiate: DATA}
 
-export type BaseField<TYPE extends Entity<EntityKind.FieldType>> = NamedIntrafile<EntityKind.Field, {
+export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field", {
     readonly isRequired: boolean
 } & DependsOnA<TYPE>> 
 
-export type BaseMsg<FIELD_TYPE extends {kind: EntityKind.Field}> = NamedIntrafile<EntityKind.Message, ParentOfMany<FIELD_TYPE>> 
+export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Message", ParentOfMany<FIELD_TYPE>> 
 
-export type BaseImport<T> = NamedIntrafile<EntityKind.Import, T>
+export type BaseImport<T> = NamedIntrafile<"Import", T>
 
 export type BaseConduitFile<
-    MESSAGE_TYPE extends {kind: EntityKind.Message}, 
-    ENUM_TYPE extends {kind: EntityKind.Enum}, 
-    IMPORT_TYPE extends {kind: EntityKind.Import}> = 
-Entity<EntityKind.File> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
+    MESSAGE_TYPE extends {kind: "Message"}, 
+    ENUM_TYPE extends {kind: "Enum"}, 
+    IMPORT_TYPE extends {kind: "Import"}> = 
+Entity<"File"> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
 
-type ParentOfMany<K extends Entity<EntityKind>> = {children: {readonly [P in K["kind"]]: K[]}}
-type DependsOnA<K extends Entity<EntityKind>> = {readonly peer: K}
+type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
+type DependsOnA<K extends Entity<EntityKinds>> = {readonly peer: K}
 
-export type IntrafileEntity<KIND extends EntityKind, DATA extends any> = {
+export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
     readonly loc: EntityLocation
 } & Entity<KIND> & DATA
 
-type NamedIntrafile<KIND extends EntityKind, DATA extends any> = IntrafileEntity<KIND, DATA & {
+type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = IntrafileEntity<KIND, DATA & {
     readonly name: string
 }> 
 
-export type EnumMember = NamedIntrafile<EntityKind.EnumMember, {}>
-export type Enum = NamedIntrafile<EntityKind.Enum, ParentOfMany<EnumMember>> 
-export type PrimitiveEntity = IntrafileEntity<EntityKind.Primitive, {readonly val: PrimitiveUnion}>
+export type EnumMember = NamedIntrafile<"EnumMember", {}>
+export type Enum = NamedIntrafile<"Enum", ParentOfMany<EnumMember>> 
+export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: PrimitiveUnion}>
 
 
 

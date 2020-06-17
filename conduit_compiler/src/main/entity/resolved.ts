@@ -1,6 +1,6 @@
 import { PrimitiveUnion } from '../lexicon';
 import { Classified } from '../util/classifying';
-import {Enum, EntityKind, BaseField, BaseMsg, BaseConduitFile, BaseImport, BaseFieldType, PrimitiveEntity} from './basic'
+import {Enum, BaseField, BaseMsg, BaseConduitFile, BaseImport, BaseFieldType, PrimitiveEntity} from './basic'
 
 export namespace Resolved {
 

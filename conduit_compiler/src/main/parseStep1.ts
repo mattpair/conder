@@ -1,12 +1,12 @@
 import { Primitives, Symbol } from './lexicon';
 import { assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
-import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseFieldType, PrimitiveEntity, IntrafileEntity} from './entity/basic'
+import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, BaseFieldType, PrimitiveEntity, IntrafileEntity, IntrafileEntityKinds, EntityKinds} from './entity/basic'
 
 
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
-    type CustomTypeEntity = IntrafileEntity<EntityKind.CustomType, {from?: string, type: string}>
+    type CustomTypeEntity = IntrafileEntity<"CustomType", {from?: string, type: string}>
     export type TypeUnion = () => PrimitiveEntity | CustomTypeEntity
     export type FieldType = BaseFieldType<TypeUnion>
     export type Field = BaseField<FieldType>
@@ -83,10 +83,10 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<EntityKind.File>(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Import: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
             return {
-                kind: EntityKind.File,
+                kind: "File",
                 loc: cursor.filelocation,
                 children
             }
@@ -145,7 +145,7 @@ export namespace Parse {
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
+    function tryExtractEntity<K extends IntrafileEntityKinds>(cursor: FileCursor, kind: K, parserSet: ParserMap): ToFullEntity<K> | undefined {
         const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
@@ -221,19 +221,19 @@ export namespace Parse {
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, peer: K["peer"]): K | undefined
         endRegex: RegExp
-        requiresA: K["peer"]["kind"]
+        requiresA: Extract<IntrafileEntityKinds, K["peer"]["kind"]>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
     type PolymorphParser<K extends PolymorphicEntity> = {
         kind: "polymorph"
         priority: {
-            [P in ReturnType<K["differentiate"]>["kind"]]: number
+            [P in Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>]: number
         }
         groupKind: K["kind"]
     }
 
-    type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
+    type ToFullEntity<K extends EntityKinds> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? AggregationParserV2<E> : (
         E extends WithDependentClause ? ConglomerateParserV2<E> : 
             E extends PolymorphicEntity ? PolymorphParser<E> :
@@ -260,7 +260,7 @@ export namespace Parse {
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
             assemble(start, end, loc, children): Enum | undefined {
                 return {
-                    kind: EntityKind.Enum,
+                    kind: "Enum",
                     name: start.groups.name,
                     loc,
                     children
@@ -276,7 +276,7 @@ export namespace Parse {
             assemble(c, loc): EnumMember | undefined {
 
                 return{
-                    kind: EntityKind.EnumMember,
+                    kind: "EnumMember",
                     name: c.groups.name,
                     loc
                 }   
@@ -288,7 +288,7 @@ export namespace Parse {
             regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
             assemble(c, loc): Import | undefined {
                 return {
-                    kind: EntityKind.Import,
+                    kind: "Import",
                     fromPresentDir: c.groups.presentDir !== undefined,
                     name: c.groups.name,
                     filename: c.groups.location,
@@ -303,7 +303,7 @@ export namespace Parse {
                 Primitive: 0,
                 CustomType: 1
             },
-            groupKind: EntityKind.FieldType
+            groupKind: "FieldType"
         },
 
         Field: {
@@ -312,14 +312,14 @@ export namespace Parse {
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
             assemble(start, end, loc, peer): Field | undefined {
                 return {
-                    kind: EntityKind.Field,
+                    kind: "Field",
                     name: end.groups.name,
                     isRequired: start.groups.optional === undefined,
                     loc,
                     peer
                 }
             },
-            requiresA: EntityKind.FieldType,
+            requiresA: "FieldType",
         },
 
         Message: {
@@ -327,7 +327,7 @@ export namespace Parse {
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
             assemble(start, end, loc, children): Message | undefined {
                 return {
-                    kind: EntityKind.Message,
+                    kind: "Message",
                     name: start.groups.name,
                     loc,
                     children
@@ -341,7 +341,7 @@ export namespace Parse {
             regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 return {
-                    kind: EntityKind.CustomType,
+                    kind: "CustomType",
                     loc,
                     from: match.groups.from,
                     type: match.groups.type
@@ -353,7 +353,7 @@ export namespace Parse {
             regex: new RegExp(`^(?<val>(${Primitives.join("|")})) +`),
             assemble(match, loc): PrimitiveEntity | undefined {
                 return {
-                    kind: EntityKind.Primitive,
+                    kind: "Primitive",
                     loc,
                     val: Primitives.find(p => p === match.groups.val)
                 }

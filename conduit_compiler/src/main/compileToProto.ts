@@ -3,7 +3,7 @@ import { Parse} from "./parseStep1";
 import { Resolved } from "./entity/resolved";
 import { resolveDeps } from "./resolveDependencies";
 import { FileLocation } from "./util/filesystem";
-import { Enum, EnumMember, EntityKind } from "./entity/basic";
+import { Enum, EnumMember } from "./entity/basic";
 
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
@@ -60,7 +60,7 @@ function printFields(fields: Resolved.Field[]): string {
     return fields
     .map((f, index) => {
         const p = f.peer.differentiate()
-        return `\t${f.isRequired ? 'required' : 'optional'} ${p.kind === EntityKind.Primitive ? p.val : p.name} ${f.name} = ${index + 1};`
+        return `\t${f.isRequired ? 'required' : 'optional'} ${p.kind === "Primitive" ? p.val : p.name} ${f.name} = ${index + 1};`
     })
     .join("\n")
 }
