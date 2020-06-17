@@ -20,7 +20,6 @@ export namespace Parse {
         readonly filename: string
     }>
 
-    // export type FunctionBody = BaseFunctionBody
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
     type MatchResult = {hit: true, match: RegExpExecArray, loc: common.EntityLocation} | {hit: false}
