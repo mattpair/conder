@@ -186,9 +186,9 @@ export namespace Parse {
                     const elt = order[i];
                     const ent = tryExtractEntity(cursor, 
                         elt, 
-                        parserSet) as any
+                        parserSet)
                     if (ent !== undefined) {
-                        return {kind: parser.groupKind, differentiate:() => ent}
+                        return {kind: parser.groupKind, differentiate:() => ent as any}
                     }
                 }
                 throw new Error(`Failure parsing polymorphic entity: ${cursor.getPositionHint()}`)
