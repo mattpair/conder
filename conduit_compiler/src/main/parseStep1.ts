@@ -1,5 +1,5 @@
-import { Primitives, PrimitiveUnion, Symbol } from './lexicon';
-import { Classified, assertNever } from './util/classifying';
+import { Primitives, Symbol } from './lexicon';
+import { assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
 import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseFieldType, PrimitiveEntity, IntrafileEntity} from './entity/basic'
 
@@ -188,7 +188,8 @@ export namespace Parse {
                         elt, 
                         parserSet)
                     if (ent !== undefined) {
-                        return parser.assemble(() => ent)
+                        //@ts-ignore
+                        return {kind: parser.groupKind, differentiate:() => ent}
                     }
                 }
                 throw new Error(`Failure parsing polymorphic entity: ${cursor.getPositionHint()}`)
@@ -229,7 +230,7 @@ export namespace Parse {
         priority: {
             [P in ReturnType<K["differentiate"]>["kind"]]: number
         }
-        assemble(differentiate: K["differentiate"]): K | undefined 
+        groupKind: K["kind"]
     }
 
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
@@ -293,16 +294,7 @@ export namespace Parse {
                 Primitive: 0,
                 CustomType: 1
             },
-            // regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-            assemble(differentiate): FieldType | undefined {
-                // const prim = Primitives.find(p => p === c.groups.type)
-                // const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
-
-                return {
-                    kind: EntityKind.FieldType,
-                    differentiate 
-                }
-            }
+            groupKind: EntityKind.FieldType
         },
 
         Field: {
