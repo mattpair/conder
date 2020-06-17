@@ -177,12 +177,11 @@ export namespace Parse {
                 return parser.assemble(start.match, end.match, start.loc, depMatch)
 
             case "polymorph":
-                const o = Object.entries(parser.priority)
-                const sorted = o.sort((a, b) => a[1] - b[1]).map(a => a[0])
-                for (let i = 0; i < sorted.length; i++) {
-                    const elt = sorted[i];
+                
+                for (let i = 0; i < parser.priority.length; i++) {
+                    const kind = parser.priority[i];
                     const ent = tryExtractEntity(cursor, 
-                        elt as IntrafileEntityKinds, 
+                        kind, 
                         parserSet) as any
                     if (ent !== undefined) {
                         return {kind: parser.groupKind, differentiate:() => ent}
@@ -223,9 +222,8 @@ export namespace Parse {
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
     type PolymorphParser<K extends PolymorphicEntity> = {
         kind: "polymorph"
-        priority: {
-            [P in Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>]: number
-        }
+        priority: Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>[]
+        
         groupKind: K["kind"]
     }
 
@@ -295,10 +293,7 @@ export namespace Parse {
 
         FieldType: {
             kind: "polymorph",
-            priority: {
-                Primitive: 0,
-                CustomType: 1
-            },
+            priority: ["Primitive", "CustomType"],
             groupKind: "FieldType"
         },
 
