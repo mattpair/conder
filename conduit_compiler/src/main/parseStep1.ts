@@ -223,6 +223,12 @@ export namespace Parse {
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
     type PolymorphParser<K extends PolymorphicEntity> = {
         kind: "polymorph"
+        // We use an object rather than all possible orderings of the kinds due to limitations of typescript.
+        // The best we could do in typescript is an array of our union of kinds.
+        // This is undesirable because you can compile a polymorphic type that hasn't prioritized all of its implementations.
+        // Typescript does not have a way to go from a union to all possible ordering of union members, which is what we would want.
+        // Further reading: https://github.com/Microsoft/TypeScript/issues/13298 
+        // More reading: https://github.com/microsoft/TypeScript/issues/26223#issuecomment-513187373
         priority: {
             [P in Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>]: number
         }
