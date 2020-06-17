@@ -122,7 +122,7 @@ export namespace Parse {
     }
 
 
-    function extractToCompositeEntity<P extends AggregationParserV2<any>>(cursor: FileCursor, parser: P, parserSet: CompleteParserV2): AnyEntity | undefined {
+    function extractToCompositeEntity<P extends AggregationParserV2<any>>(cursor: FileCursor, parser: P, parserSet: CompleteParserV2): Exclude<AnyEntity, File> | undefined {
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
@@ -142,7 +142,7 @@ export namespace Parse {
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): any | undefined {
+    function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
         const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
@@ -183,7 +183,7 @@ export namespace Parse {
                     const elt = sorted[i];
                     const ent = tryExtractEntity(cursor, 
                         elt as IntrafileEntityKinds, 
-                        parserSet)
+                        parserSet) as any
                     if (ent !== undefined) {
                         return {kind: parser.groupKind, differentiate:() => ent}
                     }
