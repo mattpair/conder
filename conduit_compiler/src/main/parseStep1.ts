@@ -146,7 +146,7 @@ export namespace Parse {
 
 
     function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
-        const parser: AggregationParserV2<any> | LeafParserV2<any> | ChainParserV2<any> | PolymorphParser<any> = parserSet[kind]
+        const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
                 //@ts-ignore
@@ -160,7 +160,7 @@ export namespace Parse {
                 }
                 return undefined
 
-            case "chain":
+            case "conglomerate":
                 
                 const start = cursor.tryMatch(parser.startRegex)
                 if (!start.hit) {
@@ -216,8 +216,8 @@ export namespace Parse {
         regex: RegExp
         assemble(c: RegExpExecArray, loc: EntityLocation): K | undefined
     }>
-    type ChainParserV2<K extends WithDependentClause> = Readonly<{
-        kind: "chain"
+    type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
+        kind: "conglomerate"
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, peer: K["peer"]): K | undefined
         endRegex: RegExp
@@ -235,7 +235,7 @@ export namespace Parse {
 
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? AggregationParserV2<E> : (
-        E extends WithDependentClause ? ChainParserV2<E> : 
+        E extends WithDependentClause ? ConglomerateParserV2<E> : 
             E extends PolymorphicEntity ? PolymorphParser<E> :
                 E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never
     )
@@ -307,7 +307,7 @@ export namespace Parse {
         },
 
         Field: {
-            kind: "chain",
+            kind: "conglomerate",
             startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
             assemble(start, end, loc, peer): Field | undefined {
