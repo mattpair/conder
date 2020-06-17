@@ -51,7 +51,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: Resolved.FieldType
                     // Switches on the variable so assert never works.
-                    const fieldType = f.peer.differentiate()
+                    const fieldType = f.part.FieldType.differentiate()
                     switch(fieldType.kind) {
                         
                         case "Primitive":
@@ -96,7 +96,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                         default: return assertNever(fieldType)
                         
                     }
-                    return {...f, peer: t}
+                    return {...f, part: {FieldType: t}}
                 })
                 const rmsg: Resolved.Message = {
                     kind: "Message", 

@@ -139,10 +139,11 @@ export namespace Parse {
 
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType | CustomTypeEntity | PrimitiveEntity
     type WithChildren = Extract<AnyEntity, {children: any}>
-    type WithDependentClause= Extract<AnyEntity, {peer: any}>
+    type WithDependentClause= Extract<AnyEntity, {part: any}>
 
 
     function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
+        //@ts-ignore
         const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
@@ -164,17 +165,20 @@ export namespace Parse {
                 if (!start.hit) {
                     return undefined
                 }
-
-                const depMatch = tryExtractEntity(cursor, parser.requiresA, parserSet)
-                if (depMatch === undefined) {
-                    throw new Error(`Unable to parse required type entity at ${JSON.stringify(start.loc)}`)
+                const part: any = {}
+                for (const req in parser.requiresOne) {
+                    const depMatch = tryExtractEntity(cursor, req as IntrafileEntityKinds, parserSet)
+                    if (depMatch === undefined) {
+                        throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}`)
+                    }
+                    part[req] = depMatch
                 }
 
                 const end = cursor.tryMatch(parser.endRegex)
                 if (!end.hit) {
                     throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
                 }
-                return parser.assemble(start.match, end.match, start.loc, depMatch)
+                return parser.assemble(start.match, end.match, start.loc, part)
 
             case "polymorph":
                 const o = Object.entries(parser.priority)
@@ -215,9 +219,11 @@ export namespace Parse {
     type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
         kind: "conglomerate"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, peer: K["peer"]): K | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresA: Extract<IntrafileEntityKinds, K["peer"]["kind"]>
+        requiresOne: {
+            [P in Extract<IntrafileEntityKinds, keyof K["part"]>]: number
+        }
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -243,7 +249,7 @@ export namespace Parse {
     )
 
     type GetAllDependencies<E extends keyof ParserMap> = E extends WithChildren["kind"] ? keyof Extract<WithChildren, {kind: E}>["children"] :
-        E extends WithDependentClause["kind"] ? Extract<WithDependentClause, {kind: E}>["peer"]["kind"] : 
+        E extends WithDependentClause["kind"] ? keyof Extract<WithDependentClause, {kind: E}>["part"] : 
             E extends PolymorphicEntity["kind"] ? ReturnType<Extract<Extract<PolymorphicEntity, {differentiate: any}>, {kind: E}>["differentiate"]>["kind"] : never
     
     type ParserMap = {
@@ -312,16 +318,18 @@ export namespace Parse {
             kind: "conglomerate",
             startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
             endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
-            assemble(start, end, loc, peer): Field | undefined {
+            assemble(start, end, loc, part): Field | undefined {
                 return {
                     kind: "Field",
                     name: end.groups.name,
                     isRequired: start.groups.optional === undefined,
                     loc,
-                    peer
+                    part
                 }
             },
-            requiresA: "FieldType",
+            requiresOne: {
+                FieldType: 1
+            },
         },
 
         Message: {

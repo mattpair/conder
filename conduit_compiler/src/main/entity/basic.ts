@@ -25,7 +25,7 @@ export type BaseFieldType<DATA extends () => Entity<any>> = Entity<"FieldType"> 
 
 export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field", {
     readonly isRequired: boolean
-} & DependsOnA<TYPE>> 
+} & RequiresOne<TYPE>> 
 
 export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Message", ParentOfMany<FIELD_TYPE>> 
 
@@ -38,7 +38,7 @@ export type BaseConduitFile<
 Entity<"File"> & ParentOfMany<MESSAGE_TYPE> &  ParentOfMany<ENUM_TYPE> & ParentOfMany<IMPORT_TYPE> & {readonly loc: FileLocation}
 
 type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
-type DependsOnA<K extends Entity<EntityKinds>> = {readonly peer: K}
+type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}
 
 export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
     readonly loc: EntityLocation

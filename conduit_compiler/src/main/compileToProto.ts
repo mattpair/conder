@@ -59,7 +59,7 @@ ${fields}
 function printFields(fields: Resolved.Field[]): string {
     return fields
     .map((f, index) => {
-        const p = f.peer.differentiate()
+        const p = f.part.FieldType.differentiate()
         return `\t${f.isRequired ? 'required' : 'optional'} ${p.kind === "Primitive" ? p.val : p.name} ${f.name} = ${index + 1};`
     })
     .join("\n")
