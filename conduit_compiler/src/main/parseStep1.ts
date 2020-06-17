@@ -182,11 +182,9 @@ export namespace Parse {
                 for (let i = 0; i < sorted.length; i++) {
                     const elt = sorted[i];
                     const ent = tryExtractEntity(cursor, 
-                        //@ts-ignore
-                        elt, 
+                        elt as IntrafileEntityKinds, 
                         parserSet)
                     if (ent !== undefined) {
-                        //@ts-ignore
                         return {kind: parser.groupKind, differentiate:() => ent}
                     }
                 }
