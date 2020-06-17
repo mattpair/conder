@@ -19,7 +19,7 @@ export type EntityLocation = {
 
 type Entity<KIND extends EntityKind> = {readonly kind: KIND}
 
-export type BaseType<DATA> = IntrafileEntity<EntityKind.FieldType, DATA>
+export type BaseFieldType<DATA> = IntrafileEntity<EntityKind.FieldType, DATA>
 
 export type BaseField<TYPE extends Entity<EntityKind.FieldType>> = NamedIntrafile<EntityKind.Field, {
     readonly isRequired: boolean

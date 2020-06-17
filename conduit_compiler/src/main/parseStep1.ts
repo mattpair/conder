@@ -1,13 +1,13 @@
 import { Primitives, PrimitiveUnion, Symbol } from './lexicon';
 import { Classified, assertNever } from './util/classifying';
 import { FileLocation } from "./util/filesystem";
-import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseType} from './entity/basic'
+import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, EnumMember, EntityKind, BaseFieldType} from './entity/basic'
 
 
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
     export type TypeUnion = Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>
-    export type Type = BaseType<{val: TypeUnion}>
+    export type Type = BaseFieldType<{val: TypeUnion}>
     export type Field = BaseField<Type>
 
     export type Message = BaseMsg<Field>
