@@ -123,21 +123,19 @@ export namespace Parse {
     }
 
 
-    function extractToCompositeEntity<K extends Exclude<WithChildren, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): EntityOf<K> | undefined {
-        //@ts-ignore
-        const parser: AggregationParserV2<EntityOf<K>> = parserSet[kind]
+    function extractToCompositeEntity<P extends AggregationParserV2<any>>(cursor: FileCursor, parser: P, parserSet: CompleteParserV2): AnyEntity | undefined {
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
         }
         
-        const children: EntityOf<K>['children'] = extractChildren<K>(cursor, parserSet, parser.hasMany)
+        const children = extractChildren(cursor, parserSet, parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return parser.assemble(m.match, end.match, m.loc, children)
         }
 
-        throw new Error(`Unable to parse end for entity: ${kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
+        throw new Error(`Unable to parse end for entity: ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
     type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType | CustomTypeEntity | PrimitiveEntity
@@ -145,14 +143,15 @@ export namespace Parse {
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
 
-    function tryExtractEntity<K extends IntrafileEntityKinds>(cursor: FileCursor, kind: K, parserSet: ParserMap): ToFullEntity<K> | undefined {
+    function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): any | undefined {
         const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
-                //@ts-ignore
-                return extractToCompositeEntity<K>(cursor, 
-                    kind, 
+                
+                return extractToCompositeEntity(cursor, 
+                    parser, 
                     parserSet)
+
             case "leaf":
                 const match = cursor.tryMatch(parser.regex)
                 if (match.hit) {
