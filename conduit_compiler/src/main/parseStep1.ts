@@ -166,13 +166,13 @@ export namespace Parse {
                     return undefined
                 }
                 const part: any = {}
-                for (const req in parser.requiresOne) {
-                    const depMatch = tryExtractEntity(cursor, req as IntrafileEntityKinds, parserSet)
+                parser.requiresOne.order.forEach(req => {
+                    const depMatch = tryExtractEntity(cursor, req, parserSet)
                     if (depMatch === undefined) {
                         throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}`)
                     }
                     part[req] = depMatch
-                }
+                })
 
                 const end = cursor.tryMatch(parser.endRegex)
                 if (!end.hit) {
@@ -229,9 +229,7 @@ export namespace Parse {
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresOne: {
-            [P in Extract<IntrafileEntityKinds, keyof K["part"]>]: number
-        }
+        requiresOne: Ordering<Extract<IntrafileEntityKinds, keyof K["part"]>>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -334,9 +332,9 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: {
+            requiresOne: new Ordering({
                 FieldType: 1
-            },
+            }),
         },
 
         Message: {
