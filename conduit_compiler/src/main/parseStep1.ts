@@ -7,8 +7,8 @@ import {BaseConduitFile, Enum, EntityLocation, BaseField, BaseMsg, BaseImport, E
 export namespace Parse {
     export type File = BaseConduitFile<Message, Enum, Import>
     export type TypeUnion = Classified<"primitive", PrimitiveUnion> | Classified<"deferred", {from?: string, type: string}>
-    export type Type = BaseFieldType<{val: TypeUnion}>
-    export type Field = BaseField<Type>
+    export type FieldType = BaseFieldType<{val: TypeUnion}>
+    export type Field = BaseField<FieldType>
 
     export type Message = BaseMsg<Field>
     export type Import = BaseImport<{
@@ -139,7 +139,7 @@ export namespace Parse {
         throw new Error(`Unable to parse end for entity: ${kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
     }
 
-    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | Type
+    type AnyEntity = File | Message | Import | Field | Enum | EnumMember | FieldType
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
@@ -267,7 +267,7 @@ export namespace Parse {
         FieldType: {
             kind: 'leaf',
             regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
-            assemble(c, loc): Type | undefined {
+            assemble(c, loc): FieldType | undefined {
                 const prim = Primitives.find(p => p === c.groups.type)
                 const val: TypeUnion = prim !== undefined ? {kind: "primitive", val: prim} : {kind: "deferred", val: {from: c.groups.from, type: c.groups.type}}
 
