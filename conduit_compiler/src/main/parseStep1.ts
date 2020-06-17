@@ -181,12 +181,11 @@ export namespace Parse {
                 return parser.assemble(start.match, end.match, start.loc, part)
 
             case "polymorph":
-                const o = Object.entries(parser.priority)
-                const sorted = o.sort((a, b) => a[1] - b[1]).map(a => a[0])
-                for (let i = 0; i < sorted.length; i++) {
-                    const elt = sorted[i];
+                const order = parser.priority.order 
+                for (let i = 0; i < order.length; i++) {
+                    const elt = order[i];
                     const ent = tryExtractEntity(cursor, 
-                        elt as IntrafileEntityKinds, 
+                        elt, 
                         parserSet) as any
                     if (ent !== undefined) {
                         return {kind: parser.groupKind, differentiate:() => ent}
@@ -202,6 +201,15 @@ export namespace Parse {
     }
 
     type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
+
+    class Ordering<K extends IntrafileEntityKinds> {
+        readonly order: K[]
+
+        constructor(priorityMap: Record<K, number>) {
+            const o = Object.entries(priorityMap) as [K, number][]
+            this.order = o.sort((a, b) => a[1] - b[1]).map(a => a[0])
+        }
+    }
 
     type AggregationParserV2<K extends WithChildren> = Readonly<{
         kind: "aggregate"
@@ -229,15 +237,14 @@ export namespace Parse {
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
     type PolymorphParser<K extends PolymorphicEntity> = {
         kind: "polymorph"
+        // Ordering types perform the sort at startup. 
         // We use an object rather than all possible orderings of the kinds due to limitations of typescript.
         // The best we could do in typescript is an array of our union of kinds.
         // This is undesirable because you can compile a polymorphic type that hasn't prioritized all of its implementations.
         // Typescript does not have a way to go from a union to all possible ordering of union members, which is what we would want.
         // Further reading: https://github.com/Microsoft/TypeScript/issues/13298 
         // More reading: https://github.com/microsoft/TypeScript/issues/26223#issuecomment-513187373
-        priority: {
-            [P in Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>]: number
-        }
+        priority: Ordering<Extract<IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>>
         groupKind: K["kind"]
     }
 
@@ -307,10 +314,10 @@ export namespace Parse {
 
         FieldType: {
             kind: "polymorph",
-            priority: {
+            priority: new Ordering({
                 Primitive: 0,
                 CustomType: 1
-            },
+            }),
             groupKind: "FieldType"
         },
 
