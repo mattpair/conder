@@ -11,7 +11,8 @@ export namespace Parse {
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
     export type FunctionBody = common.BaseFunctionBody
-    export type ParameterList = common.BaseParameterList
+    export type Parameter = common.BaseParameter
+    export type ParameterList = common.BaseParameterList<Parameter>
     export type ReturnTypeSpec = common.BaseReturnTypeSpec
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
     export type Message = common.BaseMsg<Field>
@@ -111,7 +112,7 @@ export namespace Parse {
             for (const key in accepts) {
                 
                 const child = tryExtractEntity(cursor, 
-                    key as common.IntrafileEntityKinds, 
+                    key as keyof CompleteParserV2, 
                     parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
@@ -153,7 +154,8 @@ export namespace Parse {
         Function |
         FunctionBody |
         ParameterList |
-        ReturnTypeSpec
+        ReturnTypeSpec |
+        Parameter
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -416,14 +418,17 @@ export namespace Parse {
             }
         },
         ParameterList: {
-            kind: "leaf",
-            regex: /^/,
-            assemble(c, loc): ParameterList | undefined {
+            kind: "aggregate",
+            startRegex: /^\(/,
+            endRegex: /^\s*\)/,
+            assemble(start, end, loc, children): ParameterList | undefined {
                 return {
                     kind: "ParameterList",
-                    loc
+                    loc,
+                    children
                 }
-            }
+            },
+            hasMany: {Parameter: true}
         },
 
         FunctionBody: {
@@ -432,6 +437,16 @@ export namespace Parse {
             assemble(c, loc): FunctionBody | undefined {
                 return {
                     kind: "FunctionBody",
+                    loc
+                }
+            }
+        },
+        Parameter: {
+            kind: "leaf",
+            regex: /^/,
+            assemble(c, loc): Parameter | undefined {
+                return {
+                    kind: "Parameter",
                     loc
                 }
             }
