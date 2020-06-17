@@ -1,4 +1,4 @@
-import { Parse } from './parseStep1';
+import { Parse } from './parse';
 import { FileLocation } from './util/filesystem';
 import { Resolved } from './entity/resolved';
 import { assertNever } from './util/classifying';

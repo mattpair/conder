@@ -1,5 +1,5 @@
 
-import { Parse} from "./parseStep1";
+import { Parse} from "./parse";
 import { Resolved } from "./entity/resolved";
 import { resolveDeps } from "./resolveDependencies";
 import { FileLocation } from "./util/filesystem";
