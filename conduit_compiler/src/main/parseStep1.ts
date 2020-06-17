@@ -133,13 +133,7 @@ export namespace Parse {
         const children: EntityOf<K>['children'] = extractChildren<K>(cursor, parserSet, parser.hasMany)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
-            //@ts-ignore
-            return {
-                kind,
-                loc: m.loc,
-                ...parser.assemble(m.match, end.match),
-                children
-            }
+            return parser.assemble(m.match, end.match, m.loc, children)
         }
 
         throw new Error(`Unable to parse end for entity: ${kind} \n\n ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
@@ -149,8 +143,6 @@ export namespace Parse {
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {peer: any}>
 
-
-    type OnlyCustomFieldsOf<K extends AnyEntity> = Omit<K, "loc" | "children" | "peer" | "kind">
 
     function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
         const parser: CompositeParserV2<any> | LeafParserV2<any> | ChainParserV2<any> = parserSet[kind]
@@ -196,7 +188,7 @@ export namespace Parse {
     type CompositeParserV2<K extends WithChildren> = Readonly<{
         kind: "composite"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray): OnlyCustomFieldsOf<K> | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, children: K["children"]): K | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
     }>
@@ -228,9 +220,12 @@ export namespace Parse {
         Enum: {
             kind: "composite",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end): OnlyCustomFieldsOf<Enum> | undefined {
+            assemble(start, end, loc, children): Enum | undefined {
                 return {
+                    kind: EntityKind.Enum,
                     name: start.groups.name,
+                    loc,
+                    children
                 }
             },
             endRegex:/^\s*}/,
@@ -298,9 +293,12 @@ export namespace Parse {
         Message: {
             kind: "composite",
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end): OnlyCustomFieldsOf<Message> | undefined {
+            assemble(start, end, loc, children): Message | undefined {
                 return {
+                    kind: EntityKind.Message,
                     name: start.groups.name,
+                    loc,
+                    children
                 }
             },
             endRegex:/^\s*}/,
