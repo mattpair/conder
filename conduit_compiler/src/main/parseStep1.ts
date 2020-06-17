@@ -125,7 +125,7 @@ export namespace Parse {
 
     function extractToCompositeEntity<K extends Exclude<WithChildren, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): EntityOf<K> | undefined {
         //@ts-ignore
-        const parser: CompositeParserV2<EntityOf<K>> = parserSet[kind]
+        const parser: AggregationParserV2<EntityOf<K>> = parserSet[kind]
         const m = cursor.tryMatch(parser.startRegex)
         if (!m.hit) {
             return undefined
@@ -146,9 +146,9 @@ export namespace Parse {
 
 
     function tryExtractEntity<K extends Exclude<AnyEntity, File>["kind"]>(cursor: FileCursor, kind: K, parserSet: CompleteParserV2): ToFullEntity<K> | undefined {
-        const parser: CompositeParserV2<any> | LeafParserV2<any> | ChainParserV2<any> | PolymorphParser<any> = parserSet[kind]
+        const parser: AggregationParserV2<any> | LeafParserV2<any> | ChainParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
-            case "composite":
+            case "aggregate":
                 //@ts-ignore
                 return extractToCompositeEntity<K>(cursor, 
                     kind, 
@@ -203,8 +203,8 @@ export namespace Parse {
 
     type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
 
-    type CompositeParserV2<K extends WithChildren> = Readonly<{
-        kind: "composite"
+    type AggregationParserV2<K extends WithChildren> = Readonly<{
+        kind: "aggregate"
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: EntityLocation, children: K["children"]): K | undefined
         endRegex: RegExp
@@ -234,7 +234,7 @@ export namespace Parse {
     }
 
     type ToFullEntity<K extends EntityKind> = Extract<AnyEntity, {kind: K}>
-    type SelectParserType<E extends AnyEntity> = E extends WithChildren ? CompositeParserV2<E> : (
+    type SelectParserType<E extends AnyEntity> = E extends WithChildren ? AggregationParserV2<E> : (
         E extends WithDependentClause ? ChainParserV2<E> : 
             E extends PolymorphicEntity ? PolymorphParser<E> :
                 E extends Exclude<AnyEntity, WithDependentClause | WithChildren> ? LeafParserV2<E> : never
@@ -256,7 +256,7 @@ export namespace Parse {
 
     const completeParserV2: CompleteParserV2 = {
         Enum: {
-            kind: "composite",
+            kind: "aggregate",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
             assemble(start, end, loc, children): Enum | undefined {
                 return {
@@ -323,7 +323,7 @@ export namespace Parse {
         },
 
         Message: {
-            kind: "composite",
+            kind: "aggregate",
             startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
             assemble(start, end, loc, children): Message | undefined {
                 return {
