@@ -15,7 +15,8 @@ export type EntityKinds =
 "ParameterList" |
 "ReturnTypeSpec" | 
 "FunctionBody" | 
-"Parameter"
+"Parameter" | 
+"ParameterType"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -40,7 +41,7 @@ export type BaseImport<T> = NamedIntrafile<"Import", T>
 
 export type BaseFunctionBody = IntrafileEntity<"FunctionBody", {}>
 export type BaseReturnTypeSpec = IntrafileEntity<"ReturnTypeSpec", {}>
-export type BaseParameter = IntrafileEntity<"Parameter", {}>
+export type BaseParameter<T extends EntOf<"CustomType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
 export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"ParameterList", ParentOfMany<T>>
 export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
     NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>

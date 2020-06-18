@@ -110,7 +110,7 @@ protoCompileTest("dependency subdirs", {
 
 protoCompileTest("function declaration", {
     "conduit_a.cdt": `
-    function letsGetFuncy() {
+    function letsGetFuncy(a: SomeType, b: Foreign.Type) {
 
     }
     `

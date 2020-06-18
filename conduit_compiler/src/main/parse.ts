@@ -11,7 +11,7 @@ export namespace Parse {
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
     export type FunctionBody = common.BaseFunctionBody
-    export type Parameter = common.BaseParameter
+    export type Parameter = common.BaseParameter<CustomTypeEntity>
     export type ParameterList = common.BaseParameterList<Parameter>
     export type ReturnTypeSpec = common.BaseReturnTypeSpec
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
@@ -162,7 +162,6 @@ export namespace Parse {
 
 
     function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
-        //@ts-ignore
         const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
         switch(parser.kind) {
             case "aggregate":
@@ -221,7 +220,7 @@ export namespace Parse {
 
     type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
 
-    class Ordering<K extends common.IntrafileEntityKinds> {
+    class Ordering<K extends keyof CompleteParserV2> {
         readonly order: K[]
 
         constructor(priorityMap: Record<K, number>) {
@@ -248,7 +247,7 @@ export namespace Parse {
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresOne: Ordering<Extract<common.IntrafileEntityKinds, keyof K["part"]>>
+        requiresOne: Ordering<Extract<keyof CompleteParserV2, keyof K["part"]>>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -261,7 +260,7 @@ export namespace Parse {
         // Typescript does not have a way to go from a union to all possible ordering of union members, which is what we would want.
         // Further reading: https://github.com/Microsoft/TypeScript/issues/13298 
         // More reading: https://github.com/microsoft/TypeScript/issues/26223#issuecomment-513187373
-        priority: Ordering<Extract<common.IntrafileEntityKinds, ReturnType<K["differentiate"]>["kind"]>>
+        priority: Ordering<Extract<keyof CompleteParserV2, ReturnType<K["differentiate"]>["kind"]>>
         groupKind: K["kind"]
     }
 
@@ -442,14 +441,18 @@ export namespace Parse {
             }
         },
         Parameter: {
-            kind: "leaf",
-            regex: /^/,
-            assemble(c, loc): Parameter | undefined {
+            kind: "conglomerate",
+            startRegex: /^\s+(?<name>[a-zA-Z_]\w*):/,
+            endRegex: /^\s*,?/,
+            assemble(start, end, loc, part): Parameter | undefined {
                 return {
                     kind: "Parameter",
-                    loc
+                    name: start.groups.name,
+                    loc,
+                    part
                 }
-            }
+            },
+            requiresOne: new Ordering({CustomType: 1})
         }
     }
 }
