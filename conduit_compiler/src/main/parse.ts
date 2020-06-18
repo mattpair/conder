@@ -491,8 +491,4 @@ export namespace Parse {
             }
         }
     }
-    type aaa = Ordering<"CustomType" | "VoidReturnType">
-
-    type bbbb = Record<"CustomType" | "VoidReturnType", true>
-    const a: aaa = new Ordering({})
 }
