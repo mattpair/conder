@@ -163,7 +163,7 @@ export namespace Parse {
 
 
     function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
-        const parser: AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any> = parserSet[kind]
+        const parser = parserSet[kind] as AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any>
         switch(parser.kind) {
             case "aggregate":
                 
@@ -185,7 +185,7 @@ export namespace Parse {
                     return undefined
                 }
                 const part: any = {}
-                parser.requiresOne.order.forEach(req => {
+                new Ordering(parser.requiresOne).order.forEach(req => {
                     const depMatch = tryExtractEntity(cursor, req, parserSet)
                     if (depMatch === undefined) {
                         throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}\n\n ${cursor.getPositionHint()}`)
@@ -200,7 +200,7 @@ export namespace Parse {
                 return parser.assemble(start.match, end.match, start.loc, part)
 
             case "polymorph":
-                const order = parser.priority.order 
+                const order = new Ordering(parser.priority).order 
                 for (let i = 0; i < order.length; i++) {
                     const elt = order[i];
                     const ent = tryExtractEntity(cursor, 
@@ -248,7 +248,7 @@ export namespace Parse {
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresOne: Ordering<Extract<keyof CompleteParserV2, keyof K["part"]>>
+        requiresOne: Record<Extract<keyof CompleteParserV2, keyof K["part"]>, number>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -261,7 +261,7 @@ export namespace Parse {
         // Typescript does not have a way to go from a union to all possible ordering of union members, which is what we would want.
         // Further reading: https://github.com/Microsoft/TypeScript/issues/13298 
         // More reading: https://github.com/microsoft/TypeScript/issues/26223#issuecomment-513187373
-        priority: Ordering<Extract<keyof CompleteParserV2, ReturnType<K["differentiate"]>["kind"]>>
+        priority: Record<Extract<keyof CompleteParserV2, ReturnType<K["differentiate"]>["kind"]>, number>
         groupKind: K["kind"]
     }
 
@@ -331,10 +331,10 @@ export namespace Parse {
 
         FieldType: {
             kind: "polymorph",
-            priority: new Ordering({
+            priority: {
                 Primitive: 0,
                 CustomType: 1
-            }),
+            },
             groupKind: "FieldType"
         },
 
@@ -351,9 +351,9 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: new Ordering({
+            requiresOne: {
                 FieldType: 1
-            }),
+            },
         },
 
         Message: {
@@ -405,12 +405,12 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: new Ordering({FunctionBody: 3, ParameterList: 1, ReturnTypeSpec: 2})
+            requiresOne: {FunctionBody: 3, ParameterList: 1, ReturnTypeSpec: 2}
         },
         ReturnTypeSpec: {
             kind: "polymorph",
             groupKind: "ReturnTypeSpec",
-            priority: new Ordering({CustomType: 2, VoidReturnType: 3})
+            priority: {CustomType: 2, VoidReturnType: 3}
         },
         ParameterList: {
             kind: "aggregate",
@@ -448,7 +448,7 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: new Ordering({CustomType: 1})
+            requiresOne: {CustomType: 1}
         },
         VoidReturnType: {
             kind: "leaf",
