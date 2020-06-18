@@ -166,8 +166,11 @@ Object {
         \\"loc\\": {
           \\"startColNumber\\": 56,
           \\"startLineNumber\\": 1,
-          \\"endColNumber\\": 5,
-          \\"endLineNumber\\": 3
+          \\"endColNumber\\": 57,
+          \\"endLineNumber\\": 1
+        },
+        \\"children\\": {
+          \\"Statement\\": []
         }
       }
     }
@@ -248,8 +251,86 @@ Object {
         \\"loc\\": {
           \\"startColNumber\\": 61,
           \\"startLineNumber\\": 5,
-          \\"endColNumber\\": 5,
-          \\"endLineNumber\\": 7
+          \\"endColNumber\\": 62,
+          \\"endLineNumber\\": 5
+        },
+        \\"children\\": {
+          \\"Statement\\": []
+        }
+      }
+    }
+  }
+]
+        ",
+}
+`;
+
+exports[`function with return 1`] = `
+Object {
+  "conduit_a.function": "
+        [
+  {
+    \\"kind\\": \\"Function\\",
+    \\"loc\\": {
+      \\"startColNumber\\": 0,
+      \\"startLineNumber\\": 0,
+      \\"endColNumber\\": 17,
+      \\"endLineNumber\\": 1
+    },
+    \\"name\\": \\"funk\\",
+    \\"part\\": {
+      \\"ParameterList\\": {
+        \\"kind\\": \\"ParameterList\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 17,
+          \\"startLineNumber\\": 1,
+          \\"endColNumber\\": 18,
+          \\"endLineNumber\\": 1
+        },
+        \\"children\\": {
+          \\"Parameter\\": [
+            {
+              \\"kind\\": \\"Parameter\\",
+              \\"name\\": \\"a\\",
+              \\"loc\\": {
+                \\"startColNumber\\": 18,
+                \\"startLineNumber\\": 1,
+                \\"endColNumber\\": 21,
+                \\"endLineNumber\\": 1
+              },
+              \\"part\\": {
+                \\"CustomType\\": {
+                  \\"kind\\": \\"CustomType\\",
+                  \\"loc\\": {
+                    \\"startColNumber\\": 21,
+                    \\"startLineNumber\\": 1,
+                    \\"endColNumber\\": 29,
+                    \\"endLineNumber\\": 1
+                  },
+                  \\"type\\": \\"SomeType\\"
+                }
+              }
+            }
+          ]
+        }
+      },
+      \\"ReturnTypeSpec\\": {
+        \\"kind\\": \\"ReturnTypeSpec\\"
+      },
+      \\"FunctionBody\\": {
+        \\"kind\\": \\"FunctionBody\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 31,
+          \\"startLineNumber\\": 1,
+          \\"endColNumber\\": 32,
+          \\"endLineNumber\\": 1
+        },
+        \\"children\\": {
+          \\"Statement\\": [
+            {
+              \\"kind\\": \\"Statement\\"
+            }
+          ]
         }
       }
     }

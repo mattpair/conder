@@ -10,7 +10,8 @@ export namespace Parse {
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
-    export type FunctionBody = common.BaseFunctionBody
+    export type Statement = common.BaseStatement<() => common.BaseReturnStatement>
+    export type FunctionBody = common.BaseFunctionBody<Statement>
     export type Parameter = common.BaseParameter<CustomTypeEntity>
     export type ParameterList = common.BaseParameterList<Parameter>
     export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity>
@@ -156,7 +157,9 @@ export namespace Parse {
         ParameterList |
         ReturnTypeSpec |
         Parameter | 
-        common.VoidReturn
+        common.VoidReturn |
+        common.BaseReturnStatement | 
+        Statement
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -210,7 +213,7 @@ export namespace Parse {
                         return {kind: parser.groupKind, differentiate:() => ent as any}
                     }
                 }
-                throw new Error(`Failure parsing polymorphic entity: ${cursor.getPositionHint()}`)
+                return undefined
 
                 
             default: assertNever(parser)
@@ -427,14 +430,17 @@ export namespace Parse {
         },
 
         FunctionBody: {
-            kind: "leaf",
-            regex: /^\s*{\s*}/,
-            assemble(c, loc): FunctionBody | undefined {
+            kind: "aggregate",
+            startRegex: /^\s*{/,
+            endRegex: /^\s*}/,
+            assemble(start, end, loc, children): FunctionBody | undefined {
                 return {
                     kind: "FunctionBody",
-                    loc
+                    loc,
+                    children
                 }
-            }
+            },
+            hasMany: {Statement: true}
         },
         Parameter: {
             kind: "conglomerate",
@@ -457,6 +463,22 @@ export namespace Parse {
                 return {
                     kind: "VoidReturnType",
                     loc
+                }
+            }
+        },
+        Statement: {
+            kind: "polymorph",
+            groupKind: "Statement",
+            priority: {ReturnStatement: 1}
+        },
+        ReturnStatement: {
+            kind: "leaf",
+            regex: /^\s*return +(?<val>[a-zA-Z_]\w*)/,
+            assemble(c, loc) {
+                return {
+                    kind: "ReturnStatement",
+                    loc,
+                    val: c.groups.val
                 }
             }
         }

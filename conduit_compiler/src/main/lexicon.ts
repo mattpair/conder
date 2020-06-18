@@ -25,7 +25,8 @@ export enum Symbol {
     NEW_LINE="\\n",
     import="import",
     as="as",
-    function="function"
+    function="function",
+    return="return"
 }
 
 export const Operators: [

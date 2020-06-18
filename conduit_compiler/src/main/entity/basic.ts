@@ -17,7 +17,9 @@ export type EntityKinds =
 "FunctionBody" | 
 "Parameter" | 
 "ParameterType" | 
-"VoidReturnType"
+"VoidReturnType" |
+"Statement" |
+"ReturnStatement"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -40,7 +42,9 @@ export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Messag
 
 export type BaseImport<T> = NamedIntrafile<"Import", T>
 
-export type BaseFunctionBody = IntrafileEntity<"FunctionBody", {}>
+export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: string}>
+export type BaseStatement<DATA extends () => Entity<any>> = IntrafileEntity<"Statement", {differentiate: DATA}>
+export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>
 export type BaseReturnTypeSpec<DATA extends () => Entity<any>> = IntrafileEntity<"ReturnTypeSpec", {differentiate: DATA}>
 export type BaseParameter<T extends EntOf<"CustomType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
 export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"ParameterList", ParentOfMany<T>>

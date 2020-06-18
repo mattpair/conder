@@ -120,6 +120,14 @@ protoCompileTest("function declaration", {
     `
 })
 
+protoCompileTest("function with return", {
+    "conduit_a.cdt": `
+    function funk(a: SomeType) {
+        return a
+    }
+    `
+})
+
 testFailsWhen("subdir isn't referenced in present dir", {
     "conduit_a.cdt": `
     import 'conduit_b.cdt' as B
