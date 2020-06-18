@@ -32,7 +32,10 @@ export type EntityLocation = {
 type EntOf<KIND extends EntityKinds> = {kind: KIND}
 
 type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
-export type BaseFieldType<DATA extends () => Entity<any>> = Entity<"FieldType"> & { differentiate: DATA}
+
+type PRODUCER = () => Entity<any>
+export type PolymorphicEntity<KIND extends EntityKinds, OPTIONS extends PRODUCER> = Entity<KIND> & {differentiate: OPTIONS}
+export type BaseFieldType<DATA extends () => Entity<any>> = PolymorphicEntity<"FieldType", DATA>
 
 export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field", {
     readonly isRequired: boolean
@@ -43,9 +46,9 @@ export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Messag
 export type BaseImport<T> = NamedIntrafile<"Import", T>
 
 export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: string}>
-export type BaseStatement<DATA extends () => Entity<any>> = IntrafileEntity<"Statement", {differentiate: DATA}>
+export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>
 export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>
-export type BaseReturnTypeSpec<DATA extends () => Entity<any>> = IntrafileEntity<"ReturnTypeSpec", {differentiate: DATA}>
+export type BaseReturnTypeSpec<DATA extends PRODUCER> = PolymorphicEntity<"ReturnTypeSpec", DATA>
 export type BaseParameter<T extends EntOf<"CustomType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
 export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"ParameterList", ParentOfMany<T>>
 export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
