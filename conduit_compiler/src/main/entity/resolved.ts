@@ -3,7 +3,7 @@ import { Classified } from '../util/classifying';
 import {Enum, BaseField, BaseMsg, BaseConduitFile, BaseImport, BaseFieldType, PrimitiveEntity} from './basic'
 import { Parse } from 'parse';
 
-export namespace Resolved {
+export namespace TypeResolved {
 
     // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
     export type FieldType = BaseFieldType<() => (Message | Enum | PrimitiveEntity)>

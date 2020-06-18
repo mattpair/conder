@@ -1,7 +1,7 @@
 
 import { Parse} from "./parse";
-import { Resolved } from "./entity/resolved";
-import { resolveDeps } from "./resolveDependencies";
+import { TypeResolved } from "./entity/resolved";
+import { resolveDeps } from "./resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 
@@ -19,7 +19,7 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     return toProto(r)
 } 
 
-function toProto(files: Resolved.ConduitFile[]): Record<string, string> {
+function toProto(files: TypeResolved.ConduitFile[]): Record<string, string> {
     const results: Record<string, string> = {}
     files.filter(f => f.children.Message.length > 0 || f.children.Enum.length > 0).forEach(file => {
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
@@ -54,7 +54,7 @@ function printMembers(m: EnumMember[]): string {
     return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
 }
 
-function printMessage(m: Resolved.Message): string {
+function printMessage(m: TypeResolved.Message): string {
     const fields = printFields(m.children.Field)
 
     return `
@@ -63,7 +63,7 @@ ${fields}
 }`
 }
 
-function printFields(fields: Resolved.Field[]): string {
+function printFields(fields: TypeResolved.Field[]): string {
     return fields
     .map((f, index) => {
         const p = f.part.FieldType.differentiate()

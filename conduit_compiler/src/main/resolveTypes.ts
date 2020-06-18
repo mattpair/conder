@@ -1,6 +1,6 @@
 import { Parse } from './parse';
 import { FileLocation } from './util/filesystem';
-import { Resolved } from './entity/resolved';
+import { TypeResolved } from './entity/resolved';
 import { assertNever } from './util/classifying';
 import { Enum, EntityKinds } from './entity/basic';
 
@@ -17,7 +17,7 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 
 }
 
-function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Resolved.ConduitFile>): Resolved.ConduitFile {
+function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.ConduitFile>): TypeResolved.ConduitFile {
     const intralookup: PartialLookup = {}
     const aliasToAbsFilename: Record<string, string> = {}
     toResolve.children.Import.forEach(i => {
@@ -36,8 +36,8 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
         assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = m
     })
-    const resolvedLookup: Record<string, Enum | Resolved.Message> = {}
-    const msgs: Resolved.Message[] = []
+    const resolvedLookup: Record<string, Enum | TypeResolved.Message> = {}
+    const msgs: TypeResolved.Message[] = []
 
     
     Object.values(intralookup).forEach(m => {
@@ -49,7 +49,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
             case "Message":
                 
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
-                    let t: Resolved.FieldType
+                    let t: TypeResolved.FieldType
                     // Switches on the variable so assert never works.
                     const fieldType = f.part.FieldType.differentiate()
                     switch(fieldType.kind) {
@@ -98,7 +98,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Res
                     }
                     return {...f, part: {FieldType: t}}
                 })
-                const rmsg: Resolved.Message = {
+                const rmsg: TypeResolved.Message = {
                     kind: "Message", 
                     name: m.name, 
                     loc: m.loc,
@@ -167,9 +167,9 @@ function buildNeedsCompileSet(files: Parse.File[]): UnresolvedFileLookup {
 }
 
 
-export function resolveDeps(unresolved: Parse.File[]): Resolved.ConduitFile[] {
+export function resolveDeps(unresolved: Parse.File[]): TypeResolved.ConduitFile[] {
     const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
-    const resolved: Record<string, Resolved.ConduitFile> = {}
+    const resolved: Record<string, TypeResolved.ConduitFile> = {}
 
     function tryResolve(absFilename: string) {
         const deps = toResolve[absFilename].absoluteDependencies
@@ -195,7 +195,7 @@ export function resolveDeps(unresolved: Parse.File[]): Resolved.ConduitFile[] {
         Resolved: ${JSON.stringify(Object.keys(resolved), null, 2)}
         `)
     }
-    const ret: Resolved.ConduitFile[] = []
+    const ret: TypeResolved.ConduitFile[] = []
     for (const file in resolved) {
         ret.push(resolved[file])
     }
