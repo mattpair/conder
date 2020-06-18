@@ -86,7 +86,178 @@ message m2 {
 }
 `;
 
-exports[`function declaration 1`] = `Object {}`;
+exports[`function declaration 1`] = `
+Object {
+  "conduit_a.function": "
+        [
+  {
+    \\"kind\\": \\"Function\\",
+    \\"loc\\": {
+      \\"startColNumber\\": 0,
+      \\"startLineNumber\\": 0,
+      \\"endColNumber\\": 25,
+      \\"endLineNumber\\": 1
+    },
+    \\"name\\": \\"letsGetFuncy\\",
+    \\"part\\": {
+      \\"ParameterList\\": {
+        \\"kind\\": \\"ParameterList\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 25,
+          \\"startLineNumber\\": 1,
+          \\"endColNumber\\": 26,
+          \\"endLineNumber\\": 1
+        },
+        \\"children\\": {
+          \\"Parameter\\": [
+            {
+              \\"kind\\": \\"Parameter\\",
+              \\"name\\": \\"a\\",
+              \\"loc\\": {
+                \\"startColNumber\\": 26,
+                \\"startLineNumber\\": 1,
+                \\"endColNumber\\": 29,
+                \\"endLineNumber\\": 1
+              },
+              \\"part\\": {
+                \\"CustomType\\": {
+                  \\"kind\\": \\"CustomType\\",
+                  \\"loc\\": {
+                    \\"startColNumber\\": 29,
+                    \\"startLineNumber\\": 1,
+                    \\"endColNumber\\": 37,
+                    \\"endLineNumber\\": 1
+                  },
+                  \\"type\\": \\"SomeType\\"
+                }
+              }
+            },
+            {
+              \\"kind\\": \\"Parameter\\",
+              \\"name\\": \\"b\\",
+              \\"loc\\": {
+                \\"startColNumber\\": 38,
+                \\"startLineNumber\\": 1,
+                \\"endColNumber\\": 42,
+                \\"endLineNumber\\": 1
+              },
+              \\"part\\": {
+                \\"CustomType\\": {
+                  \\"kind\\": \\"CustomType\\",
+                  \\"loc\\": {
+                    \\"startColNumber\\": 42,
+                    \\"startLineNumber\\": 1,
+                    \\"endColNumber\\": 54,
+                    \\"endLineNumber\\": 1
+                  },
+                  \\"from\\": \\"Foreign\\",
+                  \\"type\\": \\"Type\\"
+                }
+              }
+            }
+          ]
+        }
+      },
+      \\"ReturnTypeSpec\\": {
+        \\"kind\\": \\"ReturnTypeSpec\\"
+      },
+      \\"FunctionBody\\": {
+        \\"kind\\": \\"FunctionBody\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 56,
+          \\"startLineNumber\\": 1,
+          \\"endColNumber\\": 5,
+          \\"endLineNumber\\": 3
+        }
+      }
+    }
+  },
+  {
+    \\"kind\\": \\"Function\\",
+    \\"loc\\": {
+      \\"startColNumber\\": 5,
+      \\"startLineNumber\\": 3,
+      \\"endColNumber\\": 21,
+      \\"endLineNumber\\": 5
+    },
+    \\"name\\": \\"boogaloo\\",
+    \\"part\\": {
+      \\"ParameterList\\": {
+        \\"kind\\": \\"ParameterList\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 21,
+          \\"startLineNumber\\": 5,
+          \\"endColNumber\\": 22,
+          \\"endLineNumber\\": 5
+        },
+        \\"children\\": {
+          \\"Parameter\\": [
+            {
+              \\"kind\\": \\"Parameter\\",
+              \\"name\\": \\"a\\",
+              \\"loc\\": {
+                \\"startColNumber\\": 22,
+                \\"startLineNumber\\": 5,
+                \\"endColNumber\\": 25,
+                \\"endLineNumber\\": 5
+              },
+              \\"part\\": {
+                \\"CustomType\\": {
+                  \\"kind\\": \\"CustomType\\",
+                  \\"loc\\": {
+                    \\"startColNumber\\": 25,
+                    \\"startLineNumber\\": 5,
+                    \\"endColNumber\\": 33,
+                    \\"endLineNumber\\": 5
+                  },
+                  \\"type\\": \\"SomeType\\"
+                }
+              }
+            },
+            {
+              \\"kind\\": \\"Parameter\\",
+              \\"name\\": \\"b\\",
+              \\"loc\\": {
+                \\"startColNumber\\": 34,
+                \\"startLineNumber\\": 5,
+                \\"endColNumber\\": 38,
+                \\"endLineNumber\\": 5
+              },
+              \\"part\\": {
+                \\"CustomType\\": {
+                  \\"kind\\": \\"CustomType\\",
+                  \\"loc\\": {
+                    \\"startColNumber\\": 38,
+                    \\"startLineNumber\\": 5,
+                    \\"endColNumber\\": 50,
+                    \\"endLineNumber\\": 5
+                  },
+                  \\"from\\": \\"Foreign\\",
+                  \\"type\\": \\"Type\\"
+                }
+              }
+            }
+          ]
+        }
+      },
+      \\"ReturnTypeSpec\\": {
+        \\"kind\\": \\"ReturnTypeSpec\\"
+      },
+      \\"FunctionBody\\": {
+        \\"kind\\": \\"FunctionBody\\",
+        \\"loc\\": {
+          \\"startColNumber\\": 61,
+          \\"startLineNumber\\": 5,
+          \\"endColNumber\\": 5,
+          \\"endLineNumber\\": 7
+        }
+      }
+    }
+  }
+]
+        ",
+}
+`;
 
 exports[`simple multi file 1`] = `
 Object {

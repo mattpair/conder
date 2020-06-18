@@ -31,6 +31,13 @@ syntax="proto2";
         `
     })
 
+    files.filter(f => f.children.Function.length > 0).forEach(file => {
+        console.log("HERE")
+        results[`${file.loc.fullname.replace(".cdt", ".function")}`] = `
+        ${JSON.stringify(file.children.Function, null, 2)}
+        `
+    })
+
     return results       
 }
 

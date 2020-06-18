@@ -181,7 +181,7 @@ export function resolveDeps(unresolved: Parse.File[]): Resolved.ConduitFile[] {
             }
         }
         const r = resolveFile(toResolve[absFilename].data, resolved)
-        resolved[absFilename] = r
+        resolved[absFilename] = r        
         toResolve[absFilename].dependedOnBy.forEach(tryResolve)
     }
 

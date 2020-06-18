@@ -13,7 +13,7 @@ export namespace Parse {
     export type FunctionBody = common.BaseFunctionBody
     export type Parameter = common.BaseParameter<CustomTypeEntity>
     export type ParameterList = common.BaseParameterList<Parameter>
-    export type ReturnTypeSpec = common.BaseReturnTypeSpec
+    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity>
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
     export type Message = common.BaseMsg<Field>
     export type Import = common.BaseImport<{
@@ -138,7 +138,7 @@ export namespace Parse {
             return parser.assemble(m.match, end.match, m.loc, children)
         }
 
-        throw new Error(`Unable to parse end for entity: ${JSON.stringify(cursor)}\n${cursor.getPositionHint()}`)
+        throw new Error(`Unable to parse end for entity: ${parser.endRegex.source}\n${cursor.getPositionHint()}`)
     }
 
     type AnyEntity = 
@@ -155,7 +155,8 @@ export namespace Parse {
         FunctionBody |
         ParameterList |
         ReturnTypeSpec |
-        Parameter
+        Parameter | 
+        common.VoidReturn
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -187,14 +188,14 @@ export namespace Parse {
                 parser.requiresOne.order.forEach(req => {
                     const depMatch = tryExtractEntity(cursor, req, parserSet)
                     if (depMatch === undefined) {
-                        throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}`)
+                        throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}\n\n ${cursor.getPositionHint()}`)
                     }
                     part[req] = depMatch
                 })
 
                 const end = cursor.tryMatch(parser.endRegex)
                 if (!end.hit) {
-                    throw new Error(`Unable to find end of entity at ${JSON.stringify(start.loc)}`)
+                    throw new Error(`Unable to find end of entity for ${kind} at ${cursor.getPositionHint()}`)
                 }
                 return parser.assemble(start.match, end.match, start.loc, part)
 
@@ -340,7 +341,7 @@ export namespace Parse {
         Field: {
             kind: "conglomerate",
             startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
-            endRegex: /^(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
+            endRegex: /^ *(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
             assemble(start, end, loc, part): Field | undefined {
                 return {
                     kind: "Field",
@@ -371,7 +372,7 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*) +/,
+            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*)/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 return {
                     kind: "CustomType",
@@ -394,7 +395,7 @@ export namespace Parse {
         },
         Function: {
             kind: "conglomerate",
-            startRegex: /^\s*function +(?<name>[a-zA-Z_]\w*) +{.*}/,
+            startRegex: /^\s*function +(?<name>[a-zA-Z_]\w*)/,
             endRegex: /^/,
             assemble(start, end, loc, part): Function | undefined {
                 return {
@@ -407,19 +408,14 @@ export namespace Parse {
             requiresOne: new Ordering({FunctionBody: 3, ParameterList: 1, ReturnTypeSpec: 2})
         },
         ReturnTypeSpec: {
-            kind: "leaf",
-            regex: /^/,
-            assemble(c, loc): ReturnTypeSpec | undefined {
-                return {
-                    kind: "ReturnTypeSpec",
-                    loc
-                }
-            }
+            kind: "polymorph",
+            groupKind: "ReturnTypeSpec",
+            priority: new Ordering({CustomType: 2, VoidReturnType: 3})
         },
         ParameterList: {
             kind: "aggregate",
-            startRegex: /^\(/,
-            endRegex: /^\s*\)/,
+            startRegex: /^\s*\(/,
+            endRegex: /^\s*\)\s*/,
             assemble(start, end, loc, children): ParameterList | undefined {
                 return {
                     kind: "ParameterList",
@@ -432,7 +428,7 @@ export namespace Parse {
 
         FunctionBody: {
             kind: "leaf",
-            regex: /^/,
+            regex: /^\s*{\s*}/,
             assemble(c, loc): FunctionBody | undefined {
                 return {
                     kind: "FunctionBody",
@@ -442,7 +438,7 @@ export namespace Parse {
         },
         Parameter: {
             kind: "conglomerate",
-            startRegex: /^\s+(?<name>[a-zA-Z_]\w*):/,
+            startRegex: /^\s*(?<name>[a-zA-Z_]\w*): */,
             endRegex: /^\s*,?/,
             assemble(start, end, loc, part): Parameter | undefined {
                 return {
@@ -453,6 +449,20 @@ export namespace Parse {
                 }
             },
             requiresOne: new Ordering({CustomType: 1})
+        },
+        VoidReturnType: {
+            kind: "leaf",
+            regex: /^\s*(?=\{)/,
+            assemble(c, loc) {
+                return {
+                    kind: "VoidReturnType",
+                    loc
+                }
+            }
         }
     }
+    type aaa = Ordering<"CustomType" | "VoidReturnType">
+
+    type bbbb = Record<"CustomType" | "VoidReturnType", true>
+    const a: aaa = new Ordering({})
 }

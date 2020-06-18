@@ -113,6 +113,10 @@ protoCompileTest("function declaration", {
     function letsGetFuncy(a: SomeType, b: Foreign.Type) {
 
     }
+
+    function boogaloo(a: SomeType, b: Foreign.Type) Foreign.C{
+
+    }
     `
 })
 
