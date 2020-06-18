@@ -5,7 +5,15 @@ import * as common from './entity/basic'
 
 
 export namespace Parse {
-    export type File = common.BaseConduitFile<Message, common.Enum, Import, Function>
+    
+    export type File = 
+    common.Entity<"File"> & 
+    common.ParentOfMany<Message> &  
+    common.ParentOfMany<common.Enum> & 
+    common.ParentOfMany<Import> & 
+    common.ParentOfMany<Function> &
+    {readonly loc: FileLocation}
+
     type CustomTypeEntity = common.IntrafileEntity<"CustomType", {from?: string, type: string}>
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
     export type FieldType = common.BaseFieldType<TypeUnion>

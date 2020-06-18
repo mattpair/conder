@@ -31,7 +31,7 @@ export type EntityLocation = {
 }
 type EntOf<KIND extends EntityKinds> = {kind: KIND}
 
-type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
+export type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
 
 type PRODUCER = () => Entity<any>
 export type PolymorphicEntity<KIND extends EntityKinds, OPTIONS extends PRODUCER> = Entity<KIND> & {differentiate: OPTIONS}
@@ -54,19 +54,7 @@ export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"P
 export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
     NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>
 
-export type BaseConduitFile<
-    MESSAGE_TYPE extends EntOf<"Message">, 
-    ENUM_TYPE extends EntOf<"Enum">, 
-    IMPORT_TYPE extends EntOf<"Import">,
-    FUNCTION_TYPE extends EntOf<"Function">> = 
-Entity<"File"> & 
-ParentOfMany<MESSAGE_TYPE> &  
-ParentOfMany<ENUM_TYPE> & 
-ParentOfMany<IMPORT_TYPE> & 
-ParentOfMany<FUNCTION_TYPE> &
-{readonly loc: FileLocation}
-
-type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
+export type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
 type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}
 
 export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
