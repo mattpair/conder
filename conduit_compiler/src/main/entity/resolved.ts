@@ -13,7 +13,7 @@ export namespace TypeResolved {
     export type Message = BaseMsg<Field>
     export type Import =BaseImport<{dep: string}>
     export type aaa = Map<string, "b">
-    export type ConduitFile = 
+    export type File = 
     Entity<"File"> & 
     ParentOfMany<Import> & 
     ParentOfMany<Parse.Function> &

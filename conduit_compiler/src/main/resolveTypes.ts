@@ -17,7 +17,7 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 
 }
 
-function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.ConduitFile>): TypeResolved.ConduitFile {
+function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
     const intralookup: PartialLookup = {}
     const aliasToAbsFilename: Record<string, string> = {}
     toResolve.children.Import.forEach(i => {
@@ -163,9 +163,9 @@ function buildNeedsCompileSet(files: Parse.File[]): UnresolvedFileLookup {
 }
 
 
-export function resolveDeps(unresolved: Parse.File[]): TypeResolved.ConduitFile[] {
+export function resolveDeps(unresolved: Parse.File[]): TypeResolved.File[] {
     const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
-    const resolved: Record<string, TypeResolved.ConduitFile> = {}
+    const resolved: Record<string, TypeResolved.File> = {}
 
     function tryResolve(absFilename: string) {
         const deps = toResolve[absFilename].absoluteDependencies
@@ -191,7 +191,7 @@ export function resolveDeps(unresolved: Parse.File[]): TypeResolved.ConduitFile[
         Resolved: ${JSON.stringify(Object.keys(resolved), null, 2)}
         `)
     }
-    const ret: TypeResolved.ConduitFile[] = []
+    const ret: TypeResolved.File[] = []
     for (const file in resolved) {
         ret.push(resolved[file])
     }

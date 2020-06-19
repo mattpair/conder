@@ -20,7 +20,7 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     return toProto(r)
 } 
 
-function toProto(files: TypeResolved.ConduitFile[]): Record<string, string> {
+function toProto(files: TypeResolved.File[]): Record<string, string> {
     const results: Record<string, string> = {}
     files.filter(f => f.entityLookup.size > 0).forEach(file => {
 
