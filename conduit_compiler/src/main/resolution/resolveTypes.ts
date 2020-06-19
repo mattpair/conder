@@ -20,9 +20,11 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
     const intralookup: PartialLookup = {}
     const aliasToAbsFilename: Record<string, string> = {}
+    const aliasToFile: Map<string, TypeResolved.File> = new Map()
     toResolve.children.Import.forEach(i => {
         assertNameNotYetInLookup({name: i.name}, aliasToAbsFilename)
         aliasToAbsFilename[i.name] = toFullFilename(i, toResolve.loc)
+        aliasToFile.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
     })
 
 
@@ -59,12 +61,11 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                             break;
 
                         case "FromEntitySelect":
-                            const dependentFile = aliasToAbsFilename[fieldType.from]
-                            if (!dependentFile) {
+                            const targetFile = aliasToFile.get(fieldType.from)
+
+                            if (targetFile === undefined) {
                                 throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
-                            }
-                            
-                            const targetFile = externalResolved[dependentFile]
+                            }                            
 
                             if (targetFile.entityLookup.has(fieldType.part.CustomType.type)) {
                                 const ent = targetFile.entityLookup.get(fieldType.part.CustomType.type)
@@ -114,6 +115,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
         kind: "File",
         loc: toResolve.loc,
         entityLookup: resolvedLookup,
+        importAliasToFile: aliasToFile,
         children: {
             Import: toResolve.children.Import.map(v => ({
                 kind: "Import", 

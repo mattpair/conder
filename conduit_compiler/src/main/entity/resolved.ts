@@ -20,7 +20,7 @@ export namespace TypeResolved {
     {
         readonly loc: FileLocation
         readonly entityLookup: ReadonlyMap<string, Message | Enum>
-        // readonly importedEntityLookup: ReadonlyMap<string, () => ReadonlyMap<string, Message | Enum>>
+        readonly importAliasToFile: ReadonlyMap<string, BaseResolvedFile<F>>
     }
 
     export type File = BaseResolvedFile<Parse.Function> 
