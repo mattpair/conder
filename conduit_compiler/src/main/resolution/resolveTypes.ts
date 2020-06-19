@@ -5,10 +5,11 @@ import { assertNever } from '../util/classifying';
 import { Enum, EntityKinds } from '../entity/basic';
 
 
-function assertNameNotYetInLookup(m: {name: string}, l: Record<string, any>) {
-    if (m.name in l) {
+function assertNameNotYetInLookup(m: {name: string}, l: Set<string>) {
+    if (l.has(m.name)) {
         throw Error(`Duplicate entities in scope with name ${m.name}`)
     }
+    l.add(m.name)
 }
 type PartialLookup = Record<string, Enum | Parse.Message>
 
@@ -19,25 +20,20 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 
 function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
     const intralookup: PartialLookup = {}
-    const aliasToAbsFilename: Record<string, string> = {}
     const aliasToFile: Map<string, TypeResolved.File> = new Map()
+    const nameSet: Set<string> = new Set()
     toResolve.children.Import.forEach(i => {
-        assertNameNotYetInLookup({name: i.name}, aliasToAbsFilename)
-        aliasToAbsFilename[i.name] = toFullFilename(i, toResolve.loc)
+        assertNameNotYetInLookup(i, nameSet)
         aliasToFile.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
     })
 
+    const insertIntoFileScope = (m: Parse.Message | Enum) => {
+        assertNameNotYetInLookup(m, nameSet)
+        intralookup[m.name] = m
+    }
+    toResolve.children.Message.forEach(insertIntoFileScope)
+    toResolve.children.Enum.forEach(insertIntoFileScope)
 
-    toResolve.children.Message.forEach(m => {
-        assertNameNotYetInLookup(m, intralookup)
-        assertNameNotYetInLookup(m, aliasToAbsFilename)
-        intralookup[m.name] = m
-    })
-    toResolve.children.Enum.forEach(m => {
-        assertNameNotYetInLookup(m, intralookup)
-        assertNameNotYetInLookup(m, aliasToAbsFilename)
-        intralookup[m.name] = m
-    })
     const resolvedLookup: Map<string, Enum | TypeResolved.Message> = new Map()
     const msgs: TypeResolved.Message[] = []
 
