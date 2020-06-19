@@ -15,6 +15,12 @@ export namespace TypeResolved {
     export type aaa = Map<string, "b">
     type BaseResolvedFile<F extends Entity<"Function">> = 
     Entity<"File"> & 
-    ParentOfMany<F>
+    ParentOfMany<F> &
+    ParentOfMany<Import> &
+    {
+        readonly loc: FileLocation
+        readonly entityLookup: ReadonlyMap<string, Message | Enum>
+    }
+
     export type File = BaseResolvedFile<Parse.Function> 
 }
