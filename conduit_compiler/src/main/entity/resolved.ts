@@ -12,7 +12,7 @@ export namespace TypeResolved {
 
     export type Message = BaseMsg<Field>
     export type Import =BaseImport<{dep: string}>
-    export type aaa = Map<string, "b">
+
     type BaseResolvedFile<F extends Entity<"Function">> = 
     Entity<"File"> & 
     ParentOfMany<F> &
@@ -20,6 +20,7 @@ export namespace TypeResolved {
     {
         readonly loc: FileLocation
         readonly entityLookup: ReadonlyMap<string, Message | Enum>
+        // readonly importedEntityLookup: ReadonlyMap<string, () => ReadonlyMap<string, Message | Enum>>
     }
 
     export type File = BaseResolvedFile<Parse.Function> 

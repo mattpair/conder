@@ -50,44 +50,43 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                 
                 const resolvedFields = m.children.Field.map((f: Parse.Field) => {
                     let t: TypeResolved.FieldType
-                    // Switches on the variable so assert never works.
+                    // Switches on the variable so assertnever works.
                     const fieldType = f.part.FieldType.differentiate()
                     switch(fieldType.kind) {
                         
                         case "Primitive":
                             t = {differentiate: () => fieldType , kind: "FieldType"}
                             break;
-                        
-                        case "CustomType":
-                            if (fieldType.from) {
-                                const dependentFile = aliasToAbsFilename[fieldType.from]
-                                if (!dependentFile) {
-                                    throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.type} in message ${m.name}`)            
-                                }
-                                
-                                const targetFile = externalResolved[dependentFile]
 
-                                if (targetFile.entityLookup.has(fieldType.type)) {
-                                    const ent = targetFile.entityLookup.get(fieldType.type)
-                                    // TODO: loc should be reference location, not entity location.
-                                    t = {differentiate: () => ent,  kind: "FieldType"}            
-                                    
-                                } else {
-                                    throw new Error(`Unable to find type ${fieldType.type} in ${fieldType.from}`)
-                                }
-
-
-                            } else {
-                                if (!(fieldType.type in intralookup)) {
-                                    throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
-                                }
-                                t =  {
-                                    differentiate: () => resolvedLookup.get(fieldType.type),
-                                    kind: "FieldType"
-                                }
+                        case "FromEntitySelect":
+                            const dependentFile = aliasToAbsFilename[fieldType.from]
+                            if (!dependentFile) {
+                                throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
                             }
                             
+                            const targetFile = externalResolved[dependentFile]
 
+                            if (targetFile.entityLookup.has(fieldType.part.CustomType.type)) {
+                                const ent = targetFile.entityLookup.get(fieldType.part.CustomType.type)
+                                // TODO: loc should be reference location, not entity location.
+                                t = {differentiate: () => ent,  kind: "FieldType"}            
+                                
+                            } else {
+                                throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
+                            }
+
+                            break;
+                                                    
+                        case "CustomType":
+                            
+                            if (!(fieldType.type in intralookup)) {
+                                throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
+                            }
+                            t =  {
+                                differentiate: () => resolvedLookup.get(fieldType.type),
+                                kind: "FieldType"
+                            }
+                            
                             break;
                     
                         default: return assertNever(fieldType)

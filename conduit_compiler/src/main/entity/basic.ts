@@ -19,7 +19,8 @@ export type EntityKinds =
 "ParameterType" | 
 "VoidReturnType" |
 "Statement" |
-"ReturnStatement"
+"ReturnStatement" |
+"FromEntitySelect" 
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -49,13 +50,13 @@ export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: strin
 export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>
 export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>
 export type BaseReturnTypeSpec<DATA extends PRODUCER> = PolymorphicEntity<"ReturnTypeSpec", DATA>
-export type BaseParameter<T extends EntOf<"CustomType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
+export type BaseParameter<T extends EntOf<"ParameterType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
 export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"ParameterList", ParentOfMany<T>>
 export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
     NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>
 
 export type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}
-type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}
+export type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}
 
 export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
     readonly loc: EntityLocation

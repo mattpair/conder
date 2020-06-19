@@ -14,15 +14,17 @@ export namespace Parse {
     common.ParentOfMany<Function> &
     {readonly loc: FileLocation}
 
-    type CustomTypeEntity = common.IntrafileEntity<"CustomType", {from?: string, type: string}>
-    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity
+    type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
+    type FromEntitySelect = common.IntrafileEntity<"FromEntitySelect", {from: string}  & common.RequiresOne<CustomTypeEntity>>
+    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity | FromEntitySelect
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
     export type Statement = common.BaseStatement<() => common.BaseReturnStatement>
     export type FunctionBody = common.BaseFunctionBody<Statement>
-    export type Parameter = common.BaseParameter<CustomTypeEntity>
+    export type ParameterType = common.PolymorphicEntity<"ParameterType", () => CustomTypeEntity | FromEntitySelect>
+    export type Parameter = common.BaseParameter<ParameterType>
     export type ParameterList = common.BaseParameterList<Parameter>
-    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity>
+    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity | FromEntitySelect>
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
     export type Message = common.BaseMsg<Field>
     export type Import = common.BaseImport<{
@@ -167,7 +169,9 @@ export namespace Parse {
         Parameter | 
         common.VoidReturn |
         common.BaseReturnStatement | 
-        Statement
+        Statement |
+        FromEntitySelect |
+        ParameterType
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -344,7 +348,8 @@ export namespace Parse {
             kind: "polymorph",
             priority: {
                 Primitive: 0,
-                CustomType: 1
+                FromEntitySelect: 1,
+                CustomType: 2
             },
             groupKind: "FieldType"
         },
@@ -383,15 +388,28 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^((?<from>[_A-Za-z]+[\w]*)\.)?(?<type>[_A-Za-z]+[\w]*)/,
+            regex: /^(?<type>[_A-Za-z]+[\w]*)/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 return {
                     kind: "CustomType",
                     loc,
-                    from: match.groups.from,
                     type: match.groups.type
                 }
             }
+        },
+        FromEntitySelect: {
+            kind: "conglomerate",
+            startRegex: /^(?<from>[_A-Za-z]+[\w]*)\./,
+            endRegex: /^/,
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "FromEntitySelect",
+                    from: start.groups.from,
+                    loc,
+                    part
+                }
+            },
+            requiresOne: {CustomType: 1}
         },
         Primitive: {
             kind: "leaf",
@@ -421,7 +439,7 @@ export namespace Parse {
         ReturnTypeSpec: {
             kind: "polymorph",
             groupKind: "ReturnTypeSpec",
-            priority: {CustomType: 2, VoidReturnType: 3}
+            priority: {FromEntitySelect: 1, CustomType: 2, VoidReturnType: 3}
         },
         ParameterList: {
             kind: "aggregate",
@@ -462,7 +480,12 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: {CustomType: 1}
+            requiresOne: {ParameterType: 1}
+        },
+        ParameterType: {
+            kind: "polymorph",
+            priority: {CustomType: 2, FromEntitySelect: 1},
+            groupKind: "ParameterType"
         },
         VoidReturnType: {
             kind: "leaf",
@@ -489,6 +512,6 @@ export namespace Parse {
                     val: c.groups.val
                 }
             }
-        }
+        },
     }
 }

@@ -120,15 +120,8 @@ Object {
                 \\"endLineNumber\\": 1
               },
               \\"part\\": {
-                \\"CustomType\\": {
-                  \\"kind\\": \\"CustomType\\",
-                  \\"loc\\": {
-                    \\"startColNumber\\": 29,
-                    \\"startLineNumber\\": 1,
-                    \\"endColNumber\\": 37,
-                    \\"endLineNumber\\": 1
-                  },
-                  \\"type\\": \\"SomeType\\"
+                \\"ParameterType\\": {
+                  \\"kind\\": \\"ParameterType\\"
                 }
               }
             },
@@ -142,16 +135,8 @@ Object {
                 \\"endLineNumber\\": 1
               },
               \\"part\\": {
-                \\"CustomType\\": {
-                  \\"kind\\": \\"CustomType\\",
-                  \\"loc\\": {
-                    \\"startColNumber\\": 42,
-                    \\"startLineNumber\\": 1,
-                    \\"endColNumber\\": 54,
-                    \\"endLineNumber\\": 1
-                  },
-                  \\"from\\": \\"Foreign\\",
-                  \\"type\\": \\"Type\\"
+                \\"ParameterType\\": {
+                  \\"kind\\": \\"ParameterType\\"
                 }
               }
             }
@@ -205,15 +190,8 @@ Object {
                 \\"endLineNumber\\": 5
               },
               \\"part\\": {
-                \\"CustomType\\": {
-                  \\"kind\\": \\"CustomType\\",
-                  \\"loc\\": {
-                    \\"startColNumber\\": 25,
-                    \\"startLineNumber\\": 5,
-                    \\"endColNumber\\": 33,
-                    \\"endLineNumber\\": 5
-                  },
-                  \\"type\\": \\"SomeType\\"
+                \\"ParameterType\\": {
+                  \\"kind\\": \\"ParameterType\\"
                 }
               }
             },
@@ -227,16 +205,8 @@ Object {
                 \\"endLineNumber\\": 5
               },
               \\"part\\": {
-                \\"CustomType\\": {
-                  \\"kind\\": \\"CustomType\\",
-                  \\"loc\\": {
-                    \\"startColNumber\\": 38,
-                    \\"startLineNumber\\": 5,
-                    \\"endColNumber\\": 50,
-                    \\"endLineNumber\\": 5
-                  },
-                  \\"from\\": \\"Foreign\\",
-                  \\"type\\": \\"Type\\"
+                \\"ParameterType\\": {
+                  \\"kind\\": \\"ParameterType\\"
                 }
               }
             }
@@ -299,15 +269,8 @@ Object {
                 \\"endLineNumber\\": 1
               },
               \\"part\\": {
-                \\"CustomType\\": {
-                  \\"kind\\": \\"CustomType\\",
-                  \\"loc\\": {
-                    \\"startColNumber\\": 21,
-                    \\"startLineNumber\\": 1,
-                    \\"endColNumber\\": 29,
-                    \\"endLineNumber\\": 1
-                  },
-                  \\"type\\": \\"SomeType\\"
+                \\"ParameterType\\": {
+                  \\"kind\\": \\"ParameterType\\"
                 }
               }
             }
