@@ -1,5 +1,3 @@
-import { PrimitiveUnion } from '../lexicon';
-import { Classified } from '../util/classifying';
 import {Enum, BaseField, BaseMsg, BaseImport, BaseFieldType, PrimitiveEntity, ParentOfMany, Entity} from './basic'
 import { Parse } from 'parse';
 import { FileLocation } from 'util/filesystem';
@@ -14,13 +12,14 @@ export namespace TypeResolved {
 
     export type Message = BaseMsg<Field>
     export type Import =BaseImport<{dep: string}>
-
+    export type aaa = Map<string, "b">
     export type ConduitFile = 
     Entity<"File"> & 
-    ParentOfMany<Message> &  
-    ParentOfMany<Enum> & 
     ParentOfMany<Import> & 
     ParentOfMany<Parse.Function> &
-    {readonly loc: FileLocation}
+    {
+        readonly loc: FileLocation
+        readonly entityLookup: ReadonlyMap<string, Message | Enum>
+    }
     
 }

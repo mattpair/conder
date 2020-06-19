@@ -4,6 +4,7 @@ import { TypeResolved } from "./entity/resolved";
 import { resolveDeps } from "./resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
+import { assertNever } from "./util/classifying";
 
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
@@ -21,14 +22,29 @@ export function compileFiles(files: Record<string, () => string>): Record<string
 
 function toProto(files: TypeResolved.ConduitFile[]): Record<string, string> {
     const results: Record<string, string> = {}
-    files.filter(f => f.children.Message.length > 0 || f.children.Enum.length > 0).forEach(file => {
+    files.filter(f => f.entityLookup.size > 0).forEach(file => {
+
+        const enums: Enum[] = []
+        const messages: TypeResolved.Message[] = []
+        file.entityLookup.forEach(v => {
+            switch(v.kind) {
+                case "Enum":
+                    enums.push(v)
+                    break;
+                case "Message":
+                    messages.push(v)
+                    break;
+                default: assertNever(v)
+            }
+        })
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
 syntax="proto2";
         ${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
 
-        ${file.children.Enum.map(printEnum).join("\n\n")}
-        ${file.children.Message.map(printMessage).join("\n\n")}
+        ${enums.map(printEnum).join("\n\n")}
+        ${messages.map(printMessage).join("\n\n")}
         `
+        
     })
 
     files.filter(f => f.children.Function.length > 0).forEach(file => {

@@ -36,14 +36,14 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
         assertNameNotYetInLookup(m, aliasToAbsFilename)
         intralookup[m.name] = m
     })
-    const resolvedLookup: Record<string, Enum | TypeResolved.Message> = {}
+    const resolvedLookup: Map<string, Enum | TypeResolved.Message> = new Map()
     const msgs: TypeResolved.Message[] = []
 
     
     Object.values(intralookup).forEach(m => {
         switch(m.kind) {
             case "Enum":
-                resolvedLookup[m.name] = m
+                resolvedLookup.set(m.name, m)
                 break;
 
             case "Message":
@@ -67,16 +67,13 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                                 
                                 const targetFile = externalResolved[dependentFile]
 
-                                let maybeMsg = targetFile.children.Message.find(msg => msg.name === fieldType.type)
-                                if (maybeMsg === undefined) {
-                                    let maybeEnm = targetFile.children.Enum.find(tenm => tenm.name === fieldType.type)
-                                    if (maybeEnm === undefined) {
-                                        throw new Error(`Unable to find type ${fieldType.type} in ${fieldType.from}`)
-                                    }
+                                if (targetFile.entityLookup.has(fieldType.type)) {
+                                    const ent = targetFile.entityLookup.get(fieldType.type)
                                     // TODO: loc should be reference location, not entity location.
-                                    t = {differentiate: () => maybeEnm,  kind: "FieldType"}
+                                    t = {differentiate: () => ent,  kind: "FieldType"}            
+                                    
                                 } else {
-                                    t = {differentiate: () => maybeMsg, kind: "FieldType"}
+                                    throw new Error(`Unable to find type ${fieldType.type} in ${fieldType.from}`)
                                 }
 
 
@@ -85,7 +82,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                                     throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
                                 }
                                 t =  {
-                                    differentiate: () => resolvedLookup[fieldType.type],
+                                    differentiate: () => resolvedLookup.get(fieldType.type),
                                     kind: "FieldType"
                                 }
                             }
@@ -103,7 +100,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                     name: m.name, 
                     loc: m.loc,
                     children: {Field: resolvedFields}}
-                resolvedLookup[m.name] = rmsg
+                resolvedLookup.set(m.name, rmsg)
                 msgs.push(rmsg)
                 
                 break;
@@ -117,9 +114,8 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
     return {
         kind: "File",
         loc: toResolve.loc,
+        entityLookup: resolvedLookup,
         children: {
-            Message: msgs,
-            Enum: toResolve.children.Enum,
             Import: toResolve.children.Import.map(v => ({
                 kind: "Import", 
                 name: v.name, 
