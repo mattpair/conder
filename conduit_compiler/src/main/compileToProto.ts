@@ -22,11 +22,11 @@ export function compileFiles(files: Record<string, () => string>): Record<string
 
 function toProto(files: TypeResolved.File[]): Record<string, string> {
     const results: Record<string, string> = {}
-    files.filter(f => f.entityLookup.size > 0).forEach(file => {
+    files.filter(f => f.inFileScope.size > 0).forEach(file => {
 
         const enums: Enum[] = []
         const messages: TypeResolved.Message[] = []
-        file.entityLookup.forEach(v => {
+        file.inFileScope.forEach(v => {
             switch(v.kind) {
                 case "Enum":
                     enums.push(v)
@@ -34,9 +34,11 @@ function toProto(files: TypeResolved.File[]): Record<string, string> {
                 case "Message":
                     messages.push(v)
                     break;
-                default: assertNever(v)
             }
         })
+        if (enums.length + messages.length === 0) {
+            return
+        }
         results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
 syntax="proto2";
         ${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}

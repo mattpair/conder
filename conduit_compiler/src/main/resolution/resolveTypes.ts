@@ -19,24 +19,23 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 
 function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
     const intralookup: Set<string> = new Set()
-    const aliasToFile: Map<string, TypeResolved.File> = new Map()
+    const inFileScope: Map<string, TypeResolved.File | TypeResolved.Message | Enum> = new Map()
     const nameSet: Set<string> = new Set()
     toResolve.children.Import.forEach(i => {
         assertNameNotYetInLookup(i, nameSet)
-        aliasToFile.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
+        inFileScope.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
     })
 
-    const insertIntoFileScope = (m: Parse.Message | Enum) => {
+    const reserveName = (m: Parse.Message | Enum) => {
         assertNameNotYetInLookup(m, nameSet)
         intralookup.add(m.name)
     }
-    toResolve.children.Message.forEach(insertIntoFileScope)
-    toResolve.children.Enum.forEach(insertIntoFileScope)
+    toResolve.children.Enum.forEach(enm => {
+        reserveName(enm)
+        inFileScope.set(enm.name, enm)
+    })
 
-    const resolvedLookup: Map<string, Enum | TypeResolved.Message> = new Map()
-    const msgs: TypeResolved.Message[] = []
-
-    toResolve.children.Enum.forEach(e => resolvedLookup.set(e.name, e))
+    toResolve.children.Message.forEach(reserveName)
     
     toResolve.children.Message.forEach(m => {
         const resolvedFields = m.children.Field.map((f: Parse.Field) => {
@@ -50,20 +49,25 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                     break;
 
                 case "FromEntitySelect":
-                    const targetFile = aliasToFile.get(fieldType.from)
+                    const targetEntity = inFileScope.get(fieldType.from)
 
-                    if (targetFile === undefined) {
+                    if (targetEntity === undefined) {
                         throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
                     }                            
-
-                    if (targetFile.entityLookup.has(fieldType.part.CustomType.type)) {
-                        const ent = targetFile.entityLookup.get(fieldType.part.CustomType.type)
-                        // TODO: loc should be reference location, not entity location.
-                        t = {differentiate: () => ent,  kind: "FieldType"}            
-                        
-                    } else {
-                        throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
+                    switch(targetEntity.kind) {
+                        case "File":
+                            const importedEntity = targetEntity.inFileScope.get(fieldType.part.CustomType.type)
+                            if (importedEntity !== undefined && importedEntity.kind !== "File") {
+                                
+                                // TODO: loc should be reference location, not entity location.
+                                t = {differentiate: () => importedEntity,  kind: "FieldType"}            
+                                
+                            } else {
+                                throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
+                            }
                     }
+
+                    
 
                     break;
                                             
@@ -73,7 +77,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                         throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
                     }
                     t =  {
-                        differentiate: () => resolvedLookup.get(fieldType.type),
+                        differentiate: () => inFileScope.get(fieldType.type) as TypeResolved.Message | Enum,
                         kind: "FieldType"
                     }
                     
@@ -89,8 +93,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
             name: m.name, 
             loc: m.loc,
             children: {Field: resolvedFields}}
-        resolvedLookup.set(m.name, rmsg)
-        msgs.push(rmsg)
+        inFileScope.set(m.name, rmsg)
     })
         
                 
@@ -98,8 +101,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
     return {
         kind: "File",
         loc: toResolve.loc,
-        entityLookup: resolvedLookup,
-        importAliasToFile: aliasToFile,
+        inFileScope,
         children: {
             Import: toResolve.children.Import.map(v => ({
                 kind: "Import", 

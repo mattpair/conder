@@ -19,8 +19,7 @@ export namespace TypeResolved {
     ParentOfMany<Import> &
     {
         readonly loc: FileLocation
-        readonly entityLookup: ReadonlyMap<string, Message | Enum>
-        readonly importAliasToFile: ReadonlyMap<string, BaseResolvedFile<F>>
+        readonly inFileScope: ReadonlyMap<string, Message | Enum | BaseResolvedFile<F>>
     }
 
     export type File = BaseResolvedFile<Parse.Function> 
