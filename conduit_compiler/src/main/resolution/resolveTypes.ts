@@ -11,7 +11,6 @@ function assertNameNotYetInLookup(m: {name: string}, l: Set<string>) {
     }
     l.add(m.name)
 }
-type PartialLookup = Record<string, Enum | Parse.Message>
 
 function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
     return i.fromPresentDir ? `${thisFileLoc.dir}${i.filename}` : i.filename
@@ -19,7 +18,7 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 }
 
 function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
-    const intralookup: PartialLookup = {}
+    const intralookup: Set<string> = new Set()
     const aliasToFile: Map<string, TypeResolved.File> = new Map()
     const nameSet: Set<string> = new Set()
     toResolve.children.Import.forEach(i => {
@@ -29,7 +28,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
 
     const insertIntoFileScope = (m: Parse.Message | Enum) => {
         assertNameNotYetInLookup(m, nameSet)
-        intralookup[m.name] = m
+        intralookup.add(m.name)
     }
     toResolve.children.Message.forEach(insertIntoFileScope)
     toResolve.children.Enum.forEach(insertIntoFileScope)
@@ -37,76 +36,65 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
     const resolvedLookup: Map<string, Enum | TypeResolved.Message> = new Map()
     const msgs: TypeResolved.Message[] = []
 
+    toResolve.children.Enum.forEach(e => resolvedLookup.set(e.name, e))
     
-    Object.values(intralookup).forEach(m => {
-        switch(m.kind) {
-            case "Enum":
-                resolvedLookup.set(m.name, m)
-                break;
-
-            case "Message":
+    toResolve.children.Message.forEach(m => {
+        const resolvedFields = m.children.Field.map((f: Parse.Field) => {
+            let t: TypeResolved.FieldType
+            // Switches on the variable so assertnever works.
+            const fieldType = f.part.FieldType.differentiate()
+            switch(fieldType.kind) {
                 
-                const resolvedFields = m.children.Field.map((f: Parse.Field) => {
-                    let t: TypeResolved.FieldType
-                    // Switches on the variable so assertnever works.
-                    const fieldType = f.part.FieldType.differentiate()
-                    switch(fieldType.kind) {
+                case "Primitive":
+                    t = {differentiate: () => fieldType , kind: "FieldType"}
+                    break;
+
+                case "FromEntitySelect":
+                    const targetFile = aliasToFile.get(fieldType.from)
+
+                    if (targetFile === undefined) {
+                        throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
+                    }                            
+
+                    if (targetFile.entityLookup.has(fieldType.part.CustomType.type)) {
+                        const ent = targetFile.entityLookup.get(fieldType.part.CustomType.type)
+                        // TODO: loc should be reference location, not entity location.
+                        t = {differentiate: () => ent,  kind: "FieldType"}            
                         
-                        case "Primitive":
-                            t = {differentiate: () => fieldType , kind: "FieldType"}
-                            break;
-
-                        case "FromEntitySelect":
-                            const targetFile = aliasToFile.get(fieldType.from)
-
-                            if (targetFile === undefined) {
-                                throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
-                            }                            
-
-                            if (targetFile.entityLookup.has(fieldType.part.CustomType.type)) {
-                                const ent = targetFile.entityLookup.get(fieldType.part.CustomType.type)
-                                // TODO: loc should be reference location, not entity location.
-                                t = {differentiate: () => ent,  kind: "FieldType"}            
-                                
-                            } else {
-                                throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
-                            }
-
-                            break;
-                                                    
-                        case "CustomType":
-                            
-                            if (!(fieldType.type in intralookup)) {
-                                throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
-                            }
-                            t =  {
-                                differentiate: () => resolvedLookup.get(fieldType.type),
-                                kind: "FieldType"
-                            }
-                            
-                            break;
-                    
-                        default: return assertNever(fieldType)
-                        
+                    } else {
+                        throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
                     }
-                    return {...f, part: {FieldType: t}}
-                })
-                const rmsg: TypeResolved.Message = {
-                    kind: "Message", 
-                    name: m.name, 
-                    loc: m.loc,
-                    children: {Field: resolvedFields}}
-                resolvedLookup.set(m.name, rmsg)
-                msgs.push(rmsg)
+
+                    break;
+                                            
+                case "CustomType":
+                    
+                    if (!intralookup.has(fieldType.type)) {
+                        throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
+                    }
+                    t =  {
+                        differentiate: () => resolvedLookup.get(fieldType.type),
+                        kind: "FieldType"
+                    }
+                    
+                    break;
+            
+                default: return assertNever(fieldType)
                 
-                break;
-
-            default: return assertNever(m)
-
-        }
-
-        
+            }
+            return {...f, part: {FieldType: t}}
+        })
+        const rmsg: TypeResolved.Message = {
+            kind: "Message", 
+            name: m.name, 
+            loc: m.loc,
+            children: {Field: resolvedFields}}
+        resolvedLookup.set(m.name, rmsg)
+        msgs.push(rmsg)
     })
+        
+                
+                
     return {
         kind: "File",
         loc: toResolve.loc,
