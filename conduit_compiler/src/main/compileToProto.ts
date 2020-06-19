@@ -1,7 +1,7 @@
 
 import { Parse} from "./parse";
 import { TypeResolved } from "./entity/resolved";
-import { resolveDeps } from "./resolveTypes";
+import { resolveDeps } from "./resolution/resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 import { assertNever } from "./util/classifying";
@@ -48,7 +48,6 @@ syntax="proto2";
     })
 
     files.filter(f => f.children.Function.length > 0).forEach(file => {
-        console.log("HERE")
         results[`${file.loc.fullname.replace(".cdt", ".function")}`] = `
         ${JSON.stringify(file.children.Function, null, 2)}
         `
