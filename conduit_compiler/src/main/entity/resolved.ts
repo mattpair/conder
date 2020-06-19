@@ -13,13 +13,8 @@ export namespace TypeResolved {
     export type Message = BaseMsg<Field>
     export type Import =BaseImport<{dep: string}>
     export type aaa = Map<string, "b">
-    export type File = 
+    type BaseResolvedFile<F extends Entity<"Function">> = 
     Entity<"File"> & 
-    ParentOfMany<Import> & 
-    ParentOfMany<Parse.Function> &
-    {
-        readonly loc: FileLocation
-        readonly entityLookup: ReadonlyMap<string, Message | Enum>
-    }
-    
+    ParentOfMany<F>
+    export type File = BaseResolvedFile<Parse.Function> 
 }
