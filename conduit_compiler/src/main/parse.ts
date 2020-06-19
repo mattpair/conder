@@ -14,8 +14,8 @@ export namespace Parse {
     common.ParentOfMany<Function> &
     {readonly loc: FileLocation}
 
-    type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
-    type FromEntitySelect = common.IntrafileEntity<"FromEntitySelect", {from: string}  & common.RequiresOne<CustomTypeEntity>>
+    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
+    export type FromEntitySelect = common.IntrafileEntity<"FromEntitySelect", {from: string}  & common.RequiresOne<CustomTypeEntity>>
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity | FromEntitySelect
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>

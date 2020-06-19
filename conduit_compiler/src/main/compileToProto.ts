@@ -4,7 +4,7 @@ import { TypeResolved } from "./entity/resolved";
 import { resolveDeps } from "./resolution/resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
-import { assertNever } from "./util/classifying";
+import { validateFunctions } from "./resolution/resolveFunction";
 
 
 export function compileFiles(files: Record<string, () => string>): Record<string, string> {
@@ -49,7 +49,8 @@ syntax="proto2";
         
     })
 
-    files.filter(f => f.children.Function.length > 0).forEach(file => {
+    validateFunctions(files)
+    files.filter(f => f.children.Function.length > 0).forEach(file => {    
         results[`${file.loc.fullname.replace(".cdt", ".function")}`] = `
         ${JSON.stringify(file.children.Function, null, 2)}
         `

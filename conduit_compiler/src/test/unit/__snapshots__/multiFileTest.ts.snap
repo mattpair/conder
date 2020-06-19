@@ -86,187 +86,46 @@ message m2 {
 }
 `;
 
-exports[`function declaration 1`] = `
+exports[`function with invalid return type 1`] = `"Unable to find SomeType"`;
+
+exports[`function with type return returns none 1`] = `"No return yet expected a SomeType"`;
+
+exports[`function with unknown types 1`] = `"Unable to find SomeType"`;
+
+exports[`function with void returns type 1`] = `"Returning [a] which is of type SomeType but expected void return"`;
+
+exports[`simple echo function 1`] = `
 Object {
   "conduit_a.function": "
         [
-  {
-    \\"kind\\": \\"Function\\",
-    \\"loc\\": {
-      \\"startColNumber\\": 0,
-      \\"startLineNumber\\": 0,
-      \\"endColNumber\\": 25,
-      \\"endLineNumber\\": 1
-    },
-    \\"name\\": \\"letsGetFuncy\\",
-    \\"part\\": {
-      \\"ParameterList\\": {
-        \\"kind\\": \\"ParameterList\\",
-        \\"loc\\": {
-          \\"startColNumber\\": 25,
-          \\"startLineNumber\\": 1,
-          \\"endColNumber\\": 26,
-          \\"endLineNumber\\": 1
-        },
-        \\"children\\": {
-          \\"Parameter\\": [
-            {
-              \\"kind\\": \\"Parameter\\",
-              \\"name\\": \\"a\\",
-              \\"loc\\": {
-                \\"startColNumber\\": 26,
-                \\"startLineNumber\\": 1,
-                \\"endColNumber\\": 29,
-                \\"endLineNumber\\": 1
-              },
-              \\"part\\": {
-                \\"ParameterType\\": {
-                  \\"kind\\": \\"ParameterType\\"
-                }
-              }
-            },
-            {
-              \\"kind\\": \\"Parameter\\",
-              \\"name\\": \\"b\\",
-              \\"loc\\": {
-                \\"startColNumber\\": 38,
-                \\"startLineNumber\\": 1,
-                \\"endColNumber\\": 42,
-                \\"endLineNumber\\": 1
-              },
-              \\"part\\": {
-                \\"ParameterType\\": {
-                  \\"kind\\": \\"ParameterType\\"
-                }
-              }
-            }
-          ]
-        }
-      },
-      \\"ReturnTypeSpec\\": {
-        \\"kind\\": \\"ReturnTypeSpec\\"
-      },
-      \\"FunctionBody\\": {
-        \\"kind\\": \\"FunctionBody\\",
-        \\"loc\\": {
-          \\"startColNumber\\": 56,
-          \\"startLineNumber\\": 1,
-          \\"endColNumber\\": 57,
-          \\"endLineNumber\\": 1
-        },
-        \\"children\\": {
-          \\"Statement\\": []
-        }
-      }
-    }
-  },
   {
     \\"kind\\": \\"Function\\",
     \\"loc\\": {
       \\"startColNumber\\": 5,
-      \\"startLineNumber\\": 3,
-      \\"endColNumber\\": 21,
-      \\"endLineNumber\\": 5
-    },
-    \\"name\\": \\"boogaloo\\",
-    \\"part\\": {
-      \\"ParameterList\\": {
-        \\"kind\\": \\"ParameterList\\",
-        \\"loc\\": {
-          \\"startColNumber\\": 21,
-          \\"startLineNumber\\": 5,
-          \\"endColNumber\\": 22,
-          \\"endLineNumber\\": 5
-        },
-        \\"children\\": {
-          \\"Parameter\\": [
-            {
-              \\"kind\\": \\"Parameter\\",
-              \\"name\\": \\"a\\",
-              \\"loc\\": {
-                \\"startColNumber\\": 22,
-                \\"startLineNumber\\": 5,
-                \\"endColNumber\\": 25,
-                \\"endLineNumber\\": 5
-              },
-              \\"part\\": {
-                \\"ParameterType\\": {
-                  \\"kind\\": \\"ParameterType\\"
-                }
-              }
-            },
-            {
-              \\"kind\\": \\"Parameter\\",
-              \\"name\\": \\"b\\",
-              \\"loc\\": {
-                \\"startColNumber\\": 34,
-                \\"startLineNumber\\": 5,
-                \\"endColNumber\\": 38,
-                \\"endLineNumber\\": 5
-              },
-              \\"part\\": {
-                \\"ParameterType\\": {
-                  \\"kind\\": \\"ParameterType\\"
-                }
-              }
-            }
-          ]
-        }
-      },
-      \\"ReturnTypeSpec\\": {
-        \\"kind\\": \\"ReturnTypeSpec\\"
-      },
-      \\"FunctionBody\\": {
-        \\"kind\\": \\"FunctionBody\\",
-        \\"loc\\": {
-          \\"startColNumber\\": 61,
-          \\"startLineNumber\\": 5,
-          \\"endColNumber\\": 62,
-          \\"endLineNumber\\": 5
-        },
-        \\"children\\": {
-          \\"Statement\\": []
-        }
-      }
-    }
-  }
-]
-        ",
-}
-`;
-
-exports[`function with return 1`] = `
-Object {
-  "conduit_a.function": "
-        [
-  {
-    \\"kind\\": \\"Function\\",
-    \\"loc\\": {
-      \\"startColNumber\\": 0,
-      \\"startLineNumber\\": 0,
+      \\"startLineNumber\\": 4,
       \\"endColNumber\\": 17,
-      \\"endLineNumber\\": 1
+      \\"endLineNumber\\": 6
     },
-    \\"name\\": \\"funk\\",
+    \\"name\\": \\"echo\\",
     \\"part\\": {
       \\"ParameterList\\": {
         \\"kind\\": \\"ParameterList\\",
         \\"loc\\": {
           \\"startColNumber\\": 17,
-          \\"startLineNumber\\": 1,
+          \\"startLineNumber\\": 6,
           \\"endColNumber\\": 18,
-          \\"endLineNumber\\": 1
+          \\"endLineNumber\\": 6
         },
         \\"children\\": {
           \\"Parameter\\": [
             {
               \\"kind\\": \\"Parameter\\",
-              \\"name\\": \\"a\\",
+              \\"name\\": \\"s\\",
               \\"loc\\": {
                 \\"startColNumber\\": 18,
-                \\"startLineNumber\\": 1,
+                \\"startLineNumber\\": 6,
                 \\"endColNumber\\": 21,
-                \\"endLineNumber\\": 1
+                \\"endLineNumber\\": 6
               },
               \\"part\\": {
                 \\"ParameterType\\": {
@@ -283,10 +142,10 @@ Object {
       \\"FunctionBody\\": {
         \\"kind\\": \\"FunctionBody\\",
         \\"loc\\": {
-          \\"startColNumber\\": 31,
-          \\"startLineNumber\\": 1,
-          \\"endColNumber\\": 32,
-          \\"endLineNumber\\": 1
+          \\"startColNumber\\": 33,
+          \\"startLineNumber\\": 6,
+          \\"endColNumber\\": 35,
+          \\"endLineNumber\\": 6
         },
         \\"children\\": {
           \\"Statement\\": [
@@ -299,6 +158,16 @@ Object {
     }
   }
 ]
+        ",
+  "conduit_a.proto": "
+syntax=\\"proto2\\";
+        
+
+        
+        
+message Shout {
+	required string m = 1;
+}
         ",
 }
 `;

@@ -108,22 +108,57 @@ protoCompileTest("dependency subdirs", {
     `
 })
 
-protoCompileTest("function declaration", {
+testFailsWhen("function with unknown types", {
     "conduit_a.cdt": `
     function letsGetFuncy(a: SomeType, b: Foreign.Type) {
 
     }
 
-    function boogaloo(a: SomeType, b: Foreign.Type) Foreign.C{
+    `
+})
 
+testFailsWhen("function with invalid return type", {
+    "conduit_a.cdt": `
+
+    function funk() SomeType {
     }
     `
 })
 
-protoCompileTest("function with return", {
+testFailsWhen("function with void returns type", {
     "conduit_a.cdt": `
+
+    message SomeType {
+        string m
+    }
+
     function funk(a: SomeType) {
         return a
+    }
+    `
+})
+
+testFailsWhen("function with type return returns none", {
+    "conduit_a.cdt": `
+
+    message SomeType {
+        string m
+    }
+
+    function funk() SomeType {
+    }
+    `
+})
+
+protoCompileTest("simple echo function", {
+    "conduit_a.cdt": `
+
+    message Shout {
+        string m
+    }
+
+    function echo(s: Shout) Shout {
+        return s
     }
     `
 })
