@@ -6,7 +6,6 @@
     "test:unit": "jest unit/",
     "compile": "tsc -b src/main/",
     "pkg:mac": "npm run compile && npx pkg dist/server.js --target macos"
-
   },
   "author": "Jeremy",
   "license": "ISC",
@@ -19,7 +18,9 @@
     "ts-jest": "^25.5.1",
     "typescript": "^3.9.3"
   },
-  "dependencies": {},
+  "dependencies": {
+    "yauzl": "^2.10.0"
+  },
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
