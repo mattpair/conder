@@ -1,14 +1,29 @@
 package main
 
 import (
-	// "./cmd"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
+
+	"./cmd"
 )
 
 func main() {
-	out, err := http.Get("https://localhost:7344")
+	name, err := cmd.Execute()
+	if err != nil {
+		println(err)
+		return
+	}
+	file, err := os.Open(name)
+	if err != nil {
+		println(err)
+		return
+	}
+	defer file.Close()
+
+	out, err := http.Post("https://localhost:7344/upload", "file", file)
+
 	if err != nil {
 		fmt.Println("error", err)
 		return

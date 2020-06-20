@@ -17,7 +17,7 @@ var (
 )
 
 // Execute zips dir to .conduit/upload.zip
-func Execute() error {
+func Execute() (string, error) {
 	// Reference https://stackoverflow.com/questions/37869793/how-do-i-zip-a-directory-containing-sub-directories-or-files-in-golang
 
 	// Get a Buffer to Write To
@@ -43,7 +43,7 @@ func Execute() error {
 		fmt.Println(err)
 	}
 
-	return rootCmd.Execute()
+	return ".conduit/upload.zip", rootCmd.Execute()
 }
 
 func addFiles(w *zip.Writer, basePath, baseInZip string) {
