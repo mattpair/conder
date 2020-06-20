@@ -12,10 +12,10 @@ server.on("request", (req, res) => {
     res.end()
 })
 
-server.on("stream", (stream) => {
-    stream.respond({ ':status': 200, 'content-type': 'text/plain' });
-    stream.write('hello ');
-    stream.end('world');
-})
+// server.on("stream", (stream) => {
+//     stream.respond({ ':status': 200, 'content-type': 'text/plain' });
+//     stream.write('hello ');
+//     stream.end('world');
+// })
 
 server.listen(7344)

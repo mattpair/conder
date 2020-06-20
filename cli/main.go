@@ -23,7 +23,7 @@ func main() {
 		fmt.Println("error", err)
 	}
 	if body != nil {
-		fmt.Println(out)
+		fmt.Println(string(body[:]))
 	}
 
 	// cmd.Execute()
