@@ -4,10 +4,8 @@
   "description": "Universal typing",
   "scripts": {
     "test:unit": "jest unit/",
-    "test:cli": "cp conduit src/test/cli/ && jest cli/ --runInBand",
-    "pretest:cli": "npm run pkg:mac",
     "compile": "tsc -b src/main/",
-    "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos"
+    "pkg:mac": "npm run compile && npx pkg dist/server.js --target macos"
 
   },
   "author": "Jeremy",
