@@ -16,8 +16,9 @@ var (
 	}
 )
 
-// Execute executes the root command.
+// Execute zips dir to .conduit/upload.zip
 func Execute() error {
+	// Reference https://stackoverflow.com/questions/37869793/how-do-i-zip-a-directory-containing-sub-directories-or-files-in-golang
 
 	// Get a Buffer to Write To
 	os.Mkdir(`.conduit/`, os.FileMode(0777))
