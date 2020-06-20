@@ -22,7 +22,7 @@ func main() {
 	}
 	defer file.Close()
 
-	out, err := http.Post("https://localhost:7344/upload", "file", file)
+	out, err := http.Post("https://localhost:7344/upload", "application/zip", file)
 
 	if err != nil {
 		fmt.Println("error", err)
