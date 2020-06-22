@@ -19,9 +19,7 @@
     "ts-jest": "^25.5.1",
     "typescript": "^3.9.3"
   },
-  "dependencies": {
-    "yauzl": "^2.10.0"
-  },
+  "dependencies": {},
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "node",
