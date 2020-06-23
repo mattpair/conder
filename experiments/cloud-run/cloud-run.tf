@@ -15,14 +15,15 @@ resource "google_cloud_run_service" "demoservice" {
         image = "us.gcr.io/conder-systems-281115/hello-world"
       }
     }
-  }
-
     metadata {
       annotations = {
         "autoscaling.knative.dev/maxScale"      = "2"
         "run.googleapis.com/client-name"        = "terraform"
       }
     }
+  }
+
+
 
   traffic {
     percent         = 100
