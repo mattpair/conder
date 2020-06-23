@@ -12,11 +12,12 @@ export type EntityKinds =
 "CustomType" |
 "Primitive" |
 "Function" |
-"ParameterList" |
 "ReturnTypeSpec" | 
 "FunctionBody" | 
-"Parameter" | 
-"ParameterType" | 
+"Parameter" |
+"NoParameter" |
+"UnaryParameter" |
+"UnaryParameterType" | 
 "VoidReturnType" |
 "Statement" |
 "ReturnStatement" |
@@ -50,9 +51,8 @@ export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: strin
 export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>
 export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>
 export type BaseReturnTypeSpec<DATA extends PRODUCER> = PolymorphicEntity<"ReturnTypeSpec", DATA>
-export type BaseParameter<T extends EntOf<"ParameterType">> = NamedIntrafile<"Parameter", RequiresOne<T>>
-export type BaseParameterList<T extends EntOf<"Parameter">> = IntrafileEntity<"ParameterList", ParentOfMany<T>>
-export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"ParameterList">> = 
+export type BaseUnaryParameter<T extends EntOf<"UnaryParameterType">> = NamedIntrafile<"UnaryParameter", RequiresOne<T>>
+export type BaseFunction<BODY extends EntOf<"FunctionBody">, RET extends EntOf<"ReturnTypeSpec">, PARAM extends EntOf<"Parameter">> = 
     NamedIntrafile<"Function", RequiresOne<BODY> & RequiresOne<RET> & RequiresOne<PARAM>>
 
 export type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [P in K["kind"]]: K[]}}

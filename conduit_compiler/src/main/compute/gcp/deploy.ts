@@ -3,14 +3,15 @@ import * as fs from 'fs';
 import * as child_process from 'child_process';
 import { TypeResolved } from '../../entity/resolved';
 
-function generateParameterList(parameters: Parse.ParameterList): string {
-    return parameters.children.Parameter.map(p => `${p.name}`).join(", ")
+function generateParameterList(p: Parse.Parameter): string {
+    const param = p.differentiate()
+    return param.kind === "NoParameter" ? "" : `${param.name}`
 }
 
 function generateInternalFunction(f: Parse.Function): string {
     return `
 
-def internal_${f.name}(${generateParameterList(f.part.ParameterList)}): 
+def internal_${f.name}(${generateParameterList(f.part.Parameter)}): 
     return ${f.part.FunctionBody.children.Statement[0].differentiate().val}
     `
 }
@@ -19,7 +20,8 @@ function generateFunctions(fs: Parse.Function[], file: TypeResolved.File): strin
     return fs.map(f => {
 
 const internal = generateInternalFunction(f) 
-const ptype = f.part.ParameterList.children.Parameter[0].part.ParameterType.differentiate()
+//TODO: clean this up.
+const ptype = (f.part.Parameter.differentiate() as Parse.UnaryParameter).part.UnaryParameterType.differentiate()
 const typeLocation = ptype.kind === "CustomType" ? `${modelAliasOf(file)}.${ptype.type}` : `I DONT KNOW`
 const external =
 `

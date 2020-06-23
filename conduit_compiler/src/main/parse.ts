@@ -21,11 +21,12 @@ export namespace Parse {
     export type Field = common.BaseField<FieldType>
     export type Statement = common.BaseStatement<() => common.BaseReturnStatement>
     export type FunctionBody = common.BaseFunctionBody<Statement>
-    export type ParameterType = common.PolymorphicEntity<"ParameterType", () => CustomTypeEntity | FromEntitySelect>
-    export type Parameter = common.BaseParameter<ParameterType>
-    export type ParameterList = common.BaseParameterList<Parameter>
+    export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity | FromEntitySelect>
+    export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
+    export type UnaryParameter = common.BaseUnaryParameter<UnaryParameterType>
+    export type Parameter = common.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
     export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity | FromEntitySelect>
-    export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, ParameterList>
+    export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
     export type Message = common.BaseMsg<Field>
     export type Import = common.BaseImport<{
         readonly fromPresentDir: boolean
@@ -164,14 +165,15 @@ export namespace Parse {
         common.PrimitiveEntity | 
         Function |
         FunctionBody |
-        ParameterList |
         ReturnTypeSpec |
         Parameter | 
         common.VoidReturn |
         common.BaseReturnStatement | 
         Statement |
         FromEntitySelect |
-        ParameterType
+        UnaryParameterType |
+        NoParameter |
+        UnaryParameter
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -434,25 +436,44 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: {FunctionBody: 3, ParameterList: 1, ReturnTypeSpec: 2}
+            requiresOne: {FunctionBody: 3, Parameter: 1, ReturnTypeSpec: 2}
         },
         ReturnTypeSpec: {
             kind: "polymorph",
             groupKind: "ReturnTypeSpec",
             priority: {FromEntitySelect: 1, CustomType: 2, VoidReturnType: 3}
         },
-        ParameterList: {
-            kind: "aggregate",
-            startRegex: /^\s*\(/,
-            endRegex: /^\s*\)\s*/,
-            assemble(start, end, loc, children): ParameterList | undefined {
+        Parameter: {
+            kind: "polymorph",
+            groupKind: "Parameter",
+            priority: { UnaryParameter: 2, NoParameter: 1}
+        },
+
+        NoParameter: {
+            kind: "leaf",
+            regex: /^\(\)/,
+            assemble(c, loc) {
                 return {
-                    kind: "ParameterList",
-                    loc,
-                    children
+                    kind: "NoParameter",
+                    loc
                 }
-            },
-            hasMany: {Parameter: true}
+            }
+        },
+
+        UnaryParameter: {
+            kind: "conglomerate",
+            startRegex: /^\(\s*(?<name>[a-zA-Z_]\w*): */,
+            endRegex: /^\s*\) */,
+            requiresOne: {UnaryParameterType: 1},
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "UnaryParameter",
+                    name: start.groups.name,
+                    loc, 
+                    part,
+                }
+            }
+
         },
 
         FunctionBody: {
@@ -468,24 +489,10 @@ export namespace Parse {
             },
             hasMany: {Statement: true}
         },
-        Parameter: {
-            kind: "conglomerate",
-            startRegex: /^\s*(?<name>[a-zA-Z_]\w*): */,
-            endRegex: /^\s*,?/,
-            assemble(start, end, loc, part): Parameter | undefined {
-                return {
-                    kind: "Parameter",
-                    name: start.groups.name,
-                    loc,
-                    part
-                }
-            },
-            requiresOne: {ParameterType: 1}
-        },
-        ParameterType: {
+        UnaryParameterType: {
             kind: "polymorph",
             priority: {CustomType: 2, FromEntitySelect: 1},
-            groupKind: "ParameterType"
+            groupKind: "UnaryParameterType"
         },
         VoidReturnType: {
             kind: "leaf",

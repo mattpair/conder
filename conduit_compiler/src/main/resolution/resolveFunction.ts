@@ -52,32 +52,39 @@ export function validateFunctions(files: TypeResolved.File[]) {
                 throw new Error(`Function: ${func.name} duplicates another entity in scope`)
             }
             
-            const parameter: Record<string, TypeResolved.Message | Enum> = {}
-            func.part.ParameterList.children.Parameter.forEach((param: Parse.Parameter) => {
-                if (file.inFileScope.has(param.name)) {
-                    throw new Error(`Parameter: ${param.name} duplicates another entity in scope`)
-                }
-                
-                const type = param.part.ParameterType.differentiate()
+            const parameter = func.part.Parameter.differentiate()
 
-                switch(type.kind) {
-                    case "CustomType":
-                        parameter[param.name] = getCustomType(type, file.inFileScope)
-                        break
-                    case "FromEntitySelect":
-                        parameter[param.name] = getFromEntitySelect(type, file.inFileScope)
-                        break
+            const scopeLookup: Record<string, TypeResolved.Message | Enum> = {}
+            switch (parameter.kind) {
+                case "NoParameter":
+                    break
+                case "UnaryParameter":
+                    if (file.inFileScope.has(parameter.name)) {
+                        throw new Error(`Parameter: ${parameter.name} duplicates another entity in scope`)
+                    }
+                    
+                    const type: Parse.CustomTypeEntity | Parse.FromEntitySelect = parameter.part.UnaryParameterType.differentiate()
+    
+                    switch(type.kind) {
+                        case "CustomType":
+                            scopeLookup[parameter.name] = getCustomType(type, file.inFileScope)
+                            break
+                        case "FromEntitySelect":
+                            scopeLookup[parameter.name] = getFromEntitySelect(type, file.inFileScope)
+                            break
+    
+                        default: assertNever(type)
+                    }
 
-                    default: assertNever(type)
-                }
-            })
+            }
+            
 
             const returnType = getReturnType(func.part.ReturnTypeSpec, file.inFileScope)
 
             const ret = func.part.FunctionBody.children.Statement.find((s: Parse.Statement) => s.differentiate().kind === "ReturnStatement")
             if (ret !== undefined) {
                 const name = ret.differentiate().val
-                const v = parameter[name]
+                const v = scopeLookup[name]
                 if (v === undefined) {
                     throw new Error(`Cannot find variable in scope ${name}`)
                 }
