@@ -6,8 +6,8 @@ import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 import { validateFunctions } from "./resolution/resolveFunction";
 
-
-export function compileFiles(files: Record<string, () => string>): Record<string, string> {
+export type PartiallyCompiled = Record<string, {proto: string, data: TypeResolved.File}>
+export function compileFiles(files: Record<string, () => string>): PartiallyCompiled {
     const conduits: Parse.File[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
@@ -20,8 +20,8 @@ export function compileFiles(files: Record<string, () => string>): Record<string
     return toProto(r)
 } 
 
-function toProto(files: TypeResolved.File[]): Record<string, string> {
-    const results: Record<string, string> = {}
+function toProto(files: TypeResolved.File[]): PartiallyCompiled {
+    const results: PartiallyCompiled = {}
     files.filter(f => f.inFileScope.size > 0).forEach(file => {
 
         const enums: Enum[] = []
@@ -39,22 +39,20 @@ function toProto(files: TypeResolved.File[]): Record<string, string> {
         if (enums.length + messages.length === 0) {
             return
         }
-        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = `
+        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto: `
 syntax="proto2";
         ${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
 
         ${enums.map(printEnum).join("\n\n")}
         ${messages.map(printMessage).join("\n\n")}
-        `
+        `, data: file}
         
     })
 
     validateFunctions(files)
-    files.filter(f => f.children.Function.length > 0).forEach(file => {    
-        results[`${file.loc.fullname.replace(".cdt", ".function")}`] = `
-        ${JSON.stringify(file.children.Function, null, 2)}
-        `
-    })
+    // files.filter(f => f.children.Function.length > 0).forEach(file => {    
+    //     results[`${file.loc.fullname.replace(".cdt", ".function")}`].data = file
+    // })
 
     return results       
 }

@@ -1,10 +1,53 @@
+import { Parse } from '../../parse';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
+import { TypeResolved } from '../../entity/resolved';
 
-function generateAndDeployHelloWorld() {
-    fs.mkdirSync(".deploy/server/server", {recursive: true})
-    fs.writeFileSync(".deploy/server/server/__init__.py", "")
-    fs.writeFileSync(".deploy/server/server/settings.py",
+function generateParameterList(parameters: Parse.ParameterList): string {
+    return parameters.children.Parameter.map(p => `${p.name}`).join(", ")
+}
+
+function generateInternalFunction(f: Parse.Function): string {
+    return `
+
+def internal_${f.name}(${generateParameterList(f.part.ParameterList)}): 
+    return ${f.part.FunctionBody.children.Statement[0].differentiate().val}
+    `
+}
+
+function generateFunctions(fs: Parse.Function[], file: TypeResolved.File): string {
+    return fs.map(f => {
+
+const internal = generateInternalFunction(f) 
+const ptype = f.part.ParameterList.children.Parameter[0].part.ParameterType.differentiate()
+const typeLocation = ptype.kind === "CustomType" ? `${modelAliasOf(file)}.${ptype.type}` : `I DONT KNOW`
+const external =
+`
+def external_${f.name}(req):
+        msg = ${typeLocation}()
+        msg.ParseFromString(req.body)
+        ret = internal_${f.name}(msg)
+        return HttpResponse(ret.SerializeToString())
+
+
+PATH_${f.name} = path('${f.name}/', external_${f.name})
+`
+return `${internal}\n\n${external}`
+    }).join("\n\n")
+}
+
+function modelAliasOf(file: TypeResolved.File): string {
+    return `models_${file.loc.dir.replace("/", "_")}_${file.loc.name.replace(".cdt", "")}`
+}
+
+//TODO: generate random key.
+export function generateAndDeploy(files: TypeResolved.File[]) {
+
+    const functions = files.map(file => generateFunctions(file.children.Function, file)).join("\n\n")
+    fs.mkdirSync(".deploy/compute/", {recursive: true})
+    child_process.execSync("cp -r python .deploy/compute/server")
+    fs.writeFileSync(".deploy/compute/server/__init__.py", "")
+    fs.writeFileSync(".deploy/compute/server/settings.py",
 `
 import os
 
@@ -16,6 +59,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+
 SECRET_KEY = '3_+m*a$mw1q4gd22y9j_=ts%%*@_!dfldt2rd05ni#ao0r*e*n'
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -89,21 +133,24 @@ USE_TZ = True
 
 `
     )
-    fs.writeFileSync(".deploy/server/server/urls.py",
+    fs.writeFileSync(".deploy/compute/server/urls.py",
 `
 from django.contrib import admin
 from django.urls import path
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpRequest
+${files.filter(f => f.inFileScope.size > 0).map(f => `from .models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
 
+${functions}
 
-def index(req):
+def index(req: HttpRequest):
     return HttpResponse("Hello world")
 
 urlpatterns = [
     path('', index),
+    ${files.map(file => file.children.Function.map(fun => `PATH_${fun.name}`).join(",\n")).join(",\n")},
 ]
 `)
-    fs.writeFileSync(".deploy/server/manage.py", 
+    fs.writeFileSync(".deploy/compute/manage.py", 
 `
 import os
 import sys
@@ -126,12 +173,12 @@ if __name__ == '__main__':
     main()
 `)
 
-    fs.writeFileSync(".deploy/server/requirements.txt", "Django==3.0")
+    fs.writeFileSync(".deploy/compute/requirements.txt", "Django==3.0\nprotobuf==3.12.2")
     fs.writeFileSync(".deploy/Dockerfile",
 `
 FROM python:3.8-slim-buster
 
-COPY server/ .
+COPY compute/ .
 
 RUN pip install -r requirements.txt
 
