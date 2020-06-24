@@ -1,8 +1,0 @@
-
-message Shout {
-    string content
-}
-
-function echo(s: Shout) Shout {
-    return s
-}

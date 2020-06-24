@@ -54,9 +54,11 @@ function main() {
             child_process.execSync('touch python/models/__init__.py')
             results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=python/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
             const url = generateAndDeploy(results.map(p => p[1]))
-            child_process.execSync('mkdir -p clients/models')
-            child_process.execSync('touch python/models/__init__.py')
-            results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=clients/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
+            child_process.execSync('mkdir -p clients/gen/models')
+            child_process.execSync('touch clients/gen/models/__init__.py')
+            child_process.execSync('touch clients/gen/__init__.py')
+
+            results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=clients/gen/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
             generateClients(url, results.map(p => p[1]))
 
         })

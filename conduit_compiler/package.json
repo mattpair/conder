@@ -5,7 +5,8 @@
   "scripts": {
     "test:unit": "jest unit/",
     "compile": "tsc -b src/main/",
-    "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos"
+    "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
+    "setup:mac": "mkdir bin && PWD=$(pwd) && PATH=$PATH:$PWD/bin/"
   },
   "author": "Jeremy",
   "license": "ISC",

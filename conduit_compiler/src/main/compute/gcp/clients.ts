@@ -4,10 +4,9 @@ import * as fs from 'fs'
 
 export function generateClients(url: string, files: TypeResolved.File[]) {
     
-    fs.writeFileSync("clients/__init__.py", "")
-    fs.writeFileSync("clients/clients.py", 
+    fs.writeFileSync("clients/gen/clients.py", 
 `
-${files.filter(f => f.inFileScope.size > 0).map(f => `import models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
+${files.filter(f => f.inFileScope.size > 0).map(f => `import gen.models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
 import requests
 
 
