@@ -38,12 +38,12 @@ return `${internal}\n\n${external}`
     }).join("\n\n")
 }
 
-function modelAliasOf(file: TypeResolved.File): string {
+export function modelAliasOf(file: TypeResolved.File): string {
     return `models_${file.loc.dir.replace("/", "_")}_${file.loc.name.replace(".cdt", "")}`
 }
 
 //TODO: generate random key.
-export function generateAndDeploy(files: TypeResolved.File[]) {
+export function generateAndDeploy(files: TypeResolved.File[]): string {
 
     const functions = files.map(file => generateFunctions(file.children.Function, file)).join("\n\n")
     fs.mkdirSync(".deploy/compute/", {recursive: true})
@@ -83,7 +83,7 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    #'django.middleware.csrf.CsrfViewMiddleware', Disabled so test clients may be generated
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -244,6 +244,7 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
     child_process.execSync("terraform init && terraform apply -auto-approve", {cwd: ".deploy/", encoding: "utf-8"})
 
     const state = JSON.parse(fs.readFileSync(".deploy/terraform.tfstate", {encoding: "utf-8"}))
-
-    console.log(`Deployed compute to ${state.resources.find((r: any) => r.type === "google_cloud_run_service").instances[0].attributes.status[0].url}`)
+    const url = state.resources.find((r: any) => r.type === "google_cloud_run_service").instances[0].attributes.status[0].url
+    console.log(`Deployed compute to ${url}`)
+    return url
 }
