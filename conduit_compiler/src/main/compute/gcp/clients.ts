@@ -2,9 +2,9 @@ import { TypeResolved } from '../../entity/resolved';
 import {modelAliasOf} from './deploy'
 import * as fs from 'fs'
 
-export function generateClients(url: string, files: TypeResolved.File[]) {
+export function generateClients(url: string, files: TypeResolved.File[], dir: string) {
     
-    fs.writeFileSync("clients/gen/clients.py", 
+    fs.writeFileSync(`${dir}/gen/clients.py`, 
 `
 ${files.filter(f => f.inFileScope.size > 0).map(f => `import gen.models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
 import requests

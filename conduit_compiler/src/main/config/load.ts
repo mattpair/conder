@@ -5,9 +5,15 @@ type ConduitBuildConfig = {
     project: string,
     dependencies?: {
         [path in string]: {
-            kind: "python"
+            language: "python"
         }
     }
+    outputClients?: [
+        {
+            dir: string
+            language: "python"
+        }
+    ]
 }
 
 export function loadBuildConfig(): ConduitBuildConfig | StartupError {
