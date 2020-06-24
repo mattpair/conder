@@ -242,4 +242,8 @@ resource "google_cloud_run_service_iam_policy" "noauth" {
     child_process.execSync("docker tag conder-systems/cloud-run-gen us.gcr.io/conder-systems-281115/hello-world-gen", {cwd: ".deploy/"})
     child_process.execSync("docker push us.gcr.io/conder-systems-281115/hello-world-gen")
     child_process.execSync("terraform init && terraform apply -auto-approve", {cwd: ".deploy/", encoding: "utf-8"})
+
+    const state = JSON.parse(fs.readFileSync(".deploy/terraform.tfstate", {encoding: "utf-8"}))
+
+    console.log(`Deployed compute to ${state.resources.find((r: any) => r.type === "google_cloud_run_service").instances[0].attributes.status[0].url}`)
 }

@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as child_process from 'child_process';
 import {compileFiles} from "./compileToProto"
 import { generateAndDeploy } from './compute/gcp/deploy';
-import { loadBuildConfig } from 'config/load';
+import { loadBuildConfig } from './config/load';
 
 // This is just a hack for now. I'm the only one running this.
 // Revisit once productionizing.
@@ -35,7 +35,7 @@ function main() {
         console.error(config.description)
         return
     }
-    
+
     try {
         conduits = fs.readdirSync("./conduit/")
     } catch(e) {
