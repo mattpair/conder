@@ -4,6 +4,8 @@
   "description": "Universal typing",
   "scripts": {
     "test:unit": "jest unit/",
+    "pretest:integration": "npm run pkg:mac",
+    "test:integration": "cd ../integration_test && ./test_all.sh",
     "compile": "tsc -b src/main/",
     "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
     "setup:mac": "mkdir bin && PWD=$(pwd) && PATH=$PATH:$PWD/bin/"
