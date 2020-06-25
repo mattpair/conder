@@ -30,13 +30,18 @@ function conduitToProto(conduits: string[]): Promise<[string, TypeResolved.File]
 
 const commands = {
     models: (conduits: string[], config: ConduitBuildConfig) => {
+        if (!config.dependencies) {
+            console.warn("Please specify a dependency in your conduit config so I know where to put models.")
+            return
+        }
         // TODO: deduplicate
         conduitToProto(conduits)
         .then((results) => {
-            child_process.execSync('mkdir -p python/models')
-            child_process.execSync('touch python/models/__init__.py')
-            results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=python/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
-            
+            for (const dir in config.dependencies) {
+                child_process.execSync(`mkdir -p ${dir}/gen/models`)
+                child_process.execSync(`touch ${dir}/gen/models/__init__.py`)
+                results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${dir}/gen/models ${p[0]} 2>&1`, {encoding: "utf-8"}))    
+            }
             
             console.log("done!")
         })
