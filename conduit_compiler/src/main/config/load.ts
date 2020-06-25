@@ -1,7 +1,7 @@
 import { StartupError } from "error/types";
 import * as fs from 'fs';
 
-type ConduitBuildConfig = {
+export type ConduitBuildConfig = {
     project: string,
     dependencies?: {
         [path in string]: {
