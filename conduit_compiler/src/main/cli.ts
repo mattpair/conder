@@ -53,7 +53,7 @@ const commands = {
         conduitToProto(conduits)
         .then((results) => {
             if (!config.dependencies) {
-                const targetDir = 'python'
+                const targetDir = '.python'
                 child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
                 child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
                 child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
