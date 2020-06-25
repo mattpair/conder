@@ -52,21 +52,27 @@ const commands = {
     run: (conduits: string[], config: ConduitBuildConfig) => {
         conduitToProto(conduits)
         .then((results) => {
-            child_process.execSync('mkdir -p python/models')
-            child_process.execSync('touch python/models/__init__.py')
-            results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=python/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
-            const url = generateAndDeploy(results.map(p => p[1]))
+            if (!config.dependencies) {
+                const targetDir = 'python'
+                child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
+                child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
+                child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
 
-            if (config.outputClients !== undefined) {
-                config.outputClients.forEach(outputRequest => {
-                    child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
-                    child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
-                    child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
-        
-                    results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
-                    generateClients(url, results.map(p => p[1]), outputRequest.dir)
-                })
-            }  
+                results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
+                const url = generateAndDeploy(results.map(p => p[1]), targetDir)
+    
+                if (config.outputClients !== undefined) {
+                    config.outputClients.forEach(outputRequest => {
+                        child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
+                        child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
+                        child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
+            
+                        results.forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models ${p[0]} 2>&1`, {encoding: "utf-8"}))
+                        generateClients(url, results.map(p => p[1]), outputRequest.dir)
+                    })
+                }
+            }
+              
             
             console.log("done!")
         })

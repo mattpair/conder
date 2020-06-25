@@ -43,11 +43,11 @@ export function modelAliasOf(file: TypeResolved.File): string {
 }
 
 //TODO: generate random key.
-export function generateAndDeploy(files: TypeResolved.File[]): string {
+export function generateAndDeploy(files: TypeResolved.File[], dirname: string): string {
 
     const functions = files.map(file => generateFunctions(file.children.Function, file)).join("\n\n")
     fs.mkdirSync(".deploy/compute/", {recursive: true})
-    child_process.execSync("cp -r python .deploy/compute/server")
+    child_process.execSync(`cp -r ${dirname} .deploy/compute/server`)
     fs.writeFileSync(".deploy/compute/server/__init__.py", "")
     fs.writeFileSync(".deploy/compute/server/settings.py",
 `
@@ -140,7 +140,7 @@ USE_TZ = True
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
-${files.filter(f => f.inFileScope.size > 0).map(f => `from .models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
+${files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
 
 ${functions}
 
