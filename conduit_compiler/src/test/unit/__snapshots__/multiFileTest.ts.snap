@@ -45,6 +45,11 @@ Object {
               },
             ],
           },
+          "declaredIn": FileLocation {
+            "dir": "",
+            "fullname": "conduit_a.cdt",
+            "name": "conduit_a.cdt",
+          },
           "kind": "Message",
           "loc": Object {
             "endColNumber": 16,
@@ -119,6 +124,11 @@ message m1 {
                     },
                   },
                 ],
+              },
+              "declaredIn": FileLocation {
+                "dir": "",
+                "fullname": "conduit_a.cdt",
+                "name": "conduit_a.cdt",
               },
               "kind": "Message",
               "loc": Object {
@@ -220,6 +230,11 @@ Object {
                 },
               },
             ],
+          },
+          "declaredIn": FileLocation {
+            "dir": "",
+            "fullname": "conduit_a.cdt",
+            "name": "conduit_a.cdt",
           },
           "kind": "Message",
           "loc": Object {
@@ -325,6 +340,11 @@ message m1 {
                       },
                     ],
                   },
+                  "declaredIn": FileLocation {
+                    "dir": "",
+                    "fullname": "conduit_a.cdt",
+                    "name": "conduit_a.cdt",
+                  },
                   "kind": "Message",
                   "loc": Object {
                     "endColNumber": 16,
@@ -388,6 +408,11 @@ message m1 {
                           },
                         ],
                       },
+                      "declaredIn": FileLocation {
+                        "dir": "",
+                        "fullname": "conduit_a.cdt",
+                        "name": "conduit_a.cdt",
+                      },
                       "kind": "Message",
                       "loc": Object {
                         "endColNumber": 16,
@@ -426,6 +451,11 @@ message m1 {
                         },
                       },
                     ],
+                  },
+                  "declaredIn": FileLocation {
+                    "dir": "sub/",
+                    "fullname": "sub/conduit_b.cdt",
+                    "name": "conduit_b.cdt",
                   },
                   "kind": "Message",
                   "loc": Object {
@@ -482,6 +512,11 @@ message m1 {
                     },
                   },
                 ],
+              },
+              "declaredIn": FileLocation {
+                "dir": "sub/",
+                "fullname": "sub/conduit_c.cdt",
+                "name": "conduit_c.cdt",
               },
               "kind": "Message",
               "loc": Object {
@@ -597,6 +632,11 @@ message D {
                   },
                 ],
               },
+              "declaredIn": FileLocation {
+                "dir": "",
+                "fullname": "conduit_a.cdt",
+                "name": "conduit_a.cdt",
+              },
               "kind": "Message",
               "loc": Object {
                 "endColNumber": 16,
@@ -635,6 +675,11 @@ message D {
                 },
               },
             ],
+          },
+          "declaredIn": FileLocation {
+            "dir": "sub/",
+            "fullname": "sub/conduit_b.cdt",
+            "name": "conduit_b.cdt",
           },
           "kind": "Message",
           "loc": Object {
@@ -722,6 +767,11 @@ message m2 {
                   },
                 ],
               },
+              "declaredIn": FileLocation {
+                "dir": "",
+                "fullname": "conduit_a.cdt",
+                "name": "conduit_a.cdt",
+              },
               "kind": "Message",
               "loc": Object {
                 "endColNumber": 16,
@@ -785,6 +835,11 @@ message m2 {
                       },
                     ],
                   },
+                  "declaredIn": FileLocation {
+                    "dir": "",
+                    "fullname": "conduit_a.cdt",
+                    "name": "conduit_a.cdt",
+                  },
                   "kind": "Message",
                   "loc": Object {
                     "endColNumber": 16,
@@ -823,6 +878,11 @@ message m2 {
                     },
                   },
                 ],
+              },
+              "declaredIn": FileLocation {
+                "dir": "sub/",
+                "fullname": "sub/conduit_b.cdt",
+                "name": "conduit_b.cdt",
               },
               "kind": "Message",
               "loc": Object {
@@ -879,6 +939,11 @@ message m2 {
                 },
               },
             ],
+          },
+          "declaredIn": FileLocation {
+            "dir": "sub/",
+            "fullname": "sub/conduit_c.cdt",
+            "name": "conduit_c.cdt",
           },
           "kind": "Message",
           "loc": Object {

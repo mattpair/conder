@@ -1,3 +1,4 @@
+import { FileLocation } from './../../util/filesystem';
 import { Parse } from '../../parse';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
@@ -24,7 +25,7 @@ const internal = generateInternalFunction(f)
 const param = f.part.Parameter.differentiate()
 let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
 // const ptype = .part.UnaryParameterType.differentiate()
-const typeLocation = ptype !== null ? `${modelAliasOf(file)}.${ptype.name}` : `No type necessary`
+const typeLocation = ptype !== null ? `${modelAliasOf(ptype.declaredIn !== undefined ? ptype.declaredIn : file.loc)}.${ptype.name}` : `No type necessary`
 const external =
 `
 def external_${f.name}(req):
@@ -40,8 +41,8 @@ return `${internal}\n\n${external}`
     }).join("\n\n")
 }
 
-export function modelAliasOf(file: FunctionResolved.File): string {
-    return `models_${file.loc.dir.replace("/", "_")}_${file.loc.name.replace(".cdt", "")}`
+export function modelAliasOf(loc: FileLocation): string {
+    return `models_${loc.dir.replace("/", "_")}_${loc.name.replace(".cdt", "")}`
 }
 
 //TODO: generate random key.
@@ -142,7 +143,7 @@ USE_TZ = True
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
-${files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
+${files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
 
 ${functions}
 
@@ -151,7 +152,7 @@ def index(req: HttpRequest):
 
 urlpatterns = [
     path('', index),
-    ${files.map(file => file.children.Function.map(fun => `PATH_${fun.name}`).join(",\n")).join(",\n")},
+    ${files.filter(f => f.children.Function.length > 0).map(file => file.children.Function.map(fun => `PATH_${fun.name}`).join(",\n")).join(",\n")},
 ]
 `)
     fs.writeFileSync(".deploy/compute/manage.py", 

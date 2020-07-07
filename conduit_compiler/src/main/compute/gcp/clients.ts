@@ -6,7 +6,7 @@ export function generateClients(url: string, files: FunctionResolved.File[], dir
     
     fs.writeFileSync(`${dir}/gen/clients.py`, 
 `
-${files.filter(f => f.inFileScope.size > 0).map(f => `import gen.models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f)}`)}
+${files.filter(f => f.inFileScope.size > 0).map(f => `import gen.models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
 import requests
 
 

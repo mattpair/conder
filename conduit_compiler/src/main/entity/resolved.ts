@@ -3,13 +3,14 @@ import { Parse } from 'parse';
 import { FileLocation } from 'util/filesystem';
 
 // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
-type ResolvedType = Message | basic.Enum | basic.PrimitiveEntity
+type ResolvedType = Message | Enum | basic.PrimitiveEntity
 export type FieldType = basic.BaseFieldType<() => ResolvedType>
 
     
 export type Field = basic.BaseField<FieldType>
 
-export type Message = basic.BaseMsg<Field>
+export type Message = basic.BaseMsg<Field> & {readonly declaredIn?: FileLocation}
+export type Enum = basic.Enum & {readonly declaredIn?: FileLocation}
 export type Import =basic.BaseImport<{dep: string}>
 
 export namespace TypeResolved {
@@ -20,24 +21,24 @@ export namespace TypeResolved {
         basic.ParentOfMany<Import> &
     {
         readonly loc: FileLocation
-        readonly inFileScope: Map<string, Message | basic.Enum | File>
+        readonly inFileScope: Map<string, Message | Enum | File>
     }
 }
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message | basic.Enum >
+    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message | Enum >
     type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
     type ReturnStatement = basic.BaseReturnStatement
     type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>
-    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | basic.Enum | basic.VoidReturn>, Parameter>
+    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | Enum | basic.VoidReturn>, Parameter>
     export type File = basic.Entity<"File"> & 
     basic.ParentOfMany<Function> &
     basic.ParentOfMany<Import> &
     {
         readonly loc: FileLocation
-        readonly inFileScope: Map<string, Message | basic.Enum | TypeResolved.File>
+        readonly inFileScope: Map<string, Message | Enum | TypeResolved.File>
     }
         
 }

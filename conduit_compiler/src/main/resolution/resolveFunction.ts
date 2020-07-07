@@ -11,7 +11,7 @@ function getFromEntitySelect(type: Parse.FromEntitySelect, scope: ScopeMap): Mes
     if (externalFile.kind !== "File") {
         throw new Error(`${type.from} is a ${externalFile.kind} and cannot be selected`)
     }
-    return getCustomType(type.part.CustomType, externalFile.inFileScope)
+    return Object.assign(getCustomType(type.part.CustomType, externalFile.inFileScope), {declaredIn: externalFile.loc})
 }
 
 function getCustomType(type: Parse.CustomTypeEntity, scope: ScopeMap ): Message | Enum {

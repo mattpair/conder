@@ -1,8 +1,8 @@
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { Message, TypeResolved, FieldType } from '../entity/resolved';
+import { Message, Enum, TypeResolved, FieldType } from '../entity/resolved';
 import { assertNever } from '../util/classifying';
-import { Enum, EntityKinds } from '../entity/basic';
+import  * as basic from '../entity/basic';
 
 
 function assertNameNotYetInLookup(m: {name: string}, l: Set<string>) {
@@ -26,7 +26,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
         inFileScope.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
     })
 
-    const reserveName = (m: Parse.Message | Enum) => {
+    const reserveName = (m: Parse.Message | basic.Enum) => {
         assertNameNotYetInLookup(m, nameSet)
         intralookup.add(m.name)
     }
@@ -60,7 +60,9 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                             if (importedEntity !== undefined && importedEntity.kind !== "File") {
                                 
                                 // TODO: loc should be reference location, not entity location.
-                                t = {differentiate: () => importedEntity,  kind: "FieldType"}            
+                                t = {differentiate: () => {
+                                    return Object.assign(importedEntity, {declaredIn: targetEntity.loc})
+                                },  kind: "FieldType"}            
                                 
                             } else {
                                 throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
