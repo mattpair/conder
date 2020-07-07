@@ -1,8 +1,8 @@
-import { TypeResolved } from '../../entity/resolved';
+import { FunctionResolved } from '../../entity/resolved';
 import {modelAliasOf} from './deploy'
 import * as fs from 'fs'
 
-export function generateClients(url: string, files: TypeResolved.File[], dir: string) {
+export function generateClients(url: string, files: FunctionResolved.File[], dir: string) {
     
     fs.writeFileSync(`${dir}/gen/clients.py`, 
 `

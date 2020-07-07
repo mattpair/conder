@@ -64,14 +64,14 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message m1 {
 	required double d = 1;
 }
-        ",
+",
   },
   "conduit_b.proto": Object {
     "data": Object {
@@ -178,14 +178,14 @@ message m1 {
     },
     "proto": "
 syntax=\\"proto2\\";
-        import \\"conduit_a.proto\\";
+import \\"conduit_a.proto\\";
+            
 
-        
-        
+
 message m2 {
 	required m1 m = 1;
 }
-        ",
+",
   },
 }
 `;
@@ -240,14 +240,14 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message m1 {
 	required double d = 1;
 }
-        ",
+",
   },
   "conduit_d.proto": Object {
     "data": Object {
@@ -541,14 +541,14 @@ message m1 {
     },
     "proto": "
 syntax=\\"proto2\\";
-        import \\"sub/conduit_c.proto\\";
+import \\"sub/conduit_c.proto\\";
+            
 
-        
-        
+
 message D {
 	required m2 d = 1;
 }
-        ",
+",
   },
   "sub/conduit_b.proto": Object {
     "data": Object {
@@ -655,14 +655,14 @@ message D {
     },
     "proto": "
 syntax=\\"proto2\\";
-        import \\"conduit_a.proto\\";
+import \\"conduit_a.proto\\";
+            
 
-        
-        
+
 message m2 {
 	required m1 m = 1;
 }
-        ",
+",
   },
   "sub/conduit_c.proto": Object {
     "data": Object {
@@ -899,16 +899,16 @@ message m2 {
     },
     "proto": "
 syntax=\\"proto2\\";
-        import \\"conduit_a.proto\\";
+import \\"conduit_a.proto\\";
 import \\"sub/conduit_b.proto\\";
+            
 
-        
-        
+
 message m2 {
 	required m1 m1 = 1;
 	required m2 m2 = 2;
 }
-        ",
+",
   },
 }
 `;
@@ -1021,14 +1021,14 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message Shout {
 	required string m = 1;
 }
-        ",
+",
   },
 }
 `;
@@ -1083,14 +1083,14 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message m1 {
 	required double d = 1;
 }
-        ",
+",
   },
   "conduit_b.proto": Object {
     "data": Object {
@@ -1228,10 +1228,10 @@ message m1 {
     },
     "proto": "
 syntax=\\"proto2\\";
-        import \\"conduit_a.proto\\";
+import \\"conduit_a.proto\\";
+            
 
-        
-        
+
 message m2 {
 	required double d = 1;
 }
@@ -1240,7 +1240,7 @@ message m2 {
 message m1 {
 	required m2 m = 1;
 }
-        ",
+",
   },
 }
 `;

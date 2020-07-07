@@ -1,12 +1,12 @@
 
 import { Parse} from "./parse";
-import { TypeResolved } from "./entity/resolved";
+import { FunctionResolved, TypeResolved, Message, Field } from "./entity/resolved";
 import { resolveDeps } from "./resolution/resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
-import { validateFunctions } from "./resolution/resolveFunction";
+import { resolveFunctions } from "./resolution/resolveFunction";
 
-export type PartiallyCompiled = Record<string, {proto: string, data: TypeResolved.File}>
+export type PartiallyCompiled = Record<string, {proto: string, data: FunctionResolved.File}>
 export function compileFiles(files: Record<string, () => string>): PartiallyCompiled {
     const conduits: Parse.File[] = []
     for (const file in files) {
@@ -17,15 +17,15 @@ export function compileFiles(files: Record<string, () => string>): PartiallyComp
 
     const r = resolveDeps(conduits)
 
-    return toProto(r)
+    return resolveFunctionsAndProto(r)
 } 
 
-function toProto(files: TypeResolved.File[]): PartiallyCompiled {
+function resolveFunctionsAndProto(files: TypeResolved.File[]): PartiallyCompiled {
     const results: PartiallyCompiled = {}
-    files.filter(f => f.inFileScope.size > 0).forEach(file => {
+    files.forEach(file => {
 
         const enums: Enum[] = []
-        const messages: TypeResolved.Message[] = []
+        const messages: Message[] = []
         file.inFileScope.forEach(v => {
             switch(v.kind) {
                 case "Enum":
@@ -36,23 +36,20 @@ function toProto(files: TypeResolved.File[]): PartiallyCompiled {
                     break;
             }
         })
-        if (enums.length + messages.length === 0) {
-            return
-        }
-        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto: `
+        let proto = ''
+        if (enums.length + messages.length > 0) {
+            proto = `
 syntax="proto2";
-        ${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
+${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
+            
+${enums.map(printEnum).join("\n\n")}
+${messages.map(printMessage).join("\n\n")}
+`
+        }
 
-        ${enums.map(printEnum).join("\n\n")}
-        ${messages.map(printMessage).join("\n\n")}
-        `, data: file}
+        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto, data: resolveFunctions(file)}
         
     })
-
-    validateFunctions(files)
-    // files.filter(f => f.children.Function.length > 0).forEach(file => {    
-    //     results[`${file.loc.fullname.replace(".cdt", ".function")}`].data = file
-    // })
 
     return results       
 }
@@ -70,7 +67,7 @@ function printMembers(m: EnumMember[]): string {
     return m.map((e, index) => `\t${e.name} = ${index + 1};`).join("\n")
 }
 
-function printMessage(m: TypeResolved.Message): string {
+function printMessage(m: Message): string {
     const fields = printFields(m.children.Field)
 
     return `
@@ -79,7 +76,7 @@ ${fields}
 }`
 }
 
-function printFields(fields: TypeResolved.Field[]): string {
+function printFields(fields: Field[]): string {
     return fields
     .map((f, index) => {
         const p = f.part.FieldType.differentiate()

@@ -93,9 +93,9 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
+            
+
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
 	GAS = 2;
@@ -105,8 +105,8 @@ enum PurchaseCategory {
 	ENTERTAINMENT = 6;
 }
     
-        
-        ",
+
+",
   },
 }
 `;
@@ -204,9 +204,9 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
+            
+
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
 	GAS = 2;
@@ -216,8 +216,8 @@ enum PurchaseCategory {
 	ENTERTAINMENT = 6;
 }
     
-        
-        ",
+
+",
   },
 }
 `;
@@ -359,9 +359,9 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
+            
+
 enum PurchaseCategory {
 	UNCATEGORIZED = 1;
 	GAS = 2;
@@ -379,8 +379,8 @@ enum OtherCategories {
 	C = 3;
 }
     
-        
-        ",
+
+",
   },
 }
 `;
@@ -673,10 +673,10 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message MyMessage {
 	optional double d = 1;
 	required float f = 2;
@@ -694,7 +694,7 @@ message MyMessage {
 	optional string s = 14;
 	optional bytes bs = 15;
 }
-        ",
+",
   },
 }
 `;
@@ -882,10 +882,10 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message m1 {
 	required double d = 1;
 	required float f = 2;
@@ -900,7 +900,7 @@ message m2 {
 	required sint32 s32 = 1;
 	required m1 myMessag = 2;
 }
-        ",
+",
   },
 }
 `;
@@ -1193,10 +1193,10 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message MyMessage {
 	optional double d = 1;
 	optional float f = 2;
@@ -1214,7 +1214,7 @@ message MyMessage {
 	optional string s = 14;
 	optional bytes bs = 15;
 }
-        ",
+",
   },
 }
 `;
@@ -1521,10 +1521,10 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message m1 {
 	required double d = 1;
 	required float f = 2;
@@ -1546,7 +1546,7 @@ message m2 {
 	required string s = 8;
 	required bytes bs = 9;
 }
-        ",
+",
   },
 }
 `;
@@ -1839,10 +1839,10 @@ Object {
     },
     "proto": "
 syntax=\\"proto2\\";
-        
 
-        
-        
+            
+
+
 message MyMessage {
 	required double d = 1;
 	required float f = 2;
@@ -1860,7 +1860,7 @@ message MyMessage {
 	required string s = 14;
 	required bytes bs = 15;
 }
-        ",
+",
   },
 }
 `;

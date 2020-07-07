@@ -31,7 +31,7 @@ export type EntityLocation = {
     readonly startColNumber: number
     readonly endColNumber: number
 }
-type EntOf<KIND extends EntityKinds> = {kind: KIND}
+export type EntOf<KIND extends EntityKinds> = {kind: KIND}
 
 export type Entity<KIND extends EntityKinds> = {readonly kind: KIND}
 

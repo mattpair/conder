@@ -1,6 +1,6 @@
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { TypeResolved } from '../entity/resolved';
+import { Message, TypeResolved, FieldType } from '../entity/resolved';
 import { assertNever } from '../util/classifying';
 import { Enum, EntityKinds } from '../entity/basic';
 
@@ -19,7 +19,7 @@ function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
 
 function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
     const intralookup: Set<string> = new Set()
-    const inFileScope: Map<string, TypeResolved.File | TypeResolved.Message | Enum> = new Map()
+    const inFileScope: Map<string, TypeResolved.File | Message | Enum> = new Map()
     const nameSet: Set<string> = new Set()
     toResolve.children.Import.forEach(i => {
         assertNameNotYetInLookup(i, nameSet)
@@ -39,7 +39,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
     
     toResolve.children.Message.forEach(m => {
         const resolvedFields = m.children.Field.map((f: Parse.Field) => {
-            let t: TypeResolved.FieldType
+            let t: FieldType
             // Switches on the variable so assertnever works.
             const fieldType = f.part.FieldType.differentiate()
             switch(fieldType.kind) {
@@ -77,7 +77,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
                         throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
                     }
                     t =  {
-                        differentiate: () => inFileScope.get(fieldType.type) as TypeResolved.Message | Enum,
+                        differentiate: () => inFileScope.get(fieldType.type) as Message | Enum,
                         kind: "FieldType"
                     }
                     
@@ -88,7 +88,7 @@ function resolveFile(toResolve: Parse.File, externalResolved: Record<string, Typ
             }
             return {...f, part: {FieldType: t}}
         })
-        const rmsg: TypeResolved.Message = {
+        const rmsg: Message = {
             kind: "Message", 
             name: m.name, 
             loc: m.loc,

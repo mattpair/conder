@@ -3,7 +3,7 @@ import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
 import { generateAndDeploy } from './compute/gcp/deploy';
 import {compileFiles} from "./compile"
-import { TypeResolved } from './entity/resolved';
+import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 
 // This is just a hack for now. I'm the only one running this.
@@ -11,13 +11,13 @@ import * as fs from 'fs';
 const DEPENDENCY_DIR = '/Users/jerm/ConderSystems/conduit/conduit_compiler/src/main/deps'
 
 // TODO: work across multiple dirs.
-function compile(conduits: string[]): Promise<[string, TypeResolved.File][]>  {
+function compile(conduits: string[]): Promise<[string, FunctionResolved.File][]>  {
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
     const partiallyCompileds = compileFiles(toCompile)
     fs.mkdirSync(".proto")
     
-    const writes: Promise<[string, TypeResolved.File]>[] = []
+    const writes: Promise<[string, FunctionResolved.File]>[] = []
     for (const filename in partiallyCompileds) {
         writes.push(fs.promises.writeFile(`.proto/${filename}`, partiallyCompileds[filename].proto).then(r => [filename, partiallyCompileds[filename].data]))
     }

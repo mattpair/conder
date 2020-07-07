@@ -1,14 +1,14 @@
 import { Parse } from '../../parse';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
-import { TypeResolved } from '../../entity/resolved';
+import { FunctionResolved } from '../../entity/resolved';
 
-function generateParameterList(p: Parse.Parameter): string {
+function generateParameterList(p: FunctionResolved.Parameter): string {
     const param = p.differentiate()
     return param.kind === "NoParameter" ? "" : `${param.name}`
 }
 
-function generateInternalFunction(f: Parse.Function): string {
+function generateInternalFunction(f: FunctionResolved.Function): string {
     return `
 
 def internal_${f.name}(${generateParameterList(f.part.Parameter)}): 
@@ -16,13 +16,15 @@ def internal_${f.name}(${generateParameterList(f.part.Parameter)}):
     `
 }
 
-function generateFunctions(fs: Parse.Function[], file: TypeResolved.File): string {
+function generateFunctions(fs: FunctionResolved.Function[], file: FunctionResolved.File): string {
     return fs.map(f => {
 
 const internal = generateInternalFunction(f) 
 //TODO: clean this up.
-const ptype = (f.part.Parameter.differentiate() as Parse.UnaryParameter).part.UnaryParameterType.differentiate()
-const typeLocation = ptype.kind === "CustomType" ? `${modelAliasOf(file)}.${ptype.type}` : `I DONT KNOW`
+const param = f.part.Parameter.differentiate()
+let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
+// const ptype = .part.UnaryParameterType.differentiate()
+const typeLocation = ptype !== null ? `${modelAliasOf(file)}.${ptype.name}` : `No type necessary`
 const external =
 `
 def external_${f.name}(req):
@@ -38,12 +40,12 @@ return `${internal}\n\n${external}`
     }).join("\n\n")
 }
 
-export function modelAliasOf(file: TypeResolved.File): string {
+export function modelAliasOf(file: FunctionResolved.File): string {
     return `models_${file.loc.dir.replace("/", "_")}_${file.loc.name.replace(".cdt", "")}`
 }
 
 //TODO: generate random key.
-export function generateAndDeploy(files: TypeResolved.File[], dirname: string): string {
+export function generateAndDeploy(files: FunctionResolved.File[], dirname: string): string {
 
     const functions = files.map(file => generateFunctions(file.children.Function, file)).join("\n\n")
     fs.mkdirSync(".deploy/compute/", {recursive: true})

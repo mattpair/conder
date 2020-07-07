@@ -1,9 +1,12 @@
 import { Parse } from '../parse';
-import { TypeResolved } from "../entity/resolved";
+import { TypeResolved, FunctionResolved, Message } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { Enum, VoidReturn } from '../entity/basic';
 
-function getFromEntitySelect(type: Parse.FromEntitySelect, scope: TypeResolved.ScopeMap): TypeResolved.Message | Enum {
+type ChildType<T, K extends keyof T> =  T[K]
+type ScopeMap = ChildType<TypeResolved.File, "inFileScope">
+
+function getFromEntitySelect(type: Parse.FromEntitySelect, scope: ScopeMap): Message | Enum {
     const externalFile = scope.get(type.from)
     if (externalFile.kind !== "File") {
         throw new Error(`${type.from} is a ${externalFile.kind} and cannot be selected`)
@@ -11,7 +14,7 @@ function getFromEntitySelect(type: Parse.FromEntitySelect, scope: TypeResolved.S
     return getCustomType(type.part.CustomType, externalFile.inFileScope)
 }
 
-function getCustomType(type: Parse.CustomTypeEntity, scope: TypeResolved.ScopeMap ): TypeResolved.Message | Enum {
+function getCustomType(type: Parse.CustomTypeEntity, scope: ScopeMap ): Message | Enum {
     const ent = scope.get(type.type)
     if (ent === undefined) {
         throw new Error(`Unable to find ${type.type}`)
@@ -29,7 +32,7 @@ function getCustomType(type: Parse.CustomTypeEntity, scope: TypeResolved.ScopeMa
     }
 }
 
-function getReturnType(type: Parse.ReturnTypeSpec, scope: TypeResolved.ScopeMap): TypeResolved.Message | Enum | VoidReturn {
+function getReturnType(type: Parse.ReturnTypeSpec, scope: ScopeMap): Message | Enum | VoidReturn {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
@@ -44,68 +47,118 @@ function getReturnType(type: Parse.ReturnTypeSpec, scope: TypeResolved.ScopeMap)
     }
 }
 
-
-export function validateFunctions(files: TypeResolved.File[]) {
-    files.forEach(file => {
-        file.children.Function.forEach(func => {
-            if (file.inFileScope.has(func.name)) {
-                throw new Error(`Function: ${func.name} duplicates another entity in scope`)
+function resolveParameter(file: TypeResolved.File, parameter: Parse.Parameter): FunctionResolved.Parameter {
+    const param = parameter.differentiate()
+    switch (param.kind) {
+        case "NoParameter":
+            return {
+                kind: "Parameter",
+                differentiate: () => param
             }
             
-            const parameter = func.part.Parameter.differentiate()
+        case "UnaryParameter":
+            if (file.inFileScope.has(param.name)) {
+                throw new Error(`Parameter: ${param.name} duplicates another entity in scope`)
+            }
+            
+            const type: Parse.CustomTypeEntity | Parse.FromEntitySelect = param.part.UnaryParameterType.differentiate()
+            
+            let parameterType: Message | Enum = null
+            switch(type.kind) {
+                
+                case "CustomType":
 
-            const scopeLookup: Record<string, TypeResolved.Message | Enum> = {}
-            switch (parameter.kind) {
-                case "NoParameter":
+                    parameterType = getCustomType(type, file.inFileScope)
                     break
-                case "UnaryParameter":
-                    if (file.inFileScope.has(parameter.name)) {
-                        throw new Error(`Parameter: ${parameter.name} duplicates another entity in scope`)
-                    }
                     
-                    const type: Parse.CustomTypeEntity | Parse.FromEntitySelect = parameter.part.UnaryParameterType.differentiate()
-    
-                    switch(type.kind) {
-                        case "CustomType":
-                            scopeLookup[parameter.name] = getCustomType(type, file.inFileScope)
-                            break
-                        case "FromEntitySelect":
-                            scopeLookup[parameter.name] = getFromEntitySelect(type, file.inFileScope)
-                            break
-    
-                        default: assertNever(type)
-                    }
-
+                case "FromEntitySelect":
+                    parameterType = getFromEntitySelect(type, file.inFileScope)
+                    break;
+                default: assertNever(type)
             }
-            
-
-            const returnType = getReturnType(func.part.ReturnTypeSpec, file.inFileScope)
-
-            const ret = func.part.FunctionBody.children.Statement.find((s: Parse.Statement) => s.differentiate().kind === "ReturnStatement")
-            if (ret !== undefined) {
-                const name = ret.differentiate().val
-                const v = scopeLookup[name]
-                if (v === undefined) {
-                    throw new Error(`Cannot find variable in scope ${name}`)
-                }
-
-                switch (returnType.kind) {
-                    case "Enum":
-                    case "Message":
-                        if (returnType.name !== v.name) {
-                            throw new Error(`Expected a ${returnType.name} but returned a ${v.name}`)
+            return {
+                kind: "Parameter",
+                
+                differentiate: () => ({
+                    kind: "UnaryParameter",
+                    name: param.name,
+                    loc: param.loc,
+                    part: {
+                        UnaryParameterType: {
+                            kind: "UnaryParameterType",
+                            differentiate: () => parameterType
                         }
-                        break
-                        
-                    case "VoidReturnType":
-                        throw new Error(`Returning [${name}] which is of type ${v.name} but expected void return`)
-                }
-            } else {
-                if (returnType.kind !== "VoidReturnType") {
-                    throw new Error(`No return yet expected a ${returnType.name}`)
-                }
+                    }
+                })
             }
 
-        })
-    })
+    }
+} 
+
+
+function resolveFunction(file: TypeResolved.File, func: Parse.Function): FunctionResolved.Function {
+    if (file.inFileScope.has(func.name)) {
+        throw new Error(`Function: ${func.name} duplicates another entity in scope`)
+    }
+    const scopeLookup: Record<string, Message | Enum> = {}
+    const Parameter = resolveParameter(file, func.part.Parameter)
+    const paramInstance = Parameter.differentiate()
+    if (paramInstance.kind === "UnaryParameter") {
+        scopeLookup[paramInstance.name] = paramInstance.part.UnaryParameterType.differentiate()
+    }
+    
+    
+    
+
+    const returnType = getReturnType(func.part.ReturnTypeSpec, file.inFileScope)
+
+    const ret = func.part.FunctionBody.children.Statement.find((s: Parse.Statement) => s.differentiate().kind === "ReturnStatement")
+    if (ret !== undefined) {
+        const name = ret.differentiate().val
+        const v = scopeLookup[name]
+        if (v === undefined) {
+            throw new Error(`Cannot find variable in scope ${name}`)
+        }
+
+        switch (returnType.kind) {
+            case "Enum":
+            case "Message":
+                if (returnType.name !== v.name) {
+                    throw new Error(`Expected a ${returnType.name} but returned a ${v.name}`)
+                }
+                break
+                
+            case "VoidReturnType":
+                throw new Error(`Returning [${name}] which is of type ${v.name} but expected void return`)
+        }
+    } else {
+        if (returnType.kind !== "VoidReturnType") {
+            throw new Error(`No return yet expected a ${returnType.name}`)
+        }
+    }
+    return {
+        kind: "Function",
+        loc: func.loc,
+        name: func.name,
+        part: {
+            FunctionBody: func.part.FunctionBody,
+            Parameter,
+            ReturnTypeSpec: {
+                kind: "ReturnTypeSpec",
+                differentiate: () => returnType
+            }
+        }
+    }
+}
+
+export function resolveFunctions(file: TypeResolved.File): FunctionResolved.File {
+    return {
+        kind: "File",
+        children: {
+            Function: file.children.Function.map(f => resolveFunction(file, f)),
+            Import: file.children.Import
+        },
+        loc: file.loc,
+        inFileScope: file.inFileScope
+    }
 }
