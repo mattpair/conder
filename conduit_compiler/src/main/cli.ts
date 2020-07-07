@@ -2,7 +2,7 @@ import { ConduitBuildConfig } from './config/load';
 import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
 import { generateAndDeploy } from './compute/gcp/deploy';
-import {compileFiles} from "./compileToProto"
+import {compileFiles} from "./compile"
 import { TypeResolved } from './entity/resolved';
 import * as fs from 'fs';
 
@@ -11,7 +11,7 @@ import * as fs from 'fs';
 const DEPENDENCY_DIR = '/Users/jerm/ConderSystems/conduit/conduit_compiler/src/main/deps'
 
 // TODO: work across multiple dirs.
-function conduitToProto(conduits: string[]): Promise<[string, TypeResolved.File][]>  {
+function compile(conduits: string[]): Promise<[string, TypeResolved.File][]>  {
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
     const partiallyCompileds = compileFiles(toCompile)
@@ -35,7 +35,7 @@ const commands = {
             return
         }
         // TODO: deduplicate
-        conduitToProto(conduits)
+        compile(conduits)
         .then((results) => {
             for (const dir in config.dependencies) {
                 child_process.execSync(`mkdir -p ${dir}/gen/models`)
@@ -50,7 +50,7 @@ const commands = {
     },
 
     run: (conduits: string[], config: ConduitBuildConfig) => {
-        conduitToProto(conduits)
+        compile(conduits)
         .then((results) => {
             if (!config.dependencies) {
                 const targetDir = '.python'

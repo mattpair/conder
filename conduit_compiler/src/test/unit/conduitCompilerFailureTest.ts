@@ -1,4 +1,4 @@
-import {compileFiles} from "../../main/compileToProto"
+import {compileFiles} from "../../main/compile"
 
 function testFailsWhen(description: string, file: string) {
     test(description, () => {
