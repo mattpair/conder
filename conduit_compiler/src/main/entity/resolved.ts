@@ -9,8 +9,8 @@ export type FieldType = basic.BaseFieldType<() => ResolvedType>
     
 export type Field = basic.BaseField<FieldType>
 
-export type Message = basic.BaseMsg<Field> & {readonly declaredIn?: FileLocation}
-export type Enum = basic.Enum & {readonly declaredIn?: FileLocation}
+export type Message = basic.BaseMsg<Field>
+export type Enum = basic.Enum
 export type Import =basic.BaseImport<{dep: string}>
 
 export namespace TypeResolved {
@@ -27,18 +27,26 @@ export namespace TypeResolved {
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message | Enum >
+    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => (Message | Enum) & {readonly declaredIn: FileLocation}> 
     type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
     type ReturnStatement = basic.BaseReturnStatement
     type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>
     export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | Enum | basic.VoidReturn>, Parameter>
     export type File = basic.Entity<"File"> & 
-    basic.ParentOfMany<Function> &
     basic.ParentOfMany<Import> &
     {
         readonly loc: FileLocation
         readonly inFileScope: Map<string, Message | Enum | TypeResolved.File>
     }
-        
+    
+    export type Manifest = {
+        files: File[],
+        service: Service
+    }
+
+    type Service = {
+        readonly functions: Function[]
+        readonly name: string
+    }
 }

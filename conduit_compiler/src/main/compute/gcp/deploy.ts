@@ -17,25 +17,25 @@ def internal_${f.name}(${generateParameterList(f.part.Parameter)}):
     `
 }
 
-function generateFunctions(fs: FunctionResolved.Function[], file: FunctionResolved.File): string {
-    return fs.map(f => {
+function generateFunctions(functions: FunctionResolved.Function[]): string {
+    return functions.map(func => {
 
-const internal = generateInternalFunction(f) 
+const internal = generateInternalFunction(func) 
 //TODO: clean this up.
-const param = f.part.Parameter.differentiate()
+const param = func.part.Parameter.differentiate()
 let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
 // const ptype = .part.UnaryParameterType.differentiate()
-const typeLocation = ptype !== null ? `${modelAliasOf(ptype.declaredIn !== undefined ? ptype.declaredIn : file.loc)}.${ptype.name}` : `No type necessary`
+const typeLocation = ptype !== null ? `${modelAliasOf(ptype.declaredIn)}.${ptype.name}` : `No type necessary`
 const external =
 `
-def external_${f.name}(req):
+def external_${func.name}(req):
         msg = ${typeLocation}()
         msg.ParseFromString(req.body)
-        ret = internal_${f.name}(msg)
+        ret = internal_${func.name}(msg)
         return HttpResponse(ret.SerializeToString())
 
 
-PATH_${f.name} = path('${f.name}/', external_${f.name})
+PATH_${func.name} = path('${func.name}/', external_${func.name})
 `
 return `${internal}\n\n${external}`
     }).join("\n\n")
@@ -46,9 +46,9 @@ export function modelAliasOf(loc: FileLocation): string {
 }
 
 //TODO: generate random key.
-export function generateAndDeploy(files: FunctionResolved.File[], dirname: string): string {
+export function generateAndDeploy(manifest: FunctionResolved.Manifest, dirname: string): string {
 
-    const functions = files.map(file => generateFunctions(file.children.Function, file)).join("\n\n")
+    const functions = generateFunctions(manifest.service.functions)
     fs.mkdirSync(".deploy/compute/", {recursive: true})
     child_process.execSync(`cp -r ${dirname} .deploy/compute/server`)
     fs.writeFileSync(".deploy/compute/server/__init__.py", "")
@@ -143,7 +143,7 @@ USE_TZ = True
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
-${files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
+${manifest.files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
 
 ${functions}
 
@@ -152,7 +152,7 @@ def index(req: HttpRequest):
 
 urlpatterns = [
     path('', index),
-    ${files.filter(f => f.children.Function.length > 0).map(file => file.children.Function.map(fun => `PATH_${fun.name}`).join(",\n")).join(",\n")},
+    ${manifest.service.functions.map(fun => `PATH_${fun.name}`).join(",\n")},
 ]
 `)
     fs.writeFileSync(".deploy/compute/manage.py", 

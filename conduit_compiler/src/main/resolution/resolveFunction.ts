@@ -1,3 +1,4 @@
+import { FileLocation } from './../util/filesystem';
 import { Parse } from '../parse';
 import { TypeResolved, FunctionResolved, Message } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
@@ -6,7 +7,7 @@ import { Enum, VoidReturn } from '../entity/basic';
 type ChildType<T, K extends keyof T> =  T[K]
 type ScopeMap = ChildType<TypeResolved.File, "inFileScope">
 
-function getFromEntitySelect(type: Parse.FromEntitySelect, scope: ScopeMap): Message | Enum {
+function getFromEntitySelect(type: Parse.FromEntitySelect, scope: ScopeMap): (Message | Enum) & {readonly declaredIn: FileLocation} {
     const externalFile = scope.get(type.from)
     if (externalFile.kind !== "File") {
         throw new Error(`${type.from} is a ${externalFile.kind} and cannot be selected`)
@@ -63,12 +64,12 @@ function resolveParameter(file: TypeResolved.File, parameter: Parse.Parameter): 
             
             const type: Parse.CustomTypeEntity | Parse.FromEntitySelect = param.part.UnaryParameterType.differentiate()
             
-            let parameterType: Message | Enum = null
+            let parameterType: (Message | Enum) & {readonly declaredIn: FileLocation} = null
             switch(type.kind) {
                 
                 case "CustomType":
 
-                    parameterType = getCustomType(type, file.inFileScope)
+                    parameterType = {...getCustomType(type, file.inFileScope), declaredIn: file.loc}
                     break
                     
                 case "FromEntitySelect":
@@ -151,14 +152,15 @@ function resolveFunction(file: TypeResolved.File, func: Parse.Function): Functio
     }
 }
 
-export function resolveFunctions(file: TypeResolved.File): FunctionResolved.File {
+export function resolveFunctions(files: TypeResolved.File[]): FunctionResolved.Manifest {
+    const serviceExtractedFiles: FunctionResolved.File[] = files
     return {
-        kind: "File",
-        children: {
-            Function: file.children.Function.map(f => resolveFunction(file, f)),
-            Import: file.children.Import
-        },
-        loc: file.loc,
-        inFileScope: file.inFileScope
+        files: serviceExtractedFiles,
+        service: {
+            functions: files.flatMap(f => {
+                return f.children.Function.map(fn => resolveFunction(f, fn))
+            }),
+            name: "cloud-srv"
+        }
     }
 }

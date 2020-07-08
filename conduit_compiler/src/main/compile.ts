@@ -6,8 +6,7 @@ import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 import { resolveFunctions } from "./resolution/resolveFunction";
 
-export type PartiallyCompiled = Record<string, {proto: string, data: FunctionResolved.File}>
-export function compileFiles(files: Record<string, () => string>): PartiallyCompiled {
+export function compileFiles(files: Record<string, () => string>): [Record<string, {proto: string}>, FunctionResolved.Manifest] {
     const conduits: Parse.File[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
@@ -17,11 +16,11 @@ export function compileFiles(files: Record<string, () => string>): PartiallyComp
 
     const r = resolveDeps(conduits)
 
-    return resolveFunctionsAndProto(r)
+    return [toProto(r),resolveFunctions(r)]
 } 
 
-function resolveFunctionsAndProto(files: TypeResolved.File[]): PartiallyCompiled {
-    const results: PartiallyCompiled = {}
+function toProto(files: TypeResolved.File[]): Record<string, {proto: string}> {
+    const results: Record<string, {proto: string}> = {}
     files.forEach(file => {
 
         const enums: Enum[] = []
@@ -47,7 +46,7 @@ ${messages.map(printMessage).join("\n\n")}
 `
         }
 
-        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto, data: resolveFunctions(file)}
+        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto}
         
     })
 
