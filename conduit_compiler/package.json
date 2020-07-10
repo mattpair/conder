@@ -8,7 +8,7 @@
     "test:integration": "cd ../integration_test && ./test_all.sh",
     "compile": "tsc -b src/main/",
     "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
-    "setup:mac": "mkdir bin && PWD=$(pwd) && PATH=$PATH:$PWD/bin/"
+    "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/ && export CONDUIT_STATE_DIR=$(cd ../conduit_state && pwd)"
   },
   "author": "Jeremy",
   "license": "ISC",

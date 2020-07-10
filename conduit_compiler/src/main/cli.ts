@@ -5,7 +5,7 @@ import { containerize } from './compute/gcp/deploy';
 import {compileFiles} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
-import { create, destroy } from './deploy/gcp/provisioner';
+import { deployOnToCluster, destroy, createMedium, MediumState } from './deploy/gcp/provisioner';
 
 // This is just a hack for now. I'm the only one running this.
 // Revisit once productionizing.
@@ -50,7 +50,14 @@ const commands = {
 
     },
 
-    run: (conduits: string[], config: ConduitBuildConfig) => {
+    async run(conduits: string[], config: ConduitBuildConfig) {
+        const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
+        if (match === null || !match.groups.mediumName) {
+            console.error(`Need to know which medium to run against`)
+            return
+        }
+
+        const med: MediumState = JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${match.groups.mediumName}.json`, {encoding: "utf-8"}))
         compile(conduits)
         .then(async (results) => {
             if (!config.dependencies) {
@@ -61,7 +68,7 @@ const commands = {
 
                 results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
                 const image = containerize(results[1], targetDir)
-                const url = await create(results[1], image)
+                const url = await deployOnToCluster(med,results[1].service.name, image)
     
                 if (config.outputClients !== undefined) {
                     config.outputClients.forEach(outputRequest => {
@@ -80,10 +87,34 @@ const commands = {
         })
     },
     async destroy(conduits: string[], config: ConduitBuildConfig) {
-        await destroy()
-    }
-}
+        if (process.argv[3] === 'medium') {
+            if (!process.argv[4]) {
+                console.error(`Medium requires a name`)
+                return
+            }
 
+            await destroy(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${process.argv[4]}.json`, {encoding: "utf-8"})))
+        }
+        
+    },
+
+    async create(conduits: string[], config: ConduitBuildConfig) {
+        if (process.argv[3] === 'medium') {
+            if (!process.argv[4]) {
+                console.error(`Medium requires a name`)
+                return
+            }
+
+            await createMedium(process.argv[4]).then((med) => {
+                fs.writeFileSync(`${STATE_DIR}/mediums/${process.argv[4]}.json`, JSON.stringify(med))
+            })
+        } else {
+            console.error(`Don't know how to create: ${process.argv[3]}`)
+        }
+    },
+}
+const STATE_DIR = child_process.execSync("echo $CONDUIT_STATE_DIR", {encoding: "utf-8"}).trim()
+console.log(`State dir: ${STATE_DIR}`)
 export function execute(conduits: string[], config: ConduitBuildConfig) {
     const args = process.argv
     const command = args[2]
