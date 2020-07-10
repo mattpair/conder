@@ -95,6 +95,7 @@ const commands: Record<string, () => void> = {
         }
 
         const med: MediumState = JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${match.groups.mediumName}.json`, {encoding: "utf-8"}))
+        console.log("compiling conduit files")
         compile(conduits)
         .then(async (results) => {
             if (!config.dependencies) {
@@ -102,12 +103,15 @@ const commands: Record<string, () => void> = {
                 child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
                 child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
                 child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
-
+                console.log("generating models from proto")
                 results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
+                console.log("containerizing")
                 const image = containerize(results[1], targetDir)
+                console.log("deploying to medium")
                 const url = await deployOnToCluster(med,results[1].service.name, image, config.project)
     
                 if (config.outputClients !== undefined) {
+                    console.log("generating clients")
                     config.outputClients.forEach(outputRequest => {
                         child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
                         child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
