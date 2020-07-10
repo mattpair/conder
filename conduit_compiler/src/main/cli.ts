@@ -140,8 +140,10 @@ const commands: Record<string, () => void> = {
                 console.error("please specify medium to delete")
                 process.exit(1)
             }
-
-            await destroy(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${process.argv[4]}.json`, {encoding: "utf-8"})))
+            const file = `${STATE_DIR}/mediums/${process.argv[4]}.json`
+            await destroy(JSON.parse(fs.readFileSync(file, {encoding: "utf-8"})))
+            fs.rmdirSync(file)
+            
         } else if (match.groups.entityType === "deployment") {
             const config = loadBuildConfig()
             if (isError(config)) {
