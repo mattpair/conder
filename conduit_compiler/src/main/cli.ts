@@ -148,8 +148,18 @@ const commands: Record<string, () => void> = {
                 console.error(config.description)
                 process.exit(1)
             }
-            //to-do parameterize
-            destroyNamespace(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/test-medium.json`, {encoding: "utf-8"})), config.project)
+            const on = /^on=(?<medium>.*)$/.exec(process.argv[4])
+            if (!on.groups.medium) {
+                console.error(`specify the medium to delete from`)
+                process.exit(1)
+            }
+
+            if (!fs.existsSync(`${STATE_DIR}/mediums/${on.groups.medium}.json`)) {
+                console.error(`medium ${on.groups.medium} does not exist`)
+                process.exit(1)
+            }
+
+            destroyNamespace(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${on.groups.medium}.json`, {encoding: "utf-8"})), config.project)
             
         } else {
             console.error(`unable to handle ${match.groups.entityType}`)
@@ -187,13 +197,13 @@ const commands: Record<string, () => void> = {
         process.exit(1)
     }
 }
+
 const STATE_DIR = child_process.execSync("echo $CONDUIT_STATE_DIR", {encoding: "utf-8"}).trim()
 console.log(`State dir: ${STATE_DIR}`)
 
 export function execute() {
     const args = process.argv
     const command = args[2]
-    console.log(`Command: ${command}`)
     if (!(command in commands)) {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
     }
