@@ -86,7 +86,7 @@ class GoogleCloudProvisioner {
     }
 }
 
-export async function deployOnToCluster(medium: MediumState, serviceName: string, contName: string): Promise<string> {
+export async function destroyNamespace(medium: MediumState, namespace: string): Promise<void> {
     const kc = new k8s.KubeConfig()
     
     kc.addCluster({
@@ -111,74 +111,114 @@ export async function deployOnToCluster(medium: MediumState, serviceName: string
 
 
     const k8sApi= kc.makeApiClient(k8s.CoreV1Api)
-    return k8sApi.createNamespacedPod("default", {
-        kind: "Pod",
+    await k8sApi.deleteNamespace(namespace)
+}
+
+//todo dedup
+export async function deployOnToCluster(medium: MediumState, serviceName: string, contName: string, namespace: string): Promise<string> {
+    const kc = new k8s.KubeConfig()
+    
+    kc.addCluster({
+        name: medium.clusterId,
+        skipTLSVerify: false,
+        server: `https://${medium.username}:${medium.password}@${medium.endpoint}`,
+        caData: medium.caCertificate
+    })
+
+        // cluster.masterAuth.
+    kc.addUser({
+        name: `${medium.clusterId}-admin`,
+        username: medium.username,
+        password: medium.password
+    })
+    kc.addContext({
+        cluster: medium.clusterId,
+        user: `${medium.clusterId}-admin`,
+        name: `${medium.clusterId}`,
+    })
+    kc.setCurrentContext(medium.clusterId)
+
+
+    const k8sApi= kc.makeApiClient(k8s.CoreV1Api)
+    return k8sApi.createNamespace({
+        kind: "Namespace",
         metadata: {
-            name: `${serviceName}-pod`,
-            labels: {
-                app: serviceName
-            }
-        },
-        spec: {
-            nodeSelector: {
-                mode: "test"
-            },
-            containers: [{
-                name: `${serviceName}-pod`,
-                image: contName,
-                ports: [{containerPort: 8080}],
-                startupProbe: {
-                    httpGet: {
-                        port: {port: 8080},
-                    }
-                }
-            }]
-        },
+            name: namespace
+        }
     }).then(() => {
-        
-        return k8sApi.createNamespacedService("default", {
-            kind: "Service",
+        return k8sApi.createNamespacedPod(namespace, {
+            kind: "Pod",
             metadata: {
-                name: `${serviceName}-service`
+                name: `${serviceName}-pod`,
+                labels: {
+                    app: serviceName
+                }
             },
             spec: {
-                externalTrafficPolicy: "Cluster",
-                ports: [
-                    {
-                        nodePort: 32575, 
-                        port: 80,
-                        protocol: "TCP",
-                        //@ts-ignore
-                        targetPort: 8080
-                    }
-                ],
-                selector: {
-                    app: serviceName
+                nodeSelector: {
+                    mode: "test"
                 },
-                sessionAffinity: "None",
-                type: "LoadBalancer"
-            }
-        }).then(async (r) => {
-            while (!r.body.status.loadBalancer.ingress) {
-                await new Promise(resolve => setTimeout(resolve, 5000))
-                r = await k8sApi.readNamespacedService(`${serviceName}-service`, "default")
-            }
-            const url = `http://${r.body.status.loadBalancer.ingress[0].ip}`
-            let response = undefined
-            console.log("waiting for service to be reachable")
-
-            do {
-                response = await axios.get(url).catch((err) => {
-                    console.error("failure reaching new service...trying again")
-                    return {status: -1}
-                })
-                await new Promise(resolve => setTimeout(resolve, 5000))
-            } while (response.status !== 200)
+                containers: [{
+                    name: `${serviceName}-pod`,
+                    image: contName,
+                    ports: [{containerPort: 8080}],
+                    startupProbe: {
+                        httpGet: {
+                            port: {port: 8080},
+                        }
+                    }
+                }]
+            },
+        }).then(() => {
             
-            console.log(`IP FOR SERVICE: ${url}`)
-            return url
+            return k8sApi.createNamespacedService(namespace, {
+                kind: "Service",
+                metadata: {
+                    name: `${serviceName}-service`
+                },
+                spec: {
+                    externalTrafficPolicy: "Cluster",
+                    ports: [
+                        {
+                            nodePort: 32575, 
+                            port: 80,
+                            protocol: "TCP",
+                            //@ts-ignore
+                            targetPort: 8080
+                        }
+                    ],
+                    selector: {
+                        app: serviceName
+                    },
+                    sessionAffinity: "None",
+                    type: "LoadBalancer"
+                }
+            }).then(async (r) => {
+                while (!r.body.status.loadBalancer.ingress) {
+                    await new Promise(resolve => setTimeout(resolve, 5000))
+                    r = await k8sApi.readNamespacedService(`${serviceName}-service`, namespace)
+                }
+                const url = `http://${r.body.status.loadBalancer.ingress[0].ip}`
+                let response = undefined
+                console.log("waiting for service to be reachable")
+    
+                do {
+                    response = await axios.get(url).catch((err) => {
+                        console.error("failure reaching new service...trying again")
+                        return {status: -1}
+                    })
+                    await new Promise(resolve => setTimeout(resolve, 5000))
+                } while (response.status !== 200)
+                
+                console.log(`IP FOR SERVICE: ${url}`)
+                return url
+            })
         })
+    }).catch(err => {
+        console.error(err)
+        return "failure"
     })
+
 }
 
 export type MediumState = Readonly<{

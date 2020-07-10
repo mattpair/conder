@@ -1,11 +1,13 @@
-import { ConduitBuildConfig } from './config/load';
+import { ConduitBuildConfig, loadBuildConfig } from './config/load';
 import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
 import { containerize } from './compute/gcp/deploy';
 import {compileFiles} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
-import { deployOnToCluster, destroy, createMedium, MediumState } from './deploy/gcp/provisioner';
+import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
+import { isError } from './error/types';
+
 
 // This is just a hack for now. I'm the only one running this.
 // Revisit once productionizing.
@@ -29,8 +31,25 @@ function compile(conduits: string[]): Promise<[string[], FunctionResolved.Manife
     return Promise.all(writes).then((filenames) => ([filenames,manifest]))
 }
 
-const commands = {
-    models: (conduits: string[], config: ConduitBuildConfig) => {
+const commands: Record<string, () => void> = {
+    models() {
+        const config = loadBuildConfig()
+        if (isError(config)) {
+            console.error(config.description)
+            return
+        }
+        let conduits: string[] = []
+        try {
+            conduits = fs.readdirSync("./conduit/")
+        } catch(e) {
+            console.error("Unable to find ./conduit/")
+            return
+        }
+
+        if (conduits.length == 0) {
+            console.warn("no files to compile")
+            return
+        }
         if (!config.dependencies) {
             console.warn("Please specify a dependency in your conduit config so I know where to put models.")
             return
@@ -50,7 +69,25 @@ const commands = {
 
     },
 
-    async run(conduits: string[], config: ConduitBuildConfig) {
+    async run() {
+        const config = loadBuildConfig()
+        if (isError(config)) {
+            console.error(config.description)
+            return
+        }
+        let conduits: string[] = []
+        try {
+            conduits = fs.readdirSync("./conduit/")
+        } catch(e) {
+            console.error("Unable to find ./conduit/")
+            return
+        }
+
+        if (conduits.length == 0) {
+            console.warn("no files to compile")
+            return
+        }
+
         const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
         if (match === null || !match.groups.mediumName) {
             console.error(`Need to know which medium to run against`)
@@ -68,7 +105,7 @@ const commands = {
 
                 results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
                 const image = containerize(results[1], targetDir)
-                const url = await deployOnToCluster(med,results[1].service.name, image)
+                const url = await deployOnToCluster(med,results[1].service.name, image, config.project)
     
                 if (config.outputClients !== undefined) {
                     config.outputClients.forEach(outputRequest => {
@@ -86,19 +123,37 @@ const commands = {
             console.log("done!")
         })
     },
-    async destroy(conduits: string[], config: ConduitBuildConfig) {
-        if (process.argv[3] === 'medium') {
+
+    async destroy() {
+        const match = /^(?<entityType>(medium|deployment))/.exec(process.argv[3])
+        
+        if (match === null || !match.groups.entityType) {
+            console.error("Must specify entity type to delete")
+            process.exit(1)
+        }
+        if (match.groups.entityType === "medium") {
             if (!process.argv[4]) {
-                console.error(`Medium requires a name`)
-                return
+                console.error("please specify medium to delete")
+                process.exit(1)
             }
 
             await destroy(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/${process.argv[4]}.json`, {encoding: "utf-8"})))
+        } else if (match.groups.entityType === "deployment") {
+            const config = loadBuildConfig()
+            if (isError(config)) {
+                console.error(config.description)
+                process.exit(1)
+            }
+            //to-do parameterize
+            destroyNamespace(JSON.parse(fs.readFileSync(`${STATE_DIR}/mediums/test-medium.json`, {encoding: "utf-8"})), config.project)
+            
+        } else {
+            console.error(`unable to handle ${match.groups.entityType}`)
         }
-        
     },
 
-    async create(conduits: string[], config: ConduitBuildConfig) {
+    async create() {
+        
         if (process.argv[3] === 'medium') {
             if (!process.argv[4]) {
                 console.error(`Medium requires a name`)
@@ -112,10 +167,26 @@ const commands = {
             console.error(`Don't know how to create: ${process.argv[3]}`)
         }
     },
+
+    async has() {
+        const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
+        if (match === null || !match.groups.mediumName) {
+            console.error(`Need to know which medium to look for`)
+            process.exit(1)
+        }
+
+        if (fs.existsSync(`${STATE_DIR}/mediums/${match.groups.mediumName}.json`)) {
+            console.log(`have ${match.groups.mediumName}`)
+            process.exit(0)
+        }
+        console.warn("medium does not exist")
+        process.exit(1)
+    }
 }
 const STATE_DIR = child_process.execSync("echo $CONDUIT_STATE_DIR", {encoding: "utf-8"}).trim()
 console.log(`State dir: ${STATE_DIR}`)
-export function execute(conduits: string[], config: ConduitBuildConfig) {
+
+export function execute() {
     const args = process.argv
     const command = args[2]
     console.log(`Command: ${command}`)
@@ -123,6 +194,5 @@ export function execute(conduits: string[], config: ConduitBuildConfig) {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
     }
 
-    //@ts-ignore
-    commands[command](conduits, config)
+    commands[command]()
 }
