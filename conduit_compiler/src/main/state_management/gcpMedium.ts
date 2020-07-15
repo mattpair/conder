@@ -1,0 +1,49 @@
+import { MediumState } from "../deploy/gcp/provisioner";
+import {Storage, Bucket, File} from '@google-cloud/storage'
+import { create } from "domain";
+import { stringify } from "querystring";
+
+
+export interface MediumManager {
+    tryGet(mediumName: string): Promise<undefined| File>
+    save(mediumName: string, state: MediumState): Promise<void>
+    delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>): Promise<void>
+}
+
+export class GCPMediumManager implements MediumManager {
+    private readonly store: Storage
+    private readonly bucket: Bucket
+
+    constructor() {
+        this.store = new Storage()
+        this.bucket = this.store.bucket('conduit-state')
+    }
+
+
+    tryGet(mediumName: string) {
+        return this.bucket.getFiles({directory: "mediums"})
+        .then((bucketOutput) => {
+            const files = bucketOutput[0]
+            const searchName = `${mediumName}.json`
+            
+            return files.find(f => f.name.endsWith(searchName))
+        })
+    }
+
+    save(mediumName: string, state: MediumState) {
+        return this.bucket.file(`mediums/${mediumName}.json`)
+            .save(JSON.stringify(state), {gzip: false, contentType: "application/json"})  
+    }
+
+    delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>) {
+        return this.tryGet(mediumName).then(maybeFile => {
+            if (!maybeFile) {
+                return Promise.reject(`Unable to locate state for medium ${mediumName}`)
+            }
+
+            return maybeFile.download()
+            .then(download =>deleteAction(JSON.parse(download[0].toString("utf-8"))))
+            .then(() => {maybeFile.delete()})
+        })
+    }
+}

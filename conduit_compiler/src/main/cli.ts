@@ -1,4 +1,5 @@
-import { ConduitBuildConfig, loadBuildConfig } from './config/load';
+import { MediumManager, GCPMediumManager } from './state_management/gcpMedium';
+import { loadBuildConfig } from './config/load';
 import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
 import { containerize } from './compute/gcp/deploy';
@@ -7,10 +8,6 @@ import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
 import { isError } from './error/types';
-import {Storage} from '@google-cloud/storage'
-
-const store = new Storage()
-const bucket = store.bucket('conduit-state')
 
 
 // This is just a hack for now. I'm the only one running this.
@@ -35,7 +32,7 @@ function compile(conduits: string[]): Promise<[string[], FunctionResolved.Manife
     return Promise.all(writes).then((filenames) => ([filenames,manifest]))
 }
 
-const commands: Record<string, () => void> = {
+const commands: Record<string, (m: MediumManager) => void> = {
     models() {
         const config = loadBuildConfig()
         if (isError(config)) {
@@ -73,7 +70,7 @@ const commands: Record<string, () => void> = {
 
     },
 
-    async run() {
+    async run(mediumManager: MediumManager) {
         const config = loadBuildConfig()
         if (isError(config)) {
             console.error(config.description)
@@ -97,59 +94,57 @@ const commands: Record<string, () => void> = {
             console.error(`Need to know which medium to run against`)
             return
         }
-        const out = await bucket.getFiles({
-            directory: "mediums",
-        })
-        const files = out[0]
-        const searchName = `${match.groups.mediumName}.json`
-        const file = files.find(f => f.name.endsWith(searchName))
-        if (!file) {
-            console.log(`don't have ${match.groups.mediumName}`)
-            process.exit(1)
-        }
         
-        file.download(async (err, buff) => {
-            if (err) {
-                console.error("download err:", err)
+        await mediumManager.tryGet(match.groups.mediumName).then(maybeFile => {
+            if (maybeFile === undefined) {
+                console.log(`don't have ${match.groups.mediumName}`)
                 process.exit(1)
             }
-            const med: MediumState = JSON.parse(buff.toString("utf-8"))
-            console.log("compiling conduit files")
-            compile(conduits)
-            .then(async (results) => {
-                if (!config.dependencies) {
-                    const targetDir = '.python'
-                    child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
-                    child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
-                    child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
-                    console.log("generating models from proto")
-                    results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
-                    console.log("containerizing")
-                    const image = containerize(results[1], targetDir)
-                    console.log("deploying to medium")
-                    const url = await deployOnToCluster(med,results[1].service.name, image, config.project)
-        
-                    if (config.outputClients !== undefined) {
-                        console.log("generating clients")
-                        config.outputClients.forEach(outputRequest => {
-                            child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
-                            child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
-                            child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
-                
-                            results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
-                            generateClients(url, results[1], outputRequest.dir)
-                        })
-                    }
+            
+            maybeFile.download(async (err, buff) => {
+                if (err) {
+                    console.error("download err:", err)
+                    process.exit(1)
                 }
-                  
-                
-                console.log("done!")
+                const med: MediumState = JSON.parse(buff.toString("utf-8"))
+                console.log("compiling conduit files")
+                compile(conduits)
+                .then(async (results) => {
+                    if (!config.dependencies) {
+                        const targetDir = '.python'
+                        child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
+                        child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
+                        child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
+                        console.log("generating models from proto")
+                        results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
+                        console.log("containerizing")
+                        const image = containerize(results[1], targetDir)
+                        console.log("deploying to medium")
+                        const url = await deployOnToCluster(med,results[1].service.name, image, config.project)
+            
+                        if (config.outputClients !== undefined) {
+                            console.log("generating clients")
+                            config.outputClients.forEach(outputRequest => {
+                                child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
+                                child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
+                                child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
+                    
+                                results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
+                                generateClients(url, results[1], outputRequest.dir)
+                            })
+                        }
+                    }
+                      
+                    
+                    console.log("done!")
+                })
             })
         })
         
+        
     },
 
-    async destroy() {
+    async destroy(mediumManager: MediumManager) {
         const match = /^(?<entityType>(medium|deployment))/.exec(process.argv[3])
         
         if (match === null || !match.groups.entityType) {
@@ -163,28 +158,8 @@ const commands: Record<string, () => void> = {
             }
     
 
-            const out = await bucket.getFiles({
-                directory: "mediums",
-            })
-            const files = out[0]
-            const searchName = `${process.argv[4]}.json`
-            const file = files.find(f => f.name.endsWith(searchName))
-            if (!file) {
-                console.log(`don't have ${process.argv[4]}`)
-                process.exit(1)
-            }
-            
-            file.download(async (err, buff) => {
-                if (err) {
-                    console.error("download err:", err)
-                    process.exit(1)
-                }
-                await destroy(JSON.parse(buff.toString("utf-8")))
-                await file.delete()
-            })
-            
-            
-            
+            await mediumManager.delete(process.argv[4], destroy)
+        
         } else if (match.groups.entityType === "deployment") {
             const config = loadBuildConfig()
             if (isError(config)) {
@@ -196,24 +171,21 @@ const commands: Record<string, () => void> = {
                 console.error(`specify the medium to delete from`)
                 process.exit(1)
             }
-            const out = await bucket.getFiles({
-                directory: "mediums",
-            })
-            const files = out[0]
-            const searchName = `${on.groups.medium}.json`
-            const file = files.find(f => f.name.endsWith(searchName))
-            if (!file) {
-                console.log(`don't have ${on.groups.medium}`)
-                process.exit(1)
-            }
-            
-            file.download((err, buff) => {
-                if (err) {
-                    console.error("download err:", err)
+            await mediumManager.tryGet(on.groups.medium).then(maybeFile => {
+                if (maybeFile === undefined) {
+                    console.log(`don't have ${on.groups.medium}`)
                     process.exit(1)
                 }
-                destroyNamespace(JSON.parse(buff.toString("utf-8")), config.project)
+                
+                maybeFile.download(async (err, buff) => {
+                    if (err) {
+                        console.error("download err:", err)
+                        process.exit(1)
+                    }
+                    await destroyNamespace(JSON.parse(buff.toString("utf-8")), config.project)
+                })
             })
+            
             
             
         } else {
@@ -221,7 +193,7 @@ const commands: Record<string, () => void> = {
         }
     },
 
-    async create() {
+    async create(manager: MediumManager) {
         
         if (process.argv[3] === 'medium') {
             if (!process.argv[4]) {
@@ -229,33 +201,29 @@ const commands: Record<string, () => void> = {
                 return
             }
 
-            await createMedium(process.argv[4]).then((med) => {
-                return bucket.file(`mediums/${process.argv[4]}.json`)
-                    .save(JSON.stringify(med), {gzip: false, contentType: "application/json"})  
-            })
+            await createMedium(process.argv[4]).then((med) => manager.save(process.argv[4], med))
         } else {
             console.error(`Don't know how to create: ${process.argv[3]}`)
         }
     },
 
-    async has() {
+    async has(manager: MediumManager) {
         const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
         if (match === null || !match.groups.mediumName) {
             console.error(`Need to know which medium to look for`)
             process.exit(1)
         }
-        const out = await bucket.getFiles({
-            directory: "mediums",
-        })
-        const files = out[0]
-        const searchName = `${match.groups.mediumName}.json`
         
-        if (files.some(f => f.name.endsWith(searchName))) {
-            console.log(`have ${match.groups.mediumName}`)
-            process.exit(0)
-        }
-        console.warn("medium does not exist")
-        process.exit(1)
+        await manager.tryGet(match.groups.mediumName).then(maybeFile => {
+            if (maybeFile) {
+                console.log(`have ${match.groups.mediumName}`)
+                process.exit(0)
+            }
+            return Promise.reject(`Cannot find medium ${match.groups.mediumName}`)
+        }).catch(err => {
+            console.error("Failure locating medium:", err)
+            process.exit(1)
+        })
     }
 }
 
@@ -266,5 +234,5 @@ export function execute() {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
     }
 
-    commands[command]()
+    commands[command](new GCPMediumManager())
 }
