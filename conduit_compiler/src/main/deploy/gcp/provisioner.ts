@@ -3,7 +3,10 @@ import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'
 import axios from 'axios'
 import { FunctionResolved } from '../../entity/resolved'
+import * as crypto from 'crypto'
 
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 class GoogleCloudProvisioner {
     readonly client: container.v1.ClusterManagerClient
@@ -29,17 +32,22 @@ class GoogleCloudProvisioner {
         }
     }
 
+
     async createCluster(): Promise<container.protos.google.container.v1.ICluster> {
         console.log("Deploying cluster")
+        const password: string[] = []
+        
+        crypto.randomBytes(512).forEach((b) => password.push(charset[b % charset.length]))
+
         return this.client.createCluster({
             projectId: this.projectId,
             zone: this.zone,
             cluster: {
                 name: this.clusterId,
-                description: "proof of concept",
+                description: "",
                 masterAuth: {
                     username: "admin",
-                    password: "18394hjnlkaf981hnjklafuy1honlaufo",
+                    password: password.join(""),
                     clientCertificateConfig: {
                         issueClientCertificate: false
                     },
@@ -96,7 +104,6 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
         caData: medium.caCertificate
     })
 
-        // cluster.masterAuth.
     kc.addUser({
         name: `${medium.clusterId}-admin`,
         username: medium.username,
@@ -125,7 +132,6 @@ export async function deployOnToCluster(medium: MediumState, serviceName: string
         caData: medium.caCertificate
     })
 
-        // cluster.masterAuth.
     kc.addUser({
         name: `${medium.clusterId}-admin`,
         username: medium.username,
@@ -254,7 +260,6 @@ export async function createMedium(name: string): Promise<MediumState> {
     
 }
 
-// return provisioner.deployOnToCluster(cluster, manifest.service.name, containerName)
 
 export async function destroy(medium: MediumState) {
     const client = new container.v1.ClusterManagerClient()
