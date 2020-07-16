@@ -1,21 +1,19 @@
 import { MediumState } from "../deploy/gcp/provisioner";
 import {Storage, Bucket, File} from '@google-cloud/storage'
-import { create } from "domain";
-import { stringify } from "querystring";
 
 
 type StateAndFile = {
     file: File,
     medium: MediumState
 }
-export interface MediumManager {
+export interface MediumController {
     tryGet(mediumName: string): Promise<undefined| File>
     get(mediumName: string): Promise<StateAndFile>
     save(mediumName: string, state: MediumState): Promise<void>
     delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>): Promise<void>
 }
 
-export class GCPMediumManager implements MediumManager {
+export class GCPMediumController implements MediumController {
     private readonly store: Storage
     private readonly bucket: Bucket
 

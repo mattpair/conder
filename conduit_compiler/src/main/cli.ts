@@ -1,4 +1,4 @@
-import { MediumManager, GCPMediumManager } from './state_management/gcpMedium';
+import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig } from './config/load';
 import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
@@ -32,7 +32,11 @@ function compile(conduits: string[]): Promise<[string[], FunctionResolved.Manife
     return Promise.all(writes).then((filenames) => ([filenames,manifest]))
 }
 
-const commands: Record<string, (m: MediumManager) => void> = {
+type DependencyFactory = {
+    mediumController:() => MediumController
+}
+
+const commands: Record<string, (dep: DependencyFactory) => void> = {
     models() {
         const config = loadBuildConfig()
         if (isError(config)) {
@@ -70,7 +74,7 @@ const commands: Record<string, (m: MediumManager) => void> = {
 
     },
 
-    async run(mediumManager: MediumManager) {
+    async run(dep: DependencyFactory) {
         const config = loadBuildConfig()
         if (isError(config)) {
             console.error(config.description)
@@ -95,7 +99,7 @@ const commands: Record<string, (m: MediumManager) => void> = {
             return
         }
         
-        await mediumManager.get(match.groups.mediumName).then(result => {
+        await dep.mediumController().get(match.groups.mediumName).then(result => {
             const med: MediumState = result.medium
                 console.log("compiling conduit files")
                 compile(conduits)
@@ -133,7 +137,7 @@ const commands: Record<string, (m: MediumManager) => void> = {
         
     },
 
-    async destroy(mediumManager: MediumManager) {
+    async destroy(dep: DependencyFactory) {
         const match = /^(?<entityType>(medium|deployment))/.exec(process.argv[3])
         
         if (match === null || !match.groups.entityType) {
@@ -147,7 +151,7 @@ const commands: Record<string, (m: MediumManager) => void> = {
             }
     
 
-            await mediumManager.delete(process.argv[4], destroy)
+            await dep.mediumController().delete(process.argv[4], destroy)
         
         } else if (match.groups.entityType === "deployment") {
             const config = loadBuildConfig()
@@ -160,14 +164,14 @@ const commands: Record<string, (m: MediumManager) => void> = {
                 console.error(`specify the medium to delete from`)
                 process.exit(1)
             }
-            await mediumManager.get(on.groups.medium).then(results => destroyNamespace(results.medium, config.project))
+            await dep.mediumController().get(on.groups.medium).then(results => destroyNamespace(results.medium, config.project))
 
         } else {
             console.error(`unable to handle ${match.groups.entityType}`)
         }
     },
 
-    async create(manager: MediumManager) {
+    async create(dep: DependencyFactory) {
         
         if (process.argv[3] === 'medium') {
             if (!process.argv[4]) {
@@ -175,20 +179,20 @@ const commands: Record<string, (m: MediumManager) => void> = {
                 return
             }
 
-            await createMedium(process.argv[4]).then((med) => manager.save(process.argv[4], med))
+            await createMedium(process.argv[4]).then((med) => dep.mediumController().save(process.argv[4], med))
         } else {
             console.error(`Don't know how to create: ${process.argv[3]}`)
         }
     },
 
-    async has(manager: MediumManager) {
+    async has(dep: DependencyFactory) {
         const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
         if (match === null || !match.groups.mediumName) {
             console.error(`Need to know which medium to look for`)
             process.exit(1)
         }
         
-        await manager.tryGet(match.groups.mediumName).then(maybeFile => {
+        await dep.mediumController().tryGet(match.groups.mediumName).then(maybeFile => {
             if (maybeFile) {
                 console.log(`have ${match.groups.mediumName}`)
                 process.exit(0)
@@ -208,5 +212,5 @@ export function execute() {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
     }
 
-    commands[command](new GCPMediumManager())
+    commands[command]({mediumController: () => new GCPMediumController()})
 }
