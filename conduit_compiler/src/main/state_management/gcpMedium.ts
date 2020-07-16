@@ -4,8 +4,13 @@ import { create } from "domain";
 import { stringify } from "querystring";
 
 
+type StateAndFile = {
+    file: File,
+    medium: MediumState
+}
 export interface MediumManager {
     tryGet(mediumName: string): Promise<undefined| File>
+    get(mediumName: string): Promise<StateAndFile>
     save(mediumName: string, state: MediumState): Promise<void>
     delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>): Promise<void>
 }
@@ -30,20 +35,26 @@ export class GCPMediumManager implements MediumManager {
         })
     }
 
-    save(mediumName: string, state: MediumState) {
-        return this.bucket.file(`mediums/${mediumName}.json`)
-            .save(JSON.stringify(state), {gzip: false, contentType: "application/json"})  
-    }
-
-    delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>) {
+    get(mediumName: string): Promise<StateAndFile> {
         return this.tryGet(mediumName).then(maybeFile => {
             if (!maybeFile) {
                 return Promise.reject(`Unable to locate state for medium ${mediumName}`)
             }
 
             return maybeFile.download()
-            .then(download =>deleteAction(JSON.parse(download[0].toString("utf-8"))))
-            .then(() => {maybeFile.delete()})
+            .then(download => ({medium: JSON.parse(download[0].toString("utf-8")), file: maybeFile}))
+        })
+    }
+
+    save(mediumName: string, state: MediumState) {
+        return this.bucket.file(`mediums/${mediumName}.json`)
+            .save(JSON.stringify(state), {gzip: false, contentType: "application/json"})  
+    }
+
+    delete(mediumName: string, deleteAction: (m: MediumState) => Promise<void>) {
+        return this.get(mediumName).then(result => {
+            return deleteAction(result.medium)
+            .then(() => {result.file.delete()})
         })
     }
 }

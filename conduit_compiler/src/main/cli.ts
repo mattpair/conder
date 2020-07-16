@@ -95,18 +95,8 @@ const commands: Record<string, (m: MediumManager) => void> = {
             return
         }
         
-        await mediumManager.tryGet(match.groups.mediumName).then(maybeFile => {
-            if (maybeFile === undefined) {
-                console.log(`don't have ${match.groups.mediumName}`)
-                process.exit(1)
-            }
-            
-            maybeFile.download(async (err, buff) => {
-                if (err) {
-                    console.error("download err:", err)
-                    process.exit(1)
-                }
-                const med: MediumState = JSON.parse(buff.toString("utf-8"))
+        await mediumManager.get(match.groups.mediumName).then(result => {
+            const med: MediumState = result.medium
                 console.log("compiling conduit files")
                 compile(conduits)
                 .then(async (results) => {
@@ -139,7 +129,6 @@ const commands: Record<string, (m: MediumManager) => void> = {
                     console.log("done!")
                 })
             })
-        })
         
         
     },
@@ -171,23 +160,8 @@ const commands: Record<string, (m: MediumManager) => void> = {
                 console.error(`specify the medium to delete from`)
                 process.exit(1)
             }
-            await mediumManager.tryGet(on.groups.medium).then(maybeFile => {
-                if (maybeFile === undefined) {
-                    console.log(`don't have ${on.groups.medium}`)
-                    process.exit(1)
-                }
-                
-                maybeFile.download(async (err, buff) => {
-                    if (err) {
-                        console.error("download err:", err)
-                        process.exit(1)
-                    }
-                    await destroyNamespace(JSON.parse(buff.toString("utf-8")), config.project)
-                })
-            })
-            
-            
-            
+            await mediumManager.get(on.groups.medium).then(results => destroyNamespace(results.medium, config.project))
+
         } else {
             console.error(`unable to handle ${match.groups.entityType}`)
         }
