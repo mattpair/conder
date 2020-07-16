@@ -115,7 +115,7 @@ enum PurchaseCategory {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -236,7 +236,7 @@ enum PurchaseCategory {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -409,7 +409,7 @@ enum OtherCategories {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -733,7 +733,7 @@ message MyMessage {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -949,7 +949,7 @@ message m2 {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -1273,7 +1273,7 @@ message MyMessage {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -1615,7 +1615,7 @@ message m2 {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -1939,7 +1939,7 @@ message MyMessage {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]

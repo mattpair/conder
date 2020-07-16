@@ -114,7 +114,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                         console.log("containerizing")
                         const image = containerize(results[1], targetDir)
                         console.log("deploying to medium")
-                        const url = await deployOnToCluster(med,results[1].service.name, image, config.project)
+                        const url = await deployOnToCluster(med, results[1], image, config.project)
             
                         if (config.outputClients !== undefined) {
                             console.log("generating clients")

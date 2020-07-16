@@ -45,8 +45,10 @@ export namespace FunctionResolved {
         service: Service
     }
 
+    type ServiceKind = "public"
+
     type Service = {
         readonly functions: Function[]
-        readonly name: string
+        readonly kind: ServiceKind
     }
 }

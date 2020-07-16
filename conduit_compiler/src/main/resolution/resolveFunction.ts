@@ -160,7 +160,7 @@ export function resolveFunctions(files: TypeResolved.File[]): FunctionResolved.M
             functions: files.flatMap(f => {
                 return f.children.Function.map(fn => resolveFunction(f, fn))
             }),
-            name: "cloud-srv"
+            kind: "public"
         }
     }
 }

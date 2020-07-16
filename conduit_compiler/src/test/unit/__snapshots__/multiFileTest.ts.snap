@@ -204,7 +204,7 @@ message m2 {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -992,7 +992,7 @@ message m2 {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -1160,7 +1160,7 @@ message Shout {
           },
         },
       ],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]
@@ -1382,7 +1382,7 @@ message m1 {
     ],
     "service": Object {
       "functions": Array [],
-      "name": "cloud-srv",
+      "kind": "public",
     },
   },
 ]

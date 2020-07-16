@@ -122,9 +122,9 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 //todo dedup
-export async function deployOnToCluster(medium: MediumState, serviceName: string, contName: string, namespace: string): Promise<string> {
+export async function deployOnToCluster(medium: MediumState, manifest: FunctionResolved.Manifest, contName: string, namespace: string): Promise<string> {
     const kc = new k8s.KubeConfig()
-    
+    const serviceName = `${manifest.service.kind}-${namespace}`
     kc.addCluster({
         name: medium.clusterId,
         skipTLSVerify: false,
