@@ -15,21 +15,15 @@ import { isError } from './error/types';
 const DEPENDENCY_DIR = '/Users/jerm/ConderSystems/conduit/conduit_compiler/src/main/deps'
 
 // TODO: work across multiple dirs.
-function compile(conduits: string[]): Promise<[string[], FunctionResolved.Manifest]>  {
+async function compile(conduits: string[]): Promise<FunctionResolved.Manifest>  {
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
     const [proto, manifest] = compileFiles(toCompile)
     fs.mkdirSync(".proto")
+       
+    await fs.promises.writeFile(`.proto/default_namespace.proto`, proto.proto)
     
-    const writes: Promise<string>[] = []
-    for (const filename in proto) {
-        writes.push(fs.promises.writeFile(`.proto/${filename}`, proto[filename].proto).then(r => filename))
-    }
-    if (writes.length == 0) {
-        console.warn("Did not find any message types in conduit/")
-    }
-
-    return Promise.all(writes).then((filenames) => ([filenames,manifest]))
+    return manifest
 }
 
 type DependencyFactory = {
@@ -61,11 +55,11 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         }
         // TODO: deduplicate
         compile(conduits)
-        .then((filenamesAndManifest) => {
+        .then((manifest) => {
             for (const dir in config.dependencies) {
                 child_process.execSync(`mkdir -p ${dir}/gen/models`)
                 child_process.execSync(`touch ${dir}/gen/models/__init__.py`)
-                filenamesAndManifest[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${dir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))    
+                child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${dir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})    
             }
             
             console.log("done!")
@@ -103,18 +97,18 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
             const med: MediumState = result.medium
                 console.log("compiling conduit files")
                 compile(conduits)
-                .then(async (results) => {
+                .then(async (manifest) => {
                     if (!config.dependencies) {
                         const targetDir = '.python'
                         child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
                         child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
                         child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
                         console.log("generating models from proto")
-                        results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
+                        child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})    
                         console.log("containerizing")
-                        const image = containerize(results[1], targetDir)
+                        const image = containerize(manifest, targetDir)
                         console.log("deploying to medium")
-                        const url = await deployOnToCluster(med, results[1], image, config.project)
+                        const url = await deployOnToCluster(med, manifest, image, config.project)
             
                         if (config.outputClients !== undefined) {
                             console.log("generating clients")
@@ -123,8 +117,8 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                                 child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
                                 child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
                     
-                                results[0].forEach(p => child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models ${p} 2>&1`, {encoding: "utf-8"}))
-                                generateClients(url, results[1], outputRequest.dir)
+                                child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})
+                                generateClients(url, manifest, outputRequest.dir)
                             })
                         }
                     }

@@ -25,7 +25,7 @@ const internal = generateInternalFunction(func)
 const param = func.part.Parameter.differentiate()
 let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
 // const ptype = .part.UnaryParameterType.differentiate()
-const typeLocation = ptype !== null ? `${modelAliasOf(ptype.file)}.${ptype.name}` : `No type necessary`
+const typeLocation = ptype !== null ? `default_namespace_pb2.${ptype.name}` : `No type necessary`
 const external =
 `
 def external_${func.name}(req):
@@ -47,7 +47,7 @@ export function modelAliasOf(loc: FileLocation): string {
 
 //TODO: generate random key.
 export function containerize(manifest: FunctionResolved.Manifest, dirname: string): string {
-
+    console.log(`MANIFEST: ${JSON.stringify(manifest, null, 2)}`)
     const functions = generateFunctions(manifest.service.functions)
     fs.mkdirSync(".deploy/compute/", {recursive: true})
     child_process.execSync(`cp -r ${dirname} .deploy/compute/server`)
@@ -143,7 +143,7 @@ USE_TZ = True
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
-${manifest.namespaces.filter(f => f.inScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
+from .gen.models import default_namespace_pb2
 
 ${functions}
 

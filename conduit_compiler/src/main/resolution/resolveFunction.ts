@@ -126,7 +126,7 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionRes
             inScope.set(val.name, val)
         }
     })
-
+    console.log(`Found ${functions.length} function(s)`)
 
     return {
         namespaces: [{name: "default", inScope}],

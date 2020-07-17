@@ -6,7 +6,7 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
     
     fs.writeFileSync(`${dir}/gen/clients.py`, 
 `
-${manifest.files.filter(f => f.inFileScope.size > 0).map(f => `import gen.models.${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
+import gen.models.default_namespace_pb2 as d
 import requests
 
 
