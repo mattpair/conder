@@ -94,7 +94,7 @@ export namespace Parse {
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
         const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Function: true})
-        if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
+        if (cursor.tryMatch(/^\s*/).hit && cursor.isDone()) {
             return {
                 kind: "File",
                 loc: cursor.filelocation,

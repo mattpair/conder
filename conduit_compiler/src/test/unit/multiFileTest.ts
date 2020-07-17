@@ -105,6 +105,17 @@ testFailsWhen("function with unknown types", {
     `
 })
 
+testFailsWhen("attempted import", {
+    "conduit_a.cdt": `
+    import 'conduit_b.cdt' as c
+    
+    message m2 {
+        c.m1 m
+    }
+
+    `
+})
+
 testFailsWhen("function with invalid return type", {
     "conduit_a.cdt": `
 

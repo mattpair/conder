@@ -2,6 +2,8 @@
 
 exports[`Self referencing type 1`] = `"Currently do not support self-referencing types: m1"`;
 
+exports[`attempted import 1`] = `"Failed to parse file entirely: {\\"dir\\":\\"\\",\\"name\\":\\"conduit_a.cdt\\",\\"fullname\\":\\"conduit_a.cdt\\"}"`;
+
 exports[`dependency multi file 1`] = `
 Array [
   Object {
