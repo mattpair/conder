@@ -10,28 +10,22 @@ export namespace Parse {
     common.Entity<"File"> & 
     common.ParentOfMany<Message> &  
     common.ParentOfMany<common.Enum> & 
-    common.ParentOfMany<Import> & 
     common.ParentOfMany<Function> &
     {readonly loc: FileLocation}
 
     export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
-    export type FromEntitySelect = common.IntrafileEntity<"FromEntitySelect", {from: string}  & common.RequiresOne<CustomTypeEntity>>
-    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity | FromEntitySelect
+    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity 
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
     export type Statement = common.BaseStatement<() => common.BaseReturnStatement>
     export type FunctionBody = common.BaseFunctionBody<Statement>
-    export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity | FromEntitySelect>
+    export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
     export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
     export type UnaryParameter = common.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = common.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
-    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity | FromEntitySelect>
+    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity >
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
     export type Message = common.BaseMsg<Field>
-    export type Import = common.BaseImport<{
-        readonly fromPresentDir: boolean
-        readonly filename: string
-    }>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
@@ -99,7 +93,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Import: true, Function: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Function: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone) {
             return {
                 kind: "File",
@@ -156,7 +150,6 @@ export namespace Parse {
     type AnyEntity = 
         File | 
         Message | 
-        Import | 
         Field | 
         common.Enum | 
         common.EnumMember | 
@@ -170,7 +163,6 @@ export namespace Parse {
         common.VoidReturn |
         common.BaseReturnStatement | 
         Statement |
-        FromEntitySelect |
         UnaryParameterType |
         NoParameter |
         UnaryParameter
@@ -332,25 +324,11 @@ export namespace Parse {
             }
         },
 
-        Import: {
-            kind: "leaf",
-            regex: /^\s*import +'(?<presentDir>\.\/)?(?<location>[\w \.\/]*)' +as +(?<name>[_A-Za-z]+[\w]*)/,
-            assemble(c, loc): Import | undefined {
-                return {
-                    kind: "Import",
-                    fromPresentDir: c.groups.presentDir !== undefined,
-                    name: c.groups.name,
-                    filename: c.groups.location,
-                    loc
-                }
-            }
-        },
 
         FieldType: {
             kind: "polymorph",
             priority: {
                 Primitive: 0,
-                FromEntitySelect: 1,
                 CustomType: 2
             },
             groupKind: "FieldType"
@@ -399,20 +377,6 @@ export namespace Parse {
                 }
             }
         },
-        FromEntitySelect: {
-            kind: "conglomerate",
-            startRegex: /^(?<from>[_A-Za-z]+[\w]*)\./,
-            endRegex: /^/,
-            assemble(start, end, loc, part) {
-                return {
-                    kind: "FromEntitySelect",
-                    from: start.groups.from,
-                    loc,
-                    part
-                }
-            },
-            requiresOne: {CustomType: 1}
-        },
         Primitive: {
             kind: "leaf",
             regex: new RegExp(`^(?<val>(${Primitives.join("|")})) +`),
@@ -441,7 +405,7 @@ export namespace Parse {
         ReturnTypeSpec: {
             kind: "polymorph",
             groupKind: "ReturnTypeSpec",
-            priority: {FromEntitySelect: 1, CustomType: 2, VoidReturnType: 3}
+            priority: {CustomType: 2, VoidReturnType: 3}
         },
         Parameter: {
             kind: "polymorph",
@@ -491,7 +455,7 @@ export namespace Parse {
         },
         UnaryParameterType: {
             kind: "polymorph",
-            priority: {CustomType: 2, FromEntitySelect: 1},
+            priority: {CustomType: 2},
             groupKind: "UnaryParameterType"
         },
         VoidReturnType: {

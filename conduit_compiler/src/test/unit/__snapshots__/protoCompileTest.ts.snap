@@ -3,10 +3,8 @@
 exports[`should allow enums 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 enum PurchaseCategory {
@@ -20,16 +18,11 @@ enum PurchaseCategory {
     
 
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "PurchaseCategory" => Object {
             "children": Object {
               "EnumMember": Array [
@@ -95,6 +88,11 @@ enum PurchaseCategory {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Enum",
             "loc": Object {
               "endColNumber": 27,
@@ -105,12 +103,7 @@ enum PurchaseCategory {
             "name": "PurchaseCategory",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -124,10 +117,8 @@ enum PurchaseCategory {
 exports[`should allow enums separated by whitespace 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 enum PurchaseCategory {
@@ -141,16 +132,11 @@ enum PurchaseCategory {
     
 
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "PurchaseCategory" => Object {
             "children": Object {
               "EnumMember": Array [
@@ -216,6 +202,11 @@ enum PurchaseCategory {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Enum",
             "loc": Object {
               "endColNumber": 27,
@@ -226,12 +217,7 @@ enum PurchaseCategory {
             "name": "PurchaseCategory",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -245,10 +231,8 @@ enum PurchaseCategory {
 exports[`should allow multiple enums separated by whitespace 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 enum PurchaseCategory {
@@ -270,16 +254,11 @@ enum OtherCategories {
     
 
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "PurchaseCategory" => Object {
             "children": Object {
               "EnumMember": Array [
@@ -344,6 +323,11 @@ enum OtherCategories {
                   "name": "ENTERTAINMENT",
                 },
               ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
             },
             "kind": "Enum",
             "loc": Object {
@@ -389,6 +373,11 @@ enum OtherCategories {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Enum",
             "loc": Object {
               "endColNumber": 26,
@@ -399,12 +388,7 @@ enum OtherCategories {
             "name": "OtherCategories",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -418,10 +402,8 @@ enum OtherCategories {
 exports[`should allow new line to end field 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 
@@ -437,16 +419,11 @@ message MyMessage {
 	optional bytes bs = 9;
 }
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "MyMessage" => Object {
             "children": Object {
               "Field": Array [
@@ -605,6 +582,11 @@ message MyMessage {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 23,
@@ -615,12 +597,7 @@ message MyMessage {
             "name": "MyMessage",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -634,10 +611,8 @@ message MyMessage {
 exports[`should allow one message to reference another 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 
@@ -655,16 +630,11 @@ message m2 {
 	required m1 myMessag = 1;
 }
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "m1" => Object {
             "children": Object {
               "Field": Array [
@@ -772,6 +742,11 @@ message m2 {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 16,
@@ -803,6 +778,11 @@ message m2 {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 15,
@@ -813,12 +793,7 @@ message m2 {
             "name": "m2",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -832,10 +807,8 @@ message m2 {
 exports[`should allow the specification of optional fields 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 
@@ -851,16 +824,11 @@ message MyMessage {
 	optional bytes bs = 9;
 }
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "MyMessage" => Object {
             "children": Object {
               "Field": Array [
@@ -1019,6 +987,11 @@ message MyMessage {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 23,
@@ -1029,12 +1002,7 @@ message MyMessage {
             "name": "MyMessage",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -1048,10 +1016,8 @@ message MyMessage {
 exports[`should convert multiple conduit into proto2 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 
@@ -1071,16 +1037,11 @@ message m2 {
 	required bytes bs = 3;
 }
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "m1" => Object {
             "children": Object {
               "Field": Array [
@@ -1188,6 +1149,11 @@ message m2 {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 16,
@@ -1253,6 +1219,11 @@ message m2 {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 15,
@@ -1263,12 +1234,7 @@ message m2 {
             "name": "m2",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {
@@ -1282,10 +1248,8 @@ message m2 {
 exports[`should convert simple conduit into proto2 1`] = `
 Array [
   Object {
-    "testFile.proto": Object {
-      "proto": "
+    "proto": "
 syntax=\\"proto2\\";
-
             
 
 
@@ -1301,16 +1265,11 @@ message MyMessage {
 	required bytes bs = 9;
 }
 ",
-    },
   },
   Object {
-    "files": Array [
+    "namespaces": Array [
       Object {
-        "children": Object {
-          "Function": Array [],
-          "Import": Array [],
-        },
-        "inFileScope": Map {
+        "inScope": Map {
           "MyMessage" => Object {
             "children": Object {
               "Field": Array [
@@ -1469,6 +1428,11 @@ message MyMessage {
                 },
               ],
             },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
             "kind": "Message",
             "loc": Object {
               "endColNumber": 23,
@@ -1479,12 +1443,7 @@ message MyMessage {
             "name": "MyMessage",
           },
         },
-        "kind": "File",
-        "loc": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
+        "name": "default",
       },
     ],
     "service": Object {

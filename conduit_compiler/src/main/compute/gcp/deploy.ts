@@ -25,7 +25,7 @@ const internal = generateInternalFunction(func)
 const param = func.part.Parameter.differentiate()
 let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
 // const ptype = .part.UnaryParameterType.differentiate()
-const typeLocation = ptype !== null ? `${modelAliasOf(ptype.declaredIn)}.${ptype.name}` : `No type necessary`
+const typeLocation = ptype !== null ? `${modelAliasOf(ptype.file)}.${ptype.name}` : `No type necessary`
 const external =
 `
 def external_${func.name}(req):
@@ -143,7 +143,7 @@ USE_TZ = True
 from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
-${manifest.files.filter(f => f.inFileScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
+${manifest.namespaces.filter(f => f.inScope.size > 0).map(f => `from .gen.models import ${f.loc.fullname.replace(".cdt", "_pb2")} as ${modelAliasOf(f.loc)}`).join("\n")}
 
 ${functions}
 

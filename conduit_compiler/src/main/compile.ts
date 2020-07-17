@@ -1,12 +1,12 @@
 
 import { Parse} from "./parse";
 import { FunctionResolved, TypeResolved, Message, Field } from "./entity/resolved";
-import { resolveDeps } from "./resolution/resolveTypes";
+import { toNamespace } from "./resolution/resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 import { resolveFunctions } from "./resolution/resolveFunction";
 
-export function compileFiles(files: Record<string, () => string>): [Record<string, {proto: string}>, FunctionResolved.Manifest] {
+export function compileFiles(files: Record<string, () => string>): [{proto: string}, FunctionResolved.Manifest] {
     const conduits: Parse.File[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
@@ -14,43 +14,37 @@ export function compileFiles(files: Record<string, () => string>): [Record<strin
         }
     }
 
-    const r = resolveDeps(conduits)
+    const r = toNamespace(conduits)
 
     return [toProto(r),resolveFunctions(r)]
 } 
 
-function toProto(files: TypeResolved.File[]): Record<string, {proto: string}> {
-    const results: Record<string, {proto: string}> = {}
-    files.forEach(file => {
+function toProto(namespace: TypeResolved.Namespace): {proto: string} {
+    const enums: Enum[] = []
+    const messages: Message[] = []
 
-        const enums: Enum[] = []
-        const messages: Message[] = []
-        file.inFileScope.forEach(v => {
-            switch(v.kind) {
-                case "Enum":
-                    enums.push(v)
-                    break;
-                case "Message":
-                    messages.push(v)
-                    break;
-            }
-        })
-        let proto = ''
-        if (enums.length + messages.length > 0) {
-            proto = `
+    namespace.inScope.forEach((val, key) => {
+        switch(val.kind) {
+            case "Enum":
+                enums.push(val)
+                break
+            case "Message":
+                messages.push(val)
+
+        }
+    })
+
+    let proto = ''
+    if (enums.length + messages.length > 0) {
+        proto = `
 syntax="proto2";
-${file.children.Import.map(d => `import "${d.dep.replace(".cdt", ".proto")}";`).join("\n")}
             
 ${enums.map(printEnum).join("\n\n")}
 ${messages.map(printMessage).join("\n\n")}
 `
-        }
+    }
 
-        results[`${file.loc.fullname.replace(".cdt", ".proto")}`] = {proto}
-        
-    })
-
-    return results       
+    return {proto}
 }
 
 function printEnum(e: Enum): string {

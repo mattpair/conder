@@ -36,5 +36,5 @@ export function LazyClassification<T>(d: any): (a: T) => Classified<any, T> {
 
 
 export function assertNever(x: never): never {
-    throw new Error("Unexpected object: " + x);
+    throw new Error("Unexpected object: " + JSON.stringify(x, null, 2));
 }

@@ -6,7 +6,6 @@ export type EntityKinds =
 "Enum" |
 "Message" |
 "Field" |
-"Import" |
 "File" |
 "FieldType" |
 "CustomType" |
@@ -20,8 +19,7 @@ export type EntityKinds =
 "UnaryParameterType" | 
 "VoidReturnType" |
 "Statement" |
-"ReturnStatement" |
-"FromEntitySelect" 
+"ReturnStatement"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -45,7 +43,6 @@ export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field"
 
 export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Message", ParentOfMany<FIELD_TYPE>> 
 
-export type BaseImport<T> = NamedIntrafile<"Import", T>
 
 export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: string}>
 export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>

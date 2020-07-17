@@ -1,188 +1,128 @@
+
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { Message, Enum, TypeResolved, FieldType } from '../entity/resolved';
+import { Message, Enum, TypeResolved, FieldType, Field, ResolvedType} from '../entity/resolved';
 import { assertNever } from '../util/classifying';
 import  * as basic from '../entity/basic';
 
-
-function assertNameNotYetInLookup(m: {name: string}, l: Set<string>) {
-    if (l.has(m.name)) {
-        throw Error(`Duplicate entities in scope with name ${m.name}`)
-    }
-    l.add(m.name)
-}
-
-function toFullFilename(i: Parse.Import, thisFileLoc: FileLocation): string {
-    return i.fromPresentDir ? `${thisFileLoc.dir}${i.filename}` : i.filename
-
-}
-
-function resolveFile(toResolve: Parse.File, externalResolved: Record<string, TypeResolved.File>): TypeResolved.File {
-    const intralookup: Set<string> = new Set()
-    const inFileScope: Map<string, TypeResolved.File | Message | Enum> = new Map()
-    const nameSet: Set<string> = new Set()
-    toResolve.children.Import.forEach(i => {
-        assertNameNotYetInLookup(i, nameSet)
-        inFileScope.set(i.name, externalResolved[toFullFilename(i, toResolve.loc)])
-    })
-
-    const reserveName = (m: Parse.Message | basic.Enum) => {
-        assertNameNotYetInLookup(m, nameSet)
-        intralookup.add(m.name)
-    }
-    toResolve.children.Enum.forEach(enm => {
-        reserveName(enm)
-        inFileScope.set(enm.name, enm)
-    })
-
-    toResolve.children.Message.forEach(reserveName)
-    
-    toResolve.children.Message.forEach(m => {
-        const resolvedFields = m.children.Field.map((f: Parse.Field) => {
-            let t: FieldType
-            // Switches on the variable so assertnever works.
-            const fieldType = f.part.FieldType.differentiate()
-            switch(fieldType.kind) {
-                
-                case "Primitive":
-                    t = {differentiate: () => fieldType , kind: "FieldType"}
-                    break;
-
-                case "FromEntitySelect":
-                    const targetEntity = inFileScope.get(fieldType.from)
-
-                    if (targetEntity === undefined) {
-                        throw new Error(`Unable to resolve alias ${fieldType.from} for type: ${fieldType.part.CustomType.type} in message ${m.name}`)            
-                    }                            
-                    switch(targetEntity.kind) {
-                        case "File":
-                            const importedEntity = targetEntity.inFileScope.get(fieldType.part.CustomType.type)
-                            if (importedEntity !== undefined && importedEntity.kind !== "File") {
-                                
-                                // TODO: loc should be reference location, not entity location.
-                                t = {differentiate: () => {
-                                    return Object.assign(importedEntity, {declaredIn: targetEntity.loc})
-                                },  kind: "FieldType"}            
-                                
-                            } else {
-                                throw new Error(`Unable to find type ${fieldType.part.CustomType.type} in ${fieldType.from}`)
-                            }
-                    }
-
-                    
-
-                    break;
-                                            
-                case "CustomType":
-                    
-                    if (!intralookup.has(fieldType.type)) {
-                        throw new Error(`Unable to resolve field type: ${fieldType.type} in message ${m.name}`)            
-                    }
-                    t =  {
-                        differentiate: () => inFileScope.get(fieldType.type) as Message | Enum,
-                        kind: "FieldType"
-                    }
-                    
-                    break;
-            
-                default: return assertNever(fieldType)
-                
-            }
-            return {...f, part: {FieldType: t}}
+type FirstPassEntity = (Parse.Message | basic.Enum | Parse.Function) & {file: FileLocation}
+export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
+    const firstPassScope: Map<string, FirstPassEntity> = new Map()
+    const childType: (keyof Parse.File["children"])[] = ["Message", "Enum", "Function"]
+    unresolved.forEach(file => {
+        childType.forEach((type) => {
+            file.children[type].forEach((ent: Parse.Message | basic.Enum | Parse.Function) => {
+                const existing = firstPassScope.get(ent.name)
+                if (existing !== undefined) {
+                    throw new Error(`Entity name: ${ent.name} is used multiple times in default namespace
+                    once here: ${existing.file.fullname} ${existing.loc.startLineNumber}
+                    and again here: ${file.loc.fullname} ${ent.loc.startLineNumber}
+                    `)
+                }
+                firstPassScope.set(ent.name, {...ent, file: file.loc})
+            })
         })
-        const rmsg: Message = {
-            kind: "Message", 
-            name: m.name, 
-            loc: m.loc,
-            children: {Field: resolvedFields}}
-        inFileScope.set(m.name, rmsg)
     })
-        
-                
-                
-    return {
-        kind: "File",
-        loc: toResolve.loc,
-        inFileScope,
-        children: {
-            Import: toResolve.children.Import.map(v => ({
-                kind: "Import", 
-                name: v.name, 
-                dep: toFullFilename(v, toResolve.loc), 
-                loc: v.loc
-            })),
-            Function: toResolve.children.Function
+    
+
+    const secondPassScope: Map<string, TypeResolved.TopLevelEntities> = new Map()
+
+    function tryResolveFieldType(name: string): ResolvedType | undefined  {
+        const alreadyResolved = secondPassScope.get(name)
+            
+        if (alreadyResolved !== undefined) {
+            switch(alreadyResolved.kind) {
+                case "Function":
+                    throw new Error(`Field may not reference function ${name}`)
+                case "Message":
+                case "Enum":
+                    return alreadyResolved                
+            }
         }
     }
-}
 
-class FileNeedingCompilation<DATA> {
-    readonly absoluteDependencies: string[]
-    readonly dependedOnBy: string[]
-    readonly location: FileLocation
-    readonly data: DATA
-
-    constructor(dependencies: Parse.Import[], location: FileLocation, data: DATA) {
-        this.dependedOnBy = []
-        this.absoluteDependencies = dependencies.map(imp => imp.fromPresentDir ? `${location.dir}${imp.filename}` : imp.filename)
-        this.location = location
-        this.data = data
-    }     
-}
-
-type UnresolvedFileLookup = Readonly<Record<string, FileNeedingCompilation<Parse.File>>>
-
-function buildNeedsCompileSet(files: Parse.File[]): UnresolvedFileLookup {
-    //Put all in need compile state
-    const toResolve: Record<string, FileNeedingCompilation<Parse.File>> = {}
-    files.forEach(file => {
-        toResolve[file.loc.fullname] = new FileNeedingCompilation(file.children.Import, file.loc, file)
-    })
-
-
-    files.forEach(file => {
-        toResolve[file.loc.fullname].absoluteDependencies.forEach(absDep => {
-            if (!(absDep in toResolve)) {
-                throw new Error(`Cannot find imported file ${absDep} from file ${file.loc.fullname}`)
-            }
-            toResolve[absDep].dependedOnBy.push(file.loc.fullname)
-        }) 
-    })
-    return toResolve
-}
-
-
-export function resolveDeps(unresolved: Parse.File[]): TypeResolved.File[] {
-    const toResolve: UnresolvedFileLookup = buildNeedsCompileSet(unresolved)
-    const resolved: Record<string, TypeResolved.File> = {}
-
-    function tryResolve(absFilename: string) {
-        const deps = toResolve[absFilename].absoluteDependencies
+    function resolveMessage(ent: Parse.Message & {file: FileLocation}): void  {
+        const fields: Field[] = []
+        ent.children.Field.forEach(field => {
+            const type = field.part.FieldType.differentiate()
+            let newType: ResolvedType = undefined
         
-        for (let d = 0; d < deps.length; d++) {
-            const dep = deps[d];
-            if (!(dep in resolved)) {
+            switch(type.kind) {
+                case "CustomType":
+                    if (type.type === ent.name) {
+                        //TODO: eventually allow types to contain instances of self.
+                        throw new Error(`Currently do not support self-referencing types: ${ent.name}`)
+                    }
+                    const alreadyResolved = tryResolveFieldType(type.type)
+                    if (alreadyResolved !== undefined) {
+                        newType = alreadyResolved
+                        break
+                    }
+
+                    const notYetResolved = firstPassScope.get(type.type)
+                    if (notYetResolved === undefined) {
+                        throw new Error(`Unable to resolve type of field ${type.type} from message: ${ent.name}`)
+                    }  
+                    resolveEntity(notYetResolved)
+                    newType = tryResolveFieldType(notYetResolved.name)
+                    break
+            
+                case "Primitive":
+                    newType = type
+                    break
+
+                default: assertNever(type)
+            }
+            
+
+            fields.push({ 
+                loc: field.loc,
+                kind: "Field",
+                isRequired: field.isRequired,
+                name: field.name,
+                part: {
+                    FieldType: {
+                        kind: "FieldType",
+                        differentiate: () => newType
+                    }
+                }
+            })
+        })
+        const out: Message = {
+            kind: "Message",
+            loc: ent.loc,
+            children: {
+                Field: fields
+            },
+            name: ent.name,
+            file: ent.file            
+        }
+        secondPassScope.set(ent.name, out)   
+        return
+    }
+
+    
+    function resolveEntity(firstPassEnt: FirstPassEntity): void {
+        if (secondPassScope.has(firstPassEnt.name)) {
+            return
+        }
+        
+        switch(firstPassEnt.kind) {
+            case "Message":
+                return resolveMessage(firstPassEnt)
+    
+            case "Enum":
+            case "Function":
+                secondPassScope.set(firstPassEnt.name, firstPassEnt)
                 return
-            }
         }
-        const r = resolveFile(toResolve[absFilename].data, resolved)
-        resolved[absFilename] = r        
-        toResolve[absFilename].dependedOnBy.forEach(tryResolve)
     }
+        
+    
+    firstPassScope.forEach((val) => {
+        resolveEntity(val)
+    })
 
-    //Try compile all
-    unresolved.forEach(file => tryResolve(file.loc.fullname))
+    return {name: "default", inScope: secondPassScope}
 
-    //All should be compiled
-    if (!unresolved.every(unr => unr.loc.fullname in resolved)) {
-        throw new Error(`Not all files could be compiled due to circular dependency\n\n
-        All files: ${JSON.stringify(unresolved.map(u => u.loc.fullname), null, 2)}\n\n
-        Resolved: ${JSON.stringify(Object.keys(resolved), null, 2)}
-        `)
-    }
-    const ret: TypeResolved.File[] = []
-    for (const file in resolved) {
-        ret.push(resolved[file])
-    }
-    return ret
 }

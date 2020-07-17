@@ -31,12 +31,11 @@ protoCompileTest("simple multi file", {
     `,
 
     "conduit_b.cdt": `
-    import 'conduit_a.cdt' as A
 
     message m2 {
         double d
     }
-    message m1 {
+    message m3 {
         m2 m
     }
     `
@@ -50,28 +49,19 @@ protoCompileTest("dependency multi file", {
     `,
 
     "conduit_b.cdt": `
-    import 'conduit_a.cdt' as A
 
     message m2 {
-        A.m1 m
+        m1 m
     }
     `
 })
 
-testFailsWhen("circular dependency", {
+testFailsWhen("Self referencing type", {
     "conduit_a.cdt": `
-    import 'conduit_b.cdt' as B
     message m1 {
-        double d
+        m1 d
     }
     `,
-
-    "conduit_b.cdt": `
-    import 'conduit_a.cdt' as A
-    message m2 {
-        double d
-    }
-    `
 
 })
 
@@ -83,27 +73,25 @@ protoCompileTest("dependency subdirs", {
     `,
 
     "conduit_d.cdt": `
-    import 'sub/conduit_c.cdt' as C
+
     message D {
-        C.m2 d
+        m2 my_m2
     }
     `,
 
     "sub/conduit_b.cdt": `
-    import 'conduit_a.cdt' as A
 
     message m2 {
-        A.m1 m
+        m1 m
     }
     `,
 
     "sub/conduit_c.cdt": `
-    import 'conduit_a.cdt' as A
-    import './conduit_b.cdt' as B
+    
 
-    message m2 {
-        A.m1 m1
-        B.m2 m2
+    message m3 {
+        m1 m1
+        m2 m2
     }
     `
 })
@@ -161,28 +149,4 @@ protoCompileTest("simple echo function", {
         return s
     }
     `
-})
-
-testFailsWhen("subdir isn't referenced in present dir", {
-    "conduit_a.cdt": `
-    import 'conduit_b.cdt' as B
-    message m1 {
-        double d
-    }
-    `,
-
-    "conduit_b.cdt": `
-    import 'conduit_c.cdt' as C
-    message m2 {
-        double d
-    }
-    `,
-
-    "sub/conduit_c.cdt": `
-
-    message m2 {
-        double m1
-    }
-    `
-
 })
