@@ -432,15 +432,9 @@ message MyMessage {
 	optional int64 I = 4;
 	optional uint32 u32 = 5;
 	optional uint64 u64 = 6;
-	required sint32 s32 = 7;
-	optional sint64 s64 = 8;
-	optional fixed32 f32 = 9;
-	optional fixed64 f64 = 10;
-	optional sfixed32 sf32 = 11;
-	optional sfixed64 sf64 = 12;
-	optional bool b = 13;
-	optional string s = 14;
-	optional bytes bs = 15;
+	optional bool b = 7;
+	optional string s = 8;
+	optional bytes bs = 9;
 }
 ",
     },
@@ -559,15 +553,15 @@ message MyMessage {
                   },
                 },
                 Object {
-                  "isRequired": true,
+                  "isRequired": false,
                   "kind": "Field",
                   "loc": Object {
-                    "endColNumber": 8,
+                    "endColNumber": 17,
                     "endLineNumber": 8,
                     "startColNumber": 0,
                     "startLineNumber": 8,
                   },
-                  "name": "s32",
+                  "name": "b",
                   "part": Object {
                     "FieldType": Object {
                       "differentiate": [Function],
@@ -584,7 +578,7 @@ message MyMessage {
                     "startColNumber": 0,
                     "startLineNumber": 9,
                   },
-                  "name": "s64",
+                  "name": "s",
                   "part": Object {
                     "FieldType": Object {
                       "differentiate": [Function],
@@ -600,108 +594,6 @@ message MyMessage {
                     "endLineNumber": 10,
                     "startColNumber": 0,
                     "startLineNumber": 10,
-                  },
-                  "name": "f32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 11,
-                    "startColNumber": 0,
-                    "startLineNumber": 11,
-                  },
-                  "name": "f64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 12,
-                    "startColNumber": 0,
-                    "startLineNumber": 12,
-                  },
-                  "name": "sf32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 13,
-                    "startColNumber": 0,
-                    "startLineNumber": 13,
-                  },
-                  "name": "sf64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 14,
-                    "startColNumber": 0,
-                    "startLineNumber": 14,
-                  },
-                  "name": "b",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 15,
-                    "startColNumber": 0,
-                    "startLineNumber": 15,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 16,
-                    "startColNumber": 0,
-                    "startLineNumber": 16,
                   },
                   "name": "bs",
                   "part": Object {
@@ -760,8 +652,7 @@ message m1 {
 
 
 message m2 {
-	required sint32 s32 = 1;
-	required m1 myMessag = 2;
+	required m1 myMessag = 1;
 }
 ",
     },
@@ -902,23 +793,6 @@ message m2 {
                     "startColNumber": 15,
                     "startLineNumber": 9,
                   },
-                  "name": "s32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 11,
-                    "startColNumber": 19,
-                    "startLineNumber": 10,
-                  },
                   "name": "myMessag",
                   "part": Object {
                     "FieldType": Object {
@@ -972,15 +846,9 @@ message MyMessage {
 	optional int64 I = 4;
 	optional uint32 u32 = 5;
 	optional uint64 u64 = 6;
-	optional sint32 s32 = 7;
-	optional sint64 s64 = 8;
-	optional fixed32 f32 = 9;
-	optional fixed64 f64 = 10;
-	optional sfixed32 sf32 = 11;
-	optional sfixed64 sf64 = 12;
-	optional bool b = 13;
-	optional string s = 14;
-	optional bytes bs = 15;
+	optional bool b = 7;
+	optional string s = 8;
+	optional bytes bs = 9;
 }
 ",
     },
@@ -1107,108 +975,6 @@ message MyMessage {
                     "startColNumber": 28,
                     "startLineNumber": 7,
                   },
-                  "name": "s32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 9,
-                    "startColNumber": 28,
-                    "startLineNumber": 8,
-                  },
-                  "name": "s64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 10,
-                    "startColNumber": 28,
-                    "startLineNumber": 9,
-                  },
-                  "name": "f32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 11,
-                    "startColNumber": 29,
-                    "startLineNumber": 10,
-                  },
-                  "name": "f64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 12,
-                    "startColNumber": 29,
-                    "startLineNumber": 11,
-                  },
-                  "name": "sf32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 13,
-                    "startColNumber": 31,
-                    "startLineNumber": 12,
-                  },
-                  "name": "sf64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 14,
-                    "startColNumber": 31,
-                    "startLineNumber": 13,
-                  },
                   "name": "b",
                   "part": Object {
                     "FieldType": Object {
@@ -1222,9 +988,9 @@ message MyMessage {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 17,
-                    "endLineNumber": 15,
+                    "endLineNumber": 9,
                     "startColNumber": 24,
-                    "startLineNumber": 14,
+                    "startLineNumber": 8,
                   },
                   "name": "s",
                   "part": Object {
@@ -1239,9 +1005,9 @@ message MyMessage {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 17,
-                    "endLineNumber": 16,
+                    "endLineNumber": 10,
                     "startColNumber": 26,
-                    "startLineNumber": 15,
+                    "startLineNumber": 9,
                   },
                   "name": "bs",
                   "part": Object {
@@ -1300,15 +1066,9 @@ message m1 {
 
 
 message m2 {
-	required sint32 s32 = 1;
-	required sint64 s64 = 2;
-	required fixed32 f32 = 3;
-	required fixed64 f64 = 4;
-	required sfixed32 sf32 = 5;
-	required sfixed64 sf64 = 6;
-	required bool b = 7;
-	required string s = 8;
-	required bytes bs = 9;
+	required bool b = 1;
+	required string s = 2;
+	required bytes bs = 3;
 }
 ",
     },
@@ -1449,108 +1209,6 @@ message m2 {
                     "startColNumber": 15,
                     "startLineNumber": 9,
                   },
-                  "name": "s32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 11,
-                    "startColNumber": 19,
-                    "startLineNumber": 10,
-                  },
-                  "name": "s64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 12,
-                    "startColNumber": 19,
-                    "startLineNumber": 11,
-                  },
-                  "name": "f32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 13,
-                    "startColNumber": 20,
-                    "startLineNumber": 12,
-                  },
-                  "name": "f64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 14,
-                    "startColNumber": 20,
-                    "startLineNumber": 13,
-                  },
-                  "name": "sf32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 15,
-                    "startColNumber": 22,
-                    "startLineNumber": 14,
-                  },
-                  "name": "sf64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 16,
-                    "startColNumber": 22,
-                    "startLineNumber": 15,
-                  },
                   "name": "b",
                   "part": Object {
                     "FieldType": Object {
@@ -1564,9 +1222,9 @@ message m2 {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 8,
-                    "endLineNumber": 17,
+                    "endLineNumber": 11,
                     "startColNumber": 15,
-                    "startLineNumber": 16,
+                    "startLineNumber": 10,
                   },
                   "name": "s",
                   "part": Object {
@@ -1581,9 +1239,9 @@ message m2 {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 8,
-                    "endLineNumber": 18,
+                    "endLineNumber": 12,
                     "startColNumber": 17,
-                    "startLineNumber": 17,
+                    "startLineNumber": 11,
                   },
                   "name": "bs",
                   "part": Object {
@@ -1638,15 +1296,9 @@ message MyMessage {
 	required int64 I = 4;
 	required uint32 u32 = 5;
 	required uint64 u64 = 6;
-	required sint32 s32 = 7;
-	required sint64 s64 = 8;
-	required fixed32 f32 = 9;
-	required fixed64 f64 = 10;
-	required sfixed32 sf32 = 11;
-	required sfixed64 sf64 = 12;
-	required bool b = 13;
-	required string s = 14;
-	required bytes bs = 15;
+	required bool b = 7;
+	required string s = 8;
+	required bytes bs = 9;
 }
 ",
     },
@@ -1773,108 +1425,6 @@ message MyMessage {
                     "startColNumber": 19,
                     "startLineNumber": 7,
                   },
-                  "name": "s32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 9,
-                    "startColNumber": 19,
-                    "startLineNumber": 8,
-                  },
-                  "name": "s64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 10,
-                    "startColNumber": 19,
-                    "startLineNumber": 9,
-                  },
-                  "name": "f32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 11,
-                    "startColNumber": 20,
-                    "startLineNumber": 10,
-                  },
-                  "name": "f64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 12,
-                    "startColNumber": 20,
-                    "startLineNumber": 11,
-                  },
-                  "name": "sf32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 13,
-                    "startColNumber": 22,
-                    "startLineNumber": 12,
-                  },
-                  "name": "sf64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 14,
-                    "startColNumber": 22,
-                    "startLineNumber": 13,
-                  },
                   "name": "b",
                   "part": Object {
                     "FieldType": Object {
@@ -1888,9 +1438,9 @@ message MyMessage {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 8,
-                    "endLineNumber": 15,
+                    "endLineNumber": 9,
                     "startColNumber": 15,
-                    "startLineNumber": 14,
+                    "startLineNumber": 8,
                   },
                   "name": "s",
                   "part": Object {
@@ -1905,9 +1455,9 @@ message MyMessage {
                   "kind": "Field",
                   "loc": Object {
                     "endColNumber": 8,
-                    "endLineNumber": 16,
+                    "endLineNumber": 10,
                     "startColNumber": 17,
-                    "startLineNumber": 15,
+                    "startLineNumber": 9,
                   },
                   "name": "bs",
                   "part": Object {

@@ -1,9 +1,0 @@
-enum Animal {
-      Cat
-      Dog
-    }
-
-message M1 {
-    double d
-    Animal a
-}

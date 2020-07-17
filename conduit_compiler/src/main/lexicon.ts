@@ -13,12 +13,6 @@ export enum Symbol {
     int64="int64",
     uint32="uint32",
     uint64="uint64",
-    sint32="sint32",
-    sint64="sint64",
-    fixed32="fixed32",
-    fixed64="fixed64",
-    sfixed32="sfixed32",
-    sfixed64="sfixed64",
     bool="bool",
     string="string",
     bytes="bytes",
@@ -52,12 +46,6 @@ export type PrimitiveUnion =
     Symbol.int64 |
     Symbol.uint32 |
     Symbol.uint64 |
-    Symbol.sint32 |
-    Symbol.sint64 |
-    Symbol.fixed32 |
-    Symbol.fixed64 |
-    Symbol.sfixed32 |
-    Symbol.sfixed64 |
     Symbol.bool |
     Symbol.string |
     Symbol.bytes
@@ -69,12 +57,6 @@ export const Primitives: PrimitiveUnion[] = [
     Symbol.int64,
     Symbol.uint32,
     Symbol.uint64,
-    Symbol.sint32,
-    Symbol.sint64,
-    Symbol.fixed32,
-    Symbol.fixed64,
-    Symbol.sfixed32,
-    Symbol.sfixed64,
     Symbol.bool,
     Symbol.string,
     Symbol.bytes,
