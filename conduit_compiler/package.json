@@ -1,7 +1,6 @@
 {
   "name": "conduit",
   "version": "0.0.1",
-  "description": "Universal typing",
   "scripts": {
     "test:unit": "jest unit/",
     "pretest:integration": "npm run pkg:mac",

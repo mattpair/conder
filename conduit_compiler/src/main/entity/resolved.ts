@@ -24,7 +24,7 @@ export namespace TypeResolved {
 
 export namespace FunctionResolved {
     type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message | Enum> 
-    type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
+    export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
     type ReturnStatement = basic.BaseReturnStatement
     type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>

@@ -1,5 +1,5 @@
+import { Message, Enum } from './../../entity/resolved';
 import { FileLocation } from './../../util/filesystem';
-import { Parse } from '../../parse';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 import { FunctionResolved } from '../../entity/resolved';
@@ -26,13 +26,13 @@ const param = func.part.Parameter.differentiate()
 let ptype = param.kind === "NoParameter" ? null : param.part.UnaryParameterType.differentiate()
 // const ptype = .part.UnaryParameterType.differentiate()
 const typeLocation = ptype !== null ? `default_namespace_pb2.${ptype.name}` : `No type necessary`
+const returnType = func.part.ReturnTypeSpec.differentiate() as Message | Enum
 const external =
 `
 def external_${func.name}(req):
-        msg = ${typeLocation}()
-        msg.ParseFromString(req.body)
+        msg = ${typeLocation}_from_val(json.loads(req.body))
         ret = internal_${func.name}(msg)
-        return HttpResponse(ret.SerializeToString())
+        return HttpResponse(json.dumps(default_namespace_pb2.${returnType.name}_to_dict(ret)))
 
 
 PATH_${func.name} = path('${func.name}/', external_${func.name})
@@ -144,6 +144,7 @@ from django.contrib import admin
 from django.urls import path
 from django.http import HttpResponse, HttpRequest
 from .gen.models import default_namespace_pb2
+import json
 
 ${functions}
 
@@ -178,7 +179,7 @@ if __name__ == '__main__':
     main()
 `)
 
-    fs.writeFileSync(".deploy/compute/requirements.txt", "Django==3.0\nprotobuf==3.12.2")
+    fs.writeFileSync(".deploy/compute/requirements.txt", "Django==3.0\n")
     fs.writeFileSync(".deploy/Dockerfile",
 `
 FROM python:3.8-slim-buster
