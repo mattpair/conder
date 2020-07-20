@@ -1,1455 +1,1279 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`should allow enums 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-enum PurchaseCategory {
-	UNCATEGORIZED = 1;
-	GAS = 2;
-	DINING = 3;
-	TRAVEL = 4;
-	GROCERY = 5;
-	ENTERTAINMENT = 6;
-}
-    
-
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "PurchaseCategory" => Object {
-            "children": Object {
-              "EnumMember": Array [
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 22,
-                    "endLineNumber": 2,
-                    "startColNumber": 27,
-                    "startLineNumber": 1,
-                  },
-                  "name": "UNCATEGORIZED",
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "PurchaseCategory" => Object {
+          "children": Object {
+            "EnumMember": Array [
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 22,
+                  "endLineNumber": 2,
+                  "startColNumber": 27,
+                  "startLineNumber": 1,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 12,
-                    "endLineNumber": 3,
-                    "startColNumber": 22,
-                    "startLineNumber": 2,
-                  },
-                  "name": "GAS",
+                "name": "UNCATEGORIZED",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 12,
+                  "endLineNumber": 3,
+                  "startColNumber": 22,
+                  "startLineNumber": 2,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 15,
-                    "endLineNumber": 4,
-                    "startColNumber": 12,
-                    "startLineNumber": 3,
-                  },
-                  "name": "DINING",
+                "name": "GAS",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 15,
+                  "endLineNumber": 4,
+                  "startColNumber": 12,
+                  "startLineNumber": 3,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 15,
-                    "endLineNumber": 5,
-                    "startColNumber": 15,
-                    "startLineNumber": 4,
-                  },
-                  "name": "TRAVEL",
+                "name": "DINING",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 15,
+                  "endLineNumber": 5,
+                  "startColNumber": 15,
+                  "startLineNumber": 4,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 16,
-                    "endLineNumber": 6,
-                    "startColNumber": 15,
-                    "startLineNumber": 5,
-                  },
-                  "name": "GROCERY",
+                "name": "TRAVEL",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 16,
+                  "endLineNumber": 6,
+                  "startColNumber": 15,
+                  "startLineNumber": 5,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 22,
-                    "endLineNumber": 7,
-                    "startColNumber": 16,
-                    "startLineNumber": 6,
-                  },
-                  "name": "ENTERTAINMENT",
+                "name": "GROCERY",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 22,
+                  "endLineNumber": 7,
+                  "startColNumber": 16,
+                  "startLineNumber": 6,
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Enum",
-            "loc": Object {
-              "endColNumber": 27,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "PurchaseCategory",
+                "name": "ENTERTAINMENT",
+              },
+            ],
           },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Enum",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "PurchaseCategory",
         },
-        "name": "default",
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should allow enums separated by whitespace 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-enum PurchaseCategory {
-	UNCATEGORIZED = 1;
-	GAS = 2;
-	DINING = 3;
-	TRAVEL = 4;
-	GROCERY = 5;
-	ENTERTAINMENT = 6;
-}
-    
-
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "PurchaseCategory" => Object {
-            "children": Object {
-              "EnumMember": Array [
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 3,
-                    "startColNumber": 27,
-                    "startLineNumber": 1,
-                  },
-                  "name": "UNCATEGORIZED",
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "PurchaseCategory" => Object {
+          "children": Object {
+            "EnumMember": Array [
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 3,
+                  "startColNumber": 27,
+                  "startLineNumber": 1,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 4,
-                    "startColNumber": 0,
-                    "startLineNumber": 3,
-                  },
-                  "name": "GAS",
+                "name": "UNCATEGORIZED",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 4,
+                  "startColNumber": 0,
+                  "startLineNumber": 3,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 5,
-                    "startColNumber": 0,
-                    "startLineNumber": 4,
-                  },
-                  "name": "DINING",
+                "name": "GAS",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 5,
+                  "startColNumber": 0,
+                  "startLineNumber": 4,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 6,
-                    "startColNumber": 0,
-                    "startLineNumber": 5,
-                  },
-                  "name": "TRAVEL",
+                "name": "DINING",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 6,
+                  "startColNumber": 0,
+                  "startLineNumber": 5,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 7,
-                    "startColNumber": 0,
-                    "startLineNumber": 6,
-                  },
-                  "name": "GROCERY",
+                "name": "TRAVEL",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 7,
+                  "startColNumber": 0,
+                  "startLineNumber": 6,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 8,
-                    "startColNumber": 0,
-                    "startLineNumber": 7,
-                  },
-                  "name": "ENTERTAINMENT",
+                "name": "GROCERY",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 8,
+                  "startColNumber": 0,
+                  "startLineNumber": 7,
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Enum",
-            "loc": Object {
-              "endColNumber": 27,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "PurchaseCategory",
+                "name": "ENTERTAINMENT",
+              },
+            ],
           },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Enum",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "PurchaseCategory",
         },
-        "name": "default",
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should allow multiple enums separated by whitespace 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-enum PurchaseCategory {
-	UNCATEGORIZED = 1;
-	GAS = 2;
-	DINING = 3;
-	TRAVEL = 4;
-	GROCERY = 5;
-	ENTERTAINMENT = 6;
-}
-    
-
-
-enum OtherCategories {
-	A = 1;
-	B = 2;
-	C = 3;
-}
-    
-
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "PurchaseCategory" => Object {
-            "children": Object {
-              "EnumMember": Array [
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 3,
-                    "startColNumber": 27,
-                    "startLineNumber": 1,
-                  },
-                  "name": "UNCATEGORIZED",
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "PurchaseCategory" => Object {
+          "children": Object {
+            "EnumMember": Array [
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 3,
+                  "startColNumber": 27,
+                  "startLineNumber": 1,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 4,
-                    "startColNumber": 0,
-                    "startLineNumber": 3,
-                  },
-                  "name": "GAS",
+                "name": "UNCATEGORIZED",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 4,
+                  "startColNumber": 0,
+                  "startLineNumber": 3,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 5,
-                    "startColNumber": 0,
-                    "startLineNumber": 4,
-                  },
-                  "name": "DINING",
+                "name": "GAS",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 5,
+                  "startColNumber": 0,
+                  "startLineNumber": 4,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 6,
-                    "startColNumber": 0,
-                    "startLineNumber": 5,
-                  },
-                  "name": "TRAVEL",
+                "name": "DINING",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 6,
+                  "startColNumber": 0,
+                  "startLineNumber": 5,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 7,
-                    "startColNumber": 0,
-                    "startLineNumber": 6,
-                  },
-                  "name": "GROCERY",
+                "name": "TRAVEL",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 7,
+                  "startColNumber": 0,
+                  "startLineNumber": 6,
                 },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 8,
-                    "startColNumber": 0,
-                    "startLineNumber": 7,
-                  },
-                  "name": "ENTERTAINMENT",
+                "name": "GROCERY",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 8,
+                  "startColNumber": 0,
+                  "startLineNumber": 7,
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Enum",
-            "loc": Object {
-              "endColNumber": 27,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "PurchaseCategory",
+                "name": "ENTERTAINMENT",
+              },
+            ],
           },
-          "OtherCategories" => Object {
-            "children": Object {
-              "EnumMember": Array [
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 12,
-                    "startColNumber": 26,
-                    "startLineNumber": 10,
-                  },
-                  "name": "A",
-                },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 13,
-                    "startColNumber": 0,
-                    "startLineNumber": 12,
-                  },
-                  "name": "B",
-                },
-                Object {
-                  "kind": "EnumMember",
-                  "loc": Object {
-                    "endColNumber": 0,
-                    "endLineNumber": 14,
-                    "startColNumber": 0,
-                    "startLineNumber": 13,
-                  },
-                  "name": "C",
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Enum",
-            "loc": Object {
-              "endColNumber": 26,
-              "endLineNumber": 10,
-              "startColNumber": 5,
-              "startLineNumber": 8,
-            },
-            "name": "OtherCategories",
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
           },
+          "kind": "Enum",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "PurchaseCategory",
         },
-        "name": "default",
+        "OtherCategories" => Object {
+          "children": Object {
+            "EnumMember": Array [
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 12,
+                  "startColNumber": 26,
+                  "startLineNumber": 10,
+                },
+                "name": "A",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 13,
+                  "startColNumber": 0,
+                  "startLineNumber": 12,
+                },
+                "name": "B",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 14,
+                  "startColNumber": 0,
+                  "startLineNumber": 13,
+                },
+                "name": "C",
+              },
+            ],
+          },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Enum",
+          "loc": Object {
+            "endColNumber": 26,
+            "endLineNumber": 10,
+            "startColNumber": 5,
+            "startLineNumber": 8,
+          },
+          "name": "OtherCategories",
+        },
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should allow new line to end field 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-
-message MyMessage {
-	optional double d = 1;
-	required float f = 2;
-	optional int32 i32 = 3;
-	optional int64 I = 4;
-	optional uint32 u32 = 5;
-	optional uint64 u64 = 6;
-	optional bool b = 7;
-	optional string s = 8;
-	optional bytes bs = 9;
-}
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "MyMessage" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 2,
-                    "startColNumber": 23,
-                    "startLineNumber": 1,
-                  },
-                  "name": "d",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "MyMessage" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 2,
+                  "startColNumber": 23,
+                  "startLineNumber": 1,
+                },
+                "name": "d",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 3,
-                    "startColNumber": 0,
-                    "startLineNumber": 3,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 3,
+                  "startColNumber": 0,
+                  "startLineNumber": 3,
+                },
+                "name": "f",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 4,
-                    "startColNumber": 0,
-                    "startLineNumber": 4,
-                  },
-                  "name": "i32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 4,
+                  "startColNumber": 0,
+                  "startLineNumber": 4,
+                },
+                "name": "i32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 5,
-                    "startColNumber": 0,
-                    "startLineNumber": 5,
-                  },
-                  "name": "I",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 5,
+                  "startColNumber": 0,
+                  "startLineNumber": 5,
+                },
+                "name": "I",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 6,
-                    "startColNumber": 0,
-                    "startLineNumber": 6,
-                  },
-                  "name": "u32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 6,
+                  "startColNumber": 0,
+                  "startLineNumber": 6,
+                },
+                "name": "u32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 7,
-                    "startColNumber": 0,
-                    "startLineNumber": 7,
-                  },
-                  "name": "u64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 7,
+                  "startColNumber": 0,
+                  "startLineNumber": 7,
+                },
+                "name": "u64",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 8,
-                    "startColNumber": 0,
-                    "startLineNumber": 8,
-                  },
-                  "name": "b",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 8,
+                  "startColNumber": 0,
+                  "startLineNumber": 8,
+                },
+                "name": "b",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 9,
-                    "startColNumber": 0,
-                    "startLineNumber": 9,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 9,
+                  "startColNumber": 0,
+                  "startLineNumber": 9,
+                },
+                "name": "s",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 10,
-                    "startColNumber": 0,
-                    "startLineNumber": 10,
-                  },
-                  "name": "bs",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 10,
+                  "startColNumber": 0,
+                  "startLineNumber": 10,
+                },
+                "name": "bs",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 23,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "MyMessage",
+              },
+            ],
           },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "MyMessage",
         },
-        "name": "default",
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should allow one message to reference another 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-
-message m1 {
-	required double d = 1;
-	required float f = 2;
-	required int32 i32 = 3;
-	required int64 I = 4;
-	required uint32 u32 = 5;
-	required uint64 u64 = 6;
-}
-
-
-message m2 {
-	required m1 myMessag = 1;
-}
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "m1" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 2,
-                    "startColNumber": 16,
-                    "startLineNumber": 1,
-                  },
-                  "name": "d",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "m1" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 2,
+                  "startColNumber": 16,
+                  "startLineNumber": 1,
+                },
+                "name": "d",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 3,
-                    "startColNumber": 17,
-                    "startLineNumber": 2,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 3,
+                  "startColNumber": 17,
+                  "startLineNumber": 2,
+                },
+                "name": "f",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 4,
-                    "startColNumber": 16,
-                    "startLineNumber": 3,
-                  },
-                  "name": "i32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 4,
+                  "startColNumber": 16,
+                  "startLineNumber": 3,
+                },
+                "name": "i32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 5,
-                    "startColNumber": 18,
-                    "startLineNumber": 4,
-                  },
-                  "name": "I",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 5,
+                  "startColNumber": 18,
+                  "startLineNumber": 4,
+                },
+                "name": "I",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 6,
-                    "startColNumber": 16,
-                    "startLineNumber": 5,
-                  },
-                  "name": "u32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 6,
+                  "startColNumber": 16,
+                  "startLineNumber": 5,
+                },
+                "name": "u32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 7,
-                    "startColNumber": 19,
-                    "startLineNumber": 6,
-                  },
-                  "name": "u64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 7,
+                  "startColNumber": 19,
+                  "startLineNumber": 6,
+                },
+                "name": "u64",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 16,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "m1",
+              },
+            ],
           },
-          "m2" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 10,
-                    "startColNumber": 15,
-                    "startLineNumber": 9,
-                  },
-                  "name": "myMessag",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 15,
-              "endLineNumber": 9,
-              "startColNumber": 5,
-              "startLineNumber": 8,
-            },
-            "name": "m2",
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
           },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 16,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "m1",
         },
-        "name": "default",
+        "m2" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 10,
+                  "startColNumber": 15,
+                  "startLineNumber": 9,
+                },
+                "name": "myMessag",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+            ],
+          },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 15,
+            "endLineNumber": 9,
+            "startColNumber": 5,
+            "startLineNumber": 8,
+          },
+          "name": "m2",
+        },
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should allow the specification of optional fields 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-
-message MyMessage {
-	optional double d = 1;
-	optional float f = 2;
-	optional int32 i32 = 3;
-	optional int64 I = 4;
-	optional uint32 u32 = 5;
-	optional uint64 u64 = 6;
-	optional bool b = 7;
-	optional string s = 8;
-	optional bytes bs = 9;
-}
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "MyMessage" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 2,
-                    "startColNumber": 23,
-                    "startLineNumber": 1,
-                  },
-                  "name": "d",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "MyMessage" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 2,
+                  "startColNumber": 23,
+                  "startLineNumber": 1,
+                },
+                "name": "d",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 3,
-                    "startColNumber": 26,
-                    "startLineNumber": 2,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 3,
+                  "startColNumber": 26,
+                  "startLineNumber": 2,
+                },
+                "name": "f",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 4,
-                    "startColNumber": 25,
-                    "startLineNumber": 3,
-                  },
-                  "name": "i32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 4,
+                  "startColNumber": 25,
+                  "startLineNumber": 3,
+                },
+                "name": "i32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 5,
-                    "startColNumber": 27,
-                    "startLineNumber": 4,
-                  },
-                  "name": "I",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 5,
+                  "startColNumber": 27,
+                  "startLineNumber": 4,
+                },
+                "name": "I",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 6,
-                    "startColNumber": 25,
-                    "startLineNumber": 5,
-                  },
-                  "name": "u32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 6,
+                  "startColNumber": 25,
+                  "startLineNumber": 5,
+                },
+                "name": "u32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 7,
-                    "startColNumber": 28,
-                    "startLineNumber": 6,
-                  },
-                  "name": "u64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 7,
+                  "startColNumber": 28,
+                  "startLineNumber": 6,
+                },
+                "name": "u64",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 8,
-                    "startColNumber": 28,
-                    "startLineNumber": 7,
-                  },
-                  "name": "b",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 8,
+                  "startColNumber": 28,
+                  "startLineNumber": 7,
+                },
+                "name": "b",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 9,
-                    "startColNumber": 24,
-                    "startLineNumber": 8,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 9,
+                  "startColNumber": 24,
+                  "startLineNumber": 8,
+                },
+                "name": "s",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": false,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 17,
-                    "endLineNumber": 10,
-                    "startColNumber": 26,
-                    "startLineNumber": 9,
-                  },
-                  "name": "bs",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": false,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 10,
+                  "startColNumber": 26,
+                  "startLineNumber": 9,
+                },
+                "name": "bs",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 23,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "MyMessage",
+              },
+            ],
           },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "MyMessage",
         },
-        "name": "default",
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should convert multiple conduit into proto2 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-
-message m1 {
-	required double d = 1;
-	required float f = 2;
-	required int32 i32 = 3;
-	required int64 I = 4;
-	required uint32 u32 = 5;
-	required uint64 u64 = 6;
-}
-
-
-message m2 {
-	required bool b = 1;
-	required string s = 2;
-	required bytes bs = 3;
-}
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "m1" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 2,
-                    "startColNumber": 16,
-                    "startLineNumber": 1,
-                  },
-                  "name": "d",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "m1" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 2,
+                  "startColNumber": 16,
+                  "startLineNumber": 1,
+                },
+                "name": "d",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 3,
-                    "startColNumber": 17,
-                    "startLineNumber": 2,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 3,
+                  "startColNumber": 17,
+                  "startLineNumber": 2,
+                },
+                "name": "f",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 4,
-                    "startColNumber": 16,
-                    "startLineNumber": 3,
-                  },
-                  "name": "i32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 4,
+                  "startColNumber": 16,
+                  "startLineNumber": 3,
+                },
+                "name": "i32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 5,
-                    "startColNumber": 18,
-                    "startLineNumber": 4,
-                  },
-                  "name": "I",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 5,
+                  "startColNumber": 18,
+                  "startLineNumber": 4,
+                },
+                "name": "I",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 6,
-                    "startColNumber": 16,
-                    "startLineNumber": 5,
-                  },
-                  "name": "u32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 6,
+                  "startColNumber": 16,
+                  "startLineNumber": 5,
+                },
+                "name": "u32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 7,
-                    "startColNumber": 19,
-                    "startLineNumber": 6,
-                  },
-                  "name": "u64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 7,
+                  "startColNumber": 19,
+                  "startLineNumber": 6,
+                },
+                "name": "u64",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 16,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "m1",
+              },
+            ],
           },
-          "m2" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 10,
-                    "startColNumber": 15,
-                    "startLineNumber": 9,
-                  },
-                  "name": "b",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 11,
-                    "startColNumber": 15,
-                    "startLineNumber": 10,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 12,
-                    "startColNumber": 17,
-                    "startLineNumber": 11,
-                  },
-                  "name": "bs",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 15,
-              "endLineNumber": 9,
-              "startColNumber": 5,
-              "startLineNumber": 8,
-            },
-            "name": "m2",
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
           },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 16,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "m1",
         },
-        "name": "default",
+        "m2" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 10,
+                  "startColNumber": 15,
+                  "startLineNumber": 9,
+                },
+                "name": "b",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 11,
+                  "startColNumber": 15,
+                  "startLineNumber": 10,
+                },
+                "name": "s",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 12,
+                  "startColNumber": 17,
+                  "startLineNumber": 11,
+                },
+                "name": "bs",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+            ],
+          },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 15,
+            "endLineNumber": 9,
+            "startColNumber": 5,
+            "startLineNumber": 8,
+          },
+          "name": "m2",
+        },
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;
 
 exports[`should convert simple conduit into proto2 1`] = `
-Array [
-  Object {
-    "proto": "
-syntax=\\"proto2\\";
-            
-
-
-message MyMessage {
-	required double d = 1;
-	required float f = 2;
-	required int32 i32 = 3;
-	required int64 I = 4;
-	required uint32 u32 = 5;
-	required uint64 u64 = 6;
-	required bool b = 7;
-	required string s = 8;
-	required bytes bs = 9;
-}
-",
-  },
-  Object {
-    "namespaces": Array [
-      Object {
-        "inScope": Map {
-          "MyMessage" => Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 2,
-                    "startColNumber": 23,
-                    "startLineNumber": 1,
-                  },
-                  "name": "d",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+Object {
+  "namespaces": Array [
+    Object {
+      "inScope": Map {
+        "MyMessage" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 2,
+                  "startColNumber": 23,
+                  "startLineNumber": 1,
+                },
+                "name": "d",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 3,
-                    "startColNumber": 17,
-                    "startLineNumber": 2,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 3,
+                  "startColNumber": 17,
+                  "startLineNumber": 2,
+                },
+                "name": "f",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 4,
-                    "startColNumber": 16,
-                    "startLineNumber": 3,
-                  },
-                  "name": "i32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 4,
+                  "startColNumber": 16,
+                  "startLineNumber": 3,
+                },
+                "name": "i32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 5,
-                    "startColNumber": 18,
-                    "startLineNumber": 4,
-                  },
-                  "name": "I",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 5,
+                  "startColNumber": 18,
+                  "startLineNumber": 4,
+                },
+                "name": "I",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 6,
-                    "startColNumber": 16,
-                    "startLineNumber": 5,
-                  },
-                  "name": "u32",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 6,
+                  "startColNumber": 16,
+                  "startLineNumber": 5,
+                },
+                "name": "u32",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 7,
-                    "startColNumber": 19,
-                    "startLineNumber": 6,
-                  },
-                  "name": "u64",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 7,
+                  "startColNumber": 19,
+                  "startLineNumber": 6,
+                },
+                "name": "u64",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 8,
-                    "startColNumber": 19,
-                    "startLineNumber": 7,
-                  },
-                  "name": "b",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 8,
+                  "startColNumber": 19,
+                  "startLineNumber": 7,
+                },
+                "name": "b",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 9,
-                    "startColNumber": 15,
-                    "startLineNumber": 8,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 9,
+                  "startColNumber": 15,
+                  "startLineNumber": 8,
+                },
+                "name": "s",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-                Object {
-                  "isRequired": true,
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 8,
-                    "endLineNumber": 10,
-                    "startColNumber": 17,
-                    "startLineNumber": 9,
-                  },
-                  "name": "bs",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
+              },
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 10,
+                  "startColNumber": 17,
+                  "startLineNumber": 9,
+                },
+                "name": "bs",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
                   },
                 },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Message",
-            "loc": Object {
-              "endColNumber": 23,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "MyMessage",
+              },
+            ],
           },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Message",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "MyMessage",
         },
-        "name": "default",
       },
-    ],
-    "service": Object {
-      "functions": Array [],
-      "kind": "public",
+      "name": "default",
     },
+  ],
+  "service": Object {
+    "functions": Array [],
+    "kind": "public",
   },
-]
+}
 `;

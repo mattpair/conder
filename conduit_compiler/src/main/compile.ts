@@ -6,7 +6,7 @@ import { FileLocation } from "./util/filesystem";
 import { Enum, EnumMember } from "./entity/basic";
 import { resolveFunctions } from "./resolution/resolveFunction";
 
-export function compileFiles(files: Record<string, () => string>): [{proto: string}, FunctionResolved.Manifest] {
+export function compileFiles(files: Record<string, () => string>): FunctionResolved.Manifest {
     const conduits: Parse.File[] = []
     for (const file in files) {
         if (file.endsWith(".cdt")) {
@@ -14,16 +14,14 @@ export function compileFiles(files: Record<string, () => string>): [{proto: stri
         }
     }
 
-    const r = toNamespace(conduits)
-
-    return [toProto(r),resolveFunctions(r)]
+    return resolveFunctions(toNamespace(conduits))
 } 
 
-function toProto(namespace: TypeResolved.Namespace): {proto: string} {
+export function toProto(namespace: FunctionResolved.Manifest): {proto: string} {
     const enums: Enum[] = []
     const messages: Message[] = []
 
-    namespace.inScope.forEach((val, key) => {
+    namespace.namespaces[0].inScope.forEach((val, key) => {
         switch(val.kind) {
             case "Enum":
                 enums.push(val)

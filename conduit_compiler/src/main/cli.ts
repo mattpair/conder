@@ -3,7 +3,7 @@ import { loadBuildConfig } from './config/load';
 import * as child_process from 'child_process';
 import { generateClients } from './compute/gcp/clients';
 import { containerize } from './compute/gcp/deploy';
-import {compileFiles} from "./compile"
+import {compileFiles, toProto} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
@@ -14,14 +14,13 @@ import { isError } from './error/types';
 // Revisit once productionizing.
 const DEPENDENCY_DIR = '/Users/jerm/ConderSystems/conduit/conduit_compiler/src/main/deps'
 
-// TODO: work across multiple dirs.
 async function compile(conduits: string[]): Promise<FunctionResolved.Manifest>  {
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
-    const [proto, manifest] = compileFiles(toCompile)
+    const  manifest = compileFiles(toCompile)
     fs.mkdirSync(".proto")
        
-    await fs.promises.writeFile(`.proto/default_namespace.proto`, proto.proto)
+    await fs.promises.writeFile(`.proto/default_namespace.proto`, toProto(manifest).proto)
     
     return manifest
 }
