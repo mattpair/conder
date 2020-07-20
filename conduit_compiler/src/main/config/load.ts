@@ -3,17 +3,11 @@ import * as fs from 'fs';
 
 export type ConduitBuildConfig = {
     project: string,
-    dependencies?: {
+    dependents?: {
         [path in string]: {
             language: "python"
         }
     }
-    outputClients?: [
-        {
-            dir: string
-            language: "python"
-        }
-    ]
 }
 
 export function loadBuildConfig(): ConduitBuildConfig | StartupError {

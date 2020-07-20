@@ -1,28 +1,19 @@
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig } from './config/load';
-import * as child_process from 'child_process';
-import { generateClients } from './compute/gcp/clients';
 import { containerize } from './compute/gcp/deploy';
-import {compileFiles, toProto} from "./compile"
+import {compileFiles} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
 import { isError } from './error/types';
+import { generateModels, generateModelsAndClients, generateModelsToDirectory } from './models/generate';
 
-
-// This is just a hack for now. I'm the only one running this.
-// Revisit once productionizing.
-const DEPENDENCY_DIR = '/Users/jerm/ConderSystems/conduit/conduit_compiler/src/main/deps'
 
 async function compile(conduits: string[]): Promise<FunctionResolved.Manifest>  {
     const toCompile: Record<string, () => string> = {}
     conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
-    const  manifest = compileFiles(toCompile)
-    fs.mkdirSync(".proto")
-       
-    await fs.promises.writeFile(`.proto/default_namespace.proto`, toProto(manifest).proto)
-    
-    return manifest
+    return compileFiles(toCompile)
+
 }
 
 type DependencyFactory = {
@@ -30,7 +21,7 @@ type DependencyFactory = {
 }
 
 const commands: Record<string, (dep: DependencyFactory) => void> = {
-    models() {
+    async models() {
         const config = loadBuildConfig()
         if (isError(config)) {
             console.error(config.description)
@@ -48,18 +39,13 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
             console.warn("no files to compile")
             return
         }
-        if (!config.dependencies) {
-            console.warn("Please specify a dependency in your conduit config so I know where to put models.")
+        if (!config.dependents) {
+            console.warn("Please specify a dependent in your conduit config so I know where to put models.")
             return
         }
-        // TODO: deduplicate
-        compile(conduits)
-        .then((manifest) => {
-            for (const dir in config.dependencies) {
-                child_process.execSync(`mkdir -p ${dir}/gen/models`)
-                child_process.execSync(`touch ${dir}/gen/models/__init__.py`)
-                child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${dir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})    
-            }
+        await compile(conduits)
+        .then(async (manifest) => {
+            await generateModels(manifest, config)
             
             console.log("done!")
         })
@@ -97,32 +83,15 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                 console.log("compiling conduit files")
                 compile(conduits)
                 .then(async (manifest) => {
-                    if (!config.dependencies) {
-                        const targetDir = '.python'
-                        child_process.execSync(`mkdir -p ${targetDir}/gen/models`)
-                        child_process.execSync(`touch ${targetDir}/gen/models/__init__.py`)
-                        child_process.execSync(`touch ${targetDir}/gen/__init__.py`)
-                        console.log("generating models from proto")
-                        child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${targetDir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})    
-                        console.log("containerizing")
-                        const image = containerize(manifest, targetDir)
-                        console.log("deploying to medium")
-                        const url = await deployOnToCluster(med, manifest, image, config.project)
-            
-                        if (config.outputClients !== undefined) {
-                            console.log("generating clients")
-                            config.outputClients.forEach(outputRequest => {
-                                child_process.execSync(`mkdir -p ${outputRequest.dir}/gen/models`)
-                                child_process.execSync(`touch ${outputRequest.dir}/gen/models/__init__.py`)
-                                child_process.execSync(`touch ${outputRequest.dir}/gen/__init__.py`)
-                    
-                                child_process.execSync(`${DEPENDENCY_DIR}/proto/bin/protoc -I=.proto/ --python_out=${outputRequest.dir}/gen/models default_namespace.proto 2>&1`, {encoding: "utf-8"})
-                                generateClients(url, manifest, outputRequest.dir)
-                            })
-                        }
-                    }
-                      
-                    
+                    const targetDir = '.python'
+                    await generateModelsToDirectory(manifest, targetDir)
+                    console.log("containerizing")
+                    const image = containerize(manifest, targetDir)
+                    console.log("deploying to medium")
+                    const url = await deployOnToCluster(med, manifest, image, config.project)
+                                
+                    console.log("generating clients")
+                    generateModelsAndClients(manifest, config, url)
                     console.log("done!")
                 })
             })
