@@ -1,12 +1,13 @@
 import { Sequence, StepDefinition } from './util/sequence';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig, ConduitBuildConfig } from './config/load';
-import { writeRustAndContainerCode, containerize, pushContainer } from './compute/gcp/deploy';
+import { containerize, pushContainer } from './compute/gcp/deploy';
 import {compileFiles} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
 import { generateModels, generateAllClients } from './models/generate';
+import { writeRustAndContainerCode } from './compute/gcp/server_writer';
 
 
 export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: FunctionResolved.Manifest}> = {
@@ -86,10 +87,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(generateAllClients)
         .run({})
         
-                                
-                    
-        console.log("done!")
-                
+        console.log("done!")        
     },
 
     async destroy(dep: DependencyFactory) {
