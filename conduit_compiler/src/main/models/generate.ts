@@ -1,3 +1,4 @@
+import { StepDefinition } from './../util/sequence';
 import { Message, Enum } from './../entity/resolved';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
@@ -77,15 +78,27 @@ export async function generateModelsToDirectory(manifest: FunctionResolved.Manif
     fs.writeFileSync(`${dir}/gen/models/default_namespace_pb2.py`, models.join('\n\n'))
 }
 
-export async function generateModels(manifest: FunctionResolved.Manifest, config: ConduitBuildConfig): Promise<void> {
-    for (const dir in config.dependents) {
-        await generateModelsToDirectory(manifest, dir)
+export const generateModels: StepDefinition<{manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig}, {}> = {
+    stepName: "generateModels",
+    func: ({manifest, buildConf}) => {
+        const promises = []
+        for (const dir in buildConf.dependents) {
+            promises.push(generateModelsToDirectory(manifest, dir))
+        }
+        return Promise.all(promises).then(() => ({}))
     }
+
 }
 
-export async function generateModelsAndClients(manifest: FunctionResolved.Manifest, config: ConduitBuildConfig, url: string): Promise<void> {
-    await generateModels(manifest, config)
-    for (const dir in config.dependents) {
-        await generateModelsToDirectory(manifest, dir).then(() => generateClients(url, manifest, dir))   
+
+export const generateAllClients: StepDefinition<{manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
+    stepName: "generating all clients",
+    func: ({manifest, buildConf, endpoint}) => {
+        const p = []
+        for (const dir in buildConf.dependents) {
+            generateClients(endpoint, manifest, dir)
+        }
+        return Promise.resolve({})
     }
+    
 }
