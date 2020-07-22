@@ -81,6 +81,42 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
     })
 }
 
+type StepDefinition<INPUT, ADDED> = Readonly<{
+    stepName: string 
+    func: (arg0: INPUT) => Promise<ADDED>
+}>
+
+class Sequence<INPUT extends {}, OUTPUT extends {}> {
+    readonly def: StepDefinition<INPUT, OUTPUT>
+    
+    constructor(def: StepDefinition<INPUT, OUTPUT>) {
+        this.def = def
+    }
+
+    then<NEXT extends {}>(nextStep: StepDefinition<INPUT & OUTPUT, NEXT>): Sequence<INPUT, INPUT & OUTPUT & NEXT> {
+        return new Sequence<INPUT, INPUT & OUTPUT & NEXT>({
+            stepName: "",
+            func: async (arg0: INPUT) => {
+                try {
+                    return await this.def.func(arg0).then(async (add: OUTPUT) => {
+                        const next = await nextStep.func({...arg0, ...add}).catch(err => {
+                            console.error(`Failure in step: ${this.def.stepName}`, err)
+                            process.exit(1)
+                        })
+                        return {...arg0, ...add, ...next}
+                    })
+                } catch (e) {
+                    console.error(`Failure in step: ${this.def.stepName}`, e)
+                    process.exit(1)
+                }
+                
+            },
+        })
+
+    }
+
+}
+
 export async function containerize(manifest: FunctionResolved.Manifest): Promise<string> {
     const functions = generateFunctions(manifest.service.functions)
     const structs: string[] = []
@@ -146,45 +182,58 @@ export async function containerize(manifest: FunctionResolved.Manifest): Promise
     })
     fs.mkdirSync(".deploy/src", {recursive: true})
     
-    
-    await Promise.all([
-        fs.promises.writeFile(".deploy/Dockerfile", dockerfile),
-        fs.promises.writeFile(".deploy/Cargo.lock", cargolockstr),
-        fs.promises.writeFile(".deploy/Cargo.toml", cargo),
-        fs.promises.writeFile(".deploy/src/main.rs", `
-        use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-        use serde::{Deserialize, Serialize};
-
-        ${structs.join("\n")}
-
-        ${functions.map(f => f.def).join("\n\n")}
-
-        #[actix_rt::main]
-        async fn main() -> std::io::Result<()> {
-            HttpServer::new(|| {
-                App::new()
-                    .route("/", web::get().to(index))
-                    ${functions.map(f => `.route("/${f.path}", web::post().to(${f.func_name}))`).join("\n")}
-            })
-            .bind("0.0.0.0:8080")?
-            .run()
-            .await
+    const initial = new Sequence<{}, {}>({
+        stepName: "writing deployment files",
+        func: () => {
+            return Promise.all([
+                fs.promises.writeFile(".deploy/Dockerfile", dockerfile),
+                fs.promises.writeFile(".deploy/Cargo.lock", cargolockstr),
+                fs.promises.writeFile(".deploy/Cargo.toml", cargo),
+                fs.promises.writeFile(".deploy/src/main.rs", `
+                use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+                use serde::{Deserialize, Serialize};
+        
+                ${structs.join("\n")}
+        
+                ${functions.map(f => f.def).join("\n\n")}
+        
+                #[actix_rt::main]
+                async fn main() -> std::io::Result<()> {
+                    HttpServer::new(|| {
+                        App::new()
+                            .route("/", web::get().to(index))
+                            ${functions.map(f => `.route("/${f.path}", web::post().to(${f.func_name}))`).join("\n")}
+                    })
+                    .bind("0.0.0.0:8080")?
+                    .run()
+                    .await
+                }
+        
+                async fn index() -> impl Responder {
+                    HttpResponse::Ok().body("Hello world!")
+                }
+            `)
+            ]).then(() => ({}))
         }
-
-        async fn index() -> impl Responder {
-            HttpResponse::Ok().body("Hello world!")
-        }
-    `)
-    ]).catch(err => {
-        console.error("Failure writing code:", err)
-        process.exit(1)
     })
+    
+    const out = initial.then<{}>({
+        stepName: "containerize",
+        func: () => {
+            child_process.execSync("docker build -t conder-systems/cloud-run-gen .", {cwd: ".deploy/", stdio: "inherit"})
+            return Promise.resolve({})
+        }
+    }).then<{remoteContainer: string}>({
+        stepName: "push container",
+        func: () => {
+            child_process.execSync("docker tag conder-systems/cloud-run-gen us.gcr.io/conder-systems-281115/hello-world-gen", {cwd: ".deploy/"})
+            child_process.execSync("docker push us.gcr.io/conder-systems-281115/hello-world-gen")
+            return Promise.resolve({remoteContainer: "us.gcr.io/conder-systems-281115/hello-world-gen:latest"})
+        }
+    })
+    
 
-    child_process.execSync("docker build -t conder-systems/cloud-run-gen .", {cwd: ".deploy/", stdio: "inherit"})
-    child_process.execSync("docker tag conder-systems/cloud-run-gen us.gcr.io/conder-systems-281115/hello-world-gen", {cwd: ".deploy/"})
-    child_process.execSync("docker push us.gcr.io/conder-systems-281115/hello-world-gen")
-
-    return "us.gcr.io/conder-systems-281115/hello-world-gen:latest"
+    return (await out.def.func({})).remoteContainer
 }
 
 
