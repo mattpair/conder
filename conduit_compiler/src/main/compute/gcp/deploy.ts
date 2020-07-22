@@ -98,7 +98,13 @@ class Sequence<INPUT extends {}, OUTPUT extends {}> {
             stepName: "",
             func: async (arg0: INPUT) => {
                 try {
+                    if (this.def.stepName !== "") {
+                        console.log(`Running step: ${this.def.stepName}`)
+                    }
                     return await this.def.func(arg0).then(async (add: OUTPUT) => {
+                        if (nextStep.stepName !== "") {
+                            console.log(`Running step: ${nextStep.stepName}`)
+                        }
                         const next = await nextStep.func({...arg0, ...add}).catch(err => {
                             console.error(`Failure in step: ${this.def.stepName}`, err)
                             process.exit(1)
@@ -113,6 +119,10 @@ class Sequence<INPUT extends {}, OUTPUT extends {}> {
             },
         })
 
+    }
+
+    run(i: INPUT): Promise<OUTPUT> {
+        return this.def.func(i)
     }
 
 }
