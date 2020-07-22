@@ -27,13 +27,28 @@ type DependencyFactory = {
 const getConduitFileNames: StepDefinition<{}, {conduits: string[]}> = {
     stepName: "discovering conduit files",
     func: () => {
-        return fs.promises.readdir("./conduit/").then(conduits => {
-            if (conduits.length == 0) {
-                console.warn("no files to compile")
-                return
-            }
-            return {conduits}
-        })
+        
+        function readdirRecursive(currentpath: string): string[] {
+            const conduits: string[] = []
+            const dirents = fs.readdirSync(currentpath, {withFileTypes: true})
+ 
+            dirents.forEach(ent => {
+                if (ent.isDirectory()) {
+                    conduits.push(...readdirRecursive(`${currentpath}/${ent.name}`).map(name => `${ent.name}/${name}`))
+
+                } else if (ent.isFile()) {
+                    conduits.push(ent.name)
+                }               
+            })
+            return conduits
+        }
+        const conduits = readdirRecursive("./conduit/")
+
+        if (conduits.length == 0) {
+            console.warn(`no files to compile`)
+            return
+        }
+        return Promise.resolve({conduits})
     }
 }
 

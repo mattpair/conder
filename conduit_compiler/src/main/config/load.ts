@@ -6,7 +6,7 @@ export type ConduitBuildConfig = {
     project: string,
     dependents?: {
         [path in string]: {
-            language: "python"
+            language: "typescript"
         }
     }
 }
