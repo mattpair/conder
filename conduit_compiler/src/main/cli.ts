@@ -83,10 +83,9 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                 console.log("compiling conduit files")
                 compile(conduits)
                 .then(async (manifest) => {
-                    const targetDir = '.python'
-                    await generateModelsToDirectory(manifest, targetDir)
+        
                     console.log("containerizing")
-                    const image = containerize(manifest, targetDir)
+                    const image = containerize(manifest)
                     console.log("deploying to medium")
                     const url = await deployOnToCluster(med, manifest, image, config.project)
                                 
