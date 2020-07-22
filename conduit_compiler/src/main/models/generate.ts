@@ -65,7 +65,7 @@ def ${ent.name}_to_dict(inst):
 
 export async function generateModelsToDirectory(manifest: FunctionResolved.Manifest, dir: string): Promise<void> {
     const models: string[] = []
-    manifest.namespaces[0].inScope.forEach(v => {
+    manifest.namespace.inScope.forEach(v => {
         if (v.kind === "Function") {
             return
         }

@@ -36,7 +36,7 @@ export namespace FunctionResolved {
     }
     
     export type Manifest = {
-        namespaces: Namespace[],
+        namespace: Namespace,
         service: Service
     }
 

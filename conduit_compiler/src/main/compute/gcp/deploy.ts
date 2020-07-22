@@ -84,7 +84,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
 export async function containerize(manifest: FunctionResolved.Manifest): Promise<string> {
     const functions = generateFunctions(manifest.service.functions)
     const structs: string[] = []
-    manifest.namespaces[0].inScope.forEach(val => {
+    manifest.namespace.inScope.forEach(val => {
         switch (val.kind) {
             case "Function":
                 break;

@@ -6,85 +6,83 @@ exports[`attempted import 1`] = `"Failed to parse file entirely: {\\"dir\\":\\"\
 
 exports[`dependency multi file 1`] = `
 Object {
-  "namespaces": Array [
-    Object {
-      "inScope": Map {
-        "m1" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 2,
-                  "startColNumber": 16,
-                  "startLineNumber": 1,
-                },
-                "name": "d",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
+  "namespace": Object {
+    "inScope": Map {
+      "m1" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 2,
+                "startColNumber": 16,
+                "startLineNumber": 1,
+              },
+              "name": "d",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
                 },
               },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m1",
+            },
+          ],
         },
-        "m2" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 16,
-                  "startLineNumber": 2,
-                },
-                "name": "m",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_b.cdt",
-            "name": "conduit_b.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m2",
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_a.cdt",
+          "name": "conduit_a.cdt",
         },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "m1",
       },
-      "name": "default",
+      "m2" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 3,
+                "startColNumber": 16,
+                "startLineNumber": 2,
+              },
+              "name": "m",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_b.cdt",
+          "name": "conduit_b.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 2,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "m2",
+      },
     },
-  ],
+    "name": "default",
+  },
   "service": Object {
     "functions": Array [],
     "kind": "public",
@@ -94,174 +92,172 @@ Object {
 
 exports[`dependency subdirs 1`] = `
 Object {
-  "namespaces": Array [
-    Object {
-      "inScope": Map {
-        "m1" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 2,
-                  "startColNumber": 16,
-                  "startLineNumber": 1,
-                },
-                "name": "d",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
+  "namespace": Object {
+    "inScope": Map {
+      "m1" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 2,
+                "startColNumber": 16,
+                "startLineNumber": 1,
+              },
+              "name": "d",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
                 },
               },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m1",
+            },
+          ],
         },
-        "m2" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 16,
-                  "startLineNumber": 2,
-                },
-                "name": "m",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "sub/",
-            "fullname": "sub/conduit_b.cdt",
-            "name": "conduit_b.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m2",
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_a.cdt",
+          "name": "conduit_a.cdt",
         },
-        "D" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 15,
-                  "startLineNumber": 2,
-                },
-                "name": "my_m2",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_d.cdt",
-            "name": "conduit_d.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 15,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "D",
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
         },
-        "m3" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 4,
-                  "startColNumber": 16,
-                  "startLineNumber": 3,
-                },
-                "name": "m1",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 5,
-                  "startColNumber": 0,
-                  "startLineNumber": 5,
-                },
-                "name": "m2",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "sub/",
-            "fullname": "sub/conduit_c.cdt",
-            "name": "conduit_c.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 3,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m3",
-        },
+        "name": "m1",
       },
-      "name": "default",
+      "m2" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 3,
+                "startColNumber": 16,
+                "startLineNumber": 2,
+              },
+              "name": "m",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "sub/",
+          "fullname": "sub/conduit_b.cdt",
+          "name": "conduit_b.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 2,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "m2",
+      },
+      "D" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 3,
+                "startColNumber": 15,
+                "startLineNumber": 2,
+              },
+              "name": "my_m2",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_d.cdt",
+          "name": "conduit_d.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 15,
+          "endLineNumber": 2,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "D",
+      },
+      "m3" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 4,
+                "startColNumber": 16,
+                "startLineNumber": 3,
+              },
+              "name": "m1",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 5,
+                "startColNumber": 0,
+                "startLineNumber": 5,
+              },
+              "name": "m2",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "sub/",
+          "fullname": "sub/conduit_c.cdt",
+          "name": "conduit_c.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 3,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "m3",
+      },
     },
-  ],
+    "name": "default",
+  },
   "service": Object {
     "functions": Array [],
     "kind": "public",
@@ -291,91 +287,89 @@ exports[`function with void returns type 1`] = `"Returning [a] which is of type 
 
 exports[`simple echo function 1`] = `
 Object {
-  "namespaces": Array [
-    Object {
-      "inScope": Map {
-        "Shout" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 19,
-                  "startLineNumber": 2,
-                },
-                "name": "m",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 19,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "Shout",
-        },
-        "echo" => Object {
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Function",
-          "loc": Object {
-            "endColNumber": 17,
-            "endLineNumber": 6,
-            "startColNumber": 5,
-            "startLineNumber": 4,
-          },
-          "name": "echo",
-          "part": Object {
-            "FunctionBody": Object {
-              "children": Object {
-                "Statement": Array [
-                  Object {
-                    "differentiate": [Function],
-                    "kind": "Statement",
-                  },
-                ],
-              },
-              "kind": "FunctionBody",
+  "namespace": Object {
+    "inScope": Map {
+      "Shout" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
               "loc": Object {
-                "endColNumber": 35,
-                "endLineNumber": 6,
-                "startColNumber": 33,
-                "startLineNumber": 6,
+                "endColNumber": 8,
+                "endLineNumber": 3,
+                "startColNumber": 19,
+                "startLineNumber": 2,
+              },
+              "name": "m",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
               },
             },
-            "Parameter": Object {
-              "differentiate": [Function],
-              "kind": "Parameter",
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_a.cdt",
+          "name": "conduit_a.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 19,
+          "endLineNumber": 2,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "Shout",
+      },
+      "echo" => Object {
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_a.cdt",
+          "name": "conduit_a.cdt",
+        },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 17,
+          "endLineNumber": 6,
+          "startColNumber": 5,
+          "startLineNumber": 4,
+        },
+        "name": "echo",
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
             },
-            "ReturnTypeSpec": Object {
-              "differentiate": [Function],
-              "kind": "ReturnTypeSpec",
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 35,
+              "endLineNumber": 6,
+              "startColNumber": 33,
+              "startLineNumber": 6,
             },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
           },
         },
       },
-      "name": "default",
     },
-  ],
+    "name": "default",
+  },
   "service": Object {
     "functions": Array [
       Object {
@@ -428,121 +422,119 @@ Object {
 
 exports[`simple multi file 1`] = `
 Object {
-  "namespaces": Array [
-    Object {
-      "inScope": Map {
-        "m1" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 2,
-                  "startColNumber": 16,
-                  "startLineNumber": 1,
-                },
-                "name": "d",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
+  "namespace": Object {
+    "inScope": Map {
+      "m1" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 2,
+                "startColNumber": 16,
+                "startLineNumber": 1,
+              },
+              "name": "d",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
                 },
               },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m1",
+            },
+          ],
         },
-        "m2" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 16,
-                  "startLineNumber": 2,
-                },
-                "name": "d",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_b.cdt",
-            "name": "conduit_b.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m2",
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_a.cdt",
+          "name": "conduit_a.cdt",
         },
-        "m3" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 6,
-                  "startColNumber": 16,
-                  "startLineNumber": 5,
-                },
-                "name": "m",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_b.cdt",
-            "name": "conduit_b.cdt",
-          },
-          "kind": "Message",
-          "loc": Object {
-            "endColNumber": 16,
-            "endLineNumber": 5,
-            "startColNumber": 5,
-            "startLineNumber": 4,
-          },
-          "name": "m3",
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
         },
+        "name": "m1",
       },
-      "name": "default",
+      "m2" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 3,
+                "startColNumber": 16,
+                "startLineNumber": 2,
+              },
+              "name": "d",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_b.cdt",
+          "name": "conduit_b.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 2,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "m2",
+      },
+      "m3" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "isRequired": true,
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 8,
+                "endLineNumber": 6,
+                "startColNumber": 16,
+                "startLineNumber": 5,
+              },
+              "name": "m",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "conduit_b.cdt",
+          "name": "conduit_b.cdt",
+        },
+        "kind": "Message",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 5,
+          "startColNumber": 5,
+          "startLineNumber": 4,
+        },
+        "name": "m3",
+      },
     },
-  ],
+    "name": "default",
+  },
   "service": Object {
     "functions": Array [],
     "kind": "public",

@@ -128,7 +128,7 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionRes
     })
 
     return {
-        namespaces: [{name: "default", inScope}],
+        namespace: {name: "default", inScope},
         service: {
             functions,
             kind: "public"
