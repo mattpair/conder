@@ -1,6 +1,7 @@
+import { Sequence } from './util/sequence';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig } from './config/load';
-import { containerize } from './compute/gcp/deploy';
+import { writeRustAndContainerCode, containerize, pushContainer } from './compute/gcp/deploy';
 import {compileFiles} from "./compile"
 import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
@@ -85,9 +86,9 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                 .then(async (manifest) => {
         
                     console.log("containerizing")
-                    const image = await containerize(manifest)
+                    const out = await new Sequence(writeRustAndContainerCode).then(containerize).then(pushContainer).run({manifest})
                     console.log("deploying to medium")
-                    const url = await deployOnToCluster(med, manifest, image, config.project)
+                    const url = await deployOnToCluster(med, manifest, out.remoteContainer, config.project)
                                 
                     console.log("generating clients")
                     generateModelsAndClients(manifest, config, url)
