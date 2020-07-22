@@ -23,10 +23,19 @@ function generateParameterList(p: FunctionResolved.Parameter): string {
 
 function generateInternalFunction(f: FunctionResolved.Function): string {
     const ret = f.part.ReturnTypeSpec.differentiate()
+    let returnTypeSpec = ''
+    let returnStatement= ''
+    if (ret.kind === "VoidReturnType") {
+        returnTypeSpec = ' -> ()'
+        returnStatement = ''
+    } else {
+        returnTypeSpec = ` -> ${ret.name}`
+        returnStatement = `return ${f.part.FunctionBody.children.Statement[0].differentiate().val}`
+    }
 
     return `
-    fn internal_${f.name}(${generateParameterList(f.part.Parameter)}) -> ${ret.kind === "VoidReturnType" ? "()" : ret.name} {
-        return ${f.part.FunctionBody.children.Statement[0].differentiate().val}
+    fn internal_${f.name}(${generateParameterList(f.part.Parameter)}) ${returnTypeSpec} {
+        ${returnStatement}
     }
     `
 }
@@ -47,22 +56,23 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
         }
 
         const returnType = func.part.ReturnTypeSpec.differentiate()
-        let returnString = 'HttpResponse::Ok()'
+        let externalFuncBody = ''
 
         switch (returnType.kind) {
             case "VoidReturnType":
-                throw Error("void return types aren't actually supported")
+                externalFuncBody = `internal_${func.name}(msg);\nHttpResponse::Ok()`
+                break;
             case "Enum":
                 throw Error("enum return types aren't actually supported")
             case "Message":
-                returnString = `HttpResponse::Ok().json(out)`
+                externalFuncBody = `let out = internal_${func.name}(msg);\nHttpResponse::Ok().json(out)`
+                break;
         }
         
         const external = `
         async fn external_${func.name}(${paramStr}) -> impl Responder {
             let msg = input.into_inner();
-            let out = internal_${func.name}(msg);
-            ${returnString}
+            ${externalFuncBody}
         }
                 
         `
