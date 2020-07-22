@@ -85,7 +85,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
                 .then(async (manifest) => {
         
                     console.log("containerizing")
-                    const image = containerize(manifest)
+                    const image = await containerize(manifest)
                     console.log("deploying to medium")
                     const url = await deployOnToCluster(med, manifest, image, config.project)
                                 
