@@ -139,7 +139,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                                         field_type_str = 'u8'
                                         break;
                                 }
-                                return `${field.name}: ${field_type_str}`
+                                return `${field.name}: ${field.isRequired ? field_type_str : `Option<${field_type_str}>`}`
                             }).join(",\n")}
                         }
                     `)

@@ -99,6 +99,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(containerize)
         .then(pushContainer)
         .then(deployOnToCluster)
+        .then(generateModels)
         .then(generateAllClients)
         .run({})
         

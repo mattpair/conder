@@ -24,6 +24,8 @@ function modelFor(ent: Message | Enum): string {
                 export type ${ent.name} = {
                     ${ent.children.Field.map(f => {
                         const type = f.part.FieldType.differentiate()
+
+                        const tailer = f.isRequired ? "" : "| null"
                         switch (type.kind) {
                             case "Primitive":
                                 let primstring = ''
@@ -48,10 +50,10 @@ function modelFor(ent: Message | Enum): string {
                                     default: assertNever(type.val)
                                 }
 
-                                return `${f.name}: ${primstring}`
+                                return `${f.name}: ${primstring} ${tailer}`
                             case "Enum":
                             case "Message":
-                                return `${f.name}: ${type.name}`
+                                return `${f.name}: ${type.name} ${tailer}`
 
                             default: assertNever(type)
                         }
@@ -71,24 +73,23 @@ export async function generateModelsToDirectory(manifest: FunctionResolved.Manif
     })
 
     child_process.execSync(`mkdir -p ${dir}`)
-    
     fs.writeFileSync(`${dir}/models.ts`, models.join('\n\n'))
 }
 
-export const generateModels: StepDefinition<{manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig}, {}> = {
+export const generateModels: StepDefinition<{manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
     stepName: "generateModels",
     func: ({manifest, buildConf}) => {
         const promises = []
         for (const dir in buildConf.dependents) {
             promises.push(generateModelsToDirectory(manifest, dir))
         }
-        return Promise.all(promises).then(() => ({}))
+        return Promise.all(promises).then(() => ({modelsGenerated: true}))
     }
 
 }
 
 
-export const generateAllClients: StepDefinition<{manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
+export const generateAllClients: StepDefinition<{modelsGenerated: true, manifest: FunctionResolved.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
     stepName: "generating all clients",
     func: ({manifest, buildConf, endpoint}) => {
         const p = []
