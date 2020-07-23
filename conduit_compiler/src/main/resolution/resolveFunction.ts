@@ -1,5 +1,5 @@
 import { Parse } from '../parse';
-import { TypeResolved, FunctionResolved, Message, Function, Enum } from "../entity/resolved";
+import { TypeResolved, FunctionResolved, Message, Function, Enum, EntityMap } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { VoidReturn } from '../entity/basic';
 
@@ -38,13 +38,11 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             
             const type: Parse.CustomTypeEntity = param.part.UnaryParameterType.differentiate()
             
-            const parameterType = namespace.inScope.get(type.type)
+            const parameterType = namespace.inScope.getEntityOfType(type.type, "Message")
             
             if (parameterType === undefined ) {
                 throw new Error(`Invalid parameter type ${parameterType}`)
-            } else if (parameterType.kind === "Function" || parameterType.kind === "Enum") {
-                throw new Error(`Invalid parameter type ${parameterType.kind}`)
-            }
+            } 
             
             return {
                 kind: "Parameter",
@@ -116,21 +114,21 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
 export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionResolved.Manifest {
 
     const functions: FunctionResolved.Function[] = []
-    const inScope: Map<string, Message | Enum | FunctionResolved.Function> = new Map()
+    const entityMapInternal: Map<string, Message | Enum | FunctionResolved.Function> = new Map()
     
     
     namespace.inScope.forEach(val => {
         if (val.kind === "Function") {
             const func = resolveFunction(namespace, val)
             functions.push(func)
-            inScope.set(val.name, func)
+            entityMapInternal.set(val.name, func)
         } else {
-            inScope.set(val.name, val)
+            entityMapInternal.set(val.name, val)
         }
     })
 
     return {
-        namespace: {name: "default", inScope},
+        namespace: {name: "default", inScope: new EntityMap(entityMapInternal)},
         service: {
             functions,
             kind: "public"

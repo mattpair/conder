@@ -1,7 +1,7 @@
 
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { Message, Enum, TypeResolved, FieldType, Field, ResolvedType} from '../entity/resolved';
+import { Message, TypeResolved, Field, ResolvedType, EntityMap} from '../entity/resolved';
 import { assertNever } from '../util/classifying';
 import  * as basic from '../entity/basic';
 
@@ -123,6 +123,6 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         resolveEntity(val)
     })
 
-    return {name: "default", inScope: secondPassScope}
+    return {name: "default", inScope: new EntityMap(secondPassScope)}
 
 }
