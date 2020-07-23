@@ -5,12 +5,12 @@ import { VoidReturn } from '../entity/basic';
 
 
 
-function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): Message | Enum | VoidReturn {
+function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): Message | VoidReturn {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
             const t = namespace.inScope.get(ent.type)
-            if (t === undefined || t.kind === "Function" ) {
+            if (t === undefined || t.kind === "Function" || t.kind === "Enum" ) {
                 throw new Error(`Invalid return type ${t}`)
             }
             return t
@@ -40,8 +40,10 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             
             const parameterType = namespace.inScope.get(type.type)
             
-            if (parameterType === undefined || parameterType.kind === "Function" ) {
-                throw new Error(`Invalid return type ${parameterType}`)
+            if (parameterType === undefined ) {
+                throw new Error(`Invalid parameter type ${parameterType}`)
+            } else if (parameterType.kind === "Function" || parameterType.kind === "Enum") {
+                throw new Error(`Invalid parameter type ${parameterType.kind}`)
             }
             
             return {
@@ -80,7 +82,6 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
         }
 
         switch (returnType.kind) {
-            case "Enum":
             case "Message":
                 if (returnType.name !== paramInstance.part.UnaryParameterType.differentiate().name) {
                     throw new Error(`Expected a ${returnType.name} but returned a ${paramInstance.part.UnaryParameterType.differentiate().name}`)
@@ -89,6 +90,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
                 
             case "VoidReturnType":
                 throw new Error(`Returning [${name}] which is of type ${paramInstance.part.UnaryParameterType.differentiate().name} but expected void return`)
+            default: assertNever(returnType)
         }
     } else {
         if (returnType.kind !== "VoidReturnType") {

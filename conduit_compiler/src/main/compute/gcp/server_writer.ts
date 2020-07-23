@@ -13,10 +13,10 @@ function generateParameterList(p: FunctionResolved.Parameter): string {
     const type = param.part.UnaryParameterType.differentiate()
 
     switch(type.kind) {
-        case "Enum":
-            throw new Error(`Enum parameter types aren't actually supported`)
         case "Message":
             return `${param.name}: ${type.name}`
+
+        default: assertNever(type.kind)
     }
     
 }
@@ -62,11 +62,11 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
             case "VoidReturnType":
                 externalFuncBody = `internal_${func.name}(msg);\nHttpResponse::Ok()`
                 break;
-            case "Enum":
-                throw Error("enum return types aren't actually supported")
             case "Message":
                 externalFuncBody = `let out = internal_${func.name}(msg);\nHttpResponse::Ok().json(out)`
                 break;
+
+            default: assertNever(returnType)
         }
         
         const external = `

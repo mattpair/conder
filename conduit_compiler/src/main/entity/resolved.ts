@@ -23,12 +23,12 @@ export namespace TypeResolved {
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message | Enum> 
+    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message > 
     export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
     type ReturnStatement = basic.BaseReturnStatement
     type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>
-    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | Enum | basic.VoidReturn>, Parameter> & {readonly file: FileLocation}
+    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | basic.VoidReturn>, Parameter> & {readonly file: FileLocation}
 
     export type Namespace = {
         readonly name: "default"

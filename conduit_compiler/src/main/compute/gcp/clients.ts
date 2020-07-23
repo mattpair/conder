@@ -1,5 +1,6 @@
 import { FunctionResolved, Message } from '../../entity/resolved';
 import * as fs from 'fs'
+import { assertNever } from '../../util/classifying';
 
 export const a: string = `${12}`
 
@@ -26,10 +27,10 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
                     returnType = `: Promise<models.${ret.name}>`
                     followOn = '.then( data=> data.json())'
                     break;
-                case "Enum":
-                    throw Error("dont support enum")
                 case "VoidReturnType":
                     break;
+
+                default: assertNever(ret)
             }
     
             return `
