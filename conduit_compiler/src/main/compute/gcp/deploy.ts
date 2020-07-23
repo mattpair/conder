@@ -1,21 +1,24 @@
 import * as child_process from 'child_process';
 import { StepDefinition } from '../../util/sequence';
+import { ConduitBuildConfig } from 'config/load';
 
 
-export const containerize: StepDefinition<{codeWritten: true}, {containerized: true}> = {
+export const containerize: StepDefinition<{codeWritten: true, buildConf: ConduitBuildConfig}, {localContainers: {main: string}}> = {
     stepName: "containerize",
-    func: () => {
-        child_process.execSync("docker build -t conder-systems/cloud-run-gen .", {cwd: ".deploy/", stdio: "inherit"})
-        return Promise.resolve({containerized: true})
+    func: ({buildConf}) => {
+        const main = `conder-systems/conduit/${buildConf.project}-main`
+        child_process.execSync(`docker build -t ${main} .`, {cwd: ".deploy/", stdio: "inherit"})
+        return Promise.resolve({localContainers: {main}})
     }
 }  
 
-export const pushContainer: StepDefinition<{containerized: true}, {remoteContainer: string}> = {
+export const pushContainer: StepDefinition<{localContainers: {main: string}, buildConf: ConduitBuildConfig}, {remoteContainers: {main: string}}> = {
     stepName: "push container",
-    func: () => {
-        child_process.execSync("docker tag conder-systems/cloud-run-gen us.gcr.io/conder-systems-281115/hello-world-gen", {cwd: ".deploy/"})
-        child_process.execSync("docker push us.gcr.io/conder-systems-281115/hello-world-gen")
-        return Promise.resolve({remoteContainer: "us.gcr.io/conder-systems-281115/hello-world-gen:latest"})
+    func: ({localContainers, buildConf}) => {
+        const main = `us.gcr.io/conder-systems-281115/conduit/${buildConf.project}/main`
+        child_process.execSync(`docker tag ${localContainers.main} ${main}`, {cwd: ".deploy/"})
+        child_process.execSync(`docker push ${main}`)
+        return Promise.resolve({remoteContainers: {main}})
     }
 }
 

@@ -124,10 +124,10 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployOnToCluster: StepDefinition<
-    {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainer: string, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainers: {main: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
-        func: ({mediumState, manifest, remoteContainer, buildConf}) => {
+        func: ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
             const serviceName = `${manifest.service.kind}-${namespace}`
@@ -172,7 +172,7 @@ export const deployOnToCluster: StepDefinition<
                         },
                         containers: [{
                             name: `${serviceName}-pod`,
-                            image: remoteContainer,
+                            image: remoteContainers.main,
                             ports: [{containerPort: 8080}],
                             startupProbe: {
                                 httpGet: {
