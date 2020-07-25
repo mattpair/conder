@@ -9,7 +9,7 @@ function protoCompileTest(description: string, file: string) {
 
 protoCompileTest("should convert simple conduit into proto2",
 `
-    message MyMessage {
+    struct Mystruct {
         double d,
         float f,
         int32 i32,
@@ -23,7 +23,7 @@ protoCompileTest("should convert simple conduit into proto2",
 )
 
 protoCompileTest("should convert multiple conduit into proto2", `
-    message m1 {
+    struct m1 {
         double d,
         float f,
         int32 i32,
@@ -31,15 +31,15 @@ protoCompileTest("should convert multiple conduit into proto2", `
         uint32 u32,
         uint64 u64,
     }
-    message m2{
+    struct m2{
         bool b,
         string s,
         bytes bs,
     }
     `)
 
-protoCompileTest("should allow one message to reference another", `
-    message m1 {
+protoCompileTest("should allow one struct to reference another", `
+    struct m1 {
         double d,
         float f,
         int32 i32,
@@ -47,13 +47,13 @@ protoCompileTest("should allow one message to reference another", `
         uint32 u32,
         uint64 u64,
     }
-    message m2{
+    struct m2{
         m1 myMessag,
     }
     `)
 
 protoCompileTest("should allow the specification of optional fields", `
-    message MyMessage {
+    struct Mystruct {
         optional double d,
         optional float f,
         optional int32 i32,
@@ -67,7 +67,7 @@ protoCompileTest("should allow the specification of optional fields", `
     `)
 
 protoCompileTest("should allow new line to end field", `
-    message MyMessage {
+    struct Mystruct {
         optional double d
         float f
         optional int32 i32

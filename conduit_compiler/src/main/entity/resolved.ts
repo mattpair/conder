@@ -3,13 +3,13 @@ import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
 
 // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
-export type ResolvedType = Message | Enum | basic.PrimitiveEntity
+export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
 export type FieldType = basic.BaseFieldType<() => ResolvedType>
 
     
 export type Field = basic.BaseField<FieldType>
 
-export type Message = basic.BaseMsg<Field> & {readonly file: FileLocation}
+export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
 export type Enum = basic.Enum & {readonly file: FileLocation}
 export type Function = (Parse.Function & {readonly file: FileLocation})
 
@@ -46,7 +46,7 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
 }
 
 export namespace TypeResolved {
-    export type TopLevelEntities = Message | Enum | Function
+    export type TopLevelEntities = Struct | Enum | Function
     export type Namespace = {
         readonly name: "default"
         readonly inScope: EntityMap<TopLevelEntities>
@@ -55,16 +55,16 @@ export namespace TypeResolved {
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Message > 
+    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Struct > 
     export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
     type ReturnStatement = basic.BaseReturnStatement
     type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>
-    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Message | basic.VoidReturn>, Parameter> & {readonly file: FileLocation}
+    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Struct | basic.VoidReturn>, Parameter> & {readonly file: FileLocation}
 
     export type Namespace = {
         readonly name: "default"
-        readonly inScope: EntityMap<Message | Enum | Function>
+        readonly inScope: EntityMap<Struct | Enum | Function>
     }
     
     export type Manifest = {

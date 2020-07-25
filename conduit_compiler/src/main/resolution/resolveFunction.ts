@@ -1,11 +1,11 @@
 import { Parse } from '../parse';
-import { TypeResolved, FunctionResolved, Message, Function, Enum, EntityMap } from "../entity/resolved";
+import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { VoidReturn } from '../entity/basic';
 
 
 
-function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): Message | VoidReturn {
+function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): Struct | VoidReturn {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
@@ -38,7 +38,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             
             const type: Parse.CustomTypeEntity = param.part.UnaryParameterType.differentiate()
             
-            const parameterType = namespace.inScope.getEntityOfType(type.type, "Message")
+            const parameterType = namespace.inScope.getEntityOfType(type.type, "Struct")
             
             if (parameterType === undefined ) {
                 throw new Error(`Invalid parameter type ${parameterType}`)
@@ -80,7 +80,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
         }
 
         switch (returnType.kind) {
-            case "Message":
+            case "Struct":
                 if (returnType.name !== paramInstance.part.UnaryParameterType.differentiate().name) {
                     throw new Error(`Expected a ${returnType.name} but returned a ${paramInstance.part.UnaryParameterType.differentiate().name}`)
                 }
@@ -114,7 +114,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
 export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionResolved.Manifest {
 
     const functions: FunctionResolved.Function[] = []
-    const entityMapInternal: Map<string, Message | Enum | FunctionResolved.Function> = new Map()
+    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function> = new Map()
     
     
     namespace.inScope.forEach(val => {

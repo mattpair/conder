@@ -13,7 +13,7 @@ function generateParameterList(p: FunctionResolved.Parameter): string {
     const type = param.part.UnaryParameterType.differentiate()
 
     switch(type.kind) {
-        case "Message":
+        case "Struct":
             return `${param.name}: ${type.name}`
 
         default: assertNever(type.kind)
@@ -62,7 +62,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
             case "VoidReturnType":
                 externalFuncBody = `internal_${func.name}(msg);\nHttpResponse::Ok()`
                 break;
-            case "Message":
+            case "Struct":
                 externalFuncBody = `let out = internal_${func.name}(msg);\nHttpResponse::Ok().json(out)`
                 break;
 
@@ -90,7 +90,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             switch (val.kind) {
                 case "Function":
                     break;
-                case "Message":
+                case "Struct":
                     structs.push(`
                         #[derive(Serialize, Deserialize)]
                         struct ${val.name} {
@@ -131,7 +131,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                                             default: assertNever(field_type.val)
                                         }
                                         break;
-                                    case "Message":
+                                    case "Struct":
                                         field_type_str = field_type.name
                                         break;
 

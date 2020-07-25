@@ -1,4 +1,4 @@
-import { FunctionResolved, Message } from '../../entity/resolved';
+import { FunctionResolved, Struct } from '../../entity/resolved';
 import * as fs from 'fs'
 import { assertNever } from '../../util/classifying';
 
@@ -17,13 +17,13 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
 
         ${manifest.service.functions.map(fn => {
             const param = fn.part.Parameter.differentiate() as FunctionResolved.UnaryParameter
-            const type = param.part.UnaryParameterType.differentiate() as Message
+            const type = param.part.UnaryParameterType.differentiate() as Struct
             const ret = fn.part.ReturnTypeSpec.differentiate()
 
             let returnType = ''
             let followOn = ''
             switch (ret.kind) {
-                case "Message":
+                case "Struct":
                     returnType = `: Promise<models.${ret.name}>`
                     followOn = '.then( data=> data.json())'
                     break;

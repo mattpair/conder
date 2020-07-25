@@ -25,17 +25,17 @@ function testFailsWhen(description: string, files: Record<string, string>) {
 
 protoCompileTest("simple multi file", {
     "conduit_a.cdt": `
-    message m1 {
+    struct m1 {
         double d
     }
     `,
 
     "conduit_b.cdt": `
 
-    message m2 {
+    struct m2 {
         double d
     }
-    message m3 {
+    struct m3 {
         m2 m
     }
     `
@@ -43,14 +43,14 @@ protoCompileTest("simple multi file", {
 
 protoCompileTest("dependency multi file", {
     "conduit_a.cdt": `
-    message m1 {
+    struct m1 {
         double d
     }
     `,
 
     "conduit_b.cdt": `
 
-    message m2 {
+    struct m2 {
         m1 m
     }
     `
@@ -58,7 +58,7 @@ protoCompileTest("dependency multi file", {
 
 testFailsWhen("Self referencing type", {
     "conduit_a.cdt": `
-    message m1 {
+    struct m1 {
         m1 d
     }
     `,
@@ -67,21 +67,21 @@ testFailsWhen("Self referencing type", {
 
 protoCompileTest("dependency subdirs", {
     "conduit_a.cdt": `
-    message m1 {
+    struct m1 {
         double d
     }
     `,
 
     "conduit_d.cdt": `
 
-    message D {
+    struct D {
         m2 my_m2
     }
     `,
 
     "sub/conduit_b.cdt": `
 
-    message m2 {
+    struct m2 {
         m1 m
     }
     `,
@@ -89,7 +89,7 @@ protoCompileTest("dependency subdirs", {
     "sub/conduit_c.cdt": `
     
 
-    message m3 {
+    struct m3 {
         m1 m1
         m2 m2
     }
@@ -109,7 +109,7 @@ testFailsWhen("attempted import", {
     "conduit_a.cdt": `
     import 'conduit_b.cdt' as c
     
-    message m2 {
+    struct m2 {
         c.m1 m
     }
 
@@ -127,7 +127,7 @@ testFailsWhen("function with invalid return type", {
 testFailsWhen("function with void returns type", {
     "conduit_a.cdt": `
 
-    message SomeType {
+    struct SomeType {
         string m
     }
 
@@ -140,7 +140,7 @@ testFailsWhen("function with void returns type", {
 testFailsWhen("function with type return returns none", {
     "conduit_a.cdt": `
 
-    message SomeType {
+    struct SomeType {
         string m
     }
 
@@ -152,7 +152,7 @@ testFailsWhen("function with type return returns none", {
 protoCompileTest("simple echo function", {
     "conduit_a.cdt": `
 
-    message Shout {
+    struct Shout {
         string m
     }
 

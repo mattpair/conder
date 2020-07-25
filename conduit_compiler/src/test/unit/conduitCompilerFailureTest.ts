@@ -6,14 +6,14 @@ function testFailsWhen(description: string, file: string) {
     })
 }
 
-testFailsWhen("dependent message is not in scope ", `
-message m1 {
+testFailsWhen("dependent struct is not in scope ", `
+struct m1 {
     M2 m2
 }
 `)
 
 testFailsWhen("naming an entity after a keyword ", `
-message function {
+struct function {
     int32 i
 }
 `)

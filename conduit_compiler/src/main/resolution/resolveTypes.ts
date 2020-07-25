@@ -1,17 +1,17 @@
 
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { Message, TypeResolved, Field, ResolvedType, EntityMap} from '../entity/resolved';
+import { Struct, TypeResolved, Field, ResolvedType, EntityMap} from '../entity/resolved';
 import { assertNever } from '../util/classifying';
 import  * as basic from '../entity/basic';
 
-type FirstPassEntity = (Parse.Message | basic.Enum | Parse.Function) & {file: FileLocation}
+type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function) & {file: FileLocation}
 export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
     const firstPassScope: Map<string, FirstPassEntity> = new Map()
-    const childType: (keyof Parse.File["children"])[] = ["Message", "Enum", "Function"]
+    const childType: (keyof Parse.File["children"])[] = ["Struct", "Enum", "Function"]
     unresolved.forEach(file => {
         childType.forEach((type) => {
-            file.children[type].forEach((ent: Parse.Message | basic.Enum | Parse.Function) => {
+            file.children[type].forEach((ent: Parse.Struct | basic.Enum | Parse.Function) => {
                 const existing = firstPassScope.get(ent.name)
                 if (existing !== undefined) {
                     throw new Error(`Entity name: ${ent.name} is used multiple times in default namespace
@@ -34,14 +34,14 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
             switch(alreadyResolved.kind) {
                 case "Function":
                     throw new Error(`Field may not reference function ${name}`)
-                case "Message":
+                case "Struct":
                 case "Enum":
                     return alreadyResolved                
             }
         }
     }
 
-    function resolveMessage(ent: Parse.Message & {file: FileLocation}): void  {
+    function resolveMessage(ent: Parse.Struct & {file: FileLocation}): void  {
         const fields: Field[] = []
         ent.children.Field.forEach(field => {
             const type = field.part.FieldType.differentiate()
@@ -61,7 +61,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
 
                     const notYetResolved = firstPassScope.get(type.type)
                     if (notYetResolved === undefined) {
-                        throw new Error(`Unable to resolve type of field ${type.type} from message: ${ent.name}`)
+                        throw new Error(`Unable to resolve type of field ${type.type} from struct: ${ent.name}`)
                     }  
                     resolveEntity(notYetResolved)
                     newType = tryResolveFieldType(notYetResolved.name)
@@ -88,8 +88,8 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 }
             })
         })
-        const out: Message = {
-            kind: "Message",
+        const out: Struct = {
+            kind: "Struct",
             loc: ent.loc,
             children: {
                 Field: fields
@@ -108,7 +108,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         }
         
         switch(firstPassEnt.kind) {
-            case "Message":
+            case "Struct":
                 return resolveMessage(firstPassEnt)
     
             case "Enum":

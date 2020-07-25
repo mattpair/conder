@@ -1,5 +1,5 @@
 export enum Symbol {
-    message="message",
+    struct="struct",
     optional="optional",
     enum="enum",
     EQ="=",
@@ -63,13 +63,13 @@ export const Primitives: PrimitiveUnion[] = [
 ]
 
 export type AnyKeyword = 
-Symbol.message |
+Symbol.struct |
 Symbol.optional | 
 Symbol.enum |
 Symbol.function
 
 export const Keywords: AnyKeyword[] = [
-    Symbol.message,
+    Symbol.struct,
     Symbol.optional,
     Symbol.enum,
     Symbol.function

@@ -1,10 +1,10 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`dependent message is not in scope  1`] = `"Unable to resolve type of field M2 from message: m1"`;
+exports[`dependent struct is not in scope  1`] = `"Unable to resolve type of field M2 from struct: m1"`;
 
 exports[`naming an entity after a keyword  1`] = `
 "Entities may not be named after reserved symbols: Line: 0
 
 
-message function {"
+struct function {"
 `;

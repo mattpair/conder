@@ -4,7 +4,7 @@ import { FileLocation } from "../util/filesystem"
 export type EntityKinds = 
 "EnumMember" |
 "Enum" |
-"Message" |
+"Struct" |
 "Field" |
 "File" |
 "FieldType" |
@@ -41,7 +41,7 @@ export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field"
     readonly isRequired: boolean
 } & RequiresOne<TYPE>> 
 
-export type BaseMsg<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Message", ParentOfMany<FIELD_TYPE>> 
+export type BaseStruct<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Struct", ParentOfMany<FIELD_TYPE>> 
 
 
 export type BaseReturnStatement = IntrafileEntity<"ReturnStatement", {val: string}>

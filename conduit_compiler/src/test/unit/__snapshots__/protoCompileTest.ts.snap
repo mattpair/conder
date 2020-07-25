@@ -342,7 +342,7 @@ Object {
   "namespace": Object {
     "inScope": EntityMap {
       "map": Map {
-        "MyMessage" => Object {
+        "Mystruct" => Object {
           "children": Object {
             "Field": Array [
               Object {
@@ -351,7 +351,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 17,
                   "endLineNumber": 2,
-                  "startColNumber": 23,
+                  "startColNumber": 21,
                   "startLineNumber": 1,
                 },
                 "name": "d",
@@ -505,14 +505,14 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 23,
+            "endColNumber": 21,
             "endLineNumber": 1,
             "startColNumber": 0,
             "startLineNumber": 0,
           },
-          "name": "MyMessage",
+          "name": "Mystruct",
         },
       },
       "size": 1,
@@ -526,7 +526,7 @@ Object {
 }
 `;
 
-exports[`should allow one message to reference another 1`] = `
+exports[`should allow one struct to reference another 1`] = `
 Object {
   "namespace": Object {
     "inScope": EntityMap {
@@ -540,7 +540,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 8,
                   "endLineNumber": 2,
-                  "startColNumber": 16,
+                  "startColNumber": 15,
                   "startLineNumber": 1,
                 },
                 "name": "d",
@@ -643,9 +643,9 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 16,
+            "endColNumber": 15,
             "endLineNumber": 1,
             "startColNumber": 0,
             "startLineNumber": 0,
@@ -661,7 +661,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 8,
                   "endLineNumber": 10,
-                  "startColNumber": 15,
+                  "startColNumber": 14,
                   "startLineNumber": 9,
                 },
                 "name": "myMessag",
@@ -679,9 +679,9 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 15,
+            "endColNumber": 14,
             "endLineNumber": 9,
             "startColNumber": 5,
             "startLineNumber": 8,
@@ -705,7 +705,7 @@ Object {
   "namespace": Object {
     "inScope": EntityMap {
       "map": Map {
-        "MyMessage" => Object {
+        "Mystruct" => Object {
           "children": Object {
             "Field": Array [
               Object {
@@ -714,7 +714,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 17,
                   "endLineNumber": 2,
-                  "startColNumber": 23,
+                  "startColNumber": 21,
                   "startLineNumber": 1,
                 },
                 "name": "d",
@@ -868,14 +868,14 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 23,
+            "endColNumber": 21,
             "endLineNumber": 1,
             "startColNumber": 0,
             "startLineNumber": 0,
           },
-          "name": "MyMessage",
+          "name": "Mystruct",
         },
       },
       "size": 1,
@@ -903,7 +903,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 8,
                   "endLineNumber": 2,
-                  "startColNumber": 16,
+                  "startColNumber": 15,
                   "startLineNumber": 1,
                 },
                 "name": "d",
@@ -1006,9 +1006,9 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 16,
+            "endColNumber": 15,
             "endLineNumber": 1,
             "startColNumber": 0,
             "startLineNumber": 0,
@@ -1024,7 +1024,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 8,
                   "endLineNumber": 10,
-                  "startColNumber": 15,
+                  "startColNumber": 14,
                   "startLineNumber": 9,
                 },
                 "name": "b",
@@ -1076,9 +1076,9 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 15,
+            "endColNumber": 14,
             "endLineNumber": 9,
             "startColNumber": 5,
             "startLineNumber": 8,
@@ -1102,7 +1102,7 @@ Object {
   "namespace": Object {
     "inScope": EntityMap {
       "map": Map {
-        "MyMessage" => Object {
+        "Mystruct" => Object {
           "children": Object {
             "Field": Array [
               Object {
@@ -1111,7 +1111,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 8,
                   "endLineNumber": 2,
-                  "startColNumber": 23,
+                  "startColNumber": 21,
                   "startLineNumber": 1,
                 },
                 "name": "d",
@@ -1265,14 +1265,14 @@ Object {
             "fullname": "testFile.cdt",
             "name": "testFile.cdt",
           },
-          "kind": "Message",
+          "kind": "Struct",
           "loc": Object {
-            "endColNumber": 23,
+            "endColNumber": 21,
             "endLineNumber": 1,
             "startColNumber": 0,
             "startLineNumber": 0,
           },
-          "name": "MyMessage",
+          "name": "Mystruct",
         },
       },
       "size": 1,

@@ -8,7 +8,7 @@ export namespace Parse {
     
     export type File = 
     common.Entity<"File"> & 
-    common.ParentOfMany<Message> &  
+    common.ParentOfMany<Struct> &  
     common.ParentOfMany<common.Enum> & 
     common.ParentOfMany<Function> &
     {readonly loc: FileLocation}
@@ -25,7 +25,7 @@ export namespace Parse {
     export type Parameter = common.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
     export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity >
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
-    export type Message = common.BaseMsg<Field>
+    export type Struct = common.BaseStruct<Field>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
@@ -93,7 +93,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Message: true, Function: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone()) {
             return {
                 kind: "File",
@@ -149,7 +149,7 @@ export namespace Parse {
 
     type AnyEntity = 
         File | 
-        Message | 
+        Struct | 
         Field | 
         common.Enum | 
         common.EnumMember | 
@@ -352,12 +352,12 @@ export namespace Parse {
             },
         },
 
-        Message: {
+        Struct: {
             kind: "aggregate",
-            startRegex: /^\s*message +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end, loc, children): Message | undefined {
+            startRegex: /^\s*struct +(?<name>[a-zA-Z_]\w*) *{/,
+            assemble(start, end, loc, children): Struct | undefined {
                 return {
-                    kind: "Message",
+                    kind: "Struct",
                     name: start.groups.name,
                     loc,
                     children

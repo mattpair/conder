@@ -1,5 +1,5 @@
 import { StepDefinition } from './../util/sequence';
-import { Message, Enum } from './../entity/resolved';
+import { Struct, Enum } from './../entity/resolved';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 
@@ -10,7 +10,7 @@ import { assertNever } from '../util/classifying';
 import { Symbol } from '../lexicon';
 
 
-function modelFor(ent: Message | Enum): string {
+function modelFor(ent: Struct | Enum): string {
     switch(ent.kind) {
         case "Enum":
             return `
@@ -19,7 +19,7 @@ function modelFor(ent: Message | Enum): string {
                 }
                 `
     
-        case "Message":
+        case "Struct":
             return `
                 export type ${ent.name} = {
                     ${ent.children.Field.map(f => {
@@ -52,7 +52,7 @@ function modelFor(ent: Message | Enum): string {
 
                                 return `${f.name}: ${primstring} ${tailer}`
                             case "Enum":
-                            case "Message":
+                            case "Struct":
                                 return `${f.name}: ${type.name} ${tailer}`
 
                             default: assertNever(type)
