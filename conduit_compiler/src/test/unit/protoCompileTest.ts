@@ -119,3 +119,11 @@ protoCompileTest("should allow multiple enums separated by whitespace",`
         C
     }
     `)
+
+protoCompileTest("defining a store", `
+    struct stored {
+        string s
+    }
+
+    myFirstStore = new Store<stored>
+`)

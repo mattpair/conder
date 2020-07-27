@@ -11,6 +11,7 @@ export namespace Parse {
     common.ParentOfMany<Struct> &  
     common.ParentOfMany<common.Enum> & 
     common.ParentOfMany<Function> &
+    common.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
 
     export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
@@ -26,6 +27,8 @@ export namespace Parse {
     export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity >
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
     export type Struct = common.BaseStruct<Field>
+    
+    export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
 
@@ -93,7 +96,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true, StoreDefinition: true})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone()) {
             return {
                 kind: "File",
@@ -165,7 +168,8 @@ export namespace Parse {
         Statement |
         UnaryParameterType |
         NoParameter |
-        UnaryParameter
+        UnaryParameter | 
+        StoreDefinition 
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -484,5 +488,21 @@ export namespace Parse {
                 }
             }
         },
+        StoreDefinition: {
+            kind: "conglomerate",
+            startRegex: /^\s*(?<name>[a-zA-Z]+) *= * new Store</,
+            endRegex: /^\s*>/,
+            requiresOne: {
+                CustomType: 1
+            },
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "StoreDefinition",
+                    loc: loc,
+                    name: start.groups.name,
+                    part
+                }
+            }
+        }
     }
 }

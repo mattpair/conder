@@ -5,13 +5,13 @@ import { Struct, TypeResolved, Field, ResolvedType, EntityMap} from '../entity/r
 import { assertNever } from '../util/classifying';
 import  * as basic from '../entity/basic';
 
-type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function) & {file: FileLocation}
+type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function | Parse.StoreDefinition) & {file: FileLocation}
 export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
     const firstPassScope: Map<string, FirstPassEntity> = new Map()
-    const childType: (keyof Parse.File["children"])[] = ["Struct", "Enum", "Function"]
+    const childType: (keyof Parse.File["children"])[] = ["Struct", "Enum", "Function", "StoreDefinition"]
     unresolved.forEach(file => {
         childType.forEach((type) => {
-            file.children[type].forEach((ent: Parse.Struct | basic.Enum | Parse.Function) => {
+            file.children[type].forEach((ent: Parse.Struct | basic.Enum | Parse.Function | Parse.StoreDefinition) => {
                 const existing = firstPassScope.get(ent.name)
                 if (existing !== undefined) {
                     throw new Error(`Entity name: ${ent.name} is used multiple times in default namespace
@@ -32,8 +32,9 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
             
         if (alreadyResolved !== undefined) {
             switch(alreadyResolved.kind) {
+                case "StoreDefinition":
                 case "Function":
-                    throw new Error(`Field may not reference function ${name}`)
+                    throw new Error(`Field may not reference ${alreadyResolved.kind} ${name}`)
                 case "Struct":
                 case "Enum":
                     return alreadyResolved                
@@ -110,11 +111,32 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         switch(firstPassEnt.kind) {
             case "Struct":
                 return resolveMessage(firstPassEnt)
+
+            case "StoreDefinition":
+                const t = firstPassScope.get(firstPassEnt.part.CustomType.type)
+                if (t === undefined) {
+                    throw Error(`Cannot find referenced struct for store ${firstPassEnt.part.CustomType.type}`)
+                }
+                switch(t.kind) {
+                    case "Struct":
+                        resolveMessage(t)
+                        secondPassScope.set(firstPassEnt.name, {
+                            kind: "StoreDefinition",
+                            loc: firstPassEnt.loc,
+                            name: firstPassEnt.name,
+                            stores: secondPassScope.get(firstPassEnt.part.CustomType.type) as Struct
+                        })
+                        return
+                    default: 
+                        throw Error(`Stores may not reference ${t.kind}`)
+                }
+                
     
             case "Enum":
             case "Function":
                 secondPassScope.set(firstPassEnt.name, firstPassEnt)
                 return
+            default: assertNever(firstPassEnt)
         }
     }
         

@@ -12,6 +12,7 @@ export type Field = basic.BaseField<FieldType>
 export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
 export type Enum = basic.Enum & {readonly file: FileLocation}
 export type Function = (Parse.Function & {readonly file: FileLocation})
+export type StoreDefinition = basic.NamedIntrafile<"StoreDefinition", {readonly stores: Struct}>
 
 
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
@@ -46,7 +47,7 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
 }
 
 export namespace TypeResolved {
-    export type TopLevelEntities = Struct | Enum | Function
+    export type TopLevelEntities = Struct | Enum | Function | StoreDefinition
     export type Namespace = {
         readonly name: "default"
         readonly inScope: EntityMap<TopLevelEntities>
@@ -64,7 +65,7 @@ export namespace FunctionResolved {
 
     export type Namespace = {
         readonly name: "default"
-        readonly inScope: EntityMap<Struct | Enum | Function>
+        readonly inScope: EntityMap<Struct | Enum | Function | StoreDefinition>
     }
     
     export type Manifest = {

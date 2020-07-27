@@ -1,5 +1,6 @@
+
 import { Parse } from '../parse';
-import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap } from "../entity/resolved";
+import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, StoreDefinition } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { VoidReturn } from '../entity/basic';
 
@@ -10,7 +11,7 @@ function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Names
     switch (ent.kind) {
         case "CustomType":
             const t = namespace.inScope.get(ent.type)
-            if (t === undefined || t.kind === "Function" || t.kind === "Enum" ) {
+            if (t === undefined || t.kind === "Function" || t.kind === "Enum" || t.kind === "StoreDefinition" ) {
                 throw new Error(`Invalid return type ${t}`)
             }
             return t
@@ -114,7 +115,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
 export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionResolved.Manifest {
 
     const functions: FunctionResolved.Function[] = []
-    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function> = new Map()
+    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function | StoreDefinition> = new Map()
     
     
     namespace.inScope.forEach(val => {

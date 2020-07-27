@@ -19,7 +19,8 @@ export type EntityKinds =
 "UnaryParameterType" | 
 "VoidReturnType" |
 "Statement" |
-"ReturnStatement"
+"ReturnStatement" | 
+"StoreDefinition" 
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -59,7 +60,7 @@ export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any>
     readonly loc: EntityLocation
 } & Entity<KIND> & DATA
 
-type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = IntrafileEntity<KIND, DATA & {
+export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = IntrafileEntity<KIND, DATA & {
     readonly name: string
 }> 
 
