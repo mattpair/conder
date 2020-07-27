@@ -17,3 +17,13 @@ struct function {
     int32 i
 }
 `)
+
+testFailsWhen("attempting to store enums", `
+enum AttemptToStore {
+    Yes,
+    No
+}
+
+myBadStore = new Store<AttemptToStore>
+
+`)

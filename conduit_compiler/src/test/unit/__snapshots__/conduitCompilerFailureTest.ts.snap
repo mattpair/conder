@@ -1,5 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`attempting to store enums 1`] = `"Stores may not reference Enum"`;
+
 exports[`dependent struct is not in scope  1`] = `"Unable to resolve type of field M2 from struct: m1"`;
 
 exports[`naming an entity after a keyword  1`] = `
