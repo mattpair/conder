@@ -66,7 +66,7 @@ function modelFor(ent: Struct | Enum): string {
 export async function generateModelsToDirectory(manifest: FunctionResolved.Manifest, dir: string): Promise<void> {
     const models: string[] = []
     manifest.namespace.inScope.forEach(v => {
-        if (v.kind === "Function") {
+        if (v.kind === "Function" || v.kind === "StoreDefinition") {
             return
         }
         models.push(modelFor(v))
