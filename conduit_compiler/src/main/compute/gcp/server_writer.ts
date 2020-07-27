@@ -2,7 +2,7 @@ import { Symbol } from './../../lexicon';
 import * as fs from 'fs';
 import { FunctionResolved } from '../../entity/resolved';
 import { assertNever } from '../../util/classifying';
-import { cargolockstr, dockerfile, cargo } from './constants';
+import { cargolockstr, maindockerfile, cargo } from './constants';
 import { StepDefinition } from '../../util/sequence';
 
 function generateParameterList(p: FunctionResolved.Parameter): string {
@@ -81,7 +81,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
 }
 
 
-export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResolved.Manifest}, {codeWritten: true}> = {
+export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResolved.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)
@@ -146,14 +146,17 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
 
             }
         })
-        fs.mkdirSync(".deploy/src", {recursive: true})
+        fs.mkdirSync(".deploy/main/src", {recursive: true})
+        fs.mkdirSync(".deploy/postgres/startup", {recursive: true})
         return Promise.all([
-            fs.promises.writeFile(".deploy/Dockerfile", dockerfile),
-            fs.promises.writeFile(".deploy/Cargo.lock", cargolockstr),
-            fs.promises.writeFile(".deploy/Cargo.toml", cargo),
-            fs.promises.writeFile(".deploy/src/main.rs", `
+            fs.promises.writeFile(".deploy/main/Dockerfile", maindockerfile),
+            fs.promises.writeFile(".deploy/main/Cargo.lock", cargolockstr),
+            fs.promises.writeFile(".deploy/main/Cargo.toml", cargo),
+            fs.promises.writeFile(".deploy/main/src/main.rs", `
             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
             use serde::{Deserialize, Serialize};
+            use postgres::{Client, NoTls};
+            use std::env;
     
             ${structs.join("\n")}
     
@@ -172,9 +175,27 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             }
     
             async fn index() -> impl Responder {
+
+                let pgloc = env::var("POSTGRES_LOCATION")?;
+                let mut client = Client::connect(&format!("host={} user=postgres password=password", pgloc), NoTls)?;
                 HttpResponse::Ok().body("Hello world!")
             }
-        `)
-        ]).then(() => ({codeWritten: true}))
+        `),
+        fs.promises.writeFile(".deploy/postgres/Dockerfile", `
+FROM postgres:12.3
+
+COPY startup/ /docker-entrypoint-initdb.d/
+        `),
+        fs.promises.writeFile(".deploy/postgres/startup/init.sql", `
+
+        CREATE TABLE cities (
+            name            varchar(80),
+            location        int
+        );
+        
+        
+        insert into cities(name, location)
+        values ('detroit', 12)`)
+        ]).then(() => ({codeWritten: {main: ".deploy/main", postgres: ".deploy/postgres"}}))
     }
 }

@@ -124,13 +124,15 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployOnToCluster: StepDefinition<
-    {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainers: {main: string}, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
         func: ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
             const serviceName = `${manifest.service.kind}-${namespace}`
+            const mainPodName = `${serviceName}-pod-main`
+            
             kc.addCluster({
                 name: mediumState.clusterId,
                 skipTLSVerify: false,
@@ -158,30 +160,31 @@ export const deployOnToCluster: StepDefinition<
                     name: namespace
                 }
             }).then(() => {
-                return k8sApi.createNamespacedPod(namespace, {
-                    kind: "Pod",
-                    metadata: {
-                        name: `${serviceName}-pod`,
-                        labels: {
-                            app: serviceName
-                        }
-                    },
-                    spec: {
-                        nodeSelector: {
-                            mode: "test"
-                        },
-                        containers: [{
-                            name: `${serviceName}-pod`,
-                            image: remoteContainers.main,
-                            ports: [{containerPort: 8080}],
-                            startupProbe: {
-                                httpGet: {
-                                    port: {port: 8080},
-                                }
+                return Promise.all([
+                    k8sApi.createNamespacedPod(namespace, {
+                        kind: "Pod",
+                        metadata: {
+                            name: mainPodName,
+                            labels: {
+                                app: serviceName
                             }
-                        }]
-                    },
-                }).then(() => {
+                        },
+                        spec: {
+                            nodeSelector: {
+                                mode: "test"
+                            },
+                            containers: [{
+                                name: mainPodName,
+                                image: remoteContainers.main,
+                                ports: [{containerPort: 8080}],
+                                startupProbe: {
+                                    httpGet: {
+                                        port: {port: 8080},
+                                    }
+                                }
+                            }]
+                        },
+                })]).then(() => {
                     
                     return k8sApi.createNamespacedService(namespace, {
                         kind: "Service",

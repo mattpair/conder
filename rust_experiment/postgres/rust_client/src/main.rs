@@ -1,51 +1,70 @@
-use postgres::{Client, NoTls};
+use tokio_postgres::{NoTls, Client};
+use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+use std::env;
+use serde::{Deserialize, Serialize};
 
-struct PersonRequest {
-    name: String,
+
+struct AppData {
+    client: Client
 }
 
-#[derive(Debug)]
-struct Person {
-    id: i32,
+#[derive(Serialize, Deserialize)]
+struct City {
     name: String,
+    location: i32
 }
 
-fn postgres_method() -> Result<Vec<Person>, postgres::Error> {
-    let mut client = Client::connect("host=localhost user=postgres password=password", NoTls)?;
-
-    client.batch_execute("
-        CREATE TABLE if not exists Person (
-            id      SERIAL PRIMARY KEY,
-            name    TEXT NOT NULL
-        )
-    ")?;
-
-    let p = PersonRequest {
-        name: "Jeremy".to_string(),
+async fn index(data: web::Data<AppData>) -> impl Responder {
+    let mut rows = match data.client.query("select name, location from cities", &[]).await {
+        Ok(rows) => rows,
+        Err(err) => panic!("didn't succeed: {}", err)
     };
 
-    
-    client.execute(
-        "INSERT INTO Person (name) VALUES ($1)",
-        &[&p.name],
-    )?;
-    let mut people: Vec<Person> = Vec::new();
-    for row in client.query("SELECT id, name FROM Person", &[])? {
-        
-        people.push(Person {
-            id: row.get(0),
-            name: row.get(1),
-        })
-        // let id: i32 = 
-        // let name: &str = 
-        // let data: Option<&[u8]> = 
+    let mut out = Vec::with_capacity(rows.len());
 
-        // println!("found Person: {} {} {:?}", id, name, data);
+    while let Some(row) = rows.pop() {
+        out.push(City {
+            name: row.get(0),
+            location: row.get(1)
+        })
     }
-    Ok(people)
+    return HttpResponse::Ok().json(out);
 }
 
-fn main() {
-    let out = postgres_method();
-    println!("output {:?}", out)
+async fn make_app_data() -> Result<AppData, ()> {
+    let host = match env::var("POSTGRES_LOCATION") {
+        Ok(pgloc) => pgloc,
+        Err(e) => panic!("didn't receive POSTGRES_LOCATION: {}", e)
+    };
+
+    let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password=password", host), NoTls).await {
+        Ok(out) => out,
+        Err(e) => panic!("couldn't create connection: {}", e)
+    };
+    
+    // The connection object performs the actual communication with the database,
+    // so spawn it off to run on its own.
+    actix_rt::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+    
+     
+    return Ok(AppData {
+        client: client,
+    });
+}
+
+#[actix_rt::main]
+async fn main() -> std::io::Result<()> {
+
+    HttpServer::new(|| {
+        App::new()
+            .data_factory(|| make_app_data())
+            .route("/", web::get().to(index))
+    })
+    .bind("0.0.0.0:8080")?
+    .run()
+    .await
 }
