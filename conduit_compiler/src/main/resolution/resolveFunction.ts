@@ -10,11 +10,7 @@ function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Names
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
-            const t = namespace.inScope.get(ent.type)
-            if (t === undefined || t.kind === "Function" || t.kind === "Enum" || t.kind === "StoreDefinition" ) {
-                throw new Error(`Invalid return type ${t}`)
-            }
-            return t
+            return namespace.inScope.getEntityOfType(ent.type, "Struct")
 
         case "VoidReturnType":
             return ent
@@ -40,10 +36,6 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             const type: Parse.CustomTypeEntity = param.part.UnaryParameterType.differentiate()
             
             const parameterType = namespace.inScope.getEntityOfType(type.type, "Struct")
-            
-            if (parameterType === undefined ) {
-                throw new Error(`Invalid parameter type ${parameterType}`)
-            } 
             
             return {
                 kind: "Parameter",

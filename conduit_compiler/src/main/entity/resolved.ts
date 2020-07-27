@@ -35,9 +35,12 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
         return this.map.has(key)
     }
 
-    getEntityOfType<TYPE extends ENTS["kind"]> (key: string, type: TYPE): Extract<ENTS, {kind: TYPE}> | undefined {
+    getEntityOfType<TYPE extends ENTS["kind"]> (key: string, type: TYPE): Extract<ENTS, {kind: TYPE}> {
         const got = this.map.get(key)
-        if (got === undefined || got.kind === type)  {
+        if (got === undefined) {
+            throw new Error(`Could not find a ${type} named ${key}`)
+        }
+        if (got.kind === type)  {
             //@ts-ignore
             return got
         }
