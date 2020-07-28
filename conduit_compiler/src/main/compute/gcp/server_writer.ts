@@ -86,6 +86,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)
         const structs: string[] = []
+        const tables: string[] = []
         manifest.namespace.inScope.forEach(val => {
             switch (val.kind) {
                 case "Function":
@@ -143,7 +144,57 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                             }).join(",\n")}
                         }
                     `)
+                    break
+                case "StoreDefinition":
+                    tables.push(`
+                    CREATE TABLE ${val.name} (
+                        ${val.stores.children.Field.map(f => {
+                            let typeStr = ''
+                            const type = f.part.FieldType.differentiate()
+                            switch(type.kind) {
+                                case "Enum":
+                                    throw Error("Don't support enum stores yet")
+                                case "Struct":
+                                    throw Error("Don't support struct stores yet")
+                                case "Primitive":
+                                    const prim = type.val
+                                    switch(prim) {
+                                        case Symbol.bool:
+                                            typeStr = "boolean"
+                                            break
+                                        case Symbol.bytes:
+                                            throw Error("bytes aren't supported for stores yet")
 
+                                        case Symbol.double:
+                                            typeStr = "double precision"
+                                            break
+                                        case Symbol.float:
+                                            typeStr ="real"
+                                            break
+                                        case Symbol.int32:
+                                            typeStr = "integer"
+                                            break
+                                        case Symbol.int64:
+                                            typeStr = "bigint"
+                                            break
+                                        case Symbol.uint32:
+                                        case Symbol.uint64:
+                                            typeStr = "bigint"
+                                            console.warn("storing uints as signed integers")
+                                            break
+                                        case Symbol.string:
+                                            typeStr = "text"
+                                            break
+
+                                        default: assertNever(prim)
+                                    }
+                            }
+                            return `${f.name}\t${typeStr}`
+                        }).join(",\n")}
+                    );
+
+                    `)
+                
             }
         })
         fs.mkdirSync(".deploy/main/src", {recursive: true})
@@ -246,6 +297,8 @@ COPY startup/ /docker-entrypoint-initdb.d/
             name            varchar(80),
             location        int
         );
+
+        ${tables.join("\n")}
         
         
         insert into cities(name, location)
