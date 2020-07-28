@@ -208,8 +208,14 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                     Ok(pgloc) => pgloc,
                     Err(e) => panic!("didn't receive postgres location: {}", e)
                 };
+                let pwd = match env::var("POSTGRES_PASSWORD") {
+                    Ok(pgloc) => pgloc,
+                    Err(e) => panic!("didn't receive postgres password: {}", e)
+                };
+
+                println!("password: {}", pwd);
             
-                let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password=password", host), NoTls).await {
+                let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", host, pwd), NoTls).await {
                     Ok(out) => out,
                     Err(e) => panic!("couldn't create connection: {}", e)
                 };

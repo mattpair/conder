@@ -158,6 +158,20 @@ export const deployOnToCluster: StepDefinition<
                     name: namespace
                 }
             })
+            
+            await k8sApi.createNamespacedSecret(namespace, {
+                kind: "Secret",
+                metadata: {
+                    name: "postgres-data",
+                    namespace
+                },
+                type: "Opaque",
+                stringData: {
+                    //Postgres appears to only support passwords less than 100 chars.
+                    // https://www.postgresql-archive.org/Maximum-password-length-td6054172.html
+                    password: generateRandomPassword(70)
+                }
+            })
             await k8sApi.createNamespacedPod(namespace, {
                 kind: "Pod",
                 metadata: {
@@ -174,12 +188,15 @@ export const deployOnToCluster: StepDefinition<
                         name: pgPodName,
                         image: remoteContainers.postgres,
                         ports: [{containerPort: 5432}],
-                        env: [
-                            {
-                                name: "POSTGRES_PASSWORD",
-                                value: "password"
+                        env: [{
+                            name: "POSTGRES_PASSWORD",
+                            valueFrom: {
+                                secretKeyRef: {
+                                    name: "postgres-data",
+                                    key: "password"
+                                }
                             }
-                        ]
+                        }]
                 }]
             }}).then(() => {
                 return k8sApi.createNamespacedService(namespace, {
@@ -215,7 +232,16 @@ export const deployOnToCluster: StepDefinition<
                             httpGet: {
                                 port: {port: 8080},
                             }
-                        }
+                        },
+                        env: [{
+                            name: "POSTGRES_PASSWORD",
+                            valueFrom: {
+                                secretKeyRef: {
+                                    name: "postgres-data",
+                                    key: "password"
+                                }
+                            }
+                        }]
                     }]
                 },
             })
