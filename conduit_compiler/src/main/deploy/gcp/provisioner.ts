@@ -132,7 +132,7 @@ export const deployOnToCluster: StepDefinition<
             const kc = new k8s.KubeConfig()
             const serviceName = `${manifest.service.kind}-${namespace}`
             const mainPodName = `${serviceName}-pod-main`
-            const pgPodName = `${serviceName}-pod-pg`
+            const pgPodName = `${namespace}-pod-pg`
             
             kc.addCluster({
                 name: mediumState.clusterId,
@@ -161,7 +161,7 @@ export const deployOnToCluster: StepDefinition<
                     name: namespace
                 }
             })
-            const serv = await k8sApi.createNamespacedPod(namespace, {
+            await k8sApi.createNamespacedPod(namespace, {
                 kind: "Pod",
                 metadata: {
                     name: pgPodName,
@@ -197,8 +197,6 @@ export const deployOnToCluster: StepDefinition<
                     }
                 })
             })
-            console.log("service output for postgres", serv)
-
 
             await k8sApi.createNamespacedPod(namespace, {
                 kind: "Pod",
