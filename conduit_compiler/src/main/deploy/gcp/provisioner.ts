@@ -4,11 +4,10 @@ import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'
 import axios from 'axios'
 import { FunctionResolved } from '../../entity/resolved'
-import * as crypto from 'crypto'
 import { ConduitBuildConfig } from 'config/load';
+import { generateRandomPassword } from '../../security';
 
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
 class GoogleCloudProvisioner {
     readonly client: container.v1.ClusterManagerClient
@@ -37,10 +36,8 @@ class GoogleCloudProvisioner {
 
     async createCluster(): Promise<container.protos.google.container.v1.ICluster> {
         console.log("Deploying cluster")
-        const password: string[] = []
+        const password: string = generateRandomPassword()
         
-        crypto.randomBytes(512).forEach((b) => password.push(charset[b % charset.length]))
-
         return this.client.createCluster({
             projectId: this.projectId,
             zone: this.zone,
@@ -49,7 +46,7 @@ class GoogleCloudProvisioner {
                 description: "",
                 masterAuth: {
                     username: "admin",
-                    password: password.join(""),
+                    password,
                     clientCertificateConfig: {
                         issueClientCertificate: false
                     },
