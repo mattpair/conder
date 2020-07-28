@@ -10,7 +10,7 @@ export const containerize: StepDefinition<{codeWritten: {main: string, postgres:
         child_process.execSync(`docker build -t ${main} .`, {cwd: codeWritten.main, stdio: "inherit"})
 
         const postgres = `conder-systems/conduits/${buildConf.project}-postgres`
-        child_process.execSync(`docker build -t ${main} .`, {cwd: codeWritten.postgres, stdio: "inherit"})
+        child_process.execSync(`docker build -t ${postgres} .`, {cwd: codeWritten.postgres, stdio: "inherit"})
         return Promise.resolve({localContainers: {main, postgres}})
     }
 }  

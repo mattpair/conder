@@ -127,11 +127,12 @@ export const deployOnToCluster: StepDefinition<
     {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
-        func: ({mediumState, manifest, remoteContainers, buildConf}) => {
+        func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
             const serviceName = `${manifest.service.kind}-${namespace}`
             const mainPodName = `${serviceName}-pod-main`
+            const pgPodName = `${serviceName}-pod-pg`
             
             kc.addCluster({
                 name: mediumState.clusterId,
@@ -154,83 +155,118 @@ export const deployOnToCluster: StepDefinition<
         
         
             const k8sApi= kc.makeApiClient(k8s.CoreV1Api)
-            return k8sApi.createNamespace({
+            await k8sApi.createNamespace({
                 kind: "Namespace",
                 metadata: {
                     name: namespace
                 }
-            }).then(() => {
-                return Promise.all([
-                    k8sApi.createNamespacedPod(namespace, {
-                        kind: "Pod",
-                        metadata: {
-                            name: mainPodName,
-                            labels: {
-                                app: serviceName
+            })
+            const serv = await k8sApi.createNamespacedPod(namespace, {
+                kind: "Pod",
+                metadata: {
+                    name: pgPodName,
+                    labels: {
+                        app: serviceName + "-pg"
+                    }
+                },
+                spec: {
+                    nodeSelector: {
+                        mode: "test"
+                    },
+                    containers: [{
+                        name: pgPodName,
+                        image: remoteContainers.postgres,
+                        ports: [{containerPort: 5432}],
+                        env: [
+                            {
+                                name: "POSTGRES_PASSWORD",
+                                value: "password"
                             }
-                        },
-                        spec: {
-                            nodeSelector: {
-                                mode: "test"
-                            },
-                            containers: [{
-                                name: mainPodName,
-                                image: remoteContainers.main,
-                                ports: [{containerPort: 8080}],
-                                startupProbe: {
-                                    httpGet: {
-                                        port: {port: 8080},
-                                    }
-                                }
-                            }]
-                        },
-                })]).then(() => {
-                    
-                    return k8sApi.createNamespacedService(namespace, {
-                        kind: "Service",
-                        metadata: {
-                            name: `${serviceName}-service`
-                        },
-                        spec: {
-                            externalTrafficPolicy: "Cluster",
-                            ports: [
-                                {
-                                    nodePort: 32575, 
-                                    port: 80,
-                                    protocol: "TCP",
-                                    //@ts-ignore
-                                    targetPort: 8080
-                                }
-                            ],
-                            selector: {
-                                app: serviceName
-                            },
-                            sessionAffinity: "None",
-                            type: "LoadBalancer"
-                        }
-                    }).then(async (r) => {
-                        while (!r.body.status.loadBalancer.ingress) {
-                            await new Promise(resolve => setTimeout(resolve, 5000))
-                            r = await k8sApi.readNamespacedService(`${serviceName}-service`, namespace)
-                        }
-                        const url = `http://${r.body.status.loadBalancer.ingress[0].ip}`
-                        let response = undefined
-                        console.log("waiting for service to be reachable")
-            
-                        do {
-                            response = await axios.get(url).catch((err) => {
-                                console.error("failure reaching new service...trying again")
-                                return {status: -1}
-                            })
-                            await new Promise(resolve => setTimeout(resolve, 5000))
-                        } while (response.status !== 200)
-                        
-                        console.log(`IP FOR SERVICE: ${url}`)
-                        return {endpoint: url}
-                    })
+                        ]
+                }]
+            }}).then(() => {
+                return k8sApi.createNamespacedService(namespace, {
+                    kind: "Service",
+                    metadata: {name: "postgres"},
+                    spec: {
+                        type: "ClusterIP",
+                        selector: {app: serviceName + "-pg"},
+                        ports: [{protocol: "TCP", port: 5432, 
+                        //@ts-ignore
+                        targetPort: 5432}]
+                    }
                 })
             })
-        }
+            console.log("service output for postgres", serv)
+
+
+            await k8sApi.createNamespacedPod(namespace, {
+                kind: "Pod",
+                metadata: {
+                    name: mainPodName,
+                    labels: {
+                        app: serviceName
+                    }
+                },
+                spec: {
+                    nodeSelector: {
+                        mode: "test"
+                    },
+                    containers: [{
+                        name: mainPodName,
+                        image: remoteContainers.main,
+                        ports: [{containerPort: 8080}],
+                        startupProbe: {
+                            httpGet: {
+                                port: {port: 8080},
+                            }
+                        }
+                    }]
+                },
+            })
+                    
+            return k8sApi.createNamespacedService(namespace, {
+                kind: "Service",
+                metadata: {
+                    name: `${serviceName}-service`
+                },
+                spec: {
+                    externalTrafficPolicy: "Cluster",
+                    ports: [{
+                        nodePort: 32575, 
+                        port: 80,
+                        protocol: "TCP",
+                        //@ts-ignore
+                        targetPort: 8080
+                    }],
+                    selector: {
+                        app: serviceName
+                    },
+                    sessionAffinity: "None",
+                    type: "LoadBalancer"
+                }
+            }).then(async (r) => {
+                while (!r.body.status.loadBalancer.ingress) {
+                    await new Promise(resolve => setTimeout(resolve, 5000))
+                    r = await k8sApi.readNamespacedService(`${serviceName}-service`, namespace)
+                }
+                const url = `http://${r.body.status.loadBalancer.ingress[0].ip}`
+                let response = undefined
+                console.log("waiting for service to be reachable")
+
+                do {
+                    response = await axios.get(url).catch((err) => {
+                        console.error("failure reaching new service...trying again")
+                        return {status: -1}
+                    })
+                    await new Promise(resolve => setTimeout(resolve, 5000))
+                } while (response.status !== 200)
+                
+                console.log(`IP FOR SERVICE: ${url}`)
+                return {endpoint: url}
+            })
+                
+    }
 }
 
 export type MediumState = Readonly<{

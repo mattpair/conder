@@ -153,10 +153,21 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             fs.promises.writeFile(".deploy/main/Cargo.lock", cargolockstr),
             fs.promises.writeFile(".deploy/main/Cargo.toml", cargo),
             fs.promises.writeFile(".deploy/main/src/main.rs", `
+            use tokio_postgres::{NoTls, Client};
             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-            use serde::{Deserialize, Serialize};
-            use postgres::{Client, NoTls};
             use std::env;
+            use serde::{Deserialize, Serialize};
+
+            struct AppData {
+                client: Client
+            }
+            
+            #[derive(Serialize, Deserialize)]
+            struct City {
+                name: String,
+                location: i32
+            }
+            
     
             ${structs.join("\n")}
     
@@ -166,6 +177,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             async fn main() -> std::io::Result<()> {
                 HttpServer::new(|| {
                     App::new()
+                        .data_factory(|| make_app_data())
                         .route("/", web::get().to(index))
                         ${functions.map(f => `.route("/${f.path}", web::post().to(${f.func_name}))`).join("\n")}
                 })
@@ -174,19 +186,55 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                 .await
             }
     
-            async fn index() -> impl Responder {
-
-                let pgloc = env::var("POSTGRES_LOCATION")?;
-                let mut client = Client::connect(&format!("host={} user=postgres password=password", pgloc), NoTls)?;
-                HttpResponse::Ok().body("Hello world!")
+            async fn index(data: web::Data<AppData>) -> impl Responder {
+                let mut rows = match data.client.query("select name, location from cities", &[]).await {
+                    Ok(rows) => rows,
+                    Err(err) => panic!("didn't succeed: {}", err)
+                };
+            
+                let mut out = Vec::with_capacity(rows.len());
+            
+                while let Some(row) = rows.pop() {
+                    out.push(City {
+                        name: row.get(0),
+                        location: row.get(1)
+                    })
+                }
+                return HttpResponse::Ok().json(out);
             }
+
+            async fn make_app_data() -> Result<AppData, ()> {
+                let host = match env::var("POSTGRES_SERVICE_HOST") {
+                    Ok(pgloc) => pgloc,
+                    Err(e) => panic!("didn't receive postgres location: {}", e)
+                };
+            
+                let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password=password", host), NoTls).await {
+                    Ok(out) => out,
+                    Err(e) => panic!("couldn't create connection: {}", e)
+                };
+                
+                // The connection object performs the actual communication with the database,
+                // so spawn it off to run on its own.
+                actix_rt::spawn(async move {
+                    if let Err(e) = connection.await {
+                        eprintln!("connection error: {}", e);
+                    }
+                });
+                
+                 
+                return Ok(AppData {
+                    client: client,
+                });
+            }
+            
         `),
-        fs.promises.writeFile(".deploy/postgres/Dockerfile", `
+            fs.promises.writeFile(".deploy/postgres/Dockerfile", `
 FROM postgres:12.3
 
 COPY startup/ /docker-entrypoint-initdb.d/
         `),
-        fs.promises.writeFile(".deploy/postgres/startup/init.sql", `
+            fs.promises.writeFile(".deploy/postgres/startup/init.sql", `
 
         CREATE TABLE cities (
             name            varchar(80),

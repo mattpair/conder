@@ -1,4 +1,5 @@
-export const cargo = `[package]
+export const cargo = `
+[package]
 name = "app"
 version = "0.1.0"
 authors = ["jermdroui <jerm@conder.systems>"]
@@ -7,7 +8,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-postgres = "0.17"
+tokio-postgres = "0.5.3"
 actix-web = "2.0"
 actix-rt = "1.0"
 
@@ -345,9 +346,9 @@ dependencies = [
  "actix-rt",
  "actix-web",
  "json",
- "postgres",
  "serde",
  "serde_json",
+ "tokio-postgres",
 ]
 
 [[package]]
@@ -1212,20 +1213,6 @@ name = "pin-utils"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b870d8c151b6f2fb93e84a13146138f05d02ed11c7e7c54f8826aaaf7c9f184"
-
-[[package]]
-name = "postgres"
-version = "0.17.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14d864cf6c2eabf1323afe4145ff273aad1898e4f2a3bcb30347715df8624a07"
-dependencies = [
- "bytes",
- "fallible-iterator",
- "futures",
- "log",
- "tokio",
- "tokio-postgres",
-]
 
 [[package]]
 name = "postgres-protocol"
