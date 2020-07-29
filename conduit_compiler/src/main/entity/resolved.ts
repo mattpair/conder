@@ -12,7 +12,7 @@ export type Field = basic.BaseField<FieldType>
 export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
 export type Enum = basic.Enum & {readonly file: FileLocation}
 export type Function = (Parse.Function & {readonly file: FileLocation})
-export type StoreDefinition = basic.NamedIntrafile<"StoreDefinition", {readonly stores: Struct}>
+export type Store = basic.NamedIntrafile<"StoreDefinition", {readonly stores: Struct}>
 
 
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
@@ -50,7 +50,7 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
 }
 
 export namespace TypeResolved {
-    export type TopLevelEntities = Struct | Enum | Function | StoreDefinition
+    export type TopLevelEntities = Struct | Enum | Function | Store
     export type Namespace = {
         readonly name: "default"
         readonly inScope: EntityMap<TopLevelEntities>
@@ -62,13 +62,28 @@ export namespace FunctionResolved {
     type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Struct > 
     export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
-    type ReturnStatement = basic.BaseReturnStatement
-    type FunctionBody = basic.BaseFunctionBody<basic.BaseStatement<() => ReturnStatement>>
-    export type Function = basic.BaseFunction<FunctionBody, basic.BaseReturnTypeSpec<() => Struct | basic.VoidReturn>, Parameter> & {readonly file: FileLocation}
+    type ReturnStatement = basic.IntrafileEntity<"ReturnStatement", {val: Variable<Struct>}>
+
+    export type Variable<T extends ResolvedType=ResolvedType> = Readonly<{
+        name: string,
+        type: T
+    }>
+
+    export type Insertion = basic.IntrafileEntity<"Insertion", {inserting: Variable<Struct>, into: Store}>
+    export type Statement = Insertion | ReturnStatement
+    export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
+    export type ReturnType = Struct | basic.VoidReturn
+    export type Function =  basic.NamedIntrafile<"Function", {
+        requiresDbClient: boolean,
+        returnType: ReturnType,
+        parameter: Parameter,
+        body: FunctionBody
+    }>
+    
 
     export type Namespace = {
         readonly name: "default"
-        readonly inScope: EntityMap<Struct | Enum | Function | StoreDefinition>
+        readonly inScope: EntityMap<Struct | Enum | Function | Store>
     }
     
     export type Manifest = {

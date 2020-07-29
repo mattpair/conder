@@ -1,5 +1,4 @@
 import { PrimitiveUnion as common } from '../lexicon';
-import { FileLocation } from "../util/filesystem"
 
 export type EntityKinds = 
 "EnumMember" |
@@ -20,7 +19,8 @@ export type EntityKinds =
 "VoidReturnType" |
 "Statement" |
 "ReturnStatement" | 
-"StoreDefinition" 
+"StoreDefinition" |
+"Insertion"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -58,7 +58,7 @@ export type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in 
 
 export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
     readonly loc: EntityLocation
-} & Entity<KIND> & DATA
+} & Entity<KIND> & Readonly<DATA>
 
 export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = IntrafileEntity<KIND, DATA & {
     readonly name: string

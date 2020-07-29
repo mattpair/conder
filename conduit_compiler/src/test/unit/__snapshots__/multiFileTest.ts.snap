@@ -289,7 +289,7 @@ exports[`function with type return returns none 1`] = `
 
 exports[`function with unknown types 1`] = `"Unable to find end of entity for UnaryParameter at , b: Foreign.Type) {"`;
 
-exports[`function with void returns type 1`] = `"Returning [a] which is of type SomeType but expected void return"`;
+exports[`function with void returns type 1`] = `"Cannot return {\\"kind\\":\\"Struct\\",\\"loc\\":{\\"startColNumber\\":0,\\"startLineNumber\\":0,\\"endColNumber\\":21,\\"endLineNumber\\":2},\\"children\\":{\\"Field\\":[{\\"loc\\":{\\"startColNumber\\":21,\\"startLineNumber\\":2,\\"endColNumber\\":8,\\"endLineNumber\\":3},\\"kind\\":\\"Field\\",\\"isRequired\\":true,\\"name\\":\\"m\\",\\"part\\":{\\"FieldType\\":{\\"kind\\":\\"FieldType\\"}}}]},\\"name\\":\\"SomeType\\",\\"file\\":{\\"dir\\":\\"\\",\\"name\\":\\"conduit_a.cdt\\",\\"fullname\\":\\"conduit_a.cdt\\"}} because exepected return type: {\\"kind\\":\\"VoidReturnType\\",\\"loc\\":{\\"startColNumber\\":31,\\"startLineNumber\\":6,\\"endColNumber\\":31,\\"endLineNumber\\":6}}"`;
 
 exports[`simple echo function 1`] = `
 Object {
@@ -333,10 +333,64 @@ Object {
           "name": "Shout",
         },
         "echo" => Object {
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
+          "body": Object {
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 35,
+              "endLineNumber": 6,
+              "startColNumber": 33,
+              "startLineNumber": 6,
+            },
+            "statements": Array [
+              Object {
+                "kind": "ReturnStatement",
+                "loc": Object {
+                  "endColNumber": 16,
+                  "endLineNumber": 7,
+                  "startColNumber": 35,
+                  "startLineNumber": 6,
+                },
+                "val": Object {
+                  "name": "s",
+                  "type": Object {
+                    "children": Object {
+                      "Field": Array [
+                        Object {
+                          "isRequired": true,
+                          "kind": "Field",
+                          "loc": Object {
+                            "endColNumber": 8,
+                            "endLineNumber": 3,
+                            "startColNumber": 18,
+                            "startLineNumber": 2,
+                          },
+                          "name": "m",
+                          "part": Object {
+                            "FieldType": Object {
+                              "differentiate": [Function],
+                              "kind": "FieldType",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    "file": FileLocation {
+                      "dir": "",
+                      "fullname": "conduit_a.cdt",
+                      "name": "conduit_a.cdt",
+                    },
+                    "kind": "Struct",
+                    "loc": Object {
+                      "endColNumber": 18,
+                      "endLineNumber": 2,
+                      "startColNumber": 0,
+                      "startLineNumber": 0,
+                    },
+                    "name": "Shout",
+                  },
+                },
+              },
+            ],
           },
           "kind": "Function",
           "loc": Object {
@@ -346,32 +400,46 @@ Object {
             "startLineNumber": 4,
           },
           "name": "echo",
-          "part": Object {
-            "FunctionBody": Object {
-              "children": Object {
-                "Statement": Array [
-                  Object {
-                    "differentiate": [Function],
-                    "kind": "Statement",
+          "parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "requiresDbClient": false,
+          "returnType": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "isRequired": true,
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 8,
+                    "endLineNumber": 3,
+                    "startColNumber": 18,
+                    "startLineNumber": 2,
                   },
-                ],
-              },
-              "kind": "FunctionBody",
-              "loc": Object {
-                "endColNumber": 35,
-                "endLineNumber": 6,
-                "startColNumber": 33,
-                "startLineNumber": 6,
-              },
+                  "name": "m",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                    },
+                  },
+                },
+              ],
             },
-            "Parameter": Object {
-              "differentiate": [Function],
-              "kind": "Parameter",
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "conduit_a.cdt",
+              "name": "conduit_a.cdt",
             },
-            "ReturnTypeSpec": Object {
-              "differentiate": [Function],
-              "kind": "ReturnTypeSpec",
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 18,
+              "endLineNumber": 2,
+              "startColNumber": 0,
+              "startLineNumber": 0,
             },
+            "name": "Shout",
           },
         },
       },
@@ -382,10 +450,64 @@ Object {
   "service": Object {
     "functions": Array [
       Object {
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_a.cdt",
-          "name": "conduit_a.cdt",
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 35,
+            "endLineNumber": 6,
+            "startColNumber": 33,
+            "startLineNumber": 6,
+          },
+          "statements": Array [
+            Object {
+              "kind": "ReturnStatement",
+              "loc": Object {
+                "endColNumber": 16,
+                "endLineNumber": 7,
+                "startColNumber": 35,
+                "startLineNumber": 6,
+              },
+              "val": Object {
+                "name": "s",
+                "type": Object {
+                  "children": Object {
+                    "Field": Array [
+                      Object {
+                        "isRequired": true,
+                        "kind": "Field",
+                        "loc": Object {
+                          "endColNumber": 8,
+                          "endLineNumber": 3,
+                          "startColNumber": 18,
+                          "startLineNumber": 2,
+                        },
+                        "name": "m",
+                        "part": Object {
+                          "FieldType": Object {
+                            "differentiate": [Function],
+                            "kind": "FieldType",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  "file": FileLocation {
+                    "dir": "",
+                    "fullname": "conduit_a.cdt",
+                    "name": "conduit_a.cdt",
+                  },
+                  "kind": "Struct",
+                  "loc": Object {
+                    "endColNumber": 18,
+                    "endLineNumber": 2,
+                    "startColNumber": 0,
+                    "startLineNumber": 0,
+                  },
+                  "name": "Shout",
+                },
+              },
+            },
+          ],
         },
         "kind": "Function",
         "loc": Object {
@@ -395,32 +517,46 @@ Object {
           "startLineNumber": 4,
         },
         "name": "echo",
-        "part": Object {
-          "FunctionBody": Object {
-            "children": Object {
-              "Statement": Array [
-                Object {
-                  "differentiate": [Function],
-                  "kind": "Statement",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "requiresDbClient": false,
+        "returnType": Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 3,
+                  "startColNumber": 18,
+                  "startLineNumber": 2,
                 },
-              ],
-            },
-            "kind": "FunctionBody",
-            "loc": Object {
-              "endColNumber": 35,
-              "endLineNumber": 6,
-              "startColNumber": 33,
-              "startLineNumber": 6,
-            },
+                "name": "m",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+            ],
           },
-          "Parameter": Object {
-            "differentiate": [Function],
-            "kind": "Parameter",
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "conduit_a.cdt",
+            "name": "conduit_a.cdt",
           },
-          "ReturnTypeSpec": Object {
-            "differentiate": [Function],
-            "kind": "ReturnTypeSpec",
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 18,
+            "endLineNumber": 2,
+            "startColNumber": 0,
+            "startLineNumber": 0,
           },
+          "name": "Shout",
         },
       },
     ],

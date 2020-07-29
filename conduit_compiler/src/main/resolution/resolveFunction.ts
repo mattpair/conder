@@ -1,6 +1,6 @@
 
 import { Parse } from '../parse';
-import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, StoreDefinition } from "../entity/resolved";
+import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { VoidReturn } from '../entity/basic';
 
@@ -54,60 +54,104 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             }
 
     }
-} 
+}
+
+
+function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, parameter: FunctionResolved.Parameter, ret: FunctionResolved.ReturnType): FunctionResolved.FunctionBody {
+    
+    const variableLookup = new Map<string, FunctionResolved.Variable<Struct>>()
+    const p = parameter.differentiate()
+    switch(p.kind) {
+
+        case "NoParameter":
+            break;
+        case "UnaryParameter":
+            variableLookup.set(p.name, {
+                name: p.name,
+                type: p.part.UnaryParameterType.differentiate()
+            })
+            break;
+
+        default: assertNever(p)
+    }
+    const resolved: FunctionResolved.Statement[] = []
+    let earlyExit = false
+    for (let i = 0; i < func.part.FunctionBody.children.Statement.length; i++) {
+        const stmt = func.part.FunctionBody.children.Statement[i].differentiate();
+        
+        switch (stmt.kind) {
+            case "Insertion":{
+                const variable = variableLookup.get(stmt.variableName)
+                if (variable === undefined) {
+                    throw Error(`Cannot find variable ${stmt.variableName}`)
+                }
+                const into = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
+                if (into.stores !== variable.type) {
+                    throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores.name}`)
+                }
+
+                resolved.push({
+                    kind: "Insertion",
+                    loc: stmt.loc,
+                    inserting: variable,
+                    into
+                })
+
+                break}
+            case "ReturnStatement":
+                const variable = variableLookup.get(stmt.val)
+                if (variable === undefined) {
+                    throw Error(`Cannot find variable ${stmt.val}`)
+                }
+
+                if (variable.type !== ret) {
+                    throw Error(`Cannot return ${JSON.stringify(variable.type)} because exepected return type: ${JSON.stringify(ret)}`)
+                }
+                resolved.push({
+                    kind: "ReturnStatement",
+                    loc: stmt.loc,
+                    val: variable
+                })
+                earlyExit = true
+
+                break
+
+            default: assertNever(stmt)
+        }
+        if (earlyExit) {
+            break
+        }
+    }
+    return {
+        kind: "FunctionBody",
+        loc: func.part.FunctionBody.loc,
+        statements: resolved
+    }
+}
 
 
 function resolveFunction(namespace: TypeResolved.Namespace, func: Function): FunctionResolved.Function {
-    
-    const Parameter = resolveParameter(namespace, func.part.Parameter)
-    const paramInstance = Parameter.differentiate()
-    
+    const parameter = resolveParameter(namespace, func.part.Parameter)
     const returnType = getReturnType(func.part.ReturnTypeSpec, namespace)
 
-    const ret = func.part.FunctionBody.children.Statement.find((s: Parse.Statement) => s.differentiate().kind === "ReturnStatement")
-    if (ret !== undefined) {
-        const name = ret.differentiate().val
-        
-        if (paramInstance.kind === "NoParameter") {
-            throw new Error(`Cannot find variable in scope ${name}`)
-        }
+    const f = resolveFunctionBody(namespace, func, parameter, returnType)
+    
 
-        switch (returnType.kind) {
-            case "Struct":
-                if (returnType.name !== paramInstance.part.UnaryParameterType.differentiate().name) {
-                    throw new Error(`Expected a ${returnType.name} but returned a ${paramInstance.part.UnaryParameterType.differentiate().name}`)
-                }
-                break
-                
-            case "VoidReturnType":
-                throw new Error(`Returning [${name}] which is of type ${paramInstance.part.UnaryParameterType.differentiate().name} but expected void return`)
-            default: assertNever(returnType)
-        }
-    } else {
-        if (returnType.kind !== "VoidReturnType") {
-            throw new Error(`No return yet expected a ${returnType.name}`)
-        }
-    }
     return {
         kind: "Function",
         loc: func.loc,
         name: func.name,
-        file: func.file,
-        part: {
-            FunctionBody: func.part.FunctionBody,
-            Parameter,
-            ReturnTypeSpec: {
-                kind: "ReturnTypeSpec",
-                differentiate: () => returnType
-            }
-        }
+        requiresDbClient: f.statements.some(s => s.kind === "Insertion"),
+        returnType: returnType,
+        parameter,
+        body: f
     }
 }
 
 export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionResolved.Manifest {
 
     const functions: FunctionResolved.Function[] = []
-    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function | StoreDefinition> = new Map()
+    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function | Store> = new Map()
     
     
     namespace.inScope.forEach(val => {

@@ -5,78 +5,121 @@ import { assertNever } from '../../util/classifying';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import { StepDefinition } from '../../util/sequence';
 
-function generateParameterList(p: FunctionResolved.Parameter): string {
-    const param = p.differentiate()
-    if (param.kind === "NoParameter") {
-        return ""
-    }
-    const type = param.part.UnaryParameterType.differentiate()
-
-    switch(type.kind) {
-        case "Struct":
-            return `${param.name}: ${type.name}`
-
-        default: assertNever(type.kind)
-    }
-    
+type InsertCodelet = {
+    readonly sql: string,
+    readonly array: string
 }
 
-function generateInternalFunction(f: FunctionResolved.Function): string {
-    const ret = f.part.ReturnTypeSpec.differentiate()
-    let returnTypeSpec = ''
-    let returnStatement= ''
-    if (ret.kind === "VoidReturnType") {
-        returnTypeSpec = ' -> ()'
-        returnStatement = ''
-    } else {
-        returnTypeSpec = ` -> ${ret.name}`
-        returnStatement = `return ${f.part.FunctionBody.children.Statement[0].differentiate().val}`
+function generateInsertStatement(stmt: FunctionResolved.Insertion): InsertCodelet {
+    const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
+    const tableAndColumns: string = `${stmt.into.name}(${columns})`
+    const values = `values (${stmt.inserting.type.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
+    const array = `&[${stmt.inserting.type.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
+    return {
+        sql: `insert into ${tableAndColumns} ${values}`,
+        array
     }
+}
 
-    return `
-    fn internal_${f.name}(${generateParameterList(f.part.Parameter)}) ${returnTypeSpec} {
-        ${returnStatement}
+type InternalFunction = {
+    readonly definition: string,
+    readonly invocation: string
+}
+
+
+function generateInternalFunction(f: FunctionResolved.Function): InternalFunction {
+    const ret = f.returnType
+    const returnTypeSpec = ret.kind === "VoidReturnType" ? ' -> ()' : ` -> ${ret.name}`
+    const statements: string[] = []
+    const param = f.parameter.differentiate()
+    const parameterList: {name: string, type: string}[] = []
+    if (param.kind !== "NoParameter") {
+        const type = param.part.UnaryParameterType.differentiate()
+
+        switch(type.kind) {
+            case "Struct":
+                parameterList.push({name: param.name, type: type.name})
+                break
+
+            default: assertNever(type.kind)
+        }
     }
-    `
+    if (f.requiresDbClient) {
+        parameterList.push({name: "client", type: "&Client"})
+    }
+    
+
+    f.body.statements.forEach((stmt, i) => {
+        switch(stmt.kind) {
+            case "Insertion":
+                const s = generateInsertStatement(stmt)
+                statements.push(`
+                let res${i} = match client.query("${s.sql}", ${s.array}).await {
+                    Ok(out) => out,
+                    Err(err) => panic!("insertion failed: {}", err)
+                };
+                `)
+                break;
+
+            case "ReturnStatement":
+                statements.push(`return ${stmt.val.name};`)
+                break;
+        }
+    })
+    
+    return {
+        definition: `
+        ${f.requiresDbClient ? "async ": ""}fn internal_${f.name}(${parameterList.map(p => `${p.name}: ${p.type}`).join(", ")}) ${returnTypeSpec} {
+            ${statements.join(";\n")}
+        }`, 
+        invocation: `internal_${f.name}(${parameterList.map(p => p.name)})${f.requiresDbClient ? ".await" : ""}`
+    }
 }
 
 function generateFunctions(functions: FunctionResolved.Function[]): {def: string, func_name: string, path: string}[] {
     return functions.map(func => {
 
         const internal = generateInternalFunction(func) 
-        const param = func.part.Parameter.differentiate()
+        const param = func.parameter.differentiate()
         
-        let paramStr: string = ''
+        let parameters: string[] = []
+        let extractors: string[] = []
 
         if (param.kind === "UnaryParameter") {
             const ptype = param.part.UnaryParameterType.differentiate()
-            paramStr = `input: web::Json<${ptype.name}>`
+            parameters.push(`input: web::Json<${ptype.name}>`)
+            extractors.push(`let ${param.name} = input.into_inner();`)
         } else {
             throw new Error("No parameter functions actually aren't supported")
         }
 
-        const returnType = func.part.ReturnTypeSpec.differentiate()
+        if (func.requiresDbClient) {
+            parameters.push("data: web::Data<AppData>")
+            extractors.push("let client = &data.client;")
+        }
+
+        const returnType = func.returnType
         let externalFuncBody = ''
 
         switch (returnType.kind) {
             case "VoidReturnType":
-                externalFuncBody = `internal_${func.name}(msg);\nHttpResponse::Ok()`
+                externalFuncBody = `${internal.invocation};\nHttpResponse::Ok()`
                 break;
             case "Struct":
-                externalFuncBody = `let out = internal_${func.name}(msg);\nHttpResponse::Ok().json(out)`
+                externalFuncBody = `let out = ${internal.invocation};\nHttpResponse::Ok().json(out)`
                 break;
 
             default: assertNever(returnType)
         }
         
         const external = `
-        async fn external_${func.name}(${paramStr}) -> impl Responder {
-            let msg = input.into_inner();
+        async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
+            ${extractors.join("\n")}
             ${externalFuncBody}
         }
                 
         `
-        return {def: `${internal}\n${external}`, func_name: `external_${func.name}`, path: func.name}
+        return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name}
     })
 }
 
@@ -204,6 +247,9 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             fs.promises.writeFile(".deploy/main/Cargo.lock", cargolockstr),
             fs.promises.writeFile(".deploy/main/Cargo.toml", cargo),
             fs.promises.writeFile(".deploy/main/src/main.rs", `
+            #![allow(non_snake_case)]
+            #![allow(non_camel_case_types)]
+
             use tokio_postgres::{NoTls, Client};
             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
             use std::env;

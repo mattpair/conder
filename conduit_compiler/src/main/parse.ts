@@ -18,7 +18,9 @@ export namespace Parse {
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity 
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
-    export type Statement = common.BaseStatement<() => common.BaseReturnStatement>
+
+    export type Insertion = common.IntrafileEntity<"Insertion", {storeName: string, variableName: string}>
+    export type Statement = common.BaseStatement<() => (common.BaseReturnStatement | Insertion)>
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
     export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
@@ -169,7 +171,8 @@ export namespace Parse {
         UnaryParameterType |
         NoParameter |
         UnaryParameter | 
-        StoreDefinition 
+        StoreDefinition |
+        Insertion
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -475,7 +478,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1}
+            priority: {ReturnStatement: 1, Insertion: 2}
         },
         ReturnStatement: {
             kind: "leaf",
@@ -501,6 +504,18 @@ export namespace Parse {
                     loc: loc,
                     name: start.groups.name,
                     part
+                }
+            }
+        },
+        Insertion: {
+            kind: "leaf",
+            regex: /^\s*insert +(?<variableName>[a-zA-Z_]\w*) +into +(?<storeName>[a-zA-Z]+)\s*/,
+            assemble(c, loc) {
+                return {
+                    kind: "Insertion",
+                    loc,
+                    variableName: c.groups.variableName,
+                    storeName: c.groups.storeName
                 }
             }
         }

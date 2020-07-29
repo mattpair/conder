@@ -24,13 +24,13 @@ export class Sequence<INPUT extends {}, OUTPUT extends {}> {
                             console.log(`Running step: ${nextStep.stepName}`)
                         }
                         const next = await nextStep.func({...arg0, ...add}).catch(err => {
-                            console.error(`Failure in step: ${this.def.stepName}`, err)
+                            console.error(`Failure in step:`, err)
                             process.exit(1)
                         })
                         return {...arg0, ...add, ...next}
                     })
                 } catch (e) {
-                    console.error(`Failure in step: ${this.def.stepName}`, e)
+                    console.error(`Failure in step:`, e)
                     process.exit(1)
                 }
                 
