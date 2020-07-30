@@ -14,7 +14,7 @@ export namespace Parse {
     common.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
 
-    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string}>
+    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string, isArray: boolean}>
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity 
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
@@ -375,12 +375,13 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^(?<type>[_A-Za-z]+[\w]*)/,
+            regex: /^(?<type>[_A-Za-z]+[\w]*)(?<isArray>\[\])?/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 return {
                     kind: "CustomType",
                     loc,
-                    type: match.groups.type
+                    type: match.groups.type,
+                    isArray: match.groups.isArray !== undefined
                 }
             }
         },
@@ -471,7 +472,6 @@ export namespace Parse {
             assemble(c, loc) {
                 return {
                     kind: "VoidReturnType",
-                    loc
                 }
             }
         },

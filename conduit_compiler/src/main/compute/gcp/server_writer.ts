@@ -1,3 +1,4 @@
+import { WithArrayIndicator, Struct } from './../../entity/resolved';
 import { Symbol } from './../../lexicon';
 import * as fs from 'fs';
 import { FunctionResolved } from '../../entity/resolved';
@@ -13,8 +14,8 @@ type InsertCodelet = {
 function generateInsertStatement(stmt: FunctionResolved.Insertion): InsertCodelet {
     const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
     const tableAndColumns: string = `${stmt.into.name}(${columns})`
-    const values = `values (${stmt.inserting.type.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
-    const array = `&[${stmt.inserting.type.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
+    const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
+    const array = `&[${stmt.inserting.type.val.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
     return {
         sql: `insert into ${tableAndColumns} ${values}`,
         array
@@ -26,23 +27,18 @@ type InternalFunction = {
     readonly invocation: string
 }
 
+function toRustType(p: WithArrayIndicator<Struct>): string {
+    return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
+}
 
 function generateInternalFunction(f: FunctionResolved.Function): InternalFunction {
     const ret = f.returnType
-    const returnTypeSpec = ret.kind === "VoidReturnType" ? ' -> ()' : ` -> ${ret.name}`
+    const returnTypeSpec = ret.kind === "VoidReturnType" ? ' -> ()' : ` -> ${toRustType(ret.data)}`
     const statements: string[] = []
     const param = f.parameter.differentiate()
     const parameterList: {name: string, type: string}[] = []
     if (param.kind !== "NoParameter") {
-        const type = param.part.UnaryParameterType.differentiate()
-
-        switch(type.kind) {
-            case "Struct":
-                parameterList.push({name: param.name, type: type.name})
-                break
-
-            default: assertNever(type.kind)
-        }
+        parameterList.push({name: param.name, type: toRustType(param.part.UnaryParameterType)})
     }
     if (f.requiresDbClient) {
         parameterList.push({name: "client", type: "&Client"})
@@ -86,8 +82,8 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
         let extractors: string[] = []
 
         if (param.kind === "UnaryParameter") {
-            const ptype = param.part.UnaryParameterType.differentiate()
-            parameters.push(`input: web::Json<${ptype.name}>`)
+            const ptype = param.part.UnaryParameterType
+            parameters.push(`input: web::Json<${toRustType(ptype)}>`)
             extractors.push(`let ${param.name} = input.into_inner();`)
         } else {
             throw new Error("No parameter functions actually aren't supported")
@@ -105,7 +101,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
             case "VoidReturnType":
                 externalFuncBody = `${internal.invocation};\nHttpResponse::Ok()`
                 break;
-            case "Struct":
+            case "typed return":
                 externalFuncBody = `let out = ${internal.invocation};\nHttpResponse::Ok().json(out)`
                 break;
 

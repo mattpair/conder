@@ -1,16 +1,18 @@
-
 import { Parse } from '../parse';
-import { TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
+import { WithArrayIndicator, TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
 import { VoidReturn } from '../entity/basic';
 
 
 
-function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): Struct | VoidReturn {
+function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): FunctionResolved.ReturnType {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
-            return namespace.inScope.getEntityOfType(ent.type, "Struct")
+            return {
+                data: {val: namespace.inScope.getEntityOfType(ent.type, "Struct"), isArray: ent.isArray},
+                kind: "typed return"
+            }
 
         case "VoidReturnType":
             return ent
@@ -47,7 +49,8 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
                     part: {
                         UnaryParameterType: {
                             kind: "UnaryParameterType",
-                            differentiate: () => parameterType
+                            val: parameterType,
+                            isArray: type.isArray
                         }
                     }
                 })
@@ -59,16 +62,17 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
 
 function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, parameter: FunctionResolved.Parameter, ret: FunctionResolved.ReturnType): FunctionResolved.FunctionBody {
     
-    const variableLookup = new Map<string, FunctionResolved.Variable<Struct>>()
+    const variableLookup = new Map<string, FunctionResolved.Variable>()
     const p = parameter.differentiate()
     switch(p.kind) {
 
         case "NoParameter":
             break;
         case "UnaryParameter":
+            
             variableLookup.set(p.name, {
                 name: p.name,
-                type: p.part.UnaryParameterType.differentiate()
+                type: p.part.UnaryParameterType
             })
             break;
 
@@ -86,7 +90,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
                     throw Error(`Cannot find variable ${stmt.variableName}`)
                 }
                 const into = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
-                if (into.stores !== variable.type) {
+                if (into.stores !== variable.type.val) {
                     throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores.name}`)
                 }
 
@@ -103,9 +107,11 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
                 if (variable === undefined) {
                     throw Error(`Cannot find variable ${stmt.val}`)
                 }
-
-                if (variable.type !== ret) {
-                    throw Error(`Cannot return ${JSON.stringify(variable.type)} because exepected return type: ${JSON.stringify(ret)}`)
+                if (ret.kind === "VoidReturnType" ||
+                    ret.data.isArray !== variable.type.isArray ||
+                    ret.data.val.name !== variable.type.val.name
+                ) {
+                    throw Error(`Cannot return ${JSON.stringify(variable.type, null, 2)} because exepected return type: ${JSON.stringify(ret, null, 2)}`)
                 }
                 resolved.push({
                     kind: "ReturnStatement",

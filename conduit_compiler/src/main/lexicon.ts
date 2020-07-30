@@ -20,7 +20,8 @@ export enum Symbol {
     import="import",
     as="as",
     function="function",
-    return="return"
+    return="return",
+    array="\[\]"
 }
 
 export const Operators: [

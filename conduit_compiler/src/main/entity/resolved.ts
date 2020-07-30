@@ -3,6 +3,8 @@ import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
 
 // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
+
+export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
 export type FieldType = basic.BaseFieldType<() => ResolvedType>
 
@@ -59,20 +61,20 @@ export namespace TypeResolved {
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.PolymorphicEntity<"UnaryParameterType", () => Struct > 
+    type UnaryParameterType = basic.Entity<"UnaryParameterType"> & WithArrayIndicator<Struct >
     export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
-    type ReturnStatement = basic.IntrafileEntity<"ReturnStatement", {val: Variable<Struct>}>
+    type ReturnStatement = basic.IntrafileEntity<"ReturnStatement", {val: Variable}>
 
-    export type Variable<T extends ResolvedType=ResolvedType> = Readonly<{
+    export type Variable = Readonly<{
         name: string,
-        type: T
+        type: WithArrayIndicator<Struct>
     }>
 
-    export type Insertion = basic.IntrafileEntity<"Insertion", {inserting: Variable<Struct>, into: Store}>
+    export type Insertion = basic.IntrafileEntity<"Insertion", {inserting: Variable, into: Store}>
     export type Statement = Insertion | ReturnStatement
     export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
-    export type ReturnType = Struct | basic.VoidReturn
+    export type ReturnType = {kind: "typed return", data: WithArrayIndicator<Struct>} | basic.VoidReturn
     export type Function =  basic.NamedIntrafile<"Function", {
         requiresDbClient: boolean,
         returnType: ReturnType,

@@ -18,14 +18,14 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
 
         ${manifest.service.functions.map(fn => {
             const param = fn.parameter.differentiate() as FunctionResolved.UnaryParameter
-            const type = param.part.UnaryParameterType.differentiate() as Struct
+            const type = param.part.UnaryParameterType
             const ret = fn.returnType
 
             let returnType = ''
             let followOn = ''
             switch (ret.kind) {
-                case "Struct":
-                    returnType = `: Promise<models.${ret.name}>`
+                case "typed return":
+                    returnType = `: Promise<models.${ret.data.val.name}${ret.data.isArray ? "[]" : ""}>`
                     followOn = '.then( data=> data.json())'
                     break;
                 case "VoidReturnType":
@@ -35,7 +35,7 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
             }
     
             return `
-            export function ${fn.name}(a: models.${type.name})${returnType} {
+            export function ${fn.name}(a: models.${type.val.name}${type.isArray ? "[]" : ""})${returnType} {
                 const body = JSON.stringify(a)
                 return fetch("${url}/${fn.name}", {
                     body,
