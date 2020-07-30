@@ -5,6 +5,10 @@ import { assertNever } from '../../util/classifying';
 
 export const a: string = `${12}`
 
+function typeToTS(t:FunctionResolved.RealType):string {
+    return `models.${t.val.name}${t.isArray ? "[]" : ""}`
+}
+
 export function generateClients(url: string, manifest: FunctionResolved.Manifest, dir: string) {
     
     fs.writeFileSync(`${dir}/clients.ts`, 
@@ -17,15 +21,35 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
         }
 
         ${manifest.service.functions.map(fn => {
-            const param = fn.parameter.differentiate() as FunctionResolved.UnaryParameter
-            const type = param.part.UnaryParameterType
+            const param = fn.parameter.differentiate()
             const ret = fn.returnType
 
             let returnType = ''
             let followOn = ''
+            let body =  ''
+            let paramString = ''
+            let beforeReq = ''
+
+            switch(param.kind) {
+                case "UnaryParameter":
+                    paramString = `a: ${typeToTS(param.type)}`
+                    beforeReq = 'const body = JSON.stringify(a)'
+                    body = `
+                    body,
+                    headers: {
+                        "content-type": "application/json",
+                        "content-length": \`\${body.length}\`
+                    },
+                    `
+                    break;
+                case "NoParameter":
+                    break;
+
+                default: assertNever(param)
+            }
             switch (ret.kind) {
-                case "typed return":
-                    returnType = `: Promise<models.${ret.data.val.name}${ret.data.isArray ? "[]" : ""}>`
+                case "real type":
+                    returnType = `: Promise<${typeToTS(ret)}>`
                     followOn = '.then( data=> data.json())'
                     break;
                 case "VoidReturnType":
@@ -35,15 +59,11 @@ export function generateClients(url: string, manifest: FunctionResolved.Manifest
             }
     
             return `
-            export function ${fn.name}(a: models.${type.val.name}${type.isArray ? "[]" : ""})${returnType} {
-                const body = JSON.stringify(a)
+            export function ${fn.name}(${paramString})${returnType} {
+                ${beforeReq}
                 return fetch("${url}/${fn.name}", {
-                    body,
-                    headers: {
-                        "content-type": "application/json",
-                        "content-length": \`\${body.length}\`
-                    },
-                    method: "POST"
+                    ${body}
+                    method: "${fn.method}"
                 })${followOn}
 
             }`}).join("\n")}

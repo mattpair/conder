@@ -27,24 +27,28 @@ type InternalFunction = {
     readonly invocation: string
 }
 
-function toRustType(p: WithArrayIndicator<Struct>): string {
+function toRustType(p: FunctionResolved.Type): string {
+    if (p.kind === "VoidReturnType") {
+        return "()"
+    }
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
 function generateInternalFunction(f: FunctionResolved.Function): InternalFunction {
     const ret = f.returnType
-    const returnTypeSpec = ret.kind === "VoidReturnType" ? ' -> ()' : ` -> ${toRustType(ret.data)}`
+    const returnTypeSpec = ` -> ${toRustType(ret)}`
     const statements: string[] = []
     const param = f.parameter.differentiate()
     const parameterList: {name: string, type: string}[] = []
     if (param.kind !== "NoParameter") {
-        parameterList.push({name: param.name, type: toRustType(param.part.UnaryParameterType)})
+        parameterList.push({name: param.name, type: toRustType(param.type)})
     }
     if (f.requiresDbClient) {
         parameterList.push({name: "client", type: "&Client"})
     }
     
 
+    let previousReturn = false
     f.body.statements.forEach((stmt, i) => {
         switch(stmt.kind) {
             case "Insertion":
@@ -58,8 +62,42 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
                 break;
 
             case "ReturnStatement":
-                statements.push(`return ${stmt.val.name};`)
+                previousReturn = true
                 break;
+
+            case "VariableReference":
+                if (previousReturn) {
+                    statements.push(`return ${stmt.name};`)
+                } else {
+                    throw Error(`Useless variable reference ${stmt.name}`)
+                }
+                break;
+            
+            case "AllInQuery":
+                if (previousReturn) {
+                    statements.push(`
+                    let mut allin = match client.query("select * from ${stmt.from.name}", &[]).await {
+                        Ok(out) => out,
+                        Err(err) => panic!("query failed: {}", err)
+                    };
+ 
+                    let mut out = Vec::with_capacity(allin.len());
+            
+                    while let Some(row) = allin.pop() {
+                        out.push(${stmt.returnType.val.name} {
+                            ${stmt.from.stores.children.Field.map((field, index) => `${field.name}: row.get(${index})`).join(",\n")}
+
+                        })
+                    }
+                    return out;
+
+                    `)
+                    break
+                } else {
+                    throw Error(`Currently don't support all in queries outside of returns`)
+                }
+
+            default: assertNever(stmt)
         }
     })
     
@@ -72,7 +110,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
     }
 }
 
-function generateFunctions(functions: FunctionResolved.Function[]): {def: string, func_name: string, path: string}[] {
+function generateFunctions(functions: FunctionResolved.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
     return functions.map(func => {
 
         const internal = generateInternalFunction(func) 
@@ -82,11 +120,9 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
         let extractors: string[] = []
 
         if (param.kind === "UnaryParameter") {
-            const ptype = param.part.UnaryParameterType
+            const ptype = param.type
             parameters.push(`input: web::Json<${toRustType(ptype)}>`)
             extractors.push(`let ${param.name} = input.into_inner();`)
-        } else {
-            throw new Error("No parameter functions actually aren't supported")
         }
 
         if (func.requiresDbClient) {
@@ -101,7 +137,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
             case "VoidReturnType":
                 externalFuncBody = `${internal.invocation};\nHttpResponse::Ok()`
                 break;
-            case "typed return":
+            case "real type":
                 externalFuncBody = `let out = ${internal.invocation};\nHttpResponse::Ok().json(out)`
                 break;
 
@@ -115,7 +151,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
         }
                 
         `
-        return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name}
+        return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name, method: func.method === "POST" ? "post" : 'get'}
     })
 }
 
@@ -272,7 +308,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                     App::new()
                         .data_factory(|| make_app_data())
                         .route("/", web::get().to(index))
-                        ${functions.map(f => `.route("/${f.path}", web::post().to(${f.func_name}))`).join("\n")}
+                        ${functions.map(f => `.route("/${f.path}", web::${f.method}().to(${f.func_name}))`).join("\n")}
                 })
                 .bind("0.0.0.0:8080")?
                 .run()
@@ -305,8 +341,6 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                     Ok(pgloc) => pgloc,
                     Err(e) => panic!("didn't receive postgres password: {}", e)
                 };
-
-                println!("password: {}", pwd);
             
                 let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", host, pwd), NoTls).await {
                     Ok(out) => out,

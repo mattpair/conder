@@ -1,17 +1,17 @@
 import { Parse } from '../parse';
 import { WithArrayIndicator, TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
 import { assertNever } from "../util/classifying";
-import { VoidReturn } from '../entity/basic';
 
 
 
-function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): FunctionResolved.ReturnType {
+function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): FunctionResolved.Type {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
             return {
-                data: {val: namespace.inScope.getEntityOfType(ent.type, "Struct"), isArray: ent.isArray},
-                kind: "typed return"
+                val: namespace.inScope.getEntityOfType(ent.type, "Struct"), 
+                isArray: ent.isArray,
+                kind: "real type"
             }
 
         case "VoidReturnType":
@@ -46,12 +46,10 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
                     kind: "UnaryParameter",
                     name: param.name,
                     loc: param.loc,
-                    part: {
-                        UnaryParameterType: {
-                            kind: "UnaryParameterType",
-                            val: parameterType,
-                            isArray: type.isArray
-                        }
+                    type: {
+                        kind: "real type",
+                        val: parameterType,
+                        isArray: type.isArray
                     }
                 })
             }
@@ -60,7 +58,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
 }
 
 
-function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, parameter: FunctionResolved.Parameter, ret: FunctionResolved.ReturnType): FunctionResolved.FunctionBody {
+function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, parameter: FunctionResolved.Parameter, ret: FunctionResolved.Type): FunctionResolved.FunctionBody {
     
     const variableLookup = new Map<string, FunctionResolved.Variable>()
     const p = parameter.differentiate()
@@ -72,19 +70,19 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
             
             variableLookup.set(p.name, {
                 name: p.name,
-                type: p.part.UnaryParameterType
+                type: p.type
             })
             break;
 
         default: assertNever(p)
     }
     const resolved: FunctionResolved.Statement[] = []
-    let earlyExit = false
+    let hitReturnStatement = false
     for (let i = 0; i < func.part.FunctionBody.children.Statement.length; i++) {
         const stmt = func.part.FunctionBody.children.Statement[i].differentiate();
-        
+        let resolvedStmt: Exclude<FunctionResolved.Statement, {kind: "ReturnStatement"}>
         switch (stmt.kind) {
-            case "Insertion":{
+            case "Insertion": {
                 const variable = variableLookup.get(stmt.variableName)
                 if (variable === undefined) {
                     throw Error(`Cannot find variable ${stmt.variableName}`)
@@ -93,40 +91,75 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
                 if (into.stores !== variable.type.val) {
                     throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores.name}`)
                 }
-
-                resolved.push({
+                resolvedStmt = {
                     kind: "Insertion",
                     loc: stmt.loc,
                     inserting: variable,
-                    into
-                })
+                    into,
+                    returnType: {kind: "VoidReturnType"}
+                }
 
-                break}
-            case "ReturnStatement":
+                break
+            }
+            case "AllInQuery": {
+                const store = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
+                resolvedStmt = {
+                    kind: "AllInQuery",
+                    loc: stmt.loc,
+                    from: store,
+                    returnType: { kind: "real type", isArray: true, val: store.stores}
+                }
+                break
+            }
+
+            case "VariableReference": {
                 const variable = variableLookup.get(stmt.val)
                 if (variable === undefined) {
                     throw Error(`Cannot find variable ${stmt.val}`)
                 }
-                if (ret.kind === "VoidReturnType" ||
-                    ret.data.isArray !== variable.type.isArray ||
-                    ret.data.val.name !== variable.type.val.name
-                ) {
-                    throw Error(`Cannot return ${JSON.stringify(variable.type, null, 2)} because exepected return type: ${JSON.stringify(ret, null, 2)}`)
+                resolvedStmt = {
+                    kind: "VariableReference",
+                    loc: stmt.loc,
+                    name: stmt.val,
+                    type: variable.type,
+                    returnType: {kind: "real type", isArray: variable.type.isArray, val: variable.type.val}
                 }
+                break
+            }
+            case "ReturnStatement":
+                if (hitReturnStatement) {
+                    throw Error(`Double return doesn't make any sense`)
+                }
+                
                 resolved.push({
                     kind: "ReturnStatement",
                     loc: stmt.loc,
-                    val: variable
                 })
-                earlyExit = true
+                hitReturnStatement = true
 
-                break
+                continue
 
             default: assertNever(stmt)
         }
-        if (earlyExit) {
+        resolved.push(resolvedStmt)
+
+        if (hitReturnStatement) {
+            if (ret.kind === "VoidReturnType" && resolvedStmt.returnType.kind !== "VoidReturnType") {
+                throw Error(`Returning ${resolvedStmt.returnType.val.name} but expected void return`)
+            }
+            if (ret.kind === "real type" && resolvedStmt.returnType.kind === "real type") {
+                if (!(ret.val === resolvedStmt.returnType.val && ret.isArray === resolvedStmt.returnType.isArray)) {
+                    throw Error(`Cannot return ${JSON.stringify(resolvedStmt.returnType, null, 2)} because exepected return type: ${JSON.stringify(ret, null, 2)}`)
+                }
+
+            } else {
+                throw Error(`Mismatch return types: expected ${ret.kind}\nreceived ${resolvedStmt.kind}`)
+            }
             break
         }
+    }
+    if (resolved.length === 0 && ret.kind !== "VoidReturnType") {
+        throw Error(`Function expects non-void return type but there are no statements`)
     }
     return {
         kind: "FunctionBody",
@@ -147,10 +180,11 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
         kind: "Function",
         loc: func.loc,
         name: func.name,
-        requiresDbClient: f.statements.some(s => s.kind === "Insertion"),
+        requiresDbClient: f.statements.some(s => ["Insertion", "AllInQuery"].includes(s.kind)),
         returnType: returnType,
         parameter,
-        body: f
+        body: f,
+        method: parameter.differentiate().kind === "NoParameter" ? "GET" : "POST"
     }
 }
 

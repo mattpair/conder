@@ -61,25 +61,30 @@ export namespace TypeResolved {
 
 
 export namespace FunctionResolved {
-    type UnaryParameterType = basic.Entity<"UnaryParameterType"> & WithArrayIndicator<Struct >
-    export type UnaryParameter = basic.BaseUnaryParameter<UnaryParameterType>
+    export type UnaryParameter = basic.NamedIntrafile<"UnaryParameter", {type: RealType}>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
-    type ReturnStatement = basic.IntrafileEntity<"ReturnStatement", {val: Variable}>
 
     export type Variable = Readonly<{
         name: string,
         type: WithArrayIndicator<Struct>
     }>
 
-    export type Insertion = basic.IntrafileEntity<"Insertion", {inserting: Variable, into: Store}>
-    export type Statement = Insertion | ReturnStatement
+    type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends Type> = 
+        basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
+    export type Insertion = BaseStatement<"Insertion", {inserting: Variable, into: Store}, basic.VoidReturn>
+    export type AllInQuery = BaseStatement<"AllInQuery", {from: Store}, RealType>
+    export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
+    export type Statement = Insertion | AllInQuery | VariableReference | basic.ReturnStatement
     export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
-    export type ReturnType = {kind: "typed return", data: WithArrayIndicator<Struct>} | basic.VoidReturn
+
+    export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>
+    export type Type = RealType | basic.VoidReturn
     export type Function =  basic.NamedIntrafile<"Function", {
         requiresDbClient: boolean,
-        returnType: ReturnType,
+        returnType: Type,
         parameter: Parameter,
-        body: FunctionBody
+        body: FunctionBody,
+        method: "POST" | "GET"
     }>
     
 

@@ -127,3 +127,15 @@ protoCompileTest("defining a store", `
 
     myFirstStore = new Store<stored>
 `)
+
+protoCompileTest("getting all data from store", `
+    struct stored {
+        string s
+    }
+
+    secondStore = new Store<stored>
+
+    function getAllData() stored[] {
+        return all in secondStore
+    }
+`)

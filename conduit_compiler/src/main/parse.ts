@@ -19,8 +19,11 @@ export namespace Parse {
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
 
+    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
+    export type AllInQuery = common.IntrafileEntity<"AllInQuery", {storeName: string}>
     export type Insertion = common.IntrafileEntity<"Insertion", {storeName: string, variableName: string}>
-    export type Statement = common.BaseStatement<() => (common.BaseReturnStatement | Insertion)>
+    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Insertion | AllInQuery | VariableReference)>
+
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
     export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
@@ -166,13 +169,15 @@ export namespace Parse {
         ReturnTypeSpec |
         Parameter | 
         common.VoidReturn |
-        common.BaseReturnStatement | 
+        common.ReturnStatement | 
         Statement |
         UnaryParameterType |
         NoParameter |
         UnaryParameter | 
         StoreDefinition |
-        Insertion
+        Insertion |
+        AllInQuery |
+        VariableReference 
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -375,7 +380,7 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^(?<type>[_A-Za-z]+[\w]*)(?<isArray>\[\])?/,
+            regex: /^ *(?<type>[_A-Za-z]+[\w]*)(?<isArray>\[\])?/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 return {
                     kind: "CustomType",
@@ -478,16 +483,15 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Insertion: 2}
+            priority: {ReturnStatement: 1, Insertion: 2, AllInQuery: 3, VariableReference: 4}
         },
         ReturnStatement: {
             kind: "leaf",
-            regex: /^\s*return +(?<val>[a-zA-Z_]\w*)/,
+            regex: /^\s*return +/,
             assemble(c, loc) {
                 return {
                     kind: "ReturnStatement",
                     loc,
-                    val: c.groups.val
                 }
             }
         },
@@ -516,6 +520,28 @@ export namespace Parse {
                     loc,
                     variableName: c.groups.variableName,
                     storeName: c.groups.storeName
+                }
+            }
+        },
+        AllInQuery: {
+            kind: "leaf",
+            regex: /^\s*all +in +(?<storeName>[a-zA-Z]+)/,
+            assemble(c, loc) {
+                return {
+                    kind: "AllInQuery",
+                    loc,
+                    storeName: c.groups.storeName
+                }
+            }
+        },
+        VariableReference: {
+            kind: "leaf",
+            regex: /^\s*(?<name>[a-zA-Z_]\w*)/,
+            assemble(c, loc) {
+                return {
+                    kind: "VariableReference",
+                    loc,
+                    val: c.groups.name
                 }
             }
         }

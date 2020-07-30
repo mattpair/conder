@@ -99,6 +99,446 @@ Object {
 }
 `;
 
+exports[`getting all data from store 1`] = `
+Object {
+  "namespace": Object {
+    "inScope": EntityMap {
+      "map": Map {
+        "stored" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "isRequired": true,
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 8,
+                  "endLineNumber": 2,
+                  "startColNumber": 19,
+                  "startLineNumber": 1,
+                },
+                "name": "s",
+                "part": Object {
+                  "FieldType": Object {
+                    "differentiate": [Function],
+                    "kind": "FieldType",
+                  },
+                },
+              },
+            ],
+          },
+          "file": FileLocation {
+            "dir": "",
+            "fullname": "testFile.cdt",
+            "name": "testFile.cdt",
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 19,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "stored",
+        },
+        "getAllData" => Object {
+          "body": Object {
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 36,
+              "endLineNumber": 7,
+              "startColNumber": 34,
+              "startLineNumber": 7,
+            },
+            "statements": Array [
+              Object {
+                "kind": "ReturnStatement",
+                "loc": Object {
+                  "endColNumber": 15,
+                  "endLineNumber": 8,
+                  "startColNumber": 36,
+                  "startLineNumber": 7,
+                },
+              },
+              Object {
+                "from": Object {
+                  "kind": "StoreDefinition",
+                  "loc": Object {
+                    "endColNumber": 28,
+                    "endLineNumber": 5,
+                    "startColNumber": 5,
+                    "startLineNumber": 3,
+                  },
+                  "name": "secondStore",
+                  "stores": Object {
+                    "children": Object {
+                      "Field": Array [
+                        Object {
+                          "isRequired": true,
+                          "kind": "Field",
+                          "loc": Object {
+                            "endColNumber": 8,
+                            "endLineNumber": 2,
+                            "startColNumber": 19,
+                            "startLineNumber": 1,
+                          },
+                          "name": "s",
+                          "part": Object {
+                            "FieldType": Object {
+                              "differentiate": [Function],
+                              "kind": "FieldType",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    "file": FileLocation {
+                      "dir": "",
+                      "fullname": "testFile.cdt",
+                      "name": "testFile.cdt",
+                    },
+                    "kind": "Struct",
+                    "loc": Object {
+                      "endColNumber": 19,
+                      "endLineNumber": 1,
+                      "startColNumber": 0,
+                      "startLineNumber": 0,
+                    },
+                    "name": "stored",
+                  },
+                },
+                "kind": "AllInQuery",
+                "loc": Object {
+                  "endColNumber": 33,
+                  "endLineNumber": 8,
+                  "startColNumber": 15,
+                  "startLineNumber": 8,
+                },
+                "returnType": Object {
+                  "isArray": true,
+                  "kind": "real type",
+                  "val": Object {
+                    "children": Object {
+                      "Field": Array [
+                        Object {
+                          "isRequired": true,
+                          "kind": "Field",
+                          "loc": Object {
+                            "endColNumber": 8,
+                            "endLineNumber": 2,
+                            "startColNumber": 19,
+                            "startLineNumber": 1,
+                          },
+                          "name": "s",
+                          "part": Object {
+                            "FieldType": Object {
+                              "differentiate": [Function],
+                              "kind": "FieldType",
+                            },
+                          },
+                        },
+                      ],
+                    },
+                    "file": FileLocation {
+                      "dir": "",
+                      "fullname": "testFile.cdt",
+                      "name": "testFile.cdt",
+                    },
+                    "kind": "Struct",
+                    "loc": Object {
+                      "endColNumber": 19,
+                      "endLineNumber": 1,
+                      "startColNumber": 0,
+                      "startLineNumber": 0,
+                    },
+                    "name": "stored",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 7,
+            "startColNumber": 35,
+            "startLineNumber": 5,
+          },
+          "name": "getAllData",
+          "parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "requiresDbClient": true,
+          "returnType": Object {
+            "isArray": true,
+            "kind": "real type",
+            "val": Object {
+              "children": Object {
+                "Field": Array [
+                  Object {
+                    "isRequired": true,
+                    "kind": "Field",
+                    "loc": Object {
+                      "endColNumber": 8,
+                      "endLineNumber": 2,
+                      "startColNumber": 19,
+                      "startLineNumber": 1,
+                    },
+                    "name": "s",
+                    "part": Object {
+                      "FieldType": Object {
+                        "differentiate": [Function],
+                        "kind": "FieldType",
+                      },
+                    },
+                  },
+                ],
+              },
+              "file": FileLocation {
+                "dir": "",
+                "fullname": "testFile.cdt",
+                "name": "testFile.cdt",
+              },
+              "kind": "Struct",
+              "loc": Object {
+                "endColNumber": 19,
+                "endLineNumber": 1,
+                "startColNumber": 0,
+                "startLineNumber": 0,
+              },
+              "name": "stored",
+            },
+          },
+        },
+        "secondStore" => Object {
+          "kind": "StoreDefinition",
+          "loc": Object {
+            "endColNumber": 28,
+            "endLineNumber": 5,
+            "startColNumber": 5,
+            "startLineNumber": 3,
+          },
+          "name": "secondStore",
+          "stores": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "isRequired": true,
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 8,
+                    "endLineNumber": 2,
+                    "startColNumber": 19,
+                    "startLineNumber": 1,
+                  },
+                  "name": "s",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                    },
+                  },
+                },
+              ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 19,
+              "endLineNumber": 1,
+              "startColNumber": 0,
+              "startLineNumber": 0,
+            },
+            "name": "stored",
+          },
+        },
+      },
+      "size": 3,
+    },
+    "name": "default",
+  },
+  "service": Object {
+    "functions": Array [
+      Object {
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 36,
+            "endLineNumber": 7,
+            "startColNumber": 34,
+            "startLineNumber": 7,
+          },
+          "statements": Array [
+            Object {
+              "kind": "ReturnStatement",
+              "loc": Object {
+                "endColNumber": 15,
+                "endLineNumber": 8,
+                "startColNumber": 36,
+                "startLineNumber": 7,
+              },
+            },
+            Object {
+              "from": Object {
+                "kind": "StoreDefinition",
+                "loc": Object {
+                  "endColNumber": 28,
+                  "endLineNumber": 5,
+                  "startColNumber": 5,
+                  "startLineNumber": 3,
+                },
+                "name": "secondStore",
+                "stores": Object {
+                  "children": Object {
+                    "Field": Array [
+                      Object {
+                        "isRequired": true,
+                        "kind": "Field",
+                        "loc": Object {
+                          "endColNumber": 8,
+                          "endLineNumber": 2,
+                          "startColNumber": 19,
+                          "startLineNumber": 1,
+                        },
+                        "name": "s",
+                        "part": Object {
+                          "FieldType": Object {
+                            "differentiate": [Function],
+                            "kind": "FieldType",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  "file": FileLocation {
+                    "dir": "",
+                    "fullname": "testFile.cdt",
+                    "name": "testFile.cdt",
+                  },
+                  "kind": "Struct",
+                  "loc": Object {
+                    "endColNumber": 19,
+                    "endLineNumber": 1,
+                    "startColNumber": 0,
+                    "startLineNumber": 0,
+                  },
+                  "name": "stored",
+                },
+              },
+              "kind": "AllInQuery",
+              "loc": Object {
+                "endColNumber": 33,
+                "endLineNumber": 8,
+                "startColNumber": 15,
+                "startLineNumber": 8,
+              },
+              "returnType": Object {
+                "isArray": true,
+                "kind": "real type",
+                "val": Object {
+                  "children": Object {
+                    "Field": Array [
+                      Object {
+                        "isRequired": true,
+                        "kind": "Field",
+                        "loc": Object {
+                          "endColNumber": 8,
+                          "endLineNumber": 2,
+                          "startColNumber": 19,
+                          "startLineNumber": 1,
+                        },
+                        "name": "s",
+                        "part": Object {
+                          "FieldType": Object {
+                            "differentiate": [Function],
+                            "kind": "FieldType",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  "file": FileLocation {
+                    "dir": "",
+                    "fullname": "testFile.cdt",
+                    "name": "testFile.cdt",
+                  },
+                  "kind": "Struct",
+                  "loc": Object {
+                    "endColNumber": 19,
+                    "endLineNumber": 1,
+                    "startColNumber": 0,
+                    "startLineNumber": 0,
+                  },
+                  "name": "stored",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 23,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
+        "name": "getAllData",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "requiresDbClient": true,
+        "returnType": Object {
+          "isArray": true,
+          "kind": "real type",
+          "val": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "isRequired": true,
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 8,
+                    "endLineNumber": 2,
+                    "startColNumber": 19,
+                    "startLineNumber": 1,
+                  },
+                  "name": "s",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                    },
+                  },
+                },
+              ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 19,
+              "endLineNumber": 1,
+              "startColNumber": 0,
+              "startLineNumber": 0,
+            },
+            "name": "stored",
+          },
+        },
+      },
+    ],
+    "kind": "public",
+  },
+}
+`;
+
 exports[`should allow enums 1`] = `
 Object {
   "namespace": Object {
