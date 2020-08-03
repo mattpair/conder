@@ -25,5 +25,15 @@ enum AttemptToStore {
 }
 
 myBadStore: AttemptToStore[] = []
+`)
+
+testFailsWhen("attempting to store non-array", `
+
+struct Singleton {
+    string value
+}
+
+singletonStore: Singleton = []
+
 
 `)

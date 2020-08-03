@@ -119,6 +119,10 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 if (t === undefined) {
                     throw Error(`Cannot find referenced struct for store ${firstPassEnt.part.CustomType.type}`)
                 }
+
+                if (!firstPassEnt.part.CustomType.isArray) {
+                    throw Error(`Global instances must be arrays for now`)
+                }
                 switch(t.kind) {
                     case "Struct":
                         resolveMessage(t)
