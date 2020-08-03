@@ -206,9 +206,9 @@ Object {
                     "name": "stored",
                   },
                 },
-                "kind": "AllInQuery",
+                "kind": "StoreReference",
                 "loc": Object {
-                  "endColNumber": 33,
+                  "endColNumber": 26,
                   "endLineNumber": 8,
                   "startColNumber": 15,
                   "startLineNumber": 8,
@@ -430,9 +430,9 @@ Object {
                   "name": "stored",
                 },
               },
-              "kind": "AllInQuery",
+              "kind": "StoreReference",
               "loc": Object {
-                "endColNumber": 33,
+                "endColNumber": 26,
                 "endLineNumber": 8,
                 "startColNumber": 15,
                 "startLineNumber": 8,

@@ -21,8 +21,8 @@ export type EntityKinds =
 "ReturnStatement" | 
 "StoreDefinition" |
 "Append" |
-"AllInQuery" |
-"VariableReference"
+"VariableReference" |
+"StoreReference"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

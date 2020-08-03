@@ -101,21 +101,18 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
 
                 break
             }
-            case "AllInQuery": {
-                const store = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
-                resolvedStmt = {
-                    kind: "AllInQuery",
-                    loc: stmt.loc,
-                    from: store,
-                    returnType: { kind: "real type", isArray: true, val: store.stores}
-                }
-                break
-            }
 
             case "VariableReference": {
                 const variable = variableLookup.get(stmt.val)
                 if (variable === undefined) {
-                    throw Error(`Cannot find variable ${stmt.val}`)
+                    const store = namespace.inScope.getEntityOfType(stmt.val, "StoreDefinition")
+                    resolvedStmt = {
+                        kind: "StoreReference",
+                        loc: stmt.loc,
+                        from: store,
+                        returnType: { kind: "real type", isArray: true, val: store.stores}
+                    }
+                   break
                 }
                 resolvedStmt = {
                     kind: "VariableReference",
@@ -180,7 +177,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
         kind: "Function",
         loc: func.loc,
         name: func.name,
-        requiresDbClient: f.statements.some(s => ["Append", "AllInQuery"].includes(s.kind)),
+        requiresDbClient: f.statements.some(s => ["Append", "StoreReference"].includes(s.kind)),
         returnType: returnType,
         parameter,
         body: f,

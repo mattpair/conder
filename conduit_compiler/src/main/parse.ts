@@ -20,9 +20,8 @@ export namespace Parse {
     export type Field = common.BaseField<FieldType>
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
-    export type AllInQuery = common.IntrafileEntity<"AllInQuery", {storeName: string}>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
-    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Append | AllInQuery | VariableReference)>
+    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Append | VariableReference)>
 
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -176,7 +175,6 @@ export namespace Parse {
         UnaryParameter | 
         StoreDefinition |
         Append |
-        AllInQuery |
         VariableReference 
 
     type WithChildren = Extract<AnyEntity, {children: any}>
@@ -483,7 +481,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Append: 2, AllInQuery: 3, VariableReference: 4}
+            priority: {ReturnStatement: 1, Append: 2, VariableReference: 4}
         },
         ReturnStatement: {
             kind: "leaf",
@@ -519,17 +517,6 @@ export namespace Parse {
                     kind: "Append",
                     loc,
                     variableName: c.groups.variableName,
-                    storeName: c.groups.storeName
-                }
-            }
-        },
-        AllInQuery: {
-            kind: "leaf",
-            regex: /^\s*all +in +(?<storeName>[a-zA-Z]+)/,
-            assemble(c, loc) {
-                return {
-                    kind: "AllInQuery",
-                    loc,
                     storeName: c.groups.storeName
                 }
             }

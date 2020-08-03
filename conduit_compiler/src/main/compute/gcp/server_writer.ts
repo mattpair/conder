@@ -73,7 +73,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
                 }
                 break;
             
-            case "AllInQuery":
+            case "StoreReference":
                 if (previousReturn) {
                     statements.push(`
                     let mut allin = match client.query("select * from ${stmt.from.name}", &[]).await {

@@ -136,6 +136,6 @@ protoCompileTest("getting all data from store", `
     secondStore: stored[] = []
 
     function getAllData() stored[] {
-        return all in secondStore
+        return secondStore
     }
 `)
