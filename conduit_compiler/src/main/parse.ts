@@ -497,8 +497,8 @@ export namespace Parse {
         },
         StoreDefinition: {
             kind: "conglomerate",
-            startRegex: /^\s*(?<name>[a-zA-Z]+) *= * new Store</,
-            endRegex: /^\s*>/,
+            startRegex: /^\s*(?<name>[a-zA-Z]+):\s*/,
+            endRegex: /^\s*=\s*\[\]/,
             requiresOne: {
                 CustomType: 1
             },

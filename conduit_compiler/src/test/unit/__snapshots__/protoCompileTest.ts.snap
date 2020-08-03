@@ -44,7 +44,7 @@ Object {
         "myFirstStore" => Object {
           "kind": "StoreDefinition",
           "loc": Object {
-            "endColNumber": 29,
+            "endColNumber": 18,
             "endLineNumber": 5,
             "startColNumber": 5,
             "startLineNumber": 3,
@@ -163,7 +163,7 @@ Object {
                 "from": Object {
                   "kind": "StoreDefinition",
                   "loc": Object {
-                    "endColNumber": 28,
+                    "endColNumber": 17,
                     "endLineNumber": 5,
                     "startColNumber": 5,
                     "startLineNumber": 3,
@@ -260,7 +260,7 @@ Object {
           "loc": Object {
             "endColNumber": 23,
             "endLineNumber": 7,
-            "startColNumber": 35,
+            "startColNumber": 30,
             "startLineNumber": 5,
           },
           "method": "GET",
@@ -314,7 +314,7 @@ Object {
         "secondStore" => Object {
           "kind": "StoreDefinition",
           "loc": Object {
-            "endColNumber": 28,
+            "endColNumber": 17,
             "endLineNumber": 5,
             "startColNumber": 5,
             "startLineNumber": 3,
@@ -387,7 +387,7 @@ Object {
               "from": Object {
                 "kind": "StoreDefinition",
                 "loc": Object {
-                  "endColNumber": 28,
+                  "endColNumber": 17,
                   "endLineNumber": 5,
                   "startColNumber": 5,
                   "startLineNumber": 3,
@@ -484,7 +484,7 @@ Object {
         "loc": Object {
           "endColNumber": 23,
           "endLineNumber": 7,
-          "startColNumber": 35,
+          "startColNumber": 30,
           "startLineNumber": 5,
         },
         "method": "GET",

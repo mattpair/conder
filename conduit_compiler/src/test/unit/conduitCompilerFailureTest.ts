@@ -24,6 +24,6 @@ enum AttemptToStore {
     No
 }
 
-myBadStore = new Store<AttemptToStore>
+myBadStore: AttemptToStore[] = []
 
 `)

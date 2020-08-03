@@ -125,7 +125,7 @@ protoCompileTest("defining a store", `
         string s
     }
 
-    myFirstStore = new Store<stored>
+    myFirstStore: stored[] = []
 `)
 
 protoCompileTest("getting all data from store", `
@@ -133,7 +133,7 @@ protoCompileTest("getting all data from store", `
         string s
     }
 
-    secondStore = new Store<stored>
+    secondStore: stored[] = []
 
     function getAllData() stored[] {
         return all in secondStore
