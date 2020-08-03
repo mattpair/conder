@@ -36,7 +36,7 @@ function toRustType(p: FunctionResolved.Type): string {
 
 function generateInternalFunction(f: FunctionResolved.Function): InternalFunction {
     const ret = f.returnType
-    const returnTypeSpec = ` -> ${toRustType(ret)}`
+    const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
     const param = f.parameter.differentiate()
     const parameterList: {name: string, type: string}[] = []
@@ -54,10 +54,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
             case "Append":
                 const s = generateInsertStatement(stmt)
                 statements.push(`
-                let res${i} = match client.query("${s.sql}", ${s.array}).await {
-                    Ok(out) => out,
-                    Err(err) => panic!("insertion failed: {}", err)
-                };
+                let res${i} = client.query("${s.sql}", ${s.array}).await?;
                 `)
                 break;
 
@@ -67,7 +64,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
 
             case "VariableReference":
                 if (previousReturn) {
-                    statements.push(`return ${stmt.name};`)
+                    statements.push(`return Ok(${stmt.name});`)
                 } else {
                     throw Error(`Useless variable reference ${stmt.name}`)
                 }
@@ -76,10 +73,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
             case "StoreReference":
                 if (previousReturn) {
                     statements.push(`
-                    let mut allin = match client.query("select * from ${stmt.from.name}", &[]).await {
-                        Ok(out) => out,
-                        Err(err) => panic!("query failed: {}", err)
-                    };
+                    let mut allin = client.query("select * from ${stmt.from.name}", &[]).await?;
  
                     let mut out = Vec::with_capacity(allin.len());
             
@@ -89,7 +83,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
 
                         })
                     }
-                    return out;
+                    return Ok(out);
 
                     `)
                     break
@@ -100,6 +94,11 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
             default: assertNever(stmt)
         }
     })
+
+    if (ret.kind === "VoidReturnType") {
+        statements.push(`return Ok(())`)
+    }
+    
     
     return {
         definition: `
@@ -135,10 +134,21 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
 
         switch (returnType.kind) {
             case "VoidReturnType":
-                externalFuncBody = `${internal.invocation};\nHttpResponse::Ok()`
+                externalFuncBody = `match ${internal.invocation} {
+                    Ok(()) => HttpResponse::Ok().finish(),
+                    Err(err) => {
+                        HttpResponse::BadRequest().body(format!("Failure caused by: {}", err))
+                    }
+                };
+                `
                 break;
             case "real type":
-                externalFuncBody = `let out = ${internal.invocation};\nHttpResponse::Ok().json(out)`
+                externalFuncBody = `match ${internal.invocation} {
+                    Ok(out) => HttpResponse::Ok().json(out),
+                    Err(err) => {
+                        HttpResponse::BadRequest().body(format!("Failure caused by: {}", err))
+                    }
+                };`
                 break;
 
             default: assertNever(returnType)
@@ -147,7 +157,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
         const external = `
         async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
             ${extractors.join("\n")}
-            ${externalFuncBody}
+            return ${externalFuncBody}
         }
                 
         `
@@ -281,11 +291,13 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
             fs.promises.writeFile(".deploy/main/src/main.rs", `
             #![allow(non_snake_case)]
             #![allow(non_camel_case_types)]
-
+            #![allow(redundant_semicolon)]
             use tokio_postgres::{NoTls, Client};
             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
             use std::env;
             use serde::{Deserialize, Serialize};
+            use tokio_postgres::error::{Error};
+
 
             struct AppData {
                 client: Client
