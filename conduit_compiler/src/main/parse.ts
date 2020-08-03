@@ -21,8 +21,8 @@ export namespace Parse {
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
     export type AllInQuery = common.IntrafileEntity<"AllInQuery", {storeName: string}>
-    export type Insertion = common.IntrafileEntity<"Insertion", {storeName: string, variableName: string}>
-    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Insertion | AllInQuery | VariableReference)>
+    export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
+    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Append | AllInQuery | VariableReference)>
 
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -175,7 +175,7 @@ export namespace Parse {
         NoParameter |
         UnaryParameter | 
         StoreDefinition |
-        Insertion |
+        Append |
         AllInQuery |
         VariableReference 
 
@@ -483,7 +483,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Insertion: 2, AllInQuery: 3, VariableReference: 4}
+            priority: {ReturnStatement: 1, Append: 2, AllInQuery: 3, VariableReference: 4}
         },
         ReturnStatement: {
             kind: "leaf",
@@ -511,12 +511,12 @@ export namespace Parse {
                 }
             }
         },
-        Insertion: {
+        Append: {
             kind: "leaf",
-            regex: /^\s*insert +(?<variableName>[a-zA-Z_]\w*) +into +(?<storeName>[a-zA-Z]+)\s*/,
+            regex: /^\s*(?<storeName>[a-zA-Z]+)\.append\(\s*(?<variableName>[a-zA-Z_]\w*)\s*\)\s*/,
             assemble(c, loc) {
                 return {
-                    kind: "Insertion",
+                    kind: "Append",
                     loc,
                     variableName: c.groups.variableName,
                     storeName: c.groups.storeName

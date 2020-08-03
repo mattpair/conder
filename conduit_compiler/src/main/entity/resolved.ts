@@ -71,10 +71,10 @@ export namespace FunctionResolved {
 
     type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends Type> = 
         basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
-    export type Insertion = BaseStatement<"Insertion", {inserting: Variable, into: Store}, basic.VoidReturn>
+    export type Append = BaseStatement<"Append", {inserting: Variable, into: Store}, basic.VoidReturn>
     export type AllInQuery = BaseStatement<"AllInQuery", {from: Store}, RealType>
     export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
-    export type Statement = Insertion | AllInQuery | VariableReference | basic.ReturnStatement
+    export type Statement = Append | AllInQuery | VariableReference | basic.ReturnStatement
     export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
 
     export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>

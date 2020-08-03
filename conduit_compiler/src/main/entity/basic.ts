@@ -20,7 +20,7 @@ export type EntityKinds =
 "Statement" |
 "ReturnStatement" | 
 "StoreDefinition" |
-"Insertion" |
+"Append" |
 "AllInQuery" |
 "VariableReference"
 

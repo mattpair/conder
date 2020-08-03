@@ -438,6 +438,7 @@ Object {
             "startColNumber": 5,
             "startLineNumber": 4,
           },
+          "method": "POST",
           "name": "echo",
           "parameter": Object {
             "differentiate": [Function],
@@ -610,6 +611,7 @@ Object {
           "startColNumber": 5,
           "startLineNumber": 4,
         },
+        "method": "POST",
         "name": "echo",
         "parameter": Object {
           "differentiate": [Function],

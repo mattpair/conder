@@ -263,6 +263,7 @@ Object {
             "startColNumber": 35,
             "startLineNumber": 5,
           },
+          "method": "GET",
           "name": "getAllData",
           "parameter": Object {
             "differentiate": [Function],
@@ -486,6 +487,7 @@ Object {
           "startColNumber": 35,
           "startLineNumber": 5,
         },
+        "method": "GET",
         "name": "getAllData",
         "parameter": Object {
           "differentiate": [Function],

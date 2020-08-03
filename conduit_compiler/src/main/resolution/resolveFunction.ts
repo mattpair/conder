@@ -82,7 +82,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
         const stmt = func.part.FunctionBody.children.Statement[i].differentiate();
         let resolvedStmt: Exclude<FunctionResolved.Statement, {kind: "ReturnStatement"}>
         switch (stmt.kind) {
-            case "Insertion": {
+            case "Append": {
                 const variable = variableLookup.get(stmt.variableName)
                 if (variable === undefined) {
                     throw Error(`Cannot find variable ${stmt.variableName}`)
@@ -92,7 +92,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
                     throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores.name}`)
                 }
                 resolvedStmt = {
-                    kind: "Insertion",
+                    kind: "Append",
                     loc: stmt.loc,
                     inserting: variable,
                     into,
@@ -180,7 +180,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
         kind: "Function",
         loc: func.loc,
         name: func.name,
-        requiresDbClient: f.statements.some(s => ["Insertion", "AllInQuery"].includes(s.kind)),
+        requiresDbClient: f.statements.some(s => ["Append", "AllInQuery"].includes(s.kind)),
         returnType: returnType,
         parameter,
         body: f,

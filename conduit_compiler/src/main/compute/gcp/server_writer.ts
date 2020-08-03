@@ -11,7 +11,7 @@ type InsertCodelet = {
     readonly array: string
 }
 
-function generateInsertStatement(stmt: FunctionResolved.Insertion): InsertCodelet {
+function generateInsertStatement(stmt: FunctionResolved.Append): InsertCodelet {
     const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
     const tableAndColumns: string = `${stmt.into.name}(${columns})`
     const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
@@ -51,7 +51,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
     let previousReturn = false
     f.body.statements.forEach((stmt, i) => {
         switch(stmt.kind) {
-            case "Insertion":
+            case "Append":
                 const s = generateInsertStatement(stmt)
                 statements.push(`
                 let res${i} = match client.query("${s.sql}", ${s.array}).await {
