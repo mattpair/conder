@@ -158,6 +158,10 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
     if (resolved.length === 0 && ret.kind !== "VoidReturnType") {
         throw Error(`Function expects non-void return type but there are no statements`)
     }
+
+    if (ret.kind === "real type" && resolved.find(r => r.kind === "ReturnStatement") === undefined) {
+        throw Error(`Function expected a real return type, but there is no return statement`)
+    }
     return {
         kind: "FunctionBody",
         loc: func.part.FunctionBody.loc,

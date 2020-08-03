@@ -12,3 +12,5 @@ exports[`naming an entity after a keyword  1`] = `
 
 struct function {"
 `;
+
+exports[`not returning anything 1`] = `"Function expected a real return type, but there is no return statement"`;

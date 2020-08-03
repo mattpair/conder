@@ -37,3 +37,15 @@ singletonStore: Singleton = []
 
 
 `)
+
+
+testFailsWhen("not returning anything", `
+
+struct Singleton {
+    string value
+}
+
+function echosSingleton(s: Singleton) Singleton {
+    s
+}
+`)
