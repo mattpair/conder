@@ -1,5 +1,6 @@
+import { Utilities } from 'conduit_compiler';
 import * as fs from 'fs';
-import { StepDefinition } from "../util/sequence";
+
 
 export type ConduitBuildConfig = {
     project: string,
@@ -10,7 +11,7 @@ export type ConduitBuildConfig = {
     }
 }
 
-export const loadBuildConfig: StepDefinition<{}, {buildConf: ConduitBuildConfig}> = {
+export const loadBuildConfig: Utilities.StepDefinition<{}, {buildConf: ConduitBuildConfig}> = {
     stepName: "loadBuildConfig",
     func: () => {
         if (fs.existsSync("cdtconfig.json")) {

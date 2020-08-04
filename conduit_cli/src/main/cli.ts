@@ -1,4 +1,3 @@
-import { Sequence, StepDefinition } from './util/sequence';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig, ConduitBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
@@ -6,9 +5,9 @@ import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
 import {writeRustAndContainerCode, generateModels, generateAllClients} from 'conduit_system_writer'
-import {compileFiles, CompiledTypes} from 'conduit_compiler'
+import {compileFiles, CompiledTypes, Utilities} from 'conduit_compiler'
 
-export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
+export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
     stepName: "compiling",
     func: ({conduits}) => {
         const toCompile: Record<string, () => string> = {}
@@ -22,7 +21,7 @@ type DependencyFactory = {
     mediumController:() => MediumController
 }
 
-const getConduitFileNames: StepDefinition<{}, {conduits: string[]}> = {
+const getConduitFileNames: Utilities.StepDefinition<{}, {conduits: string[]}> = {
     stepName: "discovering conduit files",
     func: () => {
         
@@ -50,7 +49,7 @@ const getConduitFileNames: StepDefinition<{}, {conduits: string[]}> = {
     }
 }
 
-const loadMediumForRun: StepDefinition<{}, {mediumState: MediumState, mediumController: MediumController}> = {
+const loadMediumForRun: Utilities.StepDefinition<{}, {mediumState: MediumState, mediumController: MediumController}> = {
     stepName: "loading medium state",
     func: ({}) => {
         const match = /^medium=(?<mediumName>.*)$/.exec(process.argv[3])
@@ -64,7 +63,7 @@ const loadMediumForRun: StepDefinition<{}, {mediumState: MediumState, mediumCont
     }
 }
 
-const deleteDeploymentFromMedium: StepDefinition<{buildConf: ConduitBuildConfig}, {}> = {
+const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: ConduitBuildConfig}, {}> = {
     stepName: "delete deployment from medium",
     func: ({buildConf}) => {
         const on = /^on=(?<medium>.*)$/.exec(process.argv[4])
@@ -81,7 +80,7 @@ const deleteDeploymentFromMedium: StepDefinition<{buildConf: ConduitBuildConfig}
 
 const commands: Record<string, (dep: DependencyFactory) => void> = {
     async models() {
-        await new Sequence(loadBuildConfig)
+        await new Utilities.Sequence(loadBuildConfig)
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
         .then(generateModels)
@@ -89,7 +88,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
     },
 
     async run() {
-        await new Sequence(loadBuildConfig)
+        await new Utilities.Sequence(loadBuildConfig)
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
         .then(loadMediumForRun)
@@ -121,7 +120,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
             await dep.mediumController().delete(process.argv[4], destroy)
         
         } else if (match.groups.entityType === "deployment") {
-            await new Sequence(loadBuildConfig)
+            await new Utilities.Sequence(loadBuildConfig)
             .then(deleteDeploymentFromMedium)
             .run({})
             

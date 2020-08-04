@@ -1,7 +1,6 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import * as fs from 'fs';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import { StepDefinition } from '../../util/sequence';
 
 type InsertCodelet = {
     readonly sql: string,
@@ -163,7 +162,7 @@ function generateFunctions(functions: CompiledTypes.Function[]): {def: string, f
 }
 
 
-export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
+export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)

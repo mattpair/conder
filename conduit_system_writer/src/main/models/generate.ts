@@ -1,9 +1,8 @@
-import { StepDefinition } from './../util/sequence';
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 
 import { ConduitBuildConfig } from '../config/load';
-import { generateClients } from '../compute/gcp/clients';
+import { generateClients } from '../clients';
 import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
 
 function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
@@ -72,7 +71,7 @@ export async function generateModelsToDirectory(manifest: CompiledTypes.Manifest
     fs.writeFileSync(`${dir}/models.ts`, models.join('\n\n'))
 }
 
-export const generateModels: StepDefinition<{manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
+export const generateModels: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
     stepName: "generateModels",
     func: ({manifest, buildConf}) => {
         const promises = []
@@ -85,7 +84,7 @@ export const generateModels: StepDefinition<{manifest: CompiledTypes.Manifest, b
 }
 
 
-export const generateAllClients: StepDefinition<{modelsGenerated: true, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
+export const generateAllClients: Utilities.StepDefinition<{modelsGenerated: true, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
     stepName: "generating all clients",
     func: ({manifest, buildConf, endpoint}) => {
         const p = []
