@@ -22,7 +22,7 @@ TestCodeGen("only one struct", (m) => {
 
 TestCodeGen("struct containing struct stored", (m) => {
     m.struct("inner").addPrimitiveField("fieldA", true, Lexicon.Symbol.double).build()
-    m.struct("outer").addStructField("inner", true, m.map.get("inner")).build()
+    m.struct("outer").addStructOrEnumField("inner", true, m.map.get("inner")).build()
 })
 
 
@@ -52,7 +52,11 @@ class StructBuilder {
         return this
     }
 
-    addStructField(name: string, isRequired: boolean, type: CompiledTypes.Struct): this {
+    addStructOrEnumField(name: string, isRequired: boolean, type: CompiledTypes.Struct | CompiledTypes.Enum): this {
+        
+        if (type === undefined || !(["Struct", "Enum"].includes(type.kind))) {
+            throw Error(`TEST BUG: ${type} is not a struct or enum`)
+        }
         this.fields.push({
             kind: "Field",
             loc: ManifestBuilder.loc,
