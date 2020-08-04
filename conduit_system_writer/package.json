@@ -2,12 +2,16 @@
   "name": "conduit_system_writer",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -b"
+    "compile": "tsc -b",
+    "test": "jest"
   },
   "author": "Jeremy",
   "license": "ISC",
   "devDependencies": {
+    "@types/jest": "^26.0.8",
+    "jest": "^26.2.2",
     "prettier": "^2.0.5",
+    "ts-jest": "^26.1.4",
     "typescript": "^3.9.3"
   },
   "dependencies": {
@@ -15,11 +19,11 @@
   },
   "jest": {
     "preset": "ts-jest",
-    "testEnvironment": "node",
     "testMatch": [
       "**/test/**/*.[jt]s",
       "**/?(*.)+(spec|test).[tj]s"
-    ]
+    ],
+    "testPathIgnorePatterns": ["/node_modules/", "/dist/"]
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
