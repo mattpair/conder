@@ -9,3 +9,5 @@ export {
     writeRustAndContainerCode
 }
 
+export * as BackendTypes from './src/main/ConduitBuildConfig'
+

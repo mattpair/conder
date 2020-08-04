@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as child_process from 'child_process';
 
-import { ConduitBuildConfig } from '../config/load';
+import { ConduitBuildConfig } from "../ConduitBuildConfig";
 import { generateClients } from '../clients';
 import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
 

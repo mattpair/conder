@@ -1,10 +1,10 @@
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
-import { loadBuildConfig, ConduitBuildConfig } from './config/load';
+import { loadBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
-import {writeRustAndContainerCode, generateModels, generateAllClients} from 'conduit_system_writer'
+import {writeRustAndContainerCode, generateModels, generateAllClients, BackendTypes} from 'conduit_system_writer'
 import {compileFiles, CompiledTypes, Utilities} from 'conduit_compiler'
 
 export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
@@ -63,7 +63,7 @@ const loadMediumForRun: Utilities.StepDefinition<{}, {mediumState: MediumState, 
     }
 }
 
-const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: ConduitBuildConfig}, {}> = {
+const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: BackendTypes.ConduitBuildConfig}, {}> = {
     stepName: "delete deployment from medium",
     func: ({buildConf}) => {
         const on = /^on=(?<medium>.*)$/.exec(process.argv[4])

@@ -1,22 +1,14 @@
 import { Utilities } from 'conduit_compiler';
+import {BackendTypes} from 'conduit_system_writer'
 import * as fs from 'fs';
 
-export type ConduitBuildConfig = {
-    project: string,
-    dependents?: {
-        [path in string]: {
-            language: "typescript"
-        }
-    }
-}
-
-export const loadBuildConfig: Utilities.StepDefinition<{}, {buildConf: ConduitBuildConfig}> = {
+export const loadBuildConfig: Utilities.StepDefinition<{}, {buildConf: BackendTypes.ConduitBuildConfig}> = {
     stepName: "loadBuildConfig",
     func: () => {
         if (fs.existsSync("cdtconfig.json")) {
             const raw = fs.readFileSync("cdtconfig.json", {encoding: "utf-8"})
             // TODO: actually validate.
-            const buildConf: ConduitBuildConfig = JSON.parse(raw)
+            const buildConf: BackendTypes.ConduitBuildConfig = JSON.parse(raw)
             if (!buildConf.dependents) {
                 console.warn("Please specify a dependent in your conduit config so I know where to put models.")
                 process.exit(1)

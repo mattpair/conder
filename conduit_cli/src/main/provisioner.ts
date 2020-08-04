@@ -1,11 +1,10 @@
+import { BackendTypes } from 'conduit_system_writer';
 import { CompiledTypes, Utilities } from 'conduit_compiler';
 import * as container from '@google-cloud/container'
 import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'
 import axios from 'axios'
-import { ConduitBuildConfig } from './config/load';
 import { generateRandomPassword } from './security';
-
 
 
 class GoogleCloudProvisioner {
@@ -120,7 +119,7 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployOnToCluster: Utilities.StepDefinition<
-    {mediumState: MediumState, manifest: CompiledTypes.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: CompiledTypes.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: BackendTypes.ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
