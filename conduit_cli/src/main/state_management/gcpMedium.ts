@@ -1,4 +1,4 @@
-import { MediumState } from "../deploy/gcp/provisioner";
+import { MediumState } from "../provisioner";
 import {Storage, Bucket, File} from '@google-cloud/storage'
 
 

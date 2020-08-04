@@ -1,6 +1,6 @@
 import * as child_process from 'child_process';
-import { StepDefinition } from '../../util/sequence';
-import { ConduitBuildConfig } from '../../config/load';
+import { StepDefinition } from './util/sequence';
+import { ConduitBuildConfig } from './config/load';
 
 
 export const containerize: StepDefinition<{codeWritten: {main: string, postgres: string}, buildConf: ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {

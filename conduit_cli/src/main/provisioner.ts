@@ -1,11 +1,11 @@
 import { CompiledTypes } from 'conduit_compiler';
-import { StepDefinition } from './../../util/sequence';
+import { StepDefinition } from './util/sequence';
 import * as container from '@google-cloud/container'
 import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'
 import axios from 'axios'
-import { ConduitBuildConfig } from '../../config/load';
-import { generateRandomPassword } from '../../security';
+import { ConduitBuildConfig } from './config/load';
+import { generateRandomPassword } from './security';
 
 
 

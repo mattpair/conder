@@ -1,9 +1,9 @@
 import { Sequence, StepDefinition } from './util/sequence';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig, ConduitBuildConfig } from './config/load';
-import { containerize, pushContainer } from './compute/gcp/deploy';
+import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
-import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
+import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
 import {writeRustAndContainerCode, generateModels, generateAllClients} from 'conduit_system_writer'
 import {compileFiles, CompiledTypes} from 'conduit_compiler'
