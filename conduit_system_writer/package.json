@@ -1,12 +1,8 @@
 {
-  "name": "conduit_cli",
+  "name": "conduit_system_writer",
   "version": "0.0.1",
   "scripts": {
-    "pretest:integration": "npm run pkg:mac",
-    "test:integration": "cd ../integration_test && ./test_all.sh",
-    "compile": "tsc -b",
-    "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
-    "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/"
+    "compile": "tsc -b"
   },
   "author": "Jeremy",
   "license": "ISC",
@@ -22,7 +18,6 @@
     "@kubernetes/client-node": "^0.12.0",
     "axios": "^0.19.2",
     "conduit_compiler": "file:../conduit_compiler",
-    "conduit_system_writer": "file:../conduit_system_writer",
     "isomorphic-ws": "^4.0.1",
     "ws": "^7.3.1"
   },
@@ -34,6 +29,6 @@
       "**/?(*.)+(spec|test).[tj]s"
     ]
   },
-  "main": "dist/conduit.js",
-  "types": "dist/conduit.d.ts"
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts"
 }

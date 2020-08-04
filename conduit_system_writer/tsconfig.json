@@ -1,5 +1,5 @@
 {
-    "include": ["src/**/*"],
+    "include": ["src/**/*", "index.ts"],
     "compilerOptions": {
         "module": "commonjs",
         "esModuleInterop": true,
@@ -13,10 +13,10 @@
             "node",
         ],
         "outDir": "dist",
+        "composite": true
  
     },
     "references": [
-        {"path": "../conduit_compiler/"},
-        {"path": "../conduit_system_writer"}
+        {"path": "../conduit_compiler/"}
     ]
 }
