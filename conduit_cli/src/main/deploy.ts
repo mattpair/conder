@@ -1,9 +1,9 @@
+import { ConduitBuildConfig } from './config/load';
 import { Utilities } from 'conduit_compiler';
 import * as child_process from 'child_process';
 import { BackendTypes } from 'conduit_system_writer';
 import * as fs from 'fs'
-
-export const containerize: Utilities.StepDefinition<BackendTypes.WrittenCode & { buildConf: BackendTypes.ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {
+export const containerize: Utilities.StepDefinition<BackendTypes.WrittenCode & { buildConf: ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {
     stepName: "containerize",
     func: ({buildConf, backend}) => {
 
@@ -29,7 +29,7 @@ export const containerize: Utilities.StepDefinition<BackendTypes.WrittenCode & {
     }
 }  
 
-export const pushContainer: Utilities.StepDefinition<{localContainers: {main: string, postgres: string}, buildConf: BackendTypes.ConduitBuildConfig}, {remoteContainers: {main: string, postgres: string}}> = {
+export const pushContainer: Utilities.StepDefinition<{localContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig}, {remoteContainers: {main: string, postgres: string}}> = {
     stepName: "push container",
     func: ({localContainers, buildConf}) => {
         const main = `us.gcr.io/conder-systems-281115/conduit/${buildConf.project}/main`

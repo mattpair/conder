@@ -1,4 +1,4 @@
-import { WrittenCode } from './ConduitBuildConfig';
+import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 

@@ -1,4 +1,3 @@
-import { ConduitBuildConfig } from "../ConduitBuildConfig";
 import { generateClients } from '../clients';
 import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
 
