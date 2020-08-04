@@ -1,6 +1,31 @@
 import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes, Lexicon } from "conduit_compiler"
 
+function TestCodeGen(description: string, modifier: (m: ManifestBuilder) => void) {
+    test(description, async () => {
+        const entBuilder = new ManifestBuilder()
+        modifier(entBuilder)
+        const r = await writeRustAndContainerCode.func({manifest: entBuilder.build()})
+        const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
+        expect(mainFiles).toMatchSnapshot("main files")
+        expect(r.backend.postgres.files).toMatchSnapshot("postgres files")
+    })
+}
+
+
+
+TestCodeGen("empty everything", () => {})
+
+TestCodeGen("only one struct", (m) => {
+    m.struct("test").addPrimitiveField("onlyField", true, Lexicon.Symbol.bool).build()
+})
+
+TestCodeGen("struct containing struct stored", (m) => {
+    m.struct("inner").addPrimitiveField("fieldA", true, Lexicon.Symbol.double).build()
+    m.struct("outer").addStructField("inner", true, m.map.get("inner")).build()
+})
+
+
 class StructBuilder {
     readonly name: string
     readonly fields: CompiledTypes.Field[]
@@ -27,29 +52,31 @@ class StructBuilder {
         return this
     }
 
+    addStructField(name: string, isRequired: boolean, type: CompiledTypes.Struct): this {
+        this.fields.push({
+            kind: "Field",
+            loc: ManifestBuilder.loc,
+            isRequired,
+            name,
+            part: {
+                FieldType: {
+                    kind: "FieldType",
+                    differentiate: () => type
+                }
+            }
+        })
+        return this
+    }
+
     build(): CompiledTypes.Struct {
         const struct: CompiledTypes.Struct ={
             kind: "Struct",
             file: {dir: "", name: "", fullname: ""},
             loc: ManifestBuilder.loc,
             children: {
-                Field: [
-                    {
-                        loc: ManifestBuilder.loc, 
-                        kind: "Field", 
-                        isRequired: true,
-                        name: "onlyField",
-    
-                        part: {
-                            FieldType: {
-                                kind: "FieldType",
-                                differentiate: () => ({loc: ManifestBuilder.loc, kind: "Primitive", val: Lexicon.Symbol.bool})
-                                
-                            }
-                        }
-                    }]
+                Field: this.fields
             },
-            name: "test"
+            name: this.name
         }
 
         this.parent.map.set(this.name, struct)
@@ -83,33 +110,3 @@ class ManifestBuilder {
         }
     }
 }
-
-async function runCodeGenTest(manifest: CompiledTypes.Manifest): Promise<void> {
-    const r = await writeRustAndContainerCode.func({manifest})
-    const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
-    expect(mainFiles).toMatchSnapshot("main files")
-    expect(r.backend.postgres.files).toMatchSnapshot("postgres files")
-}
-
-
-test("empty everything", async () => {
-    runCodeGenTest({
-        namespace: {
-            name: "default",
-            inScope: new CompiledTypes.EntityMap(new Map())
-        },
-        service: {
-            kind: "public",
-            functions: []
-        }
-    })
-})
-
-
-test("only one struct", async () => {
-    const entBuilder = new ManifestBuilder()
-    entBuilder.struct("test").addPrimitiveField("onlyField", true, Lexicon.Symbol.bool).build()
-    
-
-    runCodeGenTest(entBuilder.build())
-})
