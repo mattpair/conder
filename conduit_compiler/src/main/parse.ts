@@ -1,6 +1,6 @@
 import { Primitives, Symbol } from './lexicon';
-import { assertNever } from './util/classifying';
-import { FileLocation } from "./util/filesystem";
+import { assertNever } from './utils';
+import { FileLocation } from "./utils";
 import * as common from './entity/basic'
 
 

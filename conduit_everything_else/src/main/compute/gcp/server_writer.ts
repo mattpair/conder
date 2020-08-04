@@ -1,6 +1,5 @@
-import { CompiledTypes, Lexicon} from 'conduit_compiler';
+import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import * as fs from 'fs';
-import { assertNever } from '../../util/classifying';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import { StepDefinition } from '../../util/sequence';
 
@@ -89,7 +88,7 @@ function generateInternalFunction(f: CompiledTypes.Function): InternalFunction {
                     throw Error(`Currently don't support all in queries outside of returns`)
                 }
 
-            default: assertNever(stmt)
+            default: Utilities.assertNever(stmt)
         }
     })
 
@@ -149,7 +148,7 @@ function generateFunctions(functions: CompiledTypes.Function[]): {def: string, f
                 };`
                 break;
 
-            default: assertNever(returnType)
+            default: Utilities.assertNever(returnType)
         }
         
         const external = `
@@ -212,7 +211,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes
                                             case Lexicon.Symbol.bytes:
                                                 throw new Error("bytes isn't a supporetd type yet")
 
-                                            default: assertNever(field_type.val)
+                                            default: Utilities.assertNever(field_type.val)
                                         }
                                         break;
                                     case "Struct":
@@ -269,7 +268,7 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes
                                             typeStr = "text"
                                             break
 
-                                        default: assertNever(prim)
+                                        default: Utilities.assertNever(prim)
                                     }
                             }
                             return `${f.name}\t${typeStr}`

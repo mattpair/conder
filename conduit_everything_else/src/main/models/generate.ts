@@ -4,8 +4,7 @@ import * as child_process from 'child_process';
 
 import { ConduitBuildConfig } from '../config/load';
 import { generateClients } from '../compute/gcp/clients';
-import { assertNever } from '../util/classifying';
-import { Lexicon, CompiledTypes } from 'conduit_compiler';
+import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
 
 function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
     switch(ent.kind) {
@@ -44,7 +43,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                                         primstring = 'string'
                                         break;
 
-                                    default: assertNever(type.val)
+                                    default: Utilities.assertNever(type.val)
                                 }
 
                                 return `${f.name}: ${primstring} ${tailer}`
@@ -52,7 +51,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                             case "Struct":
                                 return `${f.name}: ${type.name} ${tailer}`
 
-                            default: assertNever(type)
+                            default: Utilities.assertNever(type)
                         }
 
                     }).join("\n")}

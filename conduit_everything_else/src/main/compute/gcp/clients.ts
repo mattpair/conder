@@ -1,7 +1,6 @@
-import { CompiledTypes } from 'conduit_compiler';
+import { CompiledTypes, Utilities } from 'conduit_compiler';
 
 import * as fs from 'fs'
-import { assertNever } from '../../util/classifying';
 
 export const a: string = `${12}`
 
@@ -45,7 +44,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, d
                 case "NoParameter":
                     break;
 
-                default: assertNever(param)
+                default: Utilities.assertNever(param)
             }
             switch (ret.kind) {
                 case "real type":
@@ -55,7 +54,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, d
                 case "VoidReturnType":
                     break;
 
-                default: assertNever(ret)
+                default: Utilities.assertNever(ret)
             }
     
             return `

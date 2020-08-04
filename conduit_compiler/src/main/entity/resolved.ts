@@ -1,6 +1,6 @@
 import * as basic from './basic'
 import { Parse } from '../parse';
-import { FileLocation } from '../util/filesystem';
+import { FileLocation } from '../utils';
 
 // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
 

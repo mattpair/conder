@@ -1,9 +1,9 @@
 
 import { Parse } from '../parse';
-import { FileLocation } from '../util/filesystem';
+import { FileLocation } from '../utils';
 import { Struct, Field, ResolvedType, EntityMap} from '../entity/resolved';
 import { TypeResolved } from "../entity/TypeResolved";
-import { assertNever } from '../util/classifying';
+import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
 
 type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function | Parse.StoreDefinition) & {file: FileLocation}

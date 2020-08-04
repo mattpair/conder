@@ -2,7 +2,7 @@
 import { Parse} from "./parse";
 import { Manifest } from "./entity/resolved";
 import { toNamespace } from "./resolution/resolveTypes";
-import { FileLocation } from "./util/filesystem";
+import { FileLocation } from "./utils";
 import { resolveFunctions } from "./resolution/resolveFunction";
 
 export function compileFiles(files: Record<string, () => string>): Manifest {

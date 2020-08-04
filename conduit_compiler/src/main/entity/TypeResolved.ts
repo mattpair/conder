@@ -1,6 +1,6 @@
 import { Struct, Enum, Store, EntityMap } from './resolved';
 import {Parse} from '../parse'
-import { FileLocation } from '../util/filesystem';
+import { FileLocation } from '../utils';
 
 
 export namespace TypeResolved {

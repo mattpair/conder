@@ -1,7 +1,7 @@
 import { Parse } from '../parse';
 import { Manifest, Function, Statement, Struct, Enum, EntityMap, Store, ReturnType, Parameter, FunctionBody, Variable } from "../entity/resolved";
 import { TypeResolved } from "../entity/TypeResolved";
-import { assertNever } from "../util/classifying";
+import { assertNever } from "../utils";
 
 
 

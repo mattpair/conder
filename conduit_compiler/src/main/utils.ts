@@ -1,4 +1,6 @@
 
+
+
 export class FileLocation {
     readonly dir: string
     readonly name: string
@@ -20,4 +22,8 @@ function splitFilename(filename: string): {dir: string, name: string} {
     } else {
         return {dir: '', name: filename}
     }
+}
+
+export function assertNever(x: never): never {
+    throw new Error("Unexpected object: " + JSON.stringify(x, null, 2));
 }
