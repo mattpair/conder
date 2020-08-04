@@ -22,7 +22,8 @@ TestCodeGen("only one struct", (m) => {
 
 TestCodeGen("struct containing struct stored", (m) => {
     m.struct("inner").addPrimitiveField("fieldA", true, Lexicon.Symbol.double).build()
-    m.struct("outer").addStructOrEnumField("inner", true, m.map.get("inner")).build()
+    m.struct("outer").addStructOrEnumField("inner", true, "inner").build()
+    m.store("outerStore", "outer")
 })
 
 
@@ -52,11 +53,8 @@ class StructBuilder {
         return this
     }
 
-    addStructOrEnumField(name: string, isRequired: boolean, type: CompiledTypes.Struct | CompiledTypes.Enum): this {
+    addStructOrEnumField(name: string, isRequired: boolean, typeName: string): this {
         
-        if (type === undefined || !(["Struct", "Enum"].includes(type.kind))) {
-            throw Error(`TEST BUG: ${type} is not a struct or enum`)
-        }
         this.fields.push({
             kind: "Field",
             loc: ManifestBuilder.loc,
@@ -65,7 +63,7 @@ class StructBuilder {
             part: {
                 FieldType: {
                     kind: "FieldType",
-                    differentiate: () => type
+                    differentiate: () => this.parent.get(typeName, "Struct", "Enum")
                 }
             }
         })
@@ -98,6 +96,24 @@ class ManifestBuilder {
     
     struct(name: string): StructBuilder {
         return new StructBuilder(name, this)
+    }
+    
+    store(name: string, stores: string) {
+        const store: CompiledTypes.Store = {
+            kind: "StoreDefinition",
+            loc: ManifestBuilder.loc,
+            name,
+            stores: this.get(stores, "Struct")
+        }
+        this.map.set(name, store)
+    }
+
+    get(name: string, ...kinds: string[]): any {
+        const type = this.map.get(name)
+        if (type === undefined || !(kinds.includes(type.kind))) {
+            throw Error(`TEST BUG: ${type} is not ${kinds}`)
+        }
+        return type
     }
 
     build(): CompiledTypes.Manifest {
