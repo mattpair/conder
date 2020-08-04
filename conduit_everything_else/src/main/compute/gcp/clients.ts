@@ -1,15 +1,15 @@
-import {  } from './../../parse';
-import { FunctionResolved, Struct } from '../../entity/resolved';
+import { CompiledTypes } from 'conduit_compiler';
+
 import * as fs from 'fs'
 import { assertNever } from '../../util/classifying';
 
 export const a: string = `${12}`
 
-function typeToTS(t:FunctionResolved.RealType):string {
+function typeToTS(t: CompiledTypes.FunctionResolved.RealType):string {
     return `models.${t.val.name}${t.isArray ? "[]" : ""}`
 }
 
-export function generateClients(url: string, manifest: FunctionResolved.Manifest, dir: string) {
+export function generateClients(url: string, manifest: CompiledTypes.FunctionResolved.Manifest, dir: string) {
     
     fs.writeFileSync(`${dir}/clients.ts`, 
         `

@@ -51,15 +51,6 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     
 }
 
-export namespace TypeResolved {
-    export type TopLevelEntities = Struct | Enum | Function | Store
-    export type Namespace = {
-        readonly name: "default"
-        readonly inScope: EntityMap<TopLevelEntities>
-    }
-}
-
-
 export namespace FunctionResolved {
     export type UnaryParameter = basic.NamedIntrafile<"UnaryParameter", {type: RealType}>
     export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>

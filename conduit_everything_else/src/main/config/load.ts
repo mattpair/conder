@@ -1,6 +1,5 @@
-import { StartupError } from "error/types";
 import * as fs from 'fs';
-import { StepDefinition } from "util/sequence";
+import { StepDefinition } from "../util/sequence";
 
 export type ConduitBuildConfig = {
     project: string,

@@ -1,7 +1,8 @@
 
 import { Parse } from '../parse';
 import { FileLocation } from '../util/filesystem';
-import { Struct, TypeResolved, Field, ResolvedType, EntityMap} from '../entity/resolved';
+import { Struct, Field, ResolvedType, EntityMap} from '../entity/resolved';
+import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from '../util/classifying';
 import  * as basic from '../entity/basic';
 

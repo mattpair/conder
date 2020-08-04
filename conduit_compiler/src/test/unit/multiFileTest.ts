@@ -1,5 +1,4 @@
-import {compileFiles} from "../../main/compile"
-
+import {compileFiles} from '../../main/compile'
 
 function makeLazy(files: Record<string, string>): Record<string, () => string> {
     const lazyFiles: Record<string, () => string> = {}

@@ -2,15 +2,13 @@ import { Sequence, StepDefinition } from './util/sequence';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig, ConduitBuildConfig } from './config/load';
 import { containerize, pushContainer } from './compute/gcp/deploy';
-import {compileFiles} from "./compile"
-import { FunctionResolved } from './entity/resolved';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './deploy/gcp/provisioner';
 import { generateModels, generateAllClients } from './models/generate';
 import { writeRustAndContainerCode } from './compute/gcp/server_writer';
+import {compileFiles, CompiledTypes} from 'conduit_compiler'
 
-
-export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: FunctionResolved.Manifest}> = {
+export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.FunctionResolved.Manifest}> = {
     stepName: "compiling",
     func: ({conduits}) => {
         const toCompile: Record<string, () => string> = {}

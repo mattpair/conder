@@ -1,5 +1,4 @@
-import {compileFiles} from "../../main/compile"
-
+import {compileFiles} from '../../main/compile'
 
 function protoCompileTest(description: string, file: string) {
     test(description, () => {

@@ -1,10 +1,10 @@
+import { CompiledTypes } from 'conduit_compiler';
 import { StepDefinition } from './../../util/sequence';
 import * as container from '@google-cloud/container'
 import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'
 import axios from 'axios'
-import { FunctionResolved } from '../../entity/resolved'
-import { ConduitBuildConfig } from 'config/load';
+import { ConduitBuildConfig } from '../../config/load';
 import { generateRandomPassword } from '../../security';
 
 
@@ -121,7 +121,7 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployOnToCluster: StepDefinition<
-    {mediumState: MediumState, manifest: FunctionResolved.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: CompiledTypes.FunctionResolved.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {

@@ -1,5 +1,5 @@
 {
-    "include": ["src/**/*", "index.ts"],
+    "include": ["src/**/*"],
     "compilerOptions": {
         "module": "commonjs",
         "esModuleInterop": true,
@@ -11,9 +11,11 @@
         "typeRoots": [ "node_modules/@types/", "src/" ],
         "types": [
             "node",
-            "jest"
         ],
-        "composite": true,
-        "outDir": "dist"
-    }
+        "outDir": "dist",
+ 
+    },
+    "references": [
+        {"path": "../conduit_compiler/"}
+    ]
 }

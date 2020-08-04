@@ -1,5 +1,6 @@
 import { Parse } from '../parse';
-import { WithArrayIndicator, TypeResolved, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
+import { WithArrayIndicator, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
+import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from "../util/classifying";
 
 

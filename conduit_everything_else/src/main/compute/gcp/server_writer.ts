@@ -1,7 +1,5 @@
-import { WithArrayIndicator, Struct } from './../../entity/resolved';
-import { Symbol } from './../../lexicon';
+import { CompiledTypes, Lexicon} from 'conduit_compiler';
 import * as fs from 'fs';
-import { FunctionResolved } from '../../entity/resolved';
 import { assertNever } from '../../util/classifying';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import { StepDefinition } from '../../util/sequence';
@@ -11,7 +9,7 @@ type InsertCodelet = {
     readonly array: string
 }
 
-function generateInsertStatement(stmt: FunctionResolved.Append): InsertCodelet {
+function generateInsertStatement(stmt: CompiledTypes.FunctionResolved.Append): InsertCodelet {
     const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
     const tableAndColumns: string = `${stmt.into.name}(${columns})`
     const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
@@ -27,14 +25,14 @@ type InternalFunction = {
     readonly invocation: string
 }
 
-function toRustType(p: FunctionResolved.Type): string {
+function toRustType(p: CompiledTypes.FunctionResolved.Type): string {
     if (p.kind === "VoidReturnType") {
         return "()"
     }
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: FunctionResolved.Function): InternalFunction {
+function generateInternalFunction(f: CompiledTypes.FunctionResolved.Function): InternalFunction {
     const ret = f.returnType
     const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
@@ -109,7 +107,7 @@ function generateInternalFunction(f: FunctionResolved.Function): InternalFunctio
     }
 }
 
-function generateFunctions(functions: FunctionResolved.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
+function generateFunctions(functions: CompiledTypes.FunctionResolved.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
     return functions.map(func => {
 
         const internal = generateInternalFunction(func) 
@@ -166,7 +164,7 @@ function generateFunctions(functions: FunctionResolved.Function[]): {def: string
 }
 
 
-export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResolved.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
+export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes.FunctionResolved.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)
@@ -180,38 +178,38 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                     structs.push(`
                         #[derive(Serialize, Deserialize)]
                         struct ${val.name} {
-                            ${val.children.Field.map(field => {
+                            ${val.children.Field.map((field: CompiledTypes.Field) => {
                                 const field_type = field.part.FieldType.differentiate()
                                 let field_type_str = ''
                                 switch (field_type.kind) {
                                     case "Primitive":
                                         switch (field_type.val) {
-                                            case Symbol.double:
+                                            case Lexicon.Symbol.double:
                                                 field_type_str = "f64"
                                                 break;
-                                            case Symbol.float:
+                                            case Lexicon.Symbol.float:
                                                 field_type_str ="f32"
                                                 break;
-                                            case Symbol.int32:
+                                            case Lexicon.Symbol.int32:
                                                 field_type_str ="i32"
                                                 break;
-                                            case Symbol.int64:
+                                            case Lexicon.Symbol.int64:
                                                 field_type_str ="i64"
                                                 break;
-                                            case Symbol.string:
+                                            case Lexicon.Symbol.string:
                                                 field_type_str = "String"
                                                 break;
-                                            case Symbol.uint32:
+                                            case Lexicon.Symbol.uint32:
                                                 field_type_str = "u32"
                                                 break;
-                                            case Symbol.uint64:
+                                            case Lexicon.Symbol.uint64:
                                                 field_type_str = "u64"
                                                 break;
-                                            case Symbol.bool:
+                                            case Lexicon.Symbol.bool:
                                                 field_type_str = "bool"
                                                 break;
 
-                                            case Symbol.bytes:
+                                            case Lexicon.Symbol.bytes:
                                                 throw new Error("bytes isn't a supporetd type yet")
 
                                             default: assertNever(field_type.val)
@@ -244,30 +242,30 @@ export const writeRustAndContainerCode: StepDefinition<{ manifest: FunctionResol
                                 case "Primitive":
                                     const prim = type.val
                                     switch(prim) {
-                                        case Symbol.bool:
+                                        case Lexicon.Symbol.bool:
                                             typeStr = "boolean"
                                             break
-                                        case Symbol.bytes:
+                                        case Lexicon.Symbol.bytes:
                                             throw Error("bytes aren't supported for stores yet")
 
-                                        case Symbol.double:
+                                        case Lexicon.Symbol.double:
                                             typeStr = "double precision"
                                             break
-                                        case Symbol.float:
+                                        case Lexicon.Symbol.float:
                                             typeStr ="real"
                                             break
-                                        case Symbol.int32:
+                                        case Lexicon.Symbol.int32:
                                             typeStr = "integer"
                                             break
-                                        case Symbol.int64:
+                                        case Lexicon.Symbol.int64:
                                             typeStr = "bigint"
                                             break
-                                        case Symbol.uint32:
-                                        case Symbol.uint64:
+                                        case Lexicon.Symbol.uint32:
+                                        case Lexicon.Symbol.uint64:
                                             typeStr = "bigint"
                                             console.warn("storing uints as signed integers")
                                             break
-                                        case Symbol.string:
+                                        case Lexicon.Symbol.string:
                                             typeStr = "text"
                                             break
 
