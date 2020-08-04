@@ -1,6 +1,3 @@
-import * as fs from 'fs';
-import * as child_process from 'child_process';
-
 import { ConduitBuildConfig } from "../ConduitBuildConfig";
 import { generateClients } from '../clients';
 import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
@@ -58,7 +55,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
     }
 }
 
-export async function generateModelsToDirectory(manifest: CompiledTypes.Manifest, dir: string): Promise<void> {
+export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
     const models: string[] = []
     manifest.namespace.inScope.forEach(v => {
         if (v.kind === "Function" || v.kind === "StoreDefinition") {
@@ -66,32 +63,23 @@ export async function generateModelsToDirectory(manifest: CompiledTypes.Manifest
         }
         models.push(modelFor(v))
     })
-
-    child_process.execSync(`mkdir -p ${dir}`)
-    fs.writeFileSync(`${dir}/models.ts`, models.join('\n\n'))
+    return models
 }
 
-export const generateModels: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
+export const generateModels: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {models: string[]}> = {
     stepName: "generateModels",
-    func: ({manifest, buildConf}) => {
-        const promises = []
-        for (const dir in buildConf.dependents) {
-            promises.push(generateModelsToDirectory(manifest, dir))
-        }
-        return Promise.all(promises).then(() => ({modelsGenerated: true}))
+    func: ({manifest}) => {
+        return Promise.resolve({models: generateAllModels(manifest)})
     }
 
 }
 
 
-export const generateAllClients: Utilities.StepDefinition<{modelsGenerated: true, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
+export const generateAllClients: Utilities.StepDefinition<{models: string[], manifest: CompiledTypes.Manifest, endpoint: string}, {clients: string}> = {
     stepName: "generating all clients",
-    func: ({manifest, buildConf, endpoint}) => {
-        const p = []
-        for (const dir in buildConf.dependents) {
-            generateClients(endpoint, manifest, dir)
-        }
-        return Promise.resolve({})
+    func: ({manifest, models, endpoint}) => {
+        
+        return Promise.resolve({clients: generateClients(endpoint, manifest, models)})
     }
     
 }

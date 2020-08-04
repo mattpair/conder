@@ -1,5 +1,5 @@
+import { WrittenCode } from './ConduitBuildConfig';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
-import * as fs from 'fs';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 
 type InsertCodelet = {
@@ -162,7 +162,7 @@ function generateFunctions(functions: CompiledTypes.Function[]): {def: string, f
 }
 
 
-export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
+export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, WrittenCode> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)
@@ -278,115 +278,129 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                 
             }
         })
-        fs.mkdirSync(".deploy/main/src", {recursive: true})
-        fs.mkdirSync(".deploy/postgres/startup", {recursive: true})
-        return Promise.all([
-            fs.promises.writeFile(".deploy/main/Dockerfile", maindockerfile),
-            fs.promises.writeFile(".deploy/main/Cargo.lock", cargolockstr),
-            fs.promises.writeFile(".deploy/main/Cargo.toml", cargo),
-            fs.promises.writeFile(".deploy/main/src/main.rs", `
-            #![allow(non_snake_case)]
-            #![allow(non_camel_case_types)]
-            #![allow(redundant_semicolon)]
-            use tokio_postgres::{NoTls, Client};
-            use actix_web::{web, App, HttpResponse, HttpServer, Responder};
-            use std::env;
-            use serde::{Deserialize, Serialize};
-            use tokio_postgres::error::{Error};
-
-
-            struct AppData {
-                client: Client
-            }
-            
-            #[derive(Serialize, Deserialize)]
-            struct City {
-                name: String,
-                location: i32
-            }
-            
-    
-            ${structs.join("\n")}
-    
-            ${functions.map(f => f.def).join("\n\n")}
-    
-            #[actix_rt::main]
-            async fn main() -> std::io::Result<()> {
-                HttpServer::new(|| {
-                    App::new()
-                        .data_factory(|| make_app_data())
-                        .route("/", web::get().to(index))
-                        ${functions.map(f => `.route("/${f.path}", web::${f.method}().to(${f.func_name}))`).join("\n")}
-                })
-                .bind("0.0.0.0:8080")?
-                .run()
-                .await
-            }
-    
-            async fn index(data: web::Data<AppData>) -> impl Responder {
-                let mut rows = match data.client.query("select name, location from cities", &[]).await {
-                    Ok(rows) => rows,
-                    Err(err) => panic!("didn't succeed: {}", err)
-                };
-            
-                let mut out = Vec::with_capacity(rows.len());
-            
-                while let Some(row) = rows.pop() {
-                    out.push(City {
-                        name: row.get(0),
-                        location: row.get(1)
-                    })
-                }
-                return HttpResponse::Ok().json(out);
-            }
-
-            async fn make_app_data() -> Result<AppData, ()> {
-                let host = match env::var("POSTGRES_SERVICE_HOST") {
-                    Ok(pgloc) => pgloc,
-                    Err(e) => panic!("didn't receive postgres location: {}", e)
-                };
-                let pwd = match env::var("POSTGRES_PASSWORD") {
-                    Ok(pgloc) => pgloc,
-                    Err(e) => panic!("didn't receive postgres password: {}", e)
-                };
-            
-                let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", host, pwd), NoTls).await {
-                    Ok(out) => out,
-                    Err(e) => panic!("couldn't create connection: {}", e)
-                };
+        return Promise.resolve({
+            backend: {
                 
-                // The connection object performs the actual communication with the database,
-                // so spawn it off to run on its own.
-                actix_rt::spawn(async move {
-                    if let Err(e) = connection.await {
-                        eprintln!("connection error: {}", e);
-                    }
-                });
+                postgres: {
+                    docker: `
+                    FROM postgres:12.3
+                    
+                    COPY startup/ /docker-entrypoint-initdb.d/
+                            `,
+                    files: [{
+                        name: ".deploy/postgres/startup/init.sql",
+                        content: `
+
+                        CREATE TABLE cities (
+                            name            varchar(80),
+                            location        int
+                        );
                 
-                 
-                return Ok(AppData {
-                    client: client,
-                });
+                        ${tables.join("\n")}
+                        
+                        
+                        insert into cities(name, location)
+                        values ('detroit', 12)`
+                    }]
+                },
+                main: {
+                    docker: maindockerfile,
+                    files: [
+                        {name: ".deploy/main/Cargo.lock", content: cargolockstr}, 
+                        {name: ".deploy/main/Cargo.toml", content: cargo},
+                        {
+                            name: ".deploy/main/src/main.rs", 
+                            content: `
+                            #![allow(non_snake_case)]
+                            #![allow(non_camel_case_types)]
+                            #![allow(redundant_semicolon)]
+                            use tokio_postgres::{NoTls, Client};
+                            use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+                            use std::env;
+                            use serde::{Deserialize, Serialize};
+                            use tokio_postgres::error::{Error};
+                
+                
+                            struct AppData {
+                                client: Client
+                            }
+                            
+                            #[derive(Serialize, Deserialize)]
+                            struct City {
+                                name: String,
+                                location: i32
+                            }
+                            
+                    
+                            ${structs.join("\n")}
+                    
+                            ${functions.map(f => f.def).join("\n\n")}
+                    
+                            #[actix_rt::main]
+                            async fn main() -> std::io::Result<()> {
+                                HttpServer::new(|| {
+                                    App::new()
+                                        .data_factory(|| make_app_data())
+                                        .route("/", web::get().to(index))
+                                        ${functions.map(f => `.route("/${f.path}", web::${f.method}().to(${f.func_name}))`).join("\n")}
+                                })
+                                .bind("0.0.0.0:8080")?
+                                .run()
+                                .await
+                            }
+                    
+                            async fn index(data: web::Data<AppData>) -> impl Responder {
+                                let mut rows = match data.client.query("select name, location from cities", &[]).await {
+                                    Ok(rows) => rows,
+                                    Err(err) => panic!("didn't succeed: {}", err)
+                                };
+                            
+                                let mut out = Vec::with_capacity(rows.len());
+                            
+                                while let Some(row) = rows.pop() {
+                                    out.push(City {
+                                        name: row.get(0),
+                                        location: row.get(1)
+                                    })
+                                }
+                                return HttpResponse::Ok().json(out);
+                            }
+                
+                            async fn make_app_data() -> Result<AppData, ()> {
+                                let host = match env::var("POSTGRES_SERVICE_HOST") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!("didn't receive postgres location: {}", e)
+                                };
+                                let pwd = match env::var("POSTGRES_PASSWORD") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!("didn't receive postgres password: {}", e)
+                                };
+                            
+                                let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", host, pwd), NoTls).await {
+                                    Ok(out) => out,
+                                    Err(e) => panic!("couldn't create connection: {}", e)
+                                };
+                                
+                                // The connection object performs the actual communication with the database,
+                                // so spawn it off to run on its own.
+                                actix_rt::spawn(async move {
+                                    if let Err(e) = connection.await {
+                                        eprintln!("connection error: {}", e);
+                                    }
+                                });
+                                
+                                
+                                return Ok(AppData {
+                                    client: client,
+                                });
+                            }
+                            
+                        `
+                        }
+                    ],
+                    },
             }
-            
-        `),
-            fs.promises.writeFile(".deploy/postgres/Dockerfile", `
-FROM postgres:12.3
-
-COPY startup/ /docker-entrypoint-initdb.d/
-        `),
-            fs.promises.writeFile(".deploy/postgres/startup/init.sql", `
-
-        CREATE TABLE cities (
-            name            varchar(80),
-            location        int
-        );
-
-        ${tables.join("\n")}
-        
-        
-        insert into cities(name, location)
-        values ('detroit', 12)`)
-        ]).then(() => ({codeWritten: {main: ".deploy/main", postgres: ".deploy/postgres"}}))
+        })
     }
+        
 }

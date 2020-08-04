@@ -1,16 +1,31 @@
 import { Utilities } from 'conduit_compiler';
 import * as child_process from 'child_process';
 import { BackendTypes } from 'conduit_system_writer';
+import * as fs from 'fs'
 
-export const containerize: Utilities.StepDefinition<{codeWritten: {main: string, postgres: string}, buildConf: BackendTypes.ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {
+export const containerize: Utilities.StepDefinition<BackendTypes.WrittenCode & { buildConf: BackendTypes.ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {
     stepName: "containerize",
-    func: ({buildConf, codeWritten}) => {
-        const main = `conder-systems/conduit/${buildConf.project}-main`
-        child_process.execSync(`docker build -t ${main} .`, {cwd: codeWritten.main, stdio: "inherit"})
+    func: ({buildConf, backend}) => {
 
-        const postgres = `conder-systems/conduits/${buildConf.project}-postgres`
-        child_process.execSync(`docker build -t ${postgres} .`, {cwd: codeWritten.postgres, stdio: "inherit"})
-        return Promise.resolve({localContainers: {main, postgres}})
+        fs.mkdirSync(".deploy/main/src", {recursive: true})
+        fs.mkdirSync(".deploy/postgres/startup", {recursive: true})
+        return Promise.all([
+            ...backend.main.files.map(f => fs.promises.writeFile(f.name, f.content)),
+            ...backend.postgres.files.map(f => fs.promises.writeFile(f.name, f.content)),
+            fs.promises.writeFile(".deploy/main/Dockerfile", backend.main.docker),
+            fs.promises.writeFile(".deploy/postgres/Dockerfile", backend.postgres.docker)
+        ]).then(() => {
+            const main = `conder-systems/conduit/${buildConf.project}-main`
+        
+
+            child_process.execSync(`docker build -t ${main} .`, {cwd: ".deploy/main", stdio: "inherit"})
+    
+            const postgres = `conder-systems/conduits/${buildConf.project}-postgres`
+            child_process.execSync(`docker build -t ${postgres} .`, {cwd: ".deploy/postgres", stdio: "inherit"})
+
+            return{localContainers: {main, postgres}}
+        })
+
     }
 }  
 

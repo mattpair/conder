@@ -1,19 +1,17 @@
 import { CompiledTypes, Utilities } from 'conduit_compiler';
 
-import * as fs from 'fs'
-
 export const a: string = `${12}`
 
 function typeToTS(t: CompiledTypes.RealType):string {
-    return `models.${t.val.name}${t.isArray ? "[]" : ""}`
+    return `${t.val.name}${t.isArray ? "[]" : ""}`
 }
 
-export function generateClients(url: string, manifest: CompiledTypes.Manifest, dir: string) {
+export function generateClients(url: string, manifest: CompiledTypes.Manifest, models: string[]) {
     
-    fs.writeFileSync(`${dir}/clients.ts`, 
-        `
-        import * as models from './models'
+    return  `
         const url = '${url}'
+
+        ${models.join("\n")}
 
         export function hello() {
             return fetch(url)
@@ -67,5 +65,4 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, d
 
             }`}).join("\n")}
         `
-    )
 }

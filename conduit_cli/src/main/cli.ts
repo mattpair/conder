@@ -77,9 +77,22 @@ const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: BackendTy
 
 }
 
+export const writeClientFile: Utilities.StepDefinition<{clients: string, buildConf: BackendTypes.ConduitBuildConfig}, {}> = {
+    stepName: "generating all clients",
+    func: ({buildConf, clients}) => {
+        const p = []
+        for (const dir in buildConf.dependents) {
+            p.push(fs.promises.writeFile(`${dir}/clients.ts`, clients))
+
+        }
+        return Promise.all(p)
+    }
+    
+}
 
 const commands: Record<string, (dep: DependencyFactory) => void> = {
     async models() {
+        console.warn("Models functionality hasn't been supported in a while and may require updating")
         await new Utilities.Sequence(loadBuildConfig)
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
@@ -98,6 +111,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(deployOnToCluster)
         .then(generateModels)
         .then(generateAllClients)
+        .then(writeClientFile)
         .run({})
         
         console.log("done!")        
