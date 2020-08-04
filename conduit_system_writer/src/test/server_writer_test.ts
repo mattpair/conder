@@ -1,9 +1,16 @@
 import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes } from "conduit_compiler"
 
+async function runCodeGenTest(manifest: CompiledTypes.Manifest): Promise<void> {
+    const r = await writeRustAndContainerCode.func({manifest})
+    const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
+    expect(mainFiles).toMatchSnapshot("main files")
+    expect(r.backend.postgres.files).toMatchSnapshot("postgres files")
+}
+
 
 test("empty everything", async () => {
-    const r =await writeRustAndContainerCode.func({manifest: {
+    runCodeGenTest({
         namespace: {
             name: "default",
             inScope: new CompiledTypes.EntityMap(new Map())
@@ -12,9 +19,5 @@ test("empty everything", async () => {
             kind: "public",
             functions: []
         }
-    }})
-    const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
-    expect(r.backend.main.docker).toMatchSnapshot("main dockerfile")
-    expect(mainFiles).toMatchSnapshot("main files")
-    expect(r.backend.postgres).toMatchSnapshot("postgres files")
+    })
 })
