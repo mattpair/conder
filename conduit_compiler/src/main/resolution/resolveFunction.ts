@@ -1,11 +1,11 @@
 import { Parse } from '../parse';
-import { WithArrayIndicator, FunctionResolved, Struct, Function, Enum, EntityMap, Store, ResolvedType } from "../entity/resolved";
+import { Manifest, Function, Statement, Struct, Enum, EntityMap, Store, ReturnType, Parameter, FunctionBody, Variable } from "../entity/resolved";
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from "../util/classifying";
 
 
 
-function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): FunctionResolved.Type {
+function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): ReturnType {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
@@ -22,7 +22,7 @@ function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Names
     }
 }
 
-function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Parameter): FunctionResolved.Parameter {
+function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Parameter): Parameter {
     const param = parameter.differentiate()
     switch (param.kind) {
         case "NoParameter":
@@ -59,9 +59,9 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
 }
 
 
-function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, parameter: FunctionResolved.Parameter, ret: FunctionResolved.Type): FunctionResolved.FunctionBody {
+function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolved.Function, parameter: Parameter, ret: ReturnType): FunctionBody {
     
-    const variableLookup = new Map<string, FunctionResolved.Variable>()
+    const variableLookup = new Map<string, Variable>()
     const p = parameter.differentiate()
     switch(p.kind) {
 
@@ -77,11 +77,11 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
 
         default: assertNever(p)
     }
-    const resolved: FunctionResolved.Statement[] = []
+    const resolved: Statement[] = []
     let hitReturnStatement = false
     for (let i = 0; i < func.part.FunctionBody.children.Statement.length; i++) {
         const stmt = func.part.FunctionBody.children.Statement[i].differentiate();
-        let resolvedStmt: Exclude<FunctionResolved.Statement, {kind: "ReturnStatement"}>
+        let resolvedStmt: Exclude<Statement, {kind: "ReturnStatement"}>
         switch (stmt.kind) {
             case "Append": {
                 const variable = variableLookup.get(stmt.variableName)
@@ -171,7 +171,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: Function, 
 }
 
 
-function resolveFunction(namespace: TypeResolved.Namespace, func: Function): FunctionResolved.Function {
+function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.Function): Function {
     const parameter = resolveParameter(namespace, func.part.Parameter)
     const returnType = getReturnType(func.part.ReturnTypeSpec, namespace)
 
@@ -190,10 +190,10 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: Function): Fun
     }
 }
 
-export function resolveFunctions(namespace: TypeResolved.Namespace): FunctionResolved.Manifest {
+export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
-    const functions: FunctionResolved.Function[] = []
-    const entityMapInternal: Map<string, Struct | Enum | FunctionResolved.Function | Store> = new Map()
+    const functions: Function[] = []
+    const entityMapInternal: Map<string, Struct | Enum | Function | Store> = new Map()
     
     
     namespace.inScope.forEach(val => {

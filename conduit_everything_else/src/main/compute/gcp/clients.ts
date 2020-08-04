@@ -5,11 +5,11 @@ import { assertNever } from '../../util/classifying';
 
 export const a: string = `${12}`
 
-function typeToTS(t: CompiledTypes.FunctionResolved.RealType):string {
+function typeToTS(t: CompiledTypes.RealType):string {
     return `models.${t.val.name}${t.isArray ? "[]" : ""}`
 }
 
-export function generateClients(url: string, manifest: CompiledTypes.FunctionResolved.Manifest, dir: string) {
+export function generateClients(url: string, manifest: CompiledTypes.Manifest, dir: string) {
     
     fs.writeFileSync(`${dir}/clients.ts`, 
         `

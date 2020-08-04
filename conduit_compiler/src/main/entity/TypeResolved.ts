@@ -1,6 +1,12 @@
-import { Struct, Enum, Function, Store, EntityMap } from './resolved';
+import { Struct, Enum, Store, EntityMap } from './resolved';
+import {Parse} from '../parse'
+import { FileLocation } from '../util/filesystem';
+
 
 export namespace TypeResolved {
+    export type Function = (Parse.Function & {readonly file: FileLocation})
+
+
     export type TopLevelEntities = Struct | Enum | Function | Store;
     export type Namespace = {
         readonly name: "default";

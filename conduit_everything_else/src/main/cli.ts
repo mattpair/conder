@@ -8,7 +8,7 @@ import { generateModels, generateAllClients } from './models/generate';
 import { writeRustAndContainerCode } from './compute/gcp/server_writer';
 import {compileFiles, CompiledTypes} from 'conduit_compiler'
 
-export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.FunctionResolved.Manifest}> = {
+export const conduitsToTypeResolved: StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
     stepName: "compiling",
     func: ({conduits}) => {
         const toCompile: Record<string, () => string> = {}

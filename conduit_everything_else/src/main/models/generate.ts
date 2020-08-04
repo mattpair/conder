@@ -60,7 +60,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
     }
 }
 
-export async function generateModelsToDirectory(manifest: CompiledTypes.FunctionResolved.Manifest, dir: string): Promise<void> {
+export async function generateModelsToDirectory(manifest: CompiledTypes.Manifest, dir: string): Promise<void> {
     const models: string[] = []
     manifest.namespace.inScope.forEach(v => {
         if (v.kind === "Function" || v.kind === "StoreDefinition") {
@@ -73,7 +73,7 @@ export async function generateModelsToDirectory(manifest: CompiledTypes.Function
     fs.writeFileSync(`${dir}/models.ts`, models.join('\n\n'))
 }
 
-export const generateModels: StepDefinition<{manifest: CompiledTypes.FunctionResolved.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
+export const generateModels: StepDefinition<{manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig}, {modelsGenerated: true}> = {
     stepName: "generateModels",
     func: ({manifest, buildConf}) => {
         const promises = []
@@ -86,7 +86,7 @@ export const generateModels: StepDefinition<{manifest: CompiledTypes.FunctionRes
 }
 
 
-export const generateAllClients: StepDefinition<{modelsGenerated: true, manifest: CompiledTypes.FunctionResolved.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
+export const generateAllClients: StepDefinition<{modelsGenerated: true, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig, endpoint: string}, {}> = {
     stepName: "generating all clients",
     func: ({manifest, buildConf, endpoint}) => {
         const p = []

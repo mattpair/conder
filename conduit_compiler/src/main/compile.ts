@@ -1,11 +1,11 @@
 
 import { Parse} from "./parse";
-import { FunctionResolved, } from "./entity/resolved";
+import { Manifest } from "./entity/resolved";
 import { toNamespace } from "./resolution/resolveTypes";
 import { FileLocation } from "./util/filesystem";
 import { resolveFunctions } from "./resolution/resolveFunction";
 
-export function compileFiles(files: Record<string, () => string>): FunctionResolved.Manifest {
+export function compileFiles(files: Record<string, () => string>): Manifest {
     const conduits: Parse.File[] = []
     for (const file in files) {
         

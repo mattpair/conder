@@ -9,7 +9,7 @@ type InsertCodelet = {
     readonly array: string
 }
 
-function generateInsertStatement(stmt: CompiledTypes.FunctionResolved.Append): InsertCodelet {
+function generateInsertStatement(stmt: CompiledTypes.Append): InsertCodelet {
     const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
     const tableAndColumns: string = `${stmt.into.name}(${columns})`
     const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
@@ -25,14 +25,14 @@ type InternalFunction = {
     readonly invocation: string
 }
 
-function toRustType(p: CompiledTypes.FunctionResolved.Type): string {
+function toRustType(p: CompiledTypes.ReturnType): string {
     if (p.kind === "VoidReturnType") {
         return "()"
     }
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: CompiledTypes.FunctionResolved.Function): InternalFunction {
+function generateInternalFunction(f: CompiledTypes.Function): InternalFunction {
     const ret = f.returnType
     const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
@@ -107,7 +107,7 @@ function generateInternalFunction(f: CompiledTypes.FunctionResolved.Function): I
     }
 }
 
-function generateFunctions(functions: CompiledTypes.FunctionResolved.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
+function generateFunctions(functions: CompiledTypes.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
     return functions.map(func => {
 
         const internal = generateInternalFunction(func) 
@@ -164,7 +164,7 @@ function generateFunctions(functions: CompiledTypes.FunctionResolved.Function[])
 }
 
 
-export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes.FunctionResolved.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
+export const writeRustAndContainerCode: StepDefinition<{ manifest: CompiledTypes.Manifest}, {codeWritten: {main: string, postgres: string}}> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)

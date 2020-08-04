@@ -121,7 +121,7 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployOnToCluster: StepDefinition<
-    {mediumState: MediumState, manifest: CompiledTypes.FunctionResolved.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: CompiledTypes.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
         stepName: "deploy on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
