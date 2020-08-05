@@ -2,7 +2,7 @@
   "name": "conduit_compiler",
   "version": "0.0.1",
   "scripts": {
-    "test:unit": "jest unit/",
+    "test": "jest unit/",
     "compile": "tsc -b"
   },
   "author": "Jeremy",
