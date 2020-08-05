@@ -42,3 +42,15 @@ struct outer {
 outerStore: outer[] = []
 
 `)
+
+TestCodeGen("inserting simple struct", `
+struct simple {
+    double data
+}
+
+simpleStore: simple[] = []
+
+function insert(s: simple) {
+    simpleStore.append(s)
+}
+`)
