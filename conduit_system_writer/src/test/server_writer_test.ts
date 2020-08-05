@@ -29,10 +29,3 @@ struct outer {
 outerStore: outer[] = []
 
 `)
-
-
-// (m) => {
-//     m.struct("inner").addPrimitiveField("fieldA", true, Lexicon.Symbol.double).build()
-//     m.struct("outer").addStructOrEnumField("inner", true, "inner").build()
-//     m.store("outerStore", "outer")
-// })

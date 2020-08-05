@@ -1,22 +1,8 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-
-type InsertCodelet = {
-    readonly sql: string,
-    readonly array: string
-}
-
-function generateInsertStatement(stmt: CompiledTypes.Append): InsertCodelet {
-    const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
-    const tableAndColumns: string = `${stmt.into.name}(${columns})`
-    const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
-    const array = `&[${stmt.inserting.type.val.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
-    return {
-        sql: `insert into ${tableAndColumns} ${values}`,
-        array
-    }
-}
+import {generateInsertStatement, generateTable} from './sql'
+import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
     readonly definition: string,
@@ -227,55 +213,10 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                     `)
                     break
                 case "StoreDefinition":
-                    tables.push(`
-                    CREATE TABLE ${val.name} (
-                        ${val.stores.children.Field.map(f => {
-                            let typeStr = ''
-                            const type = f.part.FieldType.differentiate()
-                            switch(type.kind) {
-                                case "Enum":
-                                    throw Error("Don't support enum stores yet")
-                                case "Struct":
-                                    throw Error("Don't support struct stores yet")
-                                case "Primitive":
-                                    const prim = type.val
-                                    switch(prim) {
-                                        case Lexicon.Symbol.bool:
-                                            typeStr = "boolean"
-                                            break
-                                        case Lexicon.Symbol.bytes:
-                                            throw Error("bytes aren't supported for stores yet")
-
-                                        case Lexicon.Symbol.double:
-                                            typeStr = "double precision"
-                                            break
-                                        case Lexicon.Symbol.float:
-                                            typeStr ="real"
-                                            break
-                                        case Lexicon.Symbol.int32:
-                                            typeStr = "integer"
-                                            break
-                                        case Lexicon.Symbol.int64:
-                                            typeStr = "bigint"
-                                            break
-                                        case Lexicon.Symbol.uint32:
-                                        case Lexicon.Symbol.uint64:
-                                            typeStr = "bigint"
-                                            console.warn("storing uints as signed integers")
-                                            break
-                                        case Lexicon.Symbol.string:
-                                            typeStr = "text"
-                                            break
-
-                                        default: Utilities.assertNever(prim)
-                                    }
-                            }
-                            return `${f.name}\t${typeStr}`
-                        }).join(",\n")}
-                    );
-
-                    `)
-                
+                    tables.push(generateTable(val))
+                    break;
+                // TODO: enable enums
+                // default: assertNever(val)
             }
         })
         return Promise.resolve({
