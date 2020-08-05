@@ -2,22 +2,6 @@ import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 
-export type InsertCodelet = {
-    readonly sql: string,
-    readonly array: string
-}
-
-export function generateInsertStatement(stmt: CompiledTypes.Append): InsertCodelet {
-    const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
-    const tableAndColumns: string = `${stmt.into.name}(${columns})`
-    const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
-    const array = `&[${stmt.inserting.type.val.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
-    return {
-        sql: `insert into ${tableAndColumns} ${values}`,
-        array
-    }
-}
-
 type ColumnDef = Readonly<{
     name: string
     type: string
@@ -142,6 +126,11 @@ function writeCreateTables(store: TableDef): StoreCommander {
     return new StoreCommander(creates.join("\n"), children)
 }
 
+export type InsertCodelet = {
+    readonly sql: string,
+    readonly array: string
+}
+
 export class StoreCommander {
     private readonly create_sql: string
     private readonly children: StoreCommander[]
@@ -153,6 +142,17 @@ export class StoreCommander {
 
     public get create() : string {
         return `${this.children.map(child => child.create).join("\n")}\n${this.create_sql}`
+    }
+
+    public insert(stmt: CompiledTypes.Append): InsertCodelet {
+        const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
+        const tableAndColumns: string = `${stmt.into.name}(${columns})`
+        const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
+        const array = `&[${stmt.inserting.type.val.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
+        return {
+            sql: `insert into ${tableAndColumns} ${values}`,
+            array
+        }
     }
     
 }

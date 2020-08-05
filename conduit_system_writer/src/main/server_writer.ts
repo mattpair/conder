@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateInsertStatement, generateStoreCommands, StoreCommander} from './sql'
+import {generateStoreCommands, StoreCommander} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -16,7 +16,7 @@ function toRustType(p: CompiledTypes.ReturnType): string {
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: CompiledTypes.Function): InternalFunction {
+function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, StoreCommander>): InternalFunction {
     const ret = f.returnType
     const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
@@ -34,7 +34,7 @@ function generateInternalFunction(f: CompiledTypes.Function): InternalFunction {
     f.body.statements.forEach((stmt, i) => {
         switch(stmt.kind) {
             case "Append":
-                const s = generateInsertStatement(stmt)
+                const s = storeMap.get(stmt.into.name).insert(stmt)
                 statements.push(`
                 let res${i} = client.query("${s.sql}", ${s.array}).await?;
                 `)
@@ -91,10 +91,12 @@ function generateInternalFunction(f: CompiledTypes.Function): InternalFunction {
     }
 }
 
-function generateFunctions(functions: CompiledTypes.Function[]): {def: string, func_name: string, path: string, method: "get" | "post"}[] {
+type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
+
+function generateFunctions(functions: CompiledTypes.Function[], storeMap: ReadonlyMap<string, StoreCommander>): FunctionDef[] {
     return functions.map(func => {
 
-        const internal = generateInternalFunction(func) 
+        const internal = generateInternalFunction(func, storeMap) 
         const param = func.parameter.differentiate()
         
         let parameters: string[] = []
@@ -151,9 +153,8 @@ function generateFunctions(functions: CompiledTypes.Function[]): {def: string, f
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, WrittenCode> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
-        const functions = generateFunctions(manifest.service.functions)
         const structs: string[] = []
-        const stores: StoreCommander[] = []
+        const stores: Map<string, StoreCommander> = new Map()
         manifest.namespace.inScope.forEach(val => {
             switch (val.kind) {
                 case "Function":
@@ -213,12 +214,17 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                     `)
                     break
                 case "StoreDefinition":
-                    stores.push(generateStoreCommands(val))
+                    stores.set(val.name, generateStoreCommands(val))
                     break;
                 // TODO: enable enums
                 // default: assertNever(val)
             }
         })
+
+        const functions = generateFunctions(manifest.service.functions, stores)
+        const creates: string[] = []
+        stores.forEach(v => creates.push(v.create))
+
         return Promise.resolve({
             backend: {
                 
@@ -237,7 +243,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             location        int
                         );
                 
-                        ${stores.map(s => s.create).join("\n")}
+                        ${creates.join("\n")}
                         
                         
                         insert into cities(name, location)
