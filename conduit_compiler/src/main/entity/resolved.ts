@@ -6,7 +6,7 @@ import { FileLocation } from '../utils';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
-export type FieldType = basic.BaseFieldType<() => ResolvedType>
+export type FieldType = basic.BaseFieldType<() => ResolvedType> & Readonly<{isArray: boolean}>
 
     
 export type Field = basic.BaseField<FieldType>

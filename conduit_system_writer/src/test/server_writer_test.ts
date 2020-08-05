@@ -29,3 +29,16 @@ struct outer {
 outerStore: outer[] = []
 
 `)
+
+TestCodeGen("store containing struct containing array", `
+struct inner {
+    int32 fieldA
+}
+
+struct outer {
+    inner[] inners
+}
+
+outerStore: outer[] = []
+
+`)

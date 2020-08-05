@@ -68,7 +68,7 @@ export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> 
 
 export type EnumMember = NamedIntrafile<"EnumMember", {}>
 export type Enum = NamedIntrafile<"Enum", ParentOfMany<EnumMember>> 
-export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: common}>
+export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: common, readonly isArray: boolean}>
 export type VoidReturn = {readonly kind: "VoidReturnType"}
 
 

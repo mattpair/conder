@@ -87,6 +87,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 part: {
                     FieldType: {
                         kind: "FieldType",
+                        isArray: field.part.FieldType.differentiate().isArray,
                         differentiate: () => newType
                     }
                 }

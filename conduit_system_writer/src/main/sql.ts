@@ -1,4 +1,5 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
+import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 
 export type InsertCodelet = {
@@ -23,6 +24,7 @@ type ColumnDef = Readonly<{
 }>
 
 type ReferenceDef = Readonly<{
+    kind: "1:1" | "1:Many"
     name: string
     table: TableDef
 }>
@@ -53,7 +55,7 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet:
                 }
                 structSet.add(type.name)
                 const table = flattenStructForStorage(type, structSet, `${nextTableName}_${f.name}`)
-                thisTable.refs.push({name: f.name, table})
+                thisTable.refs.push({name: f.name, table, kind: f.part.FieldType.isArray ? "1:Many" : "1:1"})
                 structSet.delete(type.name)
                 return
 
@@ -99,18 +101,37 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet:
 
 function writeCreateTables(store: TableDef): string[] {
     const creates: string[] = []
-
-    store.refs.forEach(ref => {
-        creates.push(...writeCreateTables(ref.table))
-    })
-
     const constraints: string[] = ["PRIMARY KEY(conduit_entity_id)"]
     const cols = store.cols.map(c => `${c.name}\t${c.type}`)
     cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
-    cols.push(...store.refs.map(r => `${r.name}\tINT`))
 
-    constraints.push(...store.refs.map(r => `CONSTRAINT fk_${r.name}\n\tFOREIGN KEY(${r.name})\n\t\tREFERENCES ${r.table.name}(conduit_entity_id)`))
 
+    store.refs.forEach(ref => {
+        creates.push(...writeCreateTables(ref.table))
+        switch(ref.kind){
+            case "1:1":
+                cols.push(`${ref.name}\tINT`)
+                constraints.push(`CONSTRAINT fk_${ref.name}\n\tFOREIGN KEY(${ref.name})\n\t\tREFERENCES ${ref.table.name}(conduit_entity_id)`)
+                break
+            case "1:Many":
+                creates.push(`
+                CREATE TABLE rel_${ref.name}_and_${ref.table.name} (
+                    left INT,
+                    right INT,
+                    constraint fk_${ref.name}_right
+                        FOREIGN KEY(right)
+                            REFERENCES ${ref.table.name}(conduit_entity_id)
+                    constraint fk_${ref.name}_left
+                        FOREIGN KEY(left)
+                            REFERENCES ${store.name}(conduit_entity_id)
+                )
+                `)
+                break
+
+            default: assertNever(ref.kind)
+        }
+    })
+    
     creates.push(`
     CREATE TABLE ${store.name} (
         ${[...cols, ...constraints].join(",\n")}
