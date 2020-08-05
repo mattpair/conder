@@ -85,7 +85,6 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, columnPref
 
 export function generateTable(val: CompiledTypes.Store): string {
     const cols: ColumnDef[] = flattenStructForStorage(val.stores, '', new Set([val.stores.name]))
-    console.log(cols)
     return `
     CREATE TABLE ${val.name} (
         ${cols.map(c => `${c.name}\t${c.type}`).join(",\n")}
