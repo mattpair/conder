@@ -22,23 +22,29 @@ type ColumnDef = Readonly<{
     type: string
 }>
 
-// export function generateSqlColumnDefs(struct: CompiledTypes.Struct): ColumnDef[] {
-//     const cols: ColumnDef[] = []
+export function flattenStructForStorage(struct: CompiledTypes.Struct, columnPrefix: string, structSet: Set<string>): ColumnDef[] {
+    const prefix = columnPrefix.length ? columnPrefix + "_" : ""
 
-
-//     return cols
-// }
-
-export function generateTable(val: CompiledTypes.Store): string {
-    const cols: ColumnDef[] = val.stores.children.Field.map(f => {
-        let typeStr = ''
+    const cols: ColumnDef[] = []
+    
+    struct.children.Field.forEach(f => {
         const type = f.part.FieldType.differentiate()
+
         switch(type.kind) {
             case "Enum":
                 throw Error("Don't support enum stores yet")
             case "Struct":
-                throw Error("Don't support struct stores yet")
+                if (structSet.has(type.name)) {
+                    throw Error(`Cannot store type ${struct.name} because ${type.name} is recursive`)
+                }
+                structSet.add(type.name)
+                const childs = flattenStructForStorage(type, `${f.name}_${columnPrefix}`, structSet)
+                cols.push(...childs)
+                structSet.delete(type.name)
+                return
+
             case "Primitive":
+                let typeStr = ''
                 const prim = type.val
                 switch(prim) {
                     case Lexicon.Symbol.bool:
@@ -70,10 +76,16 @@ export function generateTable(val: CompiledTypes.Store): string {
 
                     default: Utilities.assertNever(prim)
                 }
+                cols.push({name: `${prefix}${f.name}`, type: typeStr})
         }
-        return {name: f.name, type: typeStr}
     })
 
+    return cols
+}
+
+export function generateTable(val: CompiledTypes.Store): string {
+    const cols: ColumnDef[] = flattenStructForStorage(val.stores, '', new Set([val.stores.name]))
+    console.log(cols)
     return `
     CREATE TABLE ${val.name} (
         ${cols.map(c => `${c.name}\t${c.type}`).join(",\n")}
