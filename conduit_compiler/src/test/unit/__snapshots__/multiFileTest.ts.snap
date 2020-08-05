@@ -25,6 +25,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -61,6 +62,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -114,6 +116,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -150,6 +153,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -186,6 +190,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -222,6 +227,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -239,6 +245,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -300,6 +307,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -367,6 +375,7 @@ Object {
                           "part": Object {
                             "FieldType": Object {
                               "differentiate": [Function],
+                              "isArray": false,
                               "kind": "FieldType",
                             },
                           },
@@ -407,6 +416,7 @@ Object {
                           "part": Object {
                             "FieldType": Object {
                               "differentiate": [Function],
+                              "isArray": false,
                               "kind": "FieldType",
                             },
                           },
@@ -464,6 +474,7 @@ Object {
                     "part": Object {
                       "FieldType": Object {
                         "differentiate": [Function],
+                        "isArray": false,
                         "kind": "FieldType",
                       },
                     },
@@ -540,6 +551,7 @@ Object {
                         "part": Object {
                           "FieldType": Object {
                             "differentiate": [Function],
+                            "isArray": false,
                             "kind": "FieldType",
                           },
                         },
@@ -580,6 +592,7 @@ Object {
                         "part": Object {
                           "FieldType": Object {
                             "differentiate": [Function],
+                            "isArray": false,
                             "kind": "FieldType",
                           },
                         },
@@ -637,6 +650,7 @@ Object {
                   "part": Object {
                     "FieldType": Object {
                       "differentiate": [Function],
+                      "isArray": false,
                       "kind": "FieldType",
                     },
                   },
@@ -686,6 +700,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -722,6 +737,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },
@@ -758,6 +774,7 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
+                    "isArray": false,
                     "kind": "FieldType",
                   },
                 },

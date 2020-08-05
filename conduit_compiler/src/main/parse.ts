@@ -396,7 +396,7 @@ export namespace Parse {
                     kind: "Primitive",
                     loc,
                     val: Primitives.find(p => p === match.groups.val),
-                    isArray: match.groups.isArray === undefined
+                    isArray: match.groups.isArray !== undefined
                 }
             }
         },

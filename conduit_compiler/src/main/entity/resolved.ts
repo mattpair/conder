@@ -5,6 +5,7 @@ import { FileLocation } from '../utils';
 // Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
+export type PrimitiveEntity = basic.PrimitiveEntity
 export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
 export type FieldType = basic.BaseFieldType<() => ResolvedType> & Readonly<{isArray: boolean}>
 

@@ -2,29 +2,9 @@ import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 
-type ColumnDef = Readonly<{
-    name: string
-    type: string
-}>
 
-type ReferenceDef = Readonly<{
-    kind: "1:1" | "1:Many"
-    name: string
-    table: TableDef
-}>
-
-type TableDef = Readonly<{
-    name: string
-    cols: ColumnDef[]
-    refs: ReferenceDef[]
-}>
-
-export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): TableDef {
-    const thisTable: TableDef = {
-        name: nextTableName,
-        cols: [],
-        refs: []
-    }
+export function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): StoreCommander {
+    const cols: CommanderColumn[] = []
 
     
     struct.children.Field.forEach(f => {
@@ -38,92 +18,40 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet:
                     throw Error(`Cannot store type ${struct.name} because ${type.name} is recursive`)
                 }
                 structSet.add(type.name)
-                const table = flattenStructForStorage(type, structSet, `${nextTableName}_${f.name}`)
-                thisTable.refs.push({name: f.name, table, kind: f.part.FieldType.isArray ? "1:Many" : "1:1"})
+                const table = assembleStoreTree(type, structSet, `${nextTableName}_${f.name}`)
+                cols.push({
+                    dif: "struct",
+                    type,
+                    columnName: f.name,
+                    fieldName: f.name,
+                    kind: f.part.FieldType.isArray ? "1:many" : "1:1",
+                    ref: table
+                })
                 structSet.delete(type.name)
                 return
 
             case "Primitive":
-                let typeStr = ''
-                const prim = type.val
-                switch(prim) {
-                    case Lexicon.Symbol.bool:
-                        typeStr = "boolean"
-                        break
-                    case Lexicon.Symbol.bytes:
-                        throw Error("bytes aren't supported for stores yet")
-
-                    case Lexicon.Symbol.double:
-                        typeStr = "double precision"
-                        break
-                    case Lexicon.Symbol.float:
-                        typeStr ="real"
-                        break
-                    case Lexicon.Symbol.int32:
-                        typeStr = "integer"
-                        break
-                    case Lexicon.Symbol.int64:
-                        typeStr = "bigint"
-                        break
-                    case Lexicon.Symbol.uint32:
-                    case Lexicon.Symbol.uint64:
-                        typeStr = "bigint"
-                        console.warn("storing uints as signed integers")
-                        break
-                    case Lexicon.Symbol.string:
-                        typeStr = "text"
-                        break
-
-                    default: Utilities.assertNever(prim)
-                }
-                thisTable.cols.push({name: f.name, type: typeStr})
-        }
-    })
-
-    return thisTable
-}
-
-function writeCreateTables(store: TableDef): StoreCommander {
-    const creates: string[] = []
-    const constraints: string[] = ["PRIMARY KEY(conduit_entity_id)"]
-    const cols = store.cols.map(c => `${c.name}\t${c.type}`)
-    const children: StoreCommander[] = []
-    cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
-
-
-    store.refs.forEach(ref => {
-        children.push(writeCreateTables(ref.table))
-
-        switch(ref.kind){
-            case "1:1":
-                cols.push(`${ref.name}\tINT`)
-                constraints.push(`CONSTRAINT fk_${ref.name}\n\tFOREIGN KEY(${ref.name})\n\t\tREFERENCES ${ref.table.name}(conduit_entity_id)`)
-                break
-            case "1:Many":
-                creates.push(`
-                CREATE TABLE rel_${ref.name}_and_${ref.table.name} (
-                    left INT,
-                    right INT,
-                    constraint fk_${ref.name}_right
-                        FOREIGN KEY(right)
-                            REFERENCES ${ref.table.name}(conduit_entity_id)
-                    constraint fk_${ref.name}_left
-                        FOREIGN KEY(left)
-                            REFERENCES ${store.name}(conduit_entity_id)
-                )
-                `)
-                break
-
-            default: assertNever(ref.kind)
-        }
-    })
+                if (type.isArray) {
+                    cols.push({
+                        dif: "prim[]",
+                        type: type,
+                        columnName: f.name,
+                        fieldName: f.name,
     
-    creates.push(`
-    CREATE TABLE ${store.name} (
-        ${[...cols, ...constraints].join(",\n")}
-    );`)
+                    })
+                } else {
+                    cols.push({
+                        dif: "prim",
+                        type,
+                        columnName: f.name,
+                        fieldName: f.name
+                    })
+            }
+                
+        }
+    })
 
-    return new StoreCommander(creates.join("\n"), children)
+    return new StoreCommander(nextTableName, cols)
 }
 
 export type InsertCodelet = {
@@ -131,17 +59,146 @@ export type InsertCodelet = {
     readonly array: string
 }
 
-export class StoreCommander {
-    private readonly create_sql: string
-    private readonly children: StoreCommander[]
+type PrimitiveColumn = {
+    dif: "prim"
+    type: CompiledTypes.PrimitiveEntity
+    columnName: string
+    fieldName: string
+}
 
-    constructor(create: string, children: StoreCommander[]) {
-        this.create_sql = create
-        this.children = children
+type StructStoreRefCol = {
+    dif: "struct"
+    type: CompiledTypes.Struct
+    columnName: string
+    fieldName: string
+    kind: "1:1" | "1:many"
+    ref: StoreCommander
+}
+
+type PrimitiveArrayColumn = {
+    dif: "prim[]"
+    type: CompiledTypes.PrimitiveEntity
+    columnName: string
+    fieldName: string
+}
+
+type CommanderColumn = PrimitiveColumn | StructStoreRefCol | PrimitiveArrayColumn
+
+function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
+
+    switch(prim.val) {
+        case Lexicon.Symbol.bool:
+            return "boolean"
+        
+        case Lexicon.Symbol.bytes:
+            throw Error("bytes aren't supported for stores yet")
+
+        case Lexicon.Symbol.double:
+            return "double precision"
+            
+        case Lexicon.Symbol.float:
+            return "real"
+            
+        case Lexicon.Symbol.int32:
+            return "integer"
+            
+        case Lexicon.Symbol.int64:
+            return "bigint"
+            
+        case Lexicon.Symbol.uint32:
+        case Lexicon.Symbol.uint64:
+            console.warn("storing uints as signed integers")
+            return "bigint"
+            
+            
+        case Lexicon.Symbol.string:
+            return "text"
+
+        default: Utilities.assertNever(prim.val)
+    }
+}
+
+export class StoreCommander {
+    private readonly name: string
+    private readonly columns: CommanderColumn[]
+
+    constructor(name: string, children: CommanderColumn[]) {
+        this.name = name
+        this.columns = children
     }
 
     public get create() : string {
-        return `${this.children.map(child => child.create).join("\n")}\n${this.create_sql}`
+        const creates: string[] = []
+
+        const constraints: string[] = []
+        
+        const cols: string[]  = []
+        const rels: string[] = []
+        
+        this.columns.forEach(c => {
+            switch(c.dif) {
+                case "prim":
+                    const typeStr = toPostgresType(c.type)
+                    cols.push(`${c.columnName}\t${typeStr}`)
+                    break;
+                    
+                case "prim[]":
+                    creates.push(`create table ${this.name}_${c.fieldName} (
+                        owner_id\tINT\tNOT NULL,
+                        val\t${toPostgresType(c.type)},
+                        constraint fk_${c.fieldName}
+                            FOREIGN KEY(owner_id)
+                                REFERENCES ${this.name}(conduit_entity_id)
+                    );`)
+                    break;
+
+                case "struct":
+                    switch (c.kind) {
+                        case "1:1":
+                            creates.push(c.ref.create)
+                            cols.push(`${c.columnName}\tINT`)
+                            constraints.push(`
+                            constraint fk_${c.fieldName}
+                                FOREIGN KEY(${c.fieldName})
+                                    REFERENCES ${c.ref.name}(conduit_entity_id)
+                            `)
+                            break;
+                        case "1:many":
+                            creates.push(c.ref.create)
+                            rels.push(`
+                            CREATE TABLE rel_${this.name}_and_${c.ref.name} (
+                                left INT,
+                                right INT,
+                                constraint fk_${c.ref.name}_right
+                                    FOREIGN KEY(right)
+                                        REFERENCES ${c.ref.name}(conduit_entity_id)
+                                constraint fk_${this.name}_left
+                                    FOREIGN KEY(left)
+                                        REFERENCES ${this.name}(conduit_entity_id)
+                            )
+                            `)
+                            break;
+
+                        default: assertNever(c.kind)
+                    }
+                    
+
+                    
+                    break;
+            }  
+        })
+
+        constraints.push("PRIMARY KEY(conduit_entity_id)")
+        cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
+
+    
+        
+        creates.push(`
+        CREATE TABLE ${this.name} (
+            ${[...cols, ...constraints].join(",\n")}
+        );`)
+    
+        return `${creates.join("\n")}${rels.join("\n")}`
     }
 
     public insert(stmt: CompiledTypes.Append): InsertCodelet {
@@ -158,8 +215,7 @@ export class StoreCommander {
 }
 
 export function generateStoreCommands(val: CompiledTypes.Store): StoreCommander {
-    const store: TableDef = flattenStructForStorage(val.stores,  new Set([val.stores.name]), val.name)
+    const store: StoreCommander = assembleStoreTree(val.stores,  new Set([val.stores.name]), val.name)
 
-
-    return writeCreateTables(store)
+    return store
 }

@@ -235,29 +235,27 @@ Array [
                         );
                 
                         
-
-    CREATE TABLE outerStore_inners (
-        fieldA	integer,
+        CREATE TABLE outerStore_inners (
+            fieldA	integer,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
-    );
+        );
 
-                CREATE TABLE rel_inners_and_outerStore_inners (
-                    left INT,
-                    right INT,
-                    constraint fk_inners_right
-                        FOREIGN KEY(right)
-                            REFERENCES outerStore_inners(conduit_entity_id)
-                    constraint fk_inners_left
-                        FOREIGN KEY(left)
-                            REFERENCES outerStore(conduit_entity_id)
-                )
-                
-
-    CREATE TABLE outerStore (
-        conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+        CREATE TABLE outerStore (
+            conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
-    );
+        );
+                            CREATE TABLE rel_outerStore_and_outerStore_inners (
+                                left INT,
+                                right INT,
+                                constraint fk_outerStore_inners_right
+                                    FOREIGN KEY(right)
+                                        REFERENCES outerStore_inners(conduit_entity_id)
+                                constraint fk_outerStore_left
+                                    FOREIGN KEY(left)
+                                        REFERENCES outerStore(conduit_entity_id)
+                            )
+                            
                         
                         
                         insert into cities(name, location)
@@ -383,21 +381,22 @@ Array [
                         );
                 
                         
-
-    CREATE TABLE outerStore_inner (
-        fieldA	double precision,
+        CREATE TABLE outerStore_inner (
+            fieldA	double precision,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
-    );
+        );
 
-    CREATE TABLE outerStore (
-        conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
-inner	INT,
-PRIMARY KEY(conduit_entity_id),
-CONSTRAINT fk_inner
-	FOREIGN KEY(inner)
-		REFERENCES outerStore_inner(conduit_entity_id)
-    );
+        CREATE TABLE outerStore (
+            inner	INT,
+conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+
+                            constraint fk_inner
+                                FOREIGN KEY(inner)
+                                    REFERENCES outerStore_inner(conduit_entity_id)
+                            ,
+PRIMARY KEY(conduit_entity_id)
+        );
                         
                         
                         insert into cities(name, location)
