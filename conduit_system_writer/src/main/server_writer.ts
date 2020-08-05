@@ -34,10 +34,10 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
     f.body.statements.forEach((stmt, i) => {
         switch(stmt.kind) {
             case "Append":
-                const s = storeMap.get(stmt.into.name).insert(stmt)
-                statements.push(`
-                let res${i} = client.query("${s.sql}", ${s.array}).await?;
-                `)
+                const inserts = storeMap.get(stmt.into.name).insert(stmt)
+                statements.push(inserts.map(insert => `
+                let res${i} = client.query("${insert.sql}", ${insert.array}).await?;
+                `).join("\n"))
                 break;
 
             case "ReturnStatement":

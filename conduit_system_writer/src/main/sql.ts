@@ -207,7 +207,7 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(stmt: CompiledTypes.Append): InsertCodelet {
+    public insert(stmt: CompiledTypes.Append): InsertCodelet[] {
         assert(stmt.into.name === this.name)
 
 
@@ -224,20 +224,28 @@ export class StoreCommander {
                     break;
 
                 case "struct":
+                    switch(c.kind) {
+                        case "1:many":
+                            break;
+                        case "1:1":
+                            break;
+                    }
                     break;
 
                 case "prim[]":
                     break;
+
+                default: assertNever(c)
             }
         })
 
 
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
-        
-        return {
+
+        return [{
             sql: `insert into ${tableAndColumns} values (${values.join(", ")})`,
             array: `&[${array.join(", ")}]`
-        }
+        }]
     }
     
 }
