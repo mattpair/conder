@@ -3,7 +3,7 @@ import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 
 
-export function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): StoreCommander {
+function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): StoreCommander {
     const cols: CommanderColumn[] = []
 
     
@@ -54,9 +54,15 @@ export function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<s
     return new StoreCommander(nextTableName, cols)
 }
 
+export type ReturnInstruction = Readonly<{
+    kind: "save"
+    name: string
+} | {kind: "drop"}> 
+
 export type InsertCodelet = {
     readonly sql: string,
-    readonly array: string
+    readonly array: string[],
+    readonly return: ReturnInstruction
 }
 
 type PrimitiveColumn = {
@@ -118,11 +124,6 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
     }
 }
 
-function assert(bool: boolean) {
-    if(!bool) {
-        throw Error(`Assertion failed`)
-    }
-}
 
 export class StoreCommander {
     private readonly name: string
@@ -207,11 +208,12 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(varname: string): InsertCodelet[] {
+    public insert(varname: string, ret: ReturnInstruction): InsertCodelet[] {
 
         const columns: string[] = []
         const values: string[] = []
         const array: string[]= []
+        const inserts: InsertCodelet[] = []
         let colCount = 0
         this.columns.forEach(c => {
             switch(c.dif) {
@@ -226,6 +228,7 @@ export class StoreCommander {
                         case "1:many":
                             break;
                         case "1:1":
+                            // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`))
                             break;
                     }
                     break;
@@ -239,11 +242,12 @@ export class StoreCommander {
 
 
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
-
-        return [{
-            sql: `insert into ${tableAndColumns} values (${values.join(", ")})`,
-            array: `&[${array.join(", ")}]`
-        }]
+        inserts.push({
+            sql: `insert into ${tableAndColumns} values (${values.join(", ")}) ${ret.kind === "drop" ? "" : "RETURNING conduit_entity_id"}`,
+            array,
+            return: ret
+        })
+        return inserts
     }
     
 }

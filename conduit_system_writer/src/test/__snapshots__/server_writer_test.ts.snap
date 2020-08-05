@@ -35,7 +35,7 @@ Array [
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
             
-                let res0 = client.query(\\"insert into simpleStore(data) values ($1)\\", &[&s.data]).await?;
+                 client.query(\\"insert into simpleStore(data) values ($1) \\", &s.data).await?;
                 ;
 return Ok(())
         }
