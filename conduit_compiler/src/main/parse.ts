@@ -390,7 +390,7 @@ export namespace Parse {
         },
         Primitive: {
             kind: "leaf",
-            regex: new RegExp(`^(?<val>(${Primitives.join("|")}))(?<isArray>\[\])? +`),
+            regex: new RegExp(`^(?<val>(${Primitives.join("|")}))(?<isArray>\\[\\])? +`),
             assemble(match, loc): common.PrimitiveEntity | undefined {
                 return {
                     kind: "Primitive",

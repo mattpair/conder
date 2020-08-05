@@ -145,30 +145,21 @@ export class StoreCommander {
         this.columns.forEach(c => {
             switch(c.dif) {
                 case "prim":
+                case "prim[]":     
                     const typeStr = toPostgresType(c.type)
-                    cols.push(`${c.columnName}\t${typeStr}`)
+                    cols.push(`${c.columnName}\t${typeStr}${c.dif === "prim[]" ? "[]" : ''}`)
                     break;
                     
-                case "prim[]":
-                    creates.push(`create table ${this.name}_${c.fieldName} (
-                        owner_id\tINT\tNOT NULL,
-                        val\t${toPostgresType(c.type)},
-                        constraint fk_${c.fieldName}
-                            FOREIGN KEY(owner_id)
-                                REFERENCES ${this.name}(conduit_entity_id)
-                    );`)
-                    break;
+                
 
                 case "struct":
                     switch (c.kind) {
                         case "1:1":
                             creates.push(c.ref.create)
                             cols.push(`${c.columnName}\tINT`)
-                            constraints.push(`
-                            constraint fk_${c.fieldName}
+                            constraints.push(`constraint fk_${c.fieldName}
                                 FOREIGN KEY(${c.fieldName})
-                                    REFERENCES ${c.ref.name}(conduit_entity_id)
-                            `)
+                                    REFERENCES ${c.ref.name}(conduit_entity_id)`)
                             break;
                         case "1:many":
                             creates.push(c.ref.create)
@@ -182,8 +173,7 @@ export class StoreCommander {
                                 constraint fk_${this.name}_left
                                     FOREIGN KEY(left)
                                         REFERENCES ${this.name}(conduit_entity_id)
-                            )
-                            `)
+                            )`)
                             break;
 
                         default: assertNever(c.kind)
@@ -218,6 +208,7 @@ export class StoreCommander {
         this.columns.forEach(c => {
             switch(c.dif) {
                 case "prim":
+                case "prim[]":
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
                     array.push(`&${varname}.${c.fieldName}`)
@@ -237,9 +228,7 @@ export class StoreCommander {
                     }
                     break;
 
-                case "prim[]":
-                    break;
-
+                
                 default: assertNever(c)
             }
         })

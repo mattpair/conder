@@ -70,3 +70,19 @@ function insert(s: wrapper) {
     wrapStore.append(s)
 }
 `)
+
+TestCodeGen("inserting struct containing struct containing primitive array", `
+struct simple {
+    string[] data
+}
+
+struct wrapper {
+    simple innard
+}
+
+wrapStore: wrapper[] = []
+
+function insert(s: wrapper) {
+    wrapStore.append(s)
+}
+`)
