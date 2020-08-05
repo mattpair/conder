@@ -99,15 +99,17 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet:
     return thisTable
 }
 
-function writeCreateTables(store: TableDef): string[] {
+function writeCreateTables(store: TableDef): StoreCommander {
     const creates: string[] = []
     const constraints: string[] = ["PRIMARY KEY(conduit_entity_id)"]
     const cols = store.cols.map(c => `${c.name}\t${c.type}`)
+    const children: StoreCommander[] = []
     cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
 
 
     store.refs.forEach(ref => {
-        creates.push(...writeCreateTables(ref.table))
+        children.push(writeCreateTables(ref.table))
+
         switch(ref.kind){
             case "1:1":
                 cols.push(`${ref.name}\tINT`)
@@ -137,20 +139,20 @@ function writeCreateTables(store: TableDef): string[] {
         ${[...cols, ...constraints].join(",\n")}
     );`)
 
-    return creates
+    return new StoreCommander(creates.join("\n"), children)
 }
 
 export class StoreCommander {
     private readonly create_sql: string
-    private readonly stores: CompiledTypes.Struct
+    private readonly children: StoreCommander[]
 
-    constructor(create: string, stores: CompiledTypes.Struct) {
+    constructor(create: string, children: StoreCommander[]) {
         this.create_sql = create
-        this.stores = stores
+        this.children = children
     }
 
     public get create() : string {
-        return this.create_sql
+        return `${this.children.map(child => child.create).join("\n")}\n${this.create_sql}`
     }
     
 }
@@ -159,6 +161,5 @@ export function generateStoreCommands(val: CompiledTypes.Store): StoreCommander 
     const store: TableDef = flattenStructForStorage(val.stores,  new Set([val.stores.name]), val.name)
 
 
-    return new StoreCommander(writeCreateTables(store).join("\n"), val.stores)
-
+    return writeCreateTables(store)
 }

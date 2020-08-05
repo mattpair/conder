@@ -235,6 +235,7 @@ Array [
                         );
                 
                         
+
     CREATE TABLE outerStore_inners (
         fieldA	integer,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
@@ -382,6 +383,7 @@ Array [
                         );
                 
                         
+
     CREATE TABLE outerStore_inner (
         fieldA	double precision,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
