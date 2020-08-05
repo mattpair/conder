@@ -35,7 +35,7 @@ Array [
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
             
-                 client.query(\\"insert into simpleStore(data) values ($1) \\", &s.data).await?;
+                 client.query(\\"insert into simpleStore(data) values ($1) \\", &[&s.data]).await?;
                 ;
 return Ok(())
         }
@@ -133,6 +133,170 @@ Array [
         CREATE TABLE simpleStore (
             data	double precision,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+PRIMARY KEY(conduit_entity_id)
+        );
+                        
+                        
+                        insert into cities(name, location)
+                        values ('detroit', 12)",
+    "name": ".deploy/postgres/startup/init.sql",
+  },
+]
+`;
+
+exports[`inserting struct containing struct: main files 1`] = `
+Array [
+  Object {
+    "content": "
+                            #![allow(non_snake_case)]
+                            #![allow(non_camel_case_types)]
+                            #![allow(redundant_semicolon)]
+                            use tokio_postgres::{NoTls, Client};
+                            use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+                            use std::env;
+                            use serde::{Deserialize, Serialize};
+                            use tokio_postgres::error::{Error};
+                
+                
+                            struct AppData {
+                                client: Client
+                            }
+                            
+                            #[derive(Serialize, Deserialize)]
+                            struct City {
+                                name: String,
+                                location: i32
+                            }
+                            
+                    
+                            
+                        #[derive(Serialize, Deserialize)]
+                        struct simple {
+                            data: bool
+                        }
+                    
+
+                        #[derive(Serialize, Deserialize)]
+                        struct wrapper {
+                            innard: simple
+                        }
+                    
+                    
+                            
+        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
+            
+                let ret0 =  client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+                
+
+                 client.query(\\"insert into wrapStore(innard) values ($1) \\", &[&(ret0.get(0))]).await?;
+                ;
+return Ok(())
+        }
+
+        async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+            let s = input.into_inner();
+let client = &data.client;
+            return match internal_insert(s,client).await {
+                    Ok(()) => HttpResponse::Ok().finish(),
+                    Err(err) => {
+                        HttpResponse::BadRequest().body(format!(\\"Failure caused by: {}\\", err))
+                    }
+                };
+                
+        }
+                
+        
+                    
+                            #[actix_rt::main]
+                            async fn main() -> std::io::Result<()> {
+                                HttpServer::new(|| {
+                                    App::new()
+                                        .data_factory(|| make_app_data())
+                                        .route(\\"/\\", web::get().to(index))
+                                        .route(\\"/insert\\", web::post().to(external_insert))
+                                })
+                                .bind(\\"0.0.0.0:8080\\")?
+                                .run()
+                                .await
+                            }
+                    
+                            async fn index(data: web::Data<AppData>) -> impl Responder {
+                                let mut rows = match data.client.query(\\"select name, location from cities\\", &[]).await {
+                                    Ok(rows) => rows,
+                                    Err(err) => panic!(\\"didn't succeed: {}\\", err)
+                                };
+                            
+                                let mut out = Vec::with_capacity(rows.len());
+                            
+                                while let Some(row) = rows.pop() {
+                                    out.push(City {
+                                        name: row.get(0),
+                                        location: row.get(1)
+                                    })
+                                }
+                                return HttpResponse::Ok().json(out);
+                            }
+                
+                            async fn make_app_data() -> Result<AppData, ()> {
+                                let host = match env::var(\\"POSTGRES_SERVICE_HOST\\") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!(\\"didn't receive postgres location: {}\\", e)
+                                };
+                                let pwd = match env::var(\\"POSTGRES_PASSWORD\\") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!(\\"didn't receive postgres password: {}\\", e)
+                                };
+                            
+                                let (client, connection) = match tokio_postgres::connect(&format!(\\"host={} user=postgres password={}\\", host, pwd), NoTls).await {
+                                    Ok(out) => out,
+                                    Err(e) => panic!(\\"couldn't create connection: {}\\", e)
+                                };
+                                
+                                // The connection object performs the actual communication with the database,
+                                // so spawn it off to run on its own.
+                                actix_rt::spawn(async move {
+                                    if let Err(e) = connection.await {
+                                        eprintln!(\\"connection error: {}\\", e);
+                                    }
+                                });
+                                
+                                
+                                return Ok(AppData {
+                                    client: client,
+                                });
+                            }
+                            
+                        ",
+    "name": ".deploy/main/src/main.rs",
+  },
+]
+`;
+
+exports[`inserting struct containing struct: postgres files 1`] = `
+Array [
+  Object {
+    "content": "
+
+                        CREATE TABLE cities (
+                            name            varchar(80),
+                            location        int
+                        );
+                
+                        
+        CREATE TABLE wrapStore_innard (
+            data	boolean,
+conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+PRIMARY KEY(conduit_entity_id)
+        );
+
+        CREATE TABLE wrapStore (
+            innard	INT,
+conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+
+                            constraint fk_innard
+                                FOREIGN KEY(innard)
+                                    REFERENCES wrapStore_innard(conduit_entity_id)
+                            ,
 PRIMARY KEY(conduit_entity_id)
         );
                         

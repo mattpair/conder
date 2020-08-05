@@ -208,7 +208,7 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(varname: string, ret: ReturnInstruction): InsertCodelet[] {
+    public insert(varname: string, ret: ReturnInstruction, nextReturnId: number): InsertCodelet[] {
 
         const columns: string[] = []
         const values: string[] = []
@@ -228,7 +228,11 @@ export class StoreCommander {
                         case "1:many":
                             break;
                         case "1:1":
-                            // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`))
+                            const returnedId = `ret${nextReturnId++}`
+                            inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
+                            columns.push(c.columnName)
+                            values.push(`$${++colCount}`)
+                            array.push(`&(${returnedId}.get(0))`)
                             break;
                     }
                     break;
