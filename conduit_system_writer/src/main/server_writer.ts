@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateInsertStatement, generateTable} from './sql'
+import {generateInsertStatement, generateStoreCommands, StoreCommander} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -153,7 +153,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
     func: ({manifest}) => {
         const functions = generateFunctions(manifest.service.functions)
         const structs: string[] = []
-        const tables: string[] = []
+        const stores: StoreCommander[] = []
         manifest.namespace.inScope.forEach(val => {
             switch (val.kind) {
                 case "Function":
@@ -213,7 +213,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                     `)
                     break
                 case "StoreDefinition":
-                    tables.push(generateTable(val))
+                    stores.push(generateStoreCommands(val))
                     break;
                 // TODO: enable enums
                 // default: assertNever(val)
@@ -237,7 +237,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             location        int
                         );
                 
-                        ${tables.join("\n")}
+                        ${stores.map(s => s.create).join("\n")}
                         
                         
                         insert into cities(name, location)

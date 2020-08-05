@@ -140,10 +140,25 @@ function writeCreateTables(store: TableDef): string[] {
     return creates
 }
 
-export function generateTable(val: CompiledTypes.Store): string {
+export class StoreCommander {
+    private readonly create_sql: string
+    private readonly stores: CompiledTypes.Struct
+
+    constructor(create: string, stores: CompiledTypes.Struct) {
+        this.create_sql = create
+        this.stores = stores
+    }
+
+    public get create() : string {
+        return this.create_sql
+    }
+    
+}
+
+export function generateStoreCommands(val: CompiledTypes.Store): StoreCommander {
     const store: TableDef = flattenStructForStorage(val.stores,  new Set([val.stores.name]), val.name)
 
 
-    return writeCreateTables(store).join("\n")
+    return new StoreCommander(writeCreateTables(store).join("\n"), val.stores)
 
 }
