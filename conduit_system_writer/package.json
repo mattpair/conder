@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "compile": "tsc -b",
+    "pretest": "npm run compile",
     "test": "jest"
   },
   "author": "Jeremy",

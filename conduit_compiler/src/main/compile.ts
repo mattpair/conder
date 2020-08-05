@@ -8,10 +8,7 @@ import { resolveFunctions } from "./resolution/resolveFunction";
 export function compileFiles(files: Record<string, () => string>): Manifest {
     const conduits: Parse.File[] = []
     for (const file in files) {
-        
-        if (file.endsWith(".cdt")) {
-            conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
-        }
+        conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
     }
 
     return resolveFunctions(toNamespace(conduits))
