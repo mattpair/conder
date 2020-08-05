@@ -22,10 +22,24 @@ type ColumnDef = Readonly<{
     type: string
 }>
 
-export function flattenStructForStorage(struct: CompiledTypes.Struct, columnPrefix: string, structSet: Set<string>): ColumnDef[] {
-    const prefix = columnPrefix.length ? columnPrefix + "_" : ""
+type ReferenceDef = Readonly<{
+    name: string
+    table: TableDef
+}>
 
-    const cols: ColumnDef[] = []
+type TableDef = Readonly<{
+    name: string
+    cols: ColumnDef[]
+    refs: ReferenceDef[]
+}>
+
+export function flattenStructForStorage(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): TableDef {
+    const thisTable: TableDef = {
+        name: nextTableName,
+        cols: [],
+        refs: []
+    }
+
     
     struct.children.Field.forEach(f => {
         const type = f.part.FieldType.differentiate()
@@ -38,8 +52,8 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, columnPref
                     throw Error(`Cannot store type ${struct.name} because ${type.name} is recursive`)
                 }
                 structSet.add(type.name)
-                const childs = flattenStructForStorage(type, `${f.name}_${columnPrefix}`, structSet)
-                cols.push(...childs)
+                const table = flattenStructForStorage(type, structSet, `${nextTableName}_${f.name}`)
+                thisTable.refs.push({name: f.name, table})
                 structSet.delete(type.name)
                 return
 
@@ -76,20 +90,39 @@ export function flattenStructForStorage(struct: CompiledTypes.Struct, columnPref
 
                     default: Utilities.assertNever(prim)
                 }
-                cols.push({name: `${prefix}${f.name}`, type: typeStr})
+                thisTable.cols.push({name: f.name, type: typeStr})
         }
     })
 
-    return cols
+    return thisTable
+}
+
+function writeCreateTables(store: TableDef): string[] {
+    const creates: string[] = []
+
+    store.refs.forEach(ref => {
+        creates.push(...writeCreateTables(ref.table))
+    })
+
+    const constraints: string[] = ["PRIMARY KEY(conduit_entity_id)"]
+    const cols = store.cols.map(c => `${c.name}\t${c.type}`)
+    cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
+    cols.push(...store.refs.map(r => `${r.name}\tINT`))
+
+    constraints.push(...store.refs.map(r => `CONSTRAINT fk_${r.name}\n\tFOREIGN KEY(${r.name})\n\t\tREFERENCES ${r.table.name}(conduit_entity_id)`))
+
+    creates.push(`
+    CREATE TABLE ${store.name} (
+        ${[...cols, ...constraints].join(",\n")}
+    );`)
+
+    return creates
 }
 
 export function generateTable(val: CompiledTypes.Store): string {
-    const cols: ColumnDef[] = flattenStructForStorage(val.stores, '', new Set([val.stores.name]))
-    return `
-    CREATE TABLE ${val.name} (
-        ${cols.map(c => `${c.name}\t${c.type}`).join(",\n")}
-    );
+    const store: TableDef = flattenStructForStorage(val.stores,  new Set([val.stores.name]), val.name)
 
-    `
+
+    return writeCreateTables(store).join("\n")
 
 }

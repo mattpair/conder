@@ -235,11 +235,20 @@ Array [
                         );
                 
                         
-    CREATE TABLE outerStore (
-        inner__fieldA	double precision
+    CREATE TABLE outerStore_inner (
+        fieldA	double precision,
+conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+PRIMARY KEY(conduit_entity_id)
     );
 
-    
+    CREATE TABLE outerStore (
+        conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
+inner	INT,
+PRIMARY KEY(conduit_entity_id),
+CONSTRAINT fk_inner
+	FOREIGN KEY(inner)
+		REFERENCES outerStore_inner(conduit_entity_id)
+    );
                         
                         
                         insert into cities(name, location)
