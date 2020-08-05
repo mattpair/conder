@@ -118,6 +118,12 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
     }
 }
 
+function assert(bool: boolean) {
+    if(!bool) {
+        throw Error(`Assertion failed`)
+    }
+}
+
 export class StoreCommander {
     private readonly name: string
     private readonly columns: CommanderColumn[]
@@ -202,13 +208,35 @@ export class StoreCommander {
     }
 
     public insert(stmt: CompiledTypes.Append): InsertCodelet {
-        const columns = stmt.into.stores.children.Field.map(i => i.name).join(", ")
-        const tableAndColumns: string = `${stmt.into.name}(${columns})`
-        const values = `values (${stmt.inserting.type.val.children.Field.map((_, i) => `$${i + 1}`).join(", ")})`
-        const array = `&[${stmt.inserting.type.val.children.Field.map(f => `&${stmt.inserting.name}.${f.name}`).join(", ")}]`
+        assert(stmt.into.name === this.name)
+
+
+        const columns: string[] = []
+        const values: string[] = []
+        const array: string[]= []
+        let colCount = 0
+        this.columns.forEach(c => {
+            switch(c.dif) {
+                case "prim":
+                    columns.push(c.columnName)
+                    values.push(`$${++colCount}`)
+                    array.push(`&${stmt.inserting.name}.${c.fieldName}`)
+                    break;
+
+                case "struct":
+                    break;
+
+                case "prim[]":
+                    break;
+            }
+        })
+
+
+        const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
+        
         return {
-            sql: `insert into ${tableAndColumns} ${values}`,
-            array
+            sql: `insert into ${tableAndColumns} values (${values.join(", ")})`,
+            array: `&[${array.join(", ")}]`
         }
     }
     
