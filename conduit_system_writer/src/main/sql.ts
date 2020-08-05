@@ -207,9 +207,7 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(stmt: CompiledTypes.Append): InsertCodelet[] {
-        assert(stmt.into.name === this.name)
-
+    public insert(varname: string): InsertCodelet[] {
 
         const columns: string[] = []
         const values: string[] = []
@@ -220,7 +218,7 @@ export class StoreCommander {
                 case "prim":
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
-                    array.push(`&${stmt.inserting.name}.${c.fieldName}`)
+                    array.push(`&${varname}.${c.fieldName}`)
                     break;
 
                 case "struct":
