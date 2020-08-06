@@ -24,7 +24,9 @@ function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>,
                         dif: "1:many",
                         type,
                         fieldName: f.name,
-                        ref: table
+                        ref: table,
+                        refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+
                     })
                 } else {
                     cols.push({
@@ -79,6 +81,7 @@ type StructArrayCol = {
     dif: "1:many"
     type: CompiledTypes.Struct
     fieldName: string
+    refTableName: string
     ref: StoreCommander
 }
 
@@ -172,7 +175,7 @@ export class StoreCommander {
                 case "1:many":
                     creates.push(c.ref.create)
                     rels.push(`
-                    CREATE TABLE rel_${this.name}_and_${c.ref.name} (
+                    CREATE TABLE ${c.refTableName} (
                         left INT,
                         right INT,
                         constraint fk_${c.ref.name}_right
@@ -181,7 +184,7 @@ export class StoreCommander {
                         constraint fk_${this.name}_left
                             FOREIGN KEY(left)
                                 REFERENCES ${this.name}(conduit_entity_id)
-                    )`)
+                    );`)
                     break;
 
                     
@@ -208,6 +211,7 @@ export class StoreCommander {
         const values: string[] = []
         const array: string[]= []
         const inserts: string[] = []
+        const postInsertPtrs: {relTableName: string, ptrVec: string}[] = []
         let colCount = 0
         this.columns.forEach(c => {
             switch(c.dif) {
@@ -219,9 +223,18 @@ export class StoreCommander {
                     break;
 
                 case "1:many":
-                    // const manyRet = `ret${nextReturnId++}`
-                    // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: manyRet}, nextReturnId))
-// let ${insert.return_name} = client.query("${insert.sql}", &[${insert.array}]).await?;
+                    const manyRet = `ret${nextReturnId++}`
+                    const vecVarName = `vec_${manyRet}`
+                    const forLoop = `
+                    let mut ${vecVarName} = Vec::new();
+                    for x${nextReturnId} in &${varname}.${c.fieldName} {
+                        ${c.ref.insert(`x${nextReturnId}`, {kind: "save", name: manyRet}, nextReturnId).join("\n")}
+                        vec${manyRet}.push(${manyRet}.get(0));
+                    }
+                    `
+
+                    postInsertPtrs.push({relTableName: c.refTableName, ptrVec: vecVarName})
+                    inserts.push(forLoop)
                     break;
 
                 case "1:1":
@@ -240,12 +253,24 @@ export class StoreCommander {
 
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
         const insertionSql = `insert into ${tableAndColumns} values (${values.join(", ")})`
+        if (postInsertPtrs.length > 0 && ret.kind !== "save") {
+            ret = {kind: "save", name: `ret${nextReturnId++}`}
+        }
 
         switch (ret.kind) {
             case "save": {
+                const returnName = ret.name
                 const completequery = `${insertionSql} RETURNING conduit_entity_id`
-                const rustCode = `let ${ret.name} = client.query("${completequery}", &[${array}]).await?;`
+                const rustCode = `let ${returnName} = client.query("${completequery}", &[${array}]).await?;`
                 inserts.push(rustCode)
+                postInsertPtrs.forEach(post => {
+                    inserts.push(`
+                    while let Some(child_id) = ${post.ptrVec}.pop() {
+                        client.query("insert into ${post.relTableName}(left, right) values ($1, $2)", &[&${returnName}, &child_id]).await?;
+                    }
+                        
+                    `)
+                })
                 break
             }
             case "drop": {   

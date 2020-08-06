@@ -87,18 +87,18 @@ function insert(s: wrapper) {
 }
 `)
 
-// TestCodeGen("inserting struct containing struct array", `
-// struct simple {
-//     string data
-// }
+TestCodeGen("inserting struct containing struct array", `
+struct simple {
+    string data
+}
 
-// struct wrapper {
-//     simple[] innard
-// }
+struct wrapper {
+    simple[] innard
+}
 
-// wrapStore: wrapper[] = []
+wrapStore: wrapper[] = []
 
-// function insert(s: wrapper) {
-//     wrapStore.append(s)
-// }
-// `)
+function insert(s: wrapper) {
+    wrapStore.append(s)
+}
+`)
