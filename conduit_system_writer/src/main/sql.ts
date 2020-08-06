@@ -205,7 +205,7 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(varname: string, ret: ReturnInstruction, nextReturnId: number): string[] {
+    public insert(varname: string, ret: ReturnInstruction, nextReturnId: () => number): string[] {
 
         const columns: string[] = []
         const values: string[] = []
@@ -223,12 +223,13 @@ export class StoreCommander {
                     break;
 
                 case "1:many":
-                    const manyRet = `ret${nextReturnId++}`
+                    const manyRet = `ret${nextReturnId()}`
                     const vecVarName = `vec_${manyRet}`
+                    const rowVarName = `row${nextReturnId()}`
                     const forLoop = `
                     let mut ${vecVarName} = Vec::new();
-                    for x${nextReturnId} in &${varname}.${c.fieldName} {
-                        ${c.ref.insert(`x${nextReturnId}`, {kind: "save", name: manyRet}, nextReturnId).join("\n")}
+                    for ${rowVarName} in &${varname}.${c.fieldName} {
+                        ${c.ref.insert(`${rowVarName}`, {kind: "save", name: manyRet}, nextReturnId).join("\n")}
                         vec${manyRet}.push(${manyRet}.get(0));
                     }
                     `
@@ -238,7 +239,7 @@ export class StoreCommander {
                     break;
 
                 case "1:1":
-                    const returnedId = `ret${nextReturnId++}`
+                    const returnedId = `ret${nextReturnId()}`
                     inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
@@ -254,7 +255,7 @@ export class StoreCommander {
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
         const insertionSql = `insert into ${tableAndColumns} values (${values.join(", ")})`
         if (postInsertPtrs.length > 0 && ret.kind !== "save") {
-            ret = {kind: "save", name: `ret${nextReturnId++}`}
+            ret = {kind: "save", name: `ret${nextReturnId()}`}
         }
 
         switch (ret.kind) {

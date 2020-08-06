@@ -184,15 +184,15 @@ Array [
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
                     let mut vec_ret0 = Vec::new();
-                    for x1 in &s.innard {
-                        let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&x1.data]).await?;
+                    for row1 in &s.innard {
+                        let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
                         vecret0.push(ret0.get(0));
                     }
                     
-let ret1 = client.query(\\"insert into wrapStore() values () RETURNING conduit_entity_id\\", &[]).await?;
+let ret2 = client.query(\\"insert into wrapStore() values () RETURNING conduit_entity_id\\", &[]).await?;
 
                     while let Some(child_id) = vec_ret0.pop() {
-                        client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left, right) values ($1, $2)\\", &[&ret1, &child_id]).await?;
+                        client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left, right) values ($1, $2)\\", &[&ret2, &child_id]).await?;
                     }
                         
                     
