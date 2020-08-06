@@ -35,9 +35,20 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
         switch(stmt.kind) {
             case "Append":
                 const inserts = storeMap.get(stmt.into.name).insert(stmt.inserting.name, {kind: "drop"}, 0)
-                statements.push(inserts.map(insert => `
-                ${insert.return.kind === "save" ? `let ${insert.return.name} = ` : ""} client.query("${insert.sql}", &[${insert.array}]).await?;
-                `).join("\n"))
+                statements.push(
+                    inserts.map(insert => {
+                        switch(insert.kind) {
+                            case "returning":
+                                return `
+                                    let ${insert.return_name} = client.query("${insert.sql}", &[${insert.array}]).await?;
+                                `                            
+                            case "dropped":
+                                return `client.query("${insert.sql}", &[${insert.array}]).await?`
+
+                            default: assertNever(insert)
+
+                        } 
+                    }).join("\n"))
                 break;
 
             case "ReturnStatement":

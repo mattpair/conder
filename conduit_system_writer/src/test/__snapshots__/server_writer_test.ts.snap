@@ -34,9 +34,7 @@ Array [
                     
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
-            
-                 client.query(\\"insert into simpleStore(data) values ($1) \\", &[&s.data]).await?;
-                ;
+            client.query(\\"insert into simpleStore(data) values ($1)\\", &[&s.data]).await?;
 return Ok(())
         }
 
@@ -185,11 +183,9 @@ Array [
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
-                let ret0 =  client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-                
-
-                 client.query(\\"insert into wrapStore(innard) values ($1) \\", &[&(ret0.get(0))]).await?;
-                ;
+                                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+                                
+client.query(\\"insert into wrapStore(innard) values ($1)\\", &[&(ret0.get(0))]).await?;
 return Ok(())
         }
 
@@ -347,11 +343,9 @@ Array [
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
-                let ret0 =  client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-                
-
-                 client.query(\\"insert into wrapStore(innard) values ($1) \\", &[&(ret0.get(0))]).await?;
-                ;
+                                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+                                
+client.query(\\"insert into wrapStore(innard) values ($1)\\", &[&(ret0.get(0))]).await?;
 return Ok(())
         }
 

@@ -59,11 +59,18 @@ export type ReturnInstruction = Readonly<{
     name: string
 } | {kind: "drop"}> 
 
-export type InsertCodelet = {
-    readonly sql: string,
-    readonly array: string[],
-    readonly return: ReturnInstruction
-}
+export type InsertCodelet = Readonly<{
+    kind: "returning"
+    sql: string,
+    array: string[],
+    return_name: string
+} | {
+    kind: "dropped"
+    sql: string,
+    array: string[],
+}>
+
+
 
 type PrimitiveColumn = {
     dif: "prim"
@@ -204,6 +211,7 @@ export class StoreCommander {
         const values: string[] = []
         const array: string[]= []
         const inserts: InsertCodelet[] = []
+        // const afterInserts: InsertCodelet[] = []
         let colCount = 0
         this.columns.forEach(c => {
             switch(c.dif) {
@@ -217,6 +225,9 @@ export class StoreCommander {
                 case "struct":
                     switch(c.kind) {
                         case "1:many":
+                            // const manyRet = `ret${nextReturnId++}`
+                            // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: manyRet}, nextReturnId))
+
                             break;
                         case "1:1":
                             const returnedId = `ret${nextReturnId++}`
@@ -235,11 +246,27 @@ export class StoreCommander {
 
 
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
-        inserts.push({
-            sql: `insert into ${tableAndColumns} values (${values.join(", ")}) ${ret.kind === "drop" ? "" : "RETURNING conduit_entity_id"}`,
-            array,
-            return: ret
-        })
+
+        switch (ret.kind) {
+            case "save":
+                inserts.push({
+                    sql: `insert into ${tableAndColumns} values (${values.join(", ")}) RETURNING conduit_entity_id`,
+                    array,
+                    return_name: ret.name,
+                    kind: "returning"
+                })
+                break
+            case "drop":
+                inserts.push({
+                    sql: `insert into ${tableAndColumns} values (${values.join(", ")})`,
+                    array,
+                    kind: "dropped"
+                })
+                break
+
+            default: assertNever(ret)
+        }
+        
         return inserts
     }
     
