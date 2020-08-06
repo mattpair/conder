@@ -59,19 +59,6 @@ export type ReturnInstruction = Readonly<{
     name: string
 } | {kind: "drop"}> 
 
-export type InsertCodelet = Readonly<{
-    kind: "returning"
-    sql: string,
-    array: string[],
-    return_name: string
-} | {
-    kind: "dropped"
-    sql: string,
-    array: string[],
-}>
-
-
-
 type PrimitiveColumn = {
     dif: "prim"
     type: CompiledTypes.PrimitiveEntity
@@ -211,7 +198,6 @@ export class StoreCommander {
         const values: string[] = []
         const array: string[]= []
         const inserts: string[] = []
-        // const afterInserts: InsertCodelet[] = []
         let colCount = 0
         this.columns.forEach(c => {
             switch(c.dif) {
@@ -259,7 +245,7 @@ export class StoreCommander {
                 inserts.push(`client.query("${insertionSql}", &[${array}]).await?;`)
                 break
             }
-            
+
             default: assertNever(ret)
         }
         
