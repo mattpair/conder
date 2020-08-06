@@ -19,14 +19,23 @@ function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>,
                 }
                 structSet.add(type.name)
                 const table = assembleStoreTree(type, structSet, `${nextTableName}_${f.name}`)
-                cols.push({
-                    dif: "struct",
-                    type,
-                    columnName: f.name,
-                    fieldName: f.name,
-                    kind: f.part.FieldType.isArray ? "1:many" : "1:1",
-                    ref: table
-                })
+                if (f.part.FieldType.isArray) {
+                    cols.push({
+                        dif: "1:many",
+                        type,
+                        fieldName: f.name,
+                        ref: table
+                    })
+                } else {
+                    cols.push({
+                        dif: "1:1",
+                        type,
+                        columnName: `${f.name}_ptr`,
+                        fieldName: f.name,
+                        ref: table
+                    })
+                }
+                
                 structSet.delete(type.name)
                 return
 
@@ -66,12 +75,18 @@ type PrimitiveColumn = {
     fieldName: string
 }
 
-type StructStoreRefCol = {
-    dif: "struct"
+type StructArrayCol = {
+    dif: "1:many"
+    type: CompiledTypes.Struct
+    fieldName: string
+    ref: StoreCommander
+}
+
+type StructRefCol = {
+    dif: "1:1"
     type: CompiledTypes.Struct
     columnName: string
     fieldName: string
-    kind: "1:1" | "1:many"
     ref: StoreCommander
 }
 
@@ -82,7 +97,7 @@ type PrimitiveArrayColumn = {
     fieldName: string
 }
 
-type CommanderColumn = PrimitiveColumn | StructStoreRefCol | PrimitiveArrayColumn
+type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | PrimitiveArrayColumn
 
 function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 
@@ -146,36 +161,31 @@ export class StoreCommander {
                     
                 
 
-                case "struct":
-                    switch (c.kind) {
-                        case "1:1":
-                            creates.push(c.ref.create)
-                            cols.push(`${c.columnName}\tINT`)
-                            constraints.push(`constraint fk_${c.fieldName}
-                                FOREIGN KEY(${c.fieldName})
-                                    REFERENCES ${c.ref.name}(conduit_entity_id)`)
-                            break;
-                        case "1:many":
-                            creates.push(c.ref.create)
-                            rels.push(`
-                            CREATE TABLE rel_${this.name}_and_${c.ref.name} (
-                                left INT,
-                                right INT,
-                                constraint fk_${c.ref.name}_right
-                                    FOREIGN KEY(right)
-                                        REFERENCES ${c.ref.name}(conduit_entity_id)
-                                constraint fk_${this.name}_left
-                                    FOREIGN KEY(left)
-                                        REFERENCES ${this.name}(conduit_entity_id)
-                            )`)
-                            break;
-
-                        default: assertNever(c.kind)
-                    }
-                    
-
-                    
+                case "1:1":
+                    creates.push(c.ref.create)
+                    cols.push(`${c.columnName}\tINT`)
+                    constraints.push(`constraint fk_${c.fieldName}
+                        FOREIGN KEY(${c.fieldName})
+                            REFERENCES ${c.ref.name}(conduit_entity_id)`)
                     break;
+
+                case "1:many":
+                    creates.push(c.ref.create)
+                    rels.push(`
+                    CREATE TABLE rel_${this.name}_and_${c.ref.name} (
+                        left INT,
+                        right INT,
+                        constraint fk_${c.ref.name}_right
+                            FOREIGN KEY(right)
+                                REFERENCES ${c.ref.name}(conduit_entity_id)
+                        constraint fk_${this.name}_left
+                            FOREIGN KEY(left)
+                                REFERENCES ${this.name}(conduit_entity_id)
+                    )`)
+                    break;
+
+                    
+                default: assertNever(c)
             }  
         })
 
@@ -208,23 +218,20 @@ export class StoreCommander {
                     array.push(`&${varname}.${c.fieldName}`)
                     break;
 
-                case "struct":
-                    switch(c.kind) {
-                        case "1:many":
-                            // const manyRet = `ret${nextReturnId++}`
-                            // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: manyRet}, nextReturnId))
+                case "1:many":
+                    // const manyRet = `ret${nextReturnId++}`
+                    // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: manyRet}, nextReturnId))
 // let ${insert.return_name} = client.query("${insert.sql}", &[${insert.array}]).await?;
-                            break;
-                        case "1:1":
-                            const returnedId = `ret${nextReturnId++}`
-                            inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
-                            columns.push(c.columnName)
-                            values.push(`$${++colCount}`)
-                            array.push(`&(${returnedId}.get(0))`)
-                            break;
-                    }
                     break;
 
+                case "1:1":
+                    const returnedId = `ret${nextReturnId++}`
+                    inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
+                    columns.push(c.columnName)
+                    values.push(`$${++colCount}`)
+                    array.push(`&(${returnedId}.get(0))`)
+                    break;
+                    
                 
                 default: assertNever(c)
             }

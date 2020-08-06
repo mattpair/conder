@@ -183,7 +183,7 @@ Array [
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard) values ($1)\\", &[&(ret0.get(0))]).await?;
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
 return Ok(())
         }
 
@@ -284,11 +284,11 @@ PRIMARY KEY(conduit_entity_id)
         );
 
         CREATE TABLE wrapStore (
-            innard	INT,
+            innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 constraint fk_innard
-                                FOREIGN KEY(innard)
-                                    REFERENCES wrapStore_innard(conduit_entity_id),
+                        FOREIGN KEY(innard)
+                            REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
         );
                         
@@ -341,7 +341,7 @@ Array [
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard) values ($1)\\", &[&(ret0.get(0))]).await?;
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
 return Ok(())
         }
 
@@ -442,11 +442,11 @@ PRIMARY KEY(conduit_entity_id)
         );
 
         CREATE TABLE wrapStore (
-            innard	INT,
+            innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 constraint fk_innard
-                                FOREIGN KEY(innard)
-                                    REFERENCES wrapStore_innard(conduit_entity_id),
+                        FOREIGN KEY(innard)
+                            REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
         );
                         
@@ -703,16 +703,16 @@ PRIMARY KEY(conduit_entity_id)
             conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
-                            CREATE TABLE rel_outerStore_and_outerStore_inners (
-                                left INT,
-                                right INT,
-                                constraint fk_outerStore_inners_right
-                                    FOREIGN KEY(right)
-                                        REFERENCES outerStore_inners(conduit_entity_id)
-                                constraint fk_outerStore_left
-                                    FOREIGN KEY(left)
-                                        REFERENCES outerStore(conduit_entity_id)
-                            )
+                    CREATE TABLE rel_outerStore_and_outerStore_inners (
+                        left INT,
+                        right INT,
+                        constraint fk_outerStore_inners_right
+                            FOREIGN KEY(right)
+                                REFERENCES outerStore_inners(conduit_entity_id)
+                        constraint fk_outerStore_left
+                            FOREIGN KEY(left)
+                                REFERENCES outerStore(conduit_entity_id)
+                    )
                         
                         
                         insert into cities(name, location)
@@ -845,11 +845,11 @@ PRIMARY KEY(conduit_entity_id)
         );
 
         CREATE TABLE outerStore (
-            inner	INT,
+            inner_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 constraint fk_inner
-                                FOREIGN KEY(inner)
-                                    REFERENCES outerStore_inner(conduit_entity_id),
+                        FOREIGN KEY(inner)
+                            REFERENCES outerStore_inner(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
         );
                         
