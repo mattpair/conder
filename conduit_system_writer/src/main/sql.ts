@@ -205,12 +205,12 @@ export class StoreCommander {
         return `${creates.join("\n")}${rels.join("\n")}`
     }
 
-    public insert(varname: string, ret: ReturnInstruction, nextReturnId: number): InsertCodelet[] {
+    public insert(varname: string, ret: ReturnInstruction, nextReturnId: number): string[] {
 
         const columns: string[] = []
         const values: string[] = []
         const array: string[]= []
-        const inserts: InsertCodelet[] = []
+        const inserts: string[] = []
         // const afterInserts: InsertCodelet[] = []
         let colCount = 0
         this.columns.forEach(c => {
@@ -227,7 +227,7 @@ export class StoreCommander {
                         case "1:many":
                             // const manyRet = `ret${nextReturnId++}`
                             // inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: manyRet}, nextReturnId))
-
+// let ${insert.return_name} = client.query("${insert.sql}", &[${insert.array}]).await?;
                             break;
                         case "1:1":
                             const returnedId = `ret${nextReturnId++}`
@@ -246,24 +246,20 @@ export class StoreCommander {
 
 
         const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
+        const insertionSql = `insert into ${tableAndColumns} values (${values.join(", ")})`
 
         switch (ret.kind) {
-            case "save":
-                inserts.push({
-                    sql: `insert into ${tableAndColumns} values (${values.join(", ")}) RETURNING conduit_entity_id`,
-                    array,
-                    return_name: ret.name,
-                    kind: "returning"
-                })
+            case "save": {
+                const completequery = `${insertionSql} RETURNING conduit_entity_id`
+                const rustCode = `let ${ret.name} = client.query("${completequery}", &[${array}]).await?;`
+                inserts.push(rustCode)
                 break
-            case "drop":
-                inserts.push({
-                    sql: `insert into ${tableAndColumns} values (${values.join(", ")})`,
-                    array,
-                    kind: "dropped"
-                })
+            }
+            case "drop": {   
+                inserts.push(`client.query("${insertionSql}", &[${array}]).await?;`)
                 break
-
+            }
+            
             default: assertNever(ret)
         }
         

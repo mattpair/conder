@@ -35,20 +35,7 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
         switch(stmt.kind) {
             case "Append":
                 const inserts = storeMap.get(stmt.into.name).insert(stmt.inserting.name, {kind: "drop"}, 0)
-                statements.push(
-                    inserts.map(insert => {
-                        switch(insert.kind) {
-                            case "returning":
-                                return `
-                                    let ${insert.return_name} = client.query("${insert.sql}", &[${insert.array}]).await?;
-                                `                            
-                            case "dropped":
-                                return `client.query("${insert.sql}", &[${insert.array}]).await?`
-
-                            default: assertNever(insert)
-
-                        } 
-                    }).join("\n"))
+                statements.push(inserts.join("\n"))
                 break;
 
             case "ReturnStatement":
@@ -96,7 +83,7 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
     return {
         definition: `
         ${f.requiresDbClient ? "async ": ""}fn internal_${f.name}(${parameterList.map(p => `${p.name}: ${p.type}`).join(", ")}) ${returnTypeSpec} {
-            ${statements.join(";\n")}
+            ${statements.join("\n")}
         }`, 
         invocation: `internal_${f.name}(${parameterList.map(p => p.name)})${f.requiresDbClient ? ".await" : ""}`
     }
