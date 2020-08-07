@@ -195,7 +195,7 @@ export class StoreCommander {
         })
 
         constraints.push("PRIMARY KEY(conduit_entity_id)")
-        cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS ENTITY ID")
+        cols.push("conduit_entity_id\tINT\tGENERATED ALWAYS AS IDENTITY")
 
     
         
@@ -286,17 +286,72 @@ export class StoreCommander {
         return inserts
     }
 
-    public getAll(ret: string, nextReturnId: () => number): string {
-        const rs = this.columns.map((col, index) => `${col.fieldName}: row.get(${index})`)
+    public getAll(returnVecName: string, nextReturnId: () => number, whereClause:string=''): string {
+        const structFieldAssignment:string[] = []
+        const childrenFetches: string[] = []
+        const extractions: string[] = []
+        const rowVarName = `row${nextReturnId()}`
+        const allVarName = `all${this.typeName}${nextReturnId()}`
+        const thisEntityIdVar = `${this.typeName}EntityId${nextReturnId()}`
+
+        this.columns.forEach((col) => {
+            switch (col.dif) {
+                case "prim":
+                    structFieldAssignment.push(`${col.fieldName}: ${rowVarName}.get("${col.columnName}")`)
+                    break;
+                case "1:1":
+                    const childRetName = `all${col.type.name}${nextReturnId()}`
+                    const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
+                    childrenFetches.push(col.ref.getAll(
+                        childRetName, 
+                        nextReturnId,
+                        `WHERE conduit_entity_id in (select ${col.columnName} from ${this.name})`
+                    ))
+                    const childRowVar = `row${nextReturnId()}`
+                    
+                    childrenFetches.push(`
+                    let mut ${childMapVar} = HashMap::with_capacity(${childRetName}.len());
+                    while let Some(${childRowVar}) = ${childRetName}.pop() {
+                        ${childMapVar}.insert(${childRowVar}.conduit_entity_id, ${childRowVar})
+                    }
+                    `)
+                    const extractedVarName = `extracted${col.type.name}${nextReturnId()}`
+                    extractions.push(`
+                    // Extracting ${col.type.name}
+                    let ${extractedVarName} = match ${childMapVar}.get(&${rowVarName}.get("${col.columnName}")) {
+                        Some(t) => t,
+                        None => panic("did not get an expected ${col.columnName}")
+                    }
+                    `)
+
+                    
+                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
+
+                    break;
+
+                case "1:many":
+                    break;
+
+
+                default: assertNever(col)
+            }
+            
+        })
 
         return `
-        let mut allin = client.query("select * from ${this.name}", &[]).await?;
+        // Gettting all ${this.typeName}
+        let mut ${allVarName} = client.query("select * from ${this.name} ${whereClause}", &[]).await?;
 
-        let mut ${ret} = Vec::with_capacity(allin.len());
+        ${childrenFetches.join("\n")}
 
-        while let Some(row) = allin.pop() {
-            out.push(${this.typeName} {
-                ${rs.join(",\n")}
+        let mut ${returnVecName} = Vec::with_capacity(${allVarName}.len());
+
+        while let Some(${rowVarName}) = ${allVarName}.pop() {
+            let ${thisEntityIdVar} = ${rowVarName}.get("conduit_entity_id");
+            ${extractions.join('\n')}
+            ${returnVecName}.push(${this.typeName} {
+                ${structFieldAssignment.join(",\n")},
+                conduit_entity_id: Some(${thisEntityIdVar})
             })
         }
 

@@ -12,6 +12,7 @@ Array [
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
                 
                 
                             struct AppData {
@@ -28,13 +29,15 @@ Array [
                             
                         #[derive(Serialize, Deserialize)]
                         struct simple {
-                            data: String
+                            data: String,
+conduit_entity_id: i32
                         }
                     
 
                         #[derive(Serialize, Deserialize)]
                         struct wrapper {
-                            innard: Vec<simple>
+                            innard: Vec<simple>,
+conduit_entity_id: i32
                         }
                     
                     
@@ -188,6 +191,7 @@ Array [
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
                 
                 
                             struct AppData {
@@ -204,7 +208,8 @@ Array [
                             
                         #[derive(Serialize, Deserialize)]
                         struct simple {
-                            data: f64
+                            data: f64,
+conduit_entity_id: i32
                         }
                     
                     
@@ -231,13 +236,19 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
             
-        let mut allin = client.query(\\"select * from simpleStore\\", &[]).await?;
+        // Gettting all simple
+        let mut allsimple1 = client.query(\\"select * from simpleStore \\", &[]).await?;
 
-        let mut out = Vec::with_capacity(allin.len());
+        
 
-        while let Some(row) = allin.pop() {
+        let mut out = Vec::with_capacity(allsimple1.len());
+
+        while let Some(row0) = allsimple1.pop() {
+            let simpleEntityId2 = row0.get(\\"conduit_entity_id\\");
+            
             out.push(simple {
-                data: row.get(0)
+                data: row0.get(\\"data\\")
+                conduit_entity_id: simpleEntityId2
             })
         }
 
@@ -360,6 +371,7 @@ Array [
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
                 
                 
                             struct AppData {
@@ -376,13 +388,15 @@ Array [
                             
                         #[derive(Serialize, Deserialize)]
                         struct simple {
-                            data: Vec<String>
+                            data: Vec<String>,
+conduit_entity_id: i32
                         }
                     
 
                         #[derive(Serialize, Deserialize)]
                         struct wrapper {
-                            innard: simple
+                            innard: simple,
+conduit_entity_id: i32
                         }
                     
                     
@@ -410,13 +424,48 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-        let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
+        // Gettting all wrapper
+        let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
-        let mut out = Vec::with_capacity(allin.len());
+        
+        // Gettting all simple
+        let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
 
-        while let Some(row) = allin.pop() {
+        
+
+        let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+
+        while let Some(row5) = allsimple6.pop() {
+            let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
+            
+            allsimple3.push(simple {
+                data: row5.get(\\"data\\")
+                conduit_entity_id: simpleEntityId7
+            })
+        }
+
+        
+
+                    let mut entityIdTosimple4 = HashMap::with_capacity(allsimple3.len());
+                    while let Some(row8) = allsimple3.pop() {
+                        entityIdTosimple4.insert(row8.conduit_entity_id, row8)
+                    }
+                    
+
+        let mut out = Vec::with_capacity(allwrapper1.len());
+
+        while let Some(row0) = allwrapper1.pop() {
+            let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
+            
+                    // Extracting simple
+                    let extractedsimple9 = match entityIdTosimple4.get(&row0.get(\\"innard_ptr\\")) {
+                        Some(t) => t,
+                        None => panic(\\"did not get an expected innard_ptr\\")
+                    }
+                    
             out.push(wrapper {
-                innard: row.get(0)
+                innard: extractedsimple9
+                conduit_entity_id: wrapperEntityId2
             })
         }
 
@@ -548,6 +597,7 @@ Array [
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
                 
                 
                             struct AppData {
@@ -564,13 +614,15 @@ Array [
                             
                         #[derive(Serialize, Deserialize)]
                         struct simple {
-                            data: bool
+                            data: bool,
+conduit_entity_id: i32
                         }
                     
 
                         #[derive(Serialize, Deserialize)]
                         struct wrapper {
-                            innard: simple
+                            innard: simple,
+conduit_entity_id: i32
                         }
                     
                     
@@ -598,13 +650,48 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-        let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
+        // Gettting all wrapper
+        let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
-        let mut out = Vec::with_capacity(allin.len());
+        
+        // Gettting all simple
+        let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
 
-        while let Some(row) = allin.pop() {
+        
+
+        let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+
+        while let Some(row5) = allsimple6.pop() {
+            let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
+            
+            allsimple3.push(simple {
+                data: row5.get(\\"data\\")
+                conduit_entity_id: simpleEntityId7
+            })
+        }
+
+        
+
+                    let mut entityIdTosimple4 = HashMap::with_capacity(allsimple3.len());
+                    while let Some(row8) = allsimple3.pop() {
+                        entityIdTosimple4.insert(row8.conduit_entity_id, row8)
+                    }
+                    
+
+        let mut out = Vec::with_capacity(allwrapper1.len());
+
+        while let Some(row0) = allwrapper1.pop() {
+            let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
+            
+                    // Extracting simple
+                    let extractedsimple9 = match entityIdTosimple4.get(&row0.get(\\"innard_ptr\\")) {
+                        Some(t) => t,
+                        None => panic(\\"did not get an expected innard_ptr\\")
+                    }
+                    
             out.push(wrapper {
-                innard: row.get(0)
+                innard: extractedsimple9
+                conduit_entity_id: wrapperEntityId2
             })
         }
 

@@ -108,9 +108,10 @@ function generateFunctions(functions: CompiledTypes.Function[], storeMap: Readon
         switch (returnType.kind) {
             case "VoidReturnType":
                 externalFuncBody = `match ${internal.invocation} {
-                    Ok(()) => HttpResponse::Ok().finish(),
+                    Ok(()) => HttpResponse::Ok(),
                     Err(err) => {
-                        HttpResponse::BadRequest().body(format!("Failure caused by: {}", err))
+                        eprintln!("Failure caused by: {}", err);
+                        HttpResponse::BadRequest()
                     }
                 };
                 `
@@ -119,7 +120,8 @@ function generateFunctions(functions: CompiledTypes.Function[], storeMap: Readon
                 externalFuncBody = `match ${internal.invocation} {
                     Ok(out) => HttpResponse::Ok().json(out),
                     Err(err) => {
-                        HttpResponse::BadRequest().body(format!("Failure caused by: {}", err))
+                        eprintln!("Failure caused by: {}", err);
+                        HttpResponse::BadRequest().finish()
                     }
                 };`
                 break;
@@ -138,6 +140,75 @@ function generateFunctions(functions: CompiledTypes.Function[], storeMap: Readon
     })
 }
 
+function generateRustStructs(val: CompiledTypes.Struct): string {
+    const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
+        const field_type = field.part.FieldType.differentiate()
+        let field_type_str = ''
+        switch (field_type.kind) {
+            case "Primitive":
+                switch (field_type.val) {
+                    case Lexicon.Symbol.double:
+                        field_type_str = "f64"
+                        break;
+                    case Lexicon.Symbol.float:
+                        field_type_str ="f32"
+                        break;
+                    case Lexicon.Symbol.int32:
+                        field_type_str ="i32"
+                        break;
+                    case Lexicon.Symbol.int64:
+                        field_type_str ="i64"
+                        break;
+                    case Lexicon.Symbol.string:
+                        field_type_str = "String"
+                        break;
+                    case Lexicon.Symbol.uint32:
+                        field_type_str = "u32"
+                        break;
+                    case Lexicon.Symbol.uint64:
+                        field_type_str = "u64"
+                        break;
+                    case Lexicon.Symbol.bool:
+                        field_type_str = "bool"
+                        break;
+
+                    case Lexicon.Symbol.bytes:
+                        throw new Error("bytes isn't a supporetd type yet")
+
+                    default: Utilities.assertNever(field_type.val)
+                }
+                break;
+            case "Struct":
+                field_type_str = field_type.name
+                break;
+
+            case "Enum":
+                field_type_str = 'u8'
+                break;
+        }
+        switch(field.part.FieldType.modification) {
+            case "array":
+                return `${field.name}: Vec<${field_type_str}>`
+            case "none":
+                return `${field.name}: ${field_type_str}`   
+
+            case "optional":
+                return `${field.name}: Option<${field_type_str}>`
+
+            default: assertNever(field.part.FieldType.modification)
+        }  
+    })
+
+    const makeStruct = (prefix: string, strFields: string[]) =>  `
+    #[derive(Serialize, Deserialize)]
+    struct ${prefix}${val.name} {
+        ${strFields.join(",\n")}
+    }
+    `
+
+    return makeStruct('', [...fields, `conduit_entity_id: Option<i32>`])
+}
+
 
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, WrittenCode> = {
     stepName: "writing deployment files",
@@ -149,69 +220,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                 case "Function":
                     break;
                 case "Struct":
-                    structs.push(`
-                        #[derive(Serialize, Deserialize)]
-                        struct ${val.name} {
-                            ${val.children.Field.map((field: CompiledTypes.Field) => {
-                                const field_type = field.part.FieldType.differentiate()
-                                let field_type_str = ''
-                                switch (field_type.kind) {
-                                    case "Primitive":
-                                        switch (field_type.val) {
-                                            case Lexicon.Symbol.double:
-                                                field_type_str = "f64"
-                                                break;
-                                            case Lexicon.Symbol.float:
-                                                field_type_str ="f32"
-                                                break;
-                                            case Lexicon.Symbol.int32:
-                                                field_type_str ="i32"
-                                                break;
-                                            case Lexicon.Symbol.int64:
-                                                field_type_str ="i64"
-                                                break;
-                                            case Lexicon.Symbol.string:
-                                                field_type_str = "String"
-                                                break;
-                                            case Lexicon.Symbol.uint32:
-                                                field_type_str = "u32"
-                                                break;
-                                            case Lexicon.Symbol.uint64:
-                                                field_type_str = "u64"
-                                                break;
-                                            case Lexicon.Symbol.bool:
-                                                field_type_str = "bool"
-                                                break;
-
-                                            case Lexicon.Symbol.bytes:
-                                                throw new Error("bytes isn't a supporetd type yet")
-
-                                            default: Utilities.assertNever(field_type.val)
-                                        }
-                                        break;
-                                    case "Struct":
-                                        field_type_str = field_type.name
-                                        break;
-
-                                    case "Enum":
-                                        field_type_str = 'u8'
-                                        break;
-                                }
-                                switch(field.part.FieldType.modification) {
-                                    case "array":
-                                        return `${field.name}: Vec<${field_type_str}>`
-                                    case "none":
-                                        return `${field.name}: ${field_type_str}`   
-
-                                    case "optional":
-                                        return `${field.name}: Option<${field_type_str}>`
-
-                                    default: assertNever(field.part.FieldType.modification)
-                                }
-                                
-                            }).join(",\n")}
-                        }
-                    `)
+                    structs.push(generateRustStructs(val))
                     break
                 case "StoreDefinition":
                     stores.set(val.name, generateStoreCommands(val))
@@ -266,6 +275,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
                 
                 
                             struct AppData {
