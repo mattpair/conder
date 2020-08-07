@@ -5,6 +5,7 @@ import { Struct, Field, ResolvedType, EntityMap} from '../entity/resolved';
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
+import { Primitives } from '../lexicon';
 
 type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function | Parse.StoreDefinition) & {file: FileLocation}
 export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
@@ -53,6 +54,18 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         
             switch(type.kind) {
                 case "CustomType":
+                    const prim = Primitives.find(p => p === type.type)
+                    if (prim) {
+                        newType = {
+                            kind: "Primitive",
+                            loc: type.loc,
+                            val: prim,
+                            modification: type.modification
+                        }
+                        break
+                    }
+
+                
                     if (type.type === ent.name) {
                         //TODO: eventually allow types to contain instances of self.
                         throw new Error(`Currently do not support self-referencing types: ${ent.name}`)
@@ -71,11 +84,8 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     newType = tryResolveFieldType(notYetResolved.name)
                     break
             
-                case "Primitive":
-                    newType = type
-                    break
 
-                default: assertNever(type)
+                default: assertNever(type.kind)
             }
             
 

@@ -1,4 +1,4 @@
-import { Primitives, Symbol } from './lexicon';
+import { Symbol } from './lexicon';
 import { assertNever } from './utils';
 import { FileLocation } from "./utils";
 import * as common from './entity/basic'
@@ -15,8 +15,7 @@ export namespace Parse {
     {readonly loc: FileLocation}
 
     export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string, modification: common.TypeModification}>
-    export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity 
-    export type FieldType = common.BaseFieldType<TypeUnion>
+    export type FieldType = common.BaseFieldType<() => CustomTypeEntity>
     export type Field = common.BaseField<FieldType>
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
@@ -162,7 +161,6 @@ export namespace Parse {
         common.EnumMember | 
         FieldType | 
         CustomTypeEntity | 
-        common.PrimitiveEntity | 
         Function |
         FunctionBody |
         ReturnTypeSpec |
@@ -338,7 +336,6 @@ export namespace Parse {
         FieldType: {
             kind: "polymorph",
             priority: {
-                Primitive: 0,
                 CustomType: 2
             },
             groupKind: "FieldType"
@@ -389,25 +386,6 @@ export namespace Parse {
                     kind: "CustomType",
                     loc,
                     type: match.groups.type,
-                    modification
-                }
-            }
-        },
-        Primitive: {
-            kind: "leaf",
-            regex: new RegExp(`^ *((?<modifier>Array|Optional) +)?(?<val>(${Primitives.join("|")}))`),
-            assemble(match, loc): common.PrimitiveEntity | undefined {
-                let modification: common.TypeModification = "none"
-                if (match.groups.modifier === "Array") {
-                    modification = "array"
-                } else if (match.groups.modifier === "Optional") {
-                    modification = "optional"
-                }
-
-                return {
-                    kind: "Primitive",
-                    loc,
-                    val: Primitives.find(p => p === match.groups.val),
                     modification
                 }
             }
