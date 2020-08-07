@@ -21,7 +21,9 @@ export enum Symbol {
     as="as",
     function="function",
     return="return",
-    array="\[\]"
+    array="\[\]",
+    Array="Array",
+    Optional="Optional"
 }
 
 export const Operators: [
