@@ -24,7 +24,7 @@ enum AttemptToStore {
     No
 }
 
-myBadStore: Array AttemptToStore = []
+myBadStore: Array<AttemptToStore> = []
 `)
 
 testFailsWhen("attempting to store non-array", `

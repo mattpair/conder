@@ -146,7 +146,7 @@ Object {
             "loc": Object {
               "endColNumber": 35,
               "endLineNumber": 6,
-              "startColNumber": 33,
+              "startColNumber": 34,
               "startLineNumber": 6,
             },
             "statements": Array [
@@ -319,7 +319,7 @@ Object {
           "loc": Object {
             "endColNumber": 35,
             "endLineNumber": 6,
-            "startColNumber": 33,
+            "startColNumber": 34,
             "startLineNumber": 6,
           },
           "statements": Array [

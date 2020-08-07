@@ -144,9 +144,9 @@ Object {
           "body": Object {
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 40,
+              "endColNumber": 41,
               "endLineNumber": 7,
-              "startColNumber": 38,
+              "startColNumber": 39,
               "startLineNumber": 7,
             },
             "statements": Array [
@@ -155,7 +155,7 @@ Object {
                 "loc": Object {
                   "endColNumber": 15,
                   "endLineNumber": 8,
-                  "startColNumber": 40,
+                  "startColNumber": 41,
                   "startLineNumber": 7,
                 },
               },
@@ -260,7 +260,7 @@ Object {
           "loc": Object {
             "endColNumber": 23,
             "endLineNumber": 7,
-            "startColNumber": 34,
+            "startColNumber": 35,
             "startLineNumber": 5,
           },
           "method": "GET",
@@ -368,9 +368,9 @@ Object {
         "body": Object {
           "kind": "FunctionBody",
           "loc": Object {
-            "endColNumber": 40,
+            "endColNumber": 41,
             "endLineNumber": 7,
-            "startColNumber": 38,
+            "startColNumber": 39,
             "startLineNumber": 7,
           },
           "statements": Array [
@@ -379,7 +379,7 @@ Object {
               "loc": Object {
                 "endColNumber": 15,
                 "endLineNumber": 8,
-                "startColNumber": 40,
+                "startColNumber": 41,
                 "startLineNumber": 7,
               },
             },
@@ -484,7 +484,7 @@ Object {
         "loc": Object {
           "endColNumber": 23,
           "endLineNumber": 7,
-          "startColNumber": 34,
+          "startColNumber": 35,
           "startLineNumber": 5,
         },
         "method": "GET",
@@ -1082,8 +1082,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 11,
                   "endLineNumber": 3,
-                  "startColNumber": 27,
-                  "startLineNumber": 2,
+                  "startColNumber": 0,
+                  "startLineNumber": 3,
                 },
                 "name": "f",
                 "part": Object {
@@ -1099,8 +1099,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 13,
                   "endLineNumber": 4,
-                  "startColNumber": 26,
-                  "startLineNumber": 3,
+                  "startColNumber": 0,
+                  "startLineNumber": 4,
                 },
                 "name": "i32",
                 "part": Object {
@@ -1116,8 +1116,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 11,
                   "endLineNumber": 5,
-                  "startColNumber": 28,
-                  "startLineNumber": 4,
+                  "startColNumber": 0,
+                  "startLineNumber": 5,
                 },
                 "name": "I",
                 "part": Object {
@@ -1133,8 +1133,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 13,
                   "endLineNumber": 6,
-                  "startColNumber": 26,
-                  "startLineNumber": 5,
+                  "startColNumber": 0,
+                  "startLineNumber": 6,
                 },
                 "name": "u32",
                 "part": Object {
@@ -1150,8 +1150,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 13,
                   "endLineNumber": 7,
-                  "startColNumber": 29,
-                  "startLineNumber": 6,
+                  "startColNumber": 0,
+                  "startLineNumber": 7,
                 },
                 "name": "u64",
                 "part": Object {
@@ -1167,8 +1167,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 11,
                   "endLineNumber": 8,
-                  "startColNumber": 29,
-                  "startLineNumber": 7,
+                  "startColNumber": 0,
+                  "startLineNumber": 8,
                 },
                 "name": "b",
                 "part": Object {
@@ -1184,8 +1184,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 11,
                   "endLineNumber": 9,
-                  "startColNumber": 25,
-                  "startLineNumber": 8,
+                  "startColNumber": 0,
+                  "startLineNumber": 9,
                 },
                 "name": "s",
                 "part": Object {
@@ -1201,8 +1201,8 @@ Object {
                 "loc": Object {
                   "endColNumber": 12,
                   "endLineNumber": 10,
-                  "startColNumber": 27,
-                  "startLineNumber": 9,
+                  "startColNumber": 0,
+                  "startLineNumber": 10,
                 },
                 "name": "bs",
                 "part": Object {

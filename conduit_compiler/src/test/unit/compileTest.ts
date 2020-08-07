@@ -54,15 +54,15 @@ compileTest("should allow one struct to reference another", `
 
 compileTest("should allow the specification of optional fields", `
     struct Mystruct {
-        d: Optional double,
-        f: Optional float,
-        i32: Optional int32,
-        I: Optional int64,
-        u32: Optional uint32,
-        u64: Optional uint64,
-        b: Optional bool,
-        s: Optional string,
-        bs: Optional bytes,
+        d: Optional<double>
+        f: Optional<float>
+        i32: Optional<int32>
+        I: Optional<int64>
+        u32: Optional<uint32>
+        u64: Optional<uint64>
+        b: Optional<bool>
+        s: Optional<string>
+        bs: Optional<bytes>
     }
     `)
 
@@ -111,7 +111,7 @@ compileTest("defining a store", `
         s: string
     }
 
-    myFirstStore: Array stored = []
+    myFirstStore: Array<stored> = []
 `)
 
 compileTest("getting all data from store", `
@@ -119,9 +119,9 @@ compileTest("getting all data from store", `
         s: string
     }
 
-    secondStore: Array stored = []
+    secondStore: Array<stored> = []
 
-    function getAllData() Array stored {
+    function getAllData() Array<stored> {
         return secondStore
     }
 `)

@@ -344,7 +344,7 @@ export namespace Parse {
         Field: {
             kind: "conglomerate",
             startRegex: /^\s*(?<name>[_A-Za-z]+[\w]*): */,
-            endRegex: /^\s*(,|\n)/,
+            endRegex: /^\s*(,|\n|(?= *}))/,
             assemble(start, end, loc, part): Field | undefined {
                 return {
                     kind: "Field",
@@ -374,9 +374,13 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^ *((?<modifier>Array|Optional) +)?(?<type>[_A-Za-z]+[\w]*)/,
+            regex: /^ *((?<modifier>Array|Optional)<)? *(?<type>[_A-Za-z]+[\w]*) *(?<closer>>)?/,
             assemble(match, loc): CustomTypeEntity | undefined {
                 let modification: common.TypeModification = "none"
+                if (match.groups.modifier && !match.groups.closer) {
+                    return undefined
+                }
+
                 if (match.groups.modifier === "Array") {
                     modification = "array"
                 } else if (match.groups.modifier === "Optional") {

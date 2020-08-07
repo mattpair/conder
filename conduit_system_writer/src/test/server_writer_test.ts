@@ -26,7 +26,7 @@ struct outer {
     inner: inner
 }
 
-outerStore: Array outer = []
+outerStore: Array<outer> = []
 
 `)
 
@@ -36,10 +36,9 @@ struct inner {
 }
 
 struct outer {
-    inners: Array inner
-}
+    inners: Array<inner>}
 
-outerStore: Array outer = []
+outerStore: Array<outer> = []
 
 `)
 
@@ -48,7 +47,7 @@ struct simple {
     data:double 
 }
 
-simpleStore: Array simple = []
+simpleStore: Array<simple> = []
 
 function insert(s: simple) {
     simpleStore.append(s)
@@ -64,7 +63,7 @@ struct wrapper {
     innard: simple 
 }
 
-wrapStore: Array wrapper = []
+wrapStore: Array<wrapper> = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
@@ -73,14 +72,14 @@ function insert(s: wrapper) {
 
 TestCodeGen("inserting struct containing struct containing primitive array", `
 struct simple {
-    data: Array string
+    data: Array<string>
 }
 
 struct wrapper {
     innard: simple 
 }
 
-wrapStore: Array wrapper = []
+wrapStore: Array<wrapper> = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
@@ -93,10 +92,10 @@ struct simple {
 }
 
 struct wrapper {
-    innard: Array simple
+    innard: Array<simple>
 }
 
-wrapStore: Array wrapper = []
+wrapStore: Array<wrapper> = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
