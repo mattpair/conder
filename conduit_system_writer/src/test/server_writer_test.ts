@@ -11,38 +11,7 @@ function TestCodeGen(description: string, conduit: string) {
     })
 }
 
-TestCodeGen("only one struct", `
-struct test {
-    onlyField: bool 
-}
-`)
-
-TestCodeGen("struct containing struct stored", `
-struct inner {
-    fieldA: double 
-}
-
-struct outer {
-    inner: inner
-}
-
-outerStore: Array<outer> = []
-
-`)
-
-TestCodeGen("store containing struct containing array", `
-struct inner {
-    fieldA: int32 
-}
-
-struct outer {
-    inners: Array<inner>}
-
-outerStore: Array<outer> = []
-
-`)
-
-TestCodeGen("inserting simple struct", `
+TestCodeGen("simple struct", `
 struct simple {
     data:double 
 }
@@ -52,9 +21,13 @@ simpleStore: Array<simple> = []
 function insert(s: simple) {
     simpleStore.append(s)
 }
+
+function get() Array<simple> {
+    return simpleStore
+}
 `)
 
-TestCodeGen("inserting struct containing struct", `
+TestCodeGen("struct containing struct", `
 struct simple {
     data: bool 
 }
@@ -68,9 +41,13 @@ wrapStore: Array<wrapper> = []
 function insert(s: wrapper) {
     wrapStore.append(s)
 }
+
+function get() Array<wrapper> {
+    return wrapStore
+}
 `)
 
-TestCodeGen("inserting struct containing struct containing primitive array", `
+TestCodeGen("struct containing struct containing primitive array", `
 struct simple {
     data: Array<string>
 }
@@ -83,6 +60,10 @@ wrapStore: Array<wrapper> = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
+}
+
+function get() Array<wrapper> {
+    return wrapStore
 }
 `)
 
