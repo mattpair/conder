@@ -1241,7 +1241,7 @@ Object {
 }
 `;
 
-exports[`should convert multiple conduit into proto2 1`] = `
+exports[`should convert multiple conduit into manifest 1`] = `
 Object {
   "namespace": Object {
     "inScope": EntityMap {
@@ -1449,7 +1449,7 @@ Object {
 }
 `;
 
-exports[`should convert simple conduit into proto2 1`] = `
+exports[`should convert simple conduit into manifest 1`] = `
 Object {
   "namespace": Object {
     "inScope": EntityMap {

@@ -1,13 +1,13 @@
 import {compileFiles} from '../../main/compile'
 
-function protoCompileTest(description: string, file: string) {
+function compileTest(description: string, file: string) {
     test(description, () => {
         expect(compileFiles({"testFile.cdt": () => file})).toMatchSnapshot()
     })
 } 
 
 //TODO: update names
-protoCompileTest("should convert simple conduit into proto2",
+compileTest("should convert simple conduit into manifest",
 `
     struct Mystruct {
         d: double 
@@ -22,7 +22,7 @@ protoCompileTest("should convert simple conduit into proto2",
     }`
 )
 
-protoCompileTest("should convert multiple conduit into proto2", `
+compileTest("should convert multiple conduit into manifest", `
     struct m1 {
         d: double 
         f: float 
@@ -38,7 +38,7 @@ protoCompileTest("should convert multiple conduit into proto2", `
     }
     `)
 
-protoCompileTest("should allow one struct to reference another", `
+compileTest("should allow one struct to reference another", `
     struct m1 {
         d: double 
         f: float 
@@ -52,7 +52,7 @@ protoCompileTest("should allow one struct to reference another", `
     }
     `)
 
-protoCompileTest("should allow the specification of optional fields", `
+compileTest("should allow the specification of optional fields", `
     struct Mystruct {
         d: Optional double,
         f: Optional float,
@@ -66,7 +66,7 @@ protoCompileTest("should allow the specification of optional fields", `
     }
     `)
 
-protoCompileTest("should allow enums",`
+compileTest("should allow enums",`
     enum PurchaseCategory {
         UNCATEGORIZED,
         GAS,
@@ -77,7 +77,7 @@ protoCompileTest("should allow enums",`
     }
     `)
 
-protoCompileTest("should allow enums separated by whitespace",`
+compileTest("should allow enums separated by whitespace",`
     enum PurchaseCategory {
         UNCATEGORIZED
         GAS
@@ -89,7 +89,7 @@ protoCompileTest("should allow enums separated by whitespace",`
     `)
 
 
-protoCompileTest("should allow multiple enums separated by whitespace",`
+compileTest("should allow multiple enums separated by whitespace",`
     enum PurchaseCategory {
         UNCATEGORIZED
         GAS
@@ -106,7 +106,7 @@ protoCompileTest("should allow multiple enums separated by whitespace",`
     }
     `)
 
-protoCompileTest("defining a store", `
+compileTest("defining a store", `
     struct stored {
         s: string
     }
@@ -114,7 +114,7 @@ protoCompileTest("defining a store", `
     myFirstStore: Array stored = []
 `)
 
-protoCompileTest("getting all data from store", `
+compileTest("getting all data from store", `
     struct stored {
         s: string
     }
