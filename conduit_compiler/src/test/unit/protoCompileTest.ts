@@ -6,76 +6,63 @@ function protoCompileTest(description: string, file: string) {
     })
 } 
 
+//TODO: update names
 protoCompileTest("should convert simple conduit into proto2",
 `
     struct Mystruct {
-        double d,
-        float f,
-        int32 i32,
-        int64 I,
-        uint32 u32,
-        uint64 u64,
-        bool b,
-        string s,
-        bytes bs,
+        d: double 
+        f: float 
+        i32: int32 
+        I: int64 
+        u32: uint32 
+        u64: uint64 
+        b: bool 
+        s: string 
+        bs: bytes 
     }`
 )
 
 protoCompileTest("should convert multiple conduit into proto2", `
     struct m1 {
-        double d,
-        float f,
-        int32 i32,
-        int64 I,
-        uint32 u32,
-        uint64 u64,
+        d: double 
+        f: float 
+        i32: int32 
+        I: int64 
+        u32: uint32 
+        u64: uint64 
     }
     struct m2{
-        bool b,
-        string s,
-        bytes bs,
+        b: bool 
+        s: string 
+        bs: bytes 
     }
     `)
 
 protoCompileTest("should allow one struct to reference another", `
     struct m1 {
-        double d,
-        float f,
-        int32 i32,
-        int64 I,
-        uint32 u32,
-        uint64 u64,
+        d: double 
+        f: float 
+        i32: int32 
+        I: int64 
+        u32: uint32 
+        u64: uint64 
     }
     struct m2{
-        m1 myMessag,
+        myMessag: m1
     }
     `)
 
 protoCompileTest("should allow the specification of optional fields", `
     struct Mystruct {
-        optional double d,
-        optional float f,
-        optional int32 i32,
-        optional int64 I,
-        optional uint32 u32,
-        optional uint64 u64,
-        optional bool b,
-        optional string s,
-        optional bytes bs,
-    }
-    `)
-
-protoCompileTest("should allow new line to end field", `
-    struct Mystruct {
-        optional double d
-        float f
-        optional int32 i32
-        optional int64 I
-        optional uint32 u32
-        optional uint64 u64
-        optional bool b
-        optional string s
-        optional bytes bs
+        d: Optional double,
+        f: Optional float,
+        i32: Optional int32,
+        I: Optional int64,
+        u32: Optional uint32,
+        u64: Optional uint64,
+        b: Optional bool,
+        s: Optional string,
+        bs: Optional bytes,
     }
     `)
 
@@ -121,20 +108,20 @@ protoCompileTest("should allow multiple enums separated by whitespace",`
 
 protoCompileTest("defining a store", `
     struct stored {
-        string s
+        s: string
     }
 
-    myFirstStore: stored[] = []
+    myFirstStore: Array stored = []
 `)
 
 protoCompileTest("getting all data from store", `
     struct stored {
-        string s
+        s: string
     }
 
-    secondStore: stored[] = []
+    secondStore: Array stored = []
 
-    function getAllData() stored[] {
+    function getAllData() Array stored {
         return secondStore
     }
 `)

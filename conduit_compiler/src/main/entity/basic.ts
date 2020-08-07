@@ -40,9 +40,7 @@ type PRODUCER = () => Entity<any>
 export type PolymorphicEntity<KIND extends EntityKinds, OPTIONS extends PRODUCER> = Entity<KIND> & {differentiate: OPTIONS}
 export type BaseFieldType<DATA extends () => Entity<any>> = PolymorphicEntity<"FieldType", DATA>
 
-export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field", {
-    readonly isRequired: boolean
-} & RequiresOne<TYPE>> 
+export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field",RequiresOne<TYPE>>  
 
 export type BaseStruct<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Struct", ParentOfMany<FIELD_TYPE>> 
 
@@ -68,7 +66,9 @@ export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> 
 
 export type EnumMember = NamedIntrafile<"EnumMember", {}>
 export type Enum = NamedIntrafile<"Enum", ParentOfMany<EnumMember>> 
-export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: common, readonly isArray: boolean}>
+export type TypeModification = "none" | "array" | "optional"
+
+export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly val: common, readonly modification: TypeModification}>
 export type VoidReturn = {readonly kind: "VoidReturnType"}
 
 

@@ -14,7 +14,7 @@ export namespace Parse {
     common.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
 
-    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string, isArray: boolean}>
+    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string, modification: common.TypeModification}>
     export type TypeUnion = () => common.PrimitiveEntity | CustomTypeEntity 
     export type FieldType = common.BaseFieldType<TypeUnion>
     export type Field = common.BaseField<FieldType>
@@ -346,13 +346,12 @@ export namespace Parse {
 
         Field: {
             kind: "conglomerate",
-            startRegex: /^\s*(?<optional>optional)? +(?!\s*})/,
-            endRegex: /^ *(?<name>[_A-Za-z]+[\w]*)(,|\n)/,
+            startRegex: /^\s*(?<name>[_A-Za-z]+[\w]*): */,
+            endRegex: /^\s*(,|\n)/,
             assemble(start, end, loc, part): Field | undefined {
                 return {
                     kind: "Field",
-                    name: end.groups.name,
-                    isRequired: start.groups.optional === undefined,
+                    name: start.groups.name,
                     loc,
                     part
                 }
@@ -378,25 +377,38 @@ export namespace Parse {
         },
         CustomType: {
             kind: "leaf",
-            regex: /^ *(?<type>[_A-Za-z]+[\w]*)(?<isArray>\[\])?/,
+            regex: /^ *((?<modifier>Array|Optional) +)?(?<type>[_A-Za-z]+[\w]*)/,
             assemble(match, loc): CustomTypeEntity | undefined {
+                let modification: common.TypeModification = "none"
+                if (match.groups.modifier === "Array") {
+                    modification = "array"
+                } else if (match.groups.modifier === "Optional") {
+                    modification = "optional"
+                }
                 return {
                     kind: "CustomType",
                     loc,
                     type: match.groups.type,
-                    isArray: match.groups.isArray !== undefined
+                    modification
                 }
             }
         },
         Primitive: {
             kind: "leaf",
-            regex: new RegExp(`^(?<val>(${Primitives.join("|")}))(?<isArray>\\[\\])? +`),
+            regex: new RegExp(`^ *((?<modifier>Array|Optional) +)?(?<val>(${Primitives.join("|")}))`),
             assemble(match, loc): common.PrimitiveEntity | undefined {
+                let modification: common.TypeModification = "none"
+                if (match.groups.modifier === "Array") {
+                    modification = "array"
+                } else if (match.groups.modifier === "Optional") {
+                    modification = "optional"
+                }
+
                 return {
                     kind: "Primitive",
                     loc,
                     val: Primitives.find(p => p === match.groups.val),
-                    isArray: match.groups.isArray !== undefined
+                    modification
                 }
             }
         },

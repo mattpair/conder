@@ -82,13 +82,12 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
             fields.push({ 
                 loc: field.loc,
                 kind: "Field",
-                isRequired: field.isRequired,
                 name: field.name,
                 part: {
                     FieldType: {
                         kind: "FieldType",
-                        isArray: field.part.FieldType.differentiate().isArray,
-                        differentiate: () => newType
+                        differentiate: () => newType,
+                        modification: field.part.FieldType.differentiate().modification
                     }
                 }
             })
@@ -122,7 +121,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     throw Error(`Cannot find referenced struct for store ${firstPassEnt.part.CustomType.type}`)
                 }
 
-                if (!firstPassEnt.part.CustomType.isArray) {
+                if (firstPassEnt.part.CustomType.modification !== "array") {
                     throw Error(`Global instances must be arrays for now`)
                 }
                 switch(t.kind) {

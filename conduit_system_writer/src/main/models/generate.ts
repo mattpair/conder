@@ -15,8 +15,16 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                 export type ${ent.name} = {
                     ${ent.children.Field.map(f => {
                         const type = f.part.FieldType.differentiate()
-
-                        const tailer = f.isRequired ? "" : "| null"
+                        let prefix = ''
+                        let suffix = ""
+                        switch (f.part.FieldType.modification) {
+                            case "optional":
+                                suffix = "| null"
+                                break;
+                            case  "array":
+                                prefix = "Vec<"
+                                suffix = ">"
+                        }
                         switch (type.kind) {
                             case "Primitive":
                                 let primstring = ''
@@ -41,10 +49,10 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                                     default: Utilities.assertNever(type.val)
                                 }
 
-                                return `${f.name}: ${primstring} ${tailer}`
+                                return `${f.name}: ${prefix}${primstring}${suffix}`
                             case "Enum":
                             case "Struct":
-                                return `${f.name}: ${type.name} ${tailer}`
+                                return `${f.name}: ${prefix}${type.name}${suffix}`
 
                             default: Utilities.assertNever(type)
                         }

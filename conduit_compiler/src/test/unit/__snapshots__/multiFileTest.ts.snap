@@ -2,8 +2,6 @@
 
 exports[`Self referencing type 1`] = `"Currently do not support self-referencing types: m1"`;
 
-exports[`attempted import 1`] = `"Failed to parse file entirely: {\\"dir\\":\\"\\",\\"name\\":\\"conduit_a.cdt\\",\\"fullname\\":\\"conduit_a.cdt\\"}"`;
-
 exports[`dependency multi file 1`] = `
 Object {
   "namespace": Object {
@@ -13,10 +11,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 11,
                   "endLineNumber": 2,
                   "startColNumber": 15,
                   "startLineNumber": 1,
@@ -25,8 +22,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },
@@ -50,10 +47,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 10,
                   "endLineNumber": 3,
                   "startColNumber": 15,
                   "startLineNumber": 2,
@@ -62,8 +58,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },
@@ -95,189 +91,6 @@ Object {
 }
 `;
 
-exports[`dependency subdirs 1`] = `
-Object {
-  "namespace": Object {
-    "inScope": EntityMap {
-      "map": Map {
-        "m1" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 2,
-                  "startColNumber": 15,
-                  "startLineNumber": 1,
-                },
-                "name": "d",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "isArray": false,
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_a.cdt",
-            "name": "conduit_a.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 15,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m1",
-        },
-        "m2" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 15,
-                  "startLineNumber": 2,
-                },
-                "name": "m",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "isArray": false,
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "sub/",
-            "fullname": "sub/conduit_b.cdt",
-            "name": "conduit_b.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 15,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m2",
-        },
-        "D" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 3,
-                  "startColNumber": 14,
-                  "startLineNumber": 2,
-                },
-                "name": "my_m2",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "isArray": false,
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "conduit_d.cdt",
-            "name": "conduit_d.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 14,
-            "endLineNumber": 2,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "D",
-        },
-        "m3" => Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 4,
-                  "startColNumber": 15,
-                  "startLineNumber": 3,
-                },
-                "name": "m1",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "isArray": false,
-                    "kind": "FieldType",
-                  },
-                },
-              },
-              Object {
-                "isRequired": true,
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 8,
-                  "endLineNumber": 5,
-                  "startColNumber": 0,
-                  "startLineNumber": 5,
-                },
-                "name": "m2",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "isArray": false,
-                    "kind": "FieldType",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "sub/",
-            "fullname": "sub/conduit_c.cdt",
-            "name": "conduit_c.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 15,
-            "endLineNumber": 3,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "m3",
-        },
-      },
-      "size": 4,
-    },
-    "name": "default",
-  },
-  "service": Object {
-    "functions": Array [],
-    "kind": "public",
-  },
-}
-`;
-
 exports[`function with invalid return type 1`] = `"Could not find a Struct named SomeType"`;
 
 exports[`function with type return returns none 1`] = `"Function expects non-void return type but there are no statements"`;
@@ -295,10 +108,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 11,
                   "endLineNumber": 3,
                   "startColNumber": 18,
                   "startLineNumber": 2,
@@ -307,8 +119,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },
@@ -363,10 +175,9 @@ Object {
                     "children": Object {
                       "Field": Array [
                         Object {
-                          "isRequired": true,
                           "kind": "Field",
                           "loc": Object {
-                            "endColNumber": 8,
+                            "endColNumber": 11,
                             "endLineNumber": 3,
                             "startColNumber": 18,
                             "startLineNumber": 2,
@@ -375,8 +186,8 @@ Object {
                           "part": Object {
                             "FieldType": Object {
                               "differentiate": [Function],
-                              "isArray": false,
                               "kind": "FieldType",
+                              "modification": "none",
                             },
                           },
                         },
@@ -404,10 +215,9 @@ Object {
                     "children": Object {
                       "Field": Array [
                         Object {
-                          "isRequired": true,
                           "kind": "Field",
                           "loc": Object {
-                            "endColNumber": 8,
+                            "endColNumber": 11,
                             "endLineNumber": 3,
                             "startColNumber": 18,
                             "startLineNumber": 2,
@@ -416,8 +226,8 @@ Object {
                           "part": Object {
                             "FieldType": Object {
                               "differentiate": [Function],
-                              "isArray": false,
                               "kind": "FieldType",
+                              "modification": "none",
                             },
                           },
                         },
@@ -462,10 +272,9 @@ Object {
               "children": Object {
                 "Field": Array [
                   Object {
-                    "isRequired": true,
                     "kind": "Field",
                     "loc": Object {
-                      "endColNumber": 8,
+                      "endColNumber": 11,
                       "endLineNumber": 3,
                       "startColNumber": 18,
                       "startLineNumber": 2,
@@ -474,8 +283,8 @@ Object {
                     "part": Object {
                       "FieldType": Object {
                         "differentiate": [Function],
-                        "isArray": false,
                         "kind": "FieldType",
+                        "modification": "none",
                       },
                     },
                   },
@@ -539,10 +348,9 @@ Object {
                   "children": Object {
                     "Field": Array [
                       Object {
-                        "isRequired": true,
                         "kind": "Field",
                         "loc": Object {
-                          "endColNumber": 8,
+                          "endColNumber": 11,
                           "endLineNumber": 3,
                           "startColNumber": 18,
                           "startLineNumber": 2,
@@ -551,8 +359,8 @@ Object {
                         "part": Object {
                           "FieldType": Object {
                             "differentiate": [Function],
-                            "isArray": false,
                             "kind": "FieldType",
+                            "modification": "none",
                           },
                         },
                       },
@@ -580,10 +388,9 @@ Object {
                   "children": Object {
                     "Field": Array [
                       Object {
-                        "isRequired": true,
                         "kind": "Field",
                         "loc": Object {
-                          "endColNumber": 8,
+                          "endColNumber": 11,
                           "endLineNumber": 3,
                           "startColNumber": 18,
                           "startLineNumber": 2,
@@ -592,8 +399,8 @@ Object {
                         "part": Object {
                           "FieldType": Object {
                             "differentiate": [Function],
-                            "isArray": false,
                             "kind": "FieldType",
+                            "modification": "none",
                           },
                         },
                       },
@@ -638,10 +445,9 @@ Object {
             "children": Object {
               "Field": Array [
                 Object {
-                  "isRequired": true,
                   "kind": "Field",
                   "loc": Object {
-                    "endColNumber": 8,
+                    "endColNumber": 11,
                     "endLineNumber": 3,
                     "startColNumber": 18,
                     "startLineNumber": 2,
@@ -650,8 +456,8 @@ Object {
                   "part": Object {
                     "FieldType": Object {
                       "differentiate": [Function],
-                      "isArray": false,
                       "kind": "FieldType",
+                      "modification": "none",
                     },
                   },
                 },
@@ -688,10 +494,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 11,
                   "endLineNumber": 2,
                   "startColNumber": 15,
                   "startLineNumber": 1,
@@ -700,8 +505,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },
@@ -725,10 +530,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 11,
                   "endLineNumber": 3,
                   "startColNumber": 15,
                   "startLineNumber": 2,
@@ -737,8 +541,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },
@@ -762,10 +566,9 @@ Object {
           "children": Object {
             "Field": Array [
               Object {
-                "isRequired": true,
                 "kind": "Field",
                 "loc": Object {
-                  "endColNumber": 8,
+                  "endColNumber": 11,
                   "endLineNumber": 6,
                   "startColNumber": 15,
                   "startLineNumber": 5,
@@ -774,8 +577,8 @@ Object {
                 "part": Object {
                   "FieldType": Object {
                     "differentiate": [Function],
-                    "isArray": false,
                     "kind": "FieldType",
+                    "modification": "none",
                   },
                 },
               },

@@ -11,7 +11,7 @@ function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Names
         case "CustomType":
             return {
                 val: namespace.inScope.getEntityOfType(ent.type, "Struct"), 
-                isArray: ent.isArray,
+                isArray: ent.modification === "array",
                 kind: "real type"
             }
 
@@ -50,7 +50,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
                     type: {
                         kind: "real type",
                         val: parameterType,
-                        isArray: type.isArray
+                        isArray: type.modification === "array"
                     }
                 })
             }

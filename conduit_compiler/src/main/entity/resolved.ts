@@ -2,13 +2,11 @@ import * as basic from './basic'
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
 
-// Part of the reason we must use functions for field types is so the types don't circularly reference. Message->FieldType->Message.
-
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type PrimitiveEntity = basic.PrimitiveEntity
 export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
-export type FieldType = basic.BaseFieldType<() => ResolvedType> & Readonly<{isArray: boolean}>
-
+export type FieldType = basic.BaseFieldType<() => ResolvedType> & {readonly modification: basic.TypeModification}
+export type TypeModification = basic.TypeModification
     
 export type Field = basic.BaseField<FieldType>
 

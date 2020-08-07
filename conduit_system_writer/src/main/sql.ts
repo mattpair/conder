@@ -19,45 +19,42 @@ function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>,
                 }
                 structSet.add(type.name)
                 const table = assembleStoreTree(type, structSet, `${nextTableName}_${f.name}`)
-                if (f.part.FieldType.isArray) {
-                    cols.push({
-                        dif: "1:many",
-                        type,
-                        fieldName: f.name,
-                        ref: table,
-                        refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+                switch(f.part.FieldType.modification){
+                    case "array":
+                        cols.push({
+                            dif: "1:many",
+                            type,
+                            fieldName: f.name,
+                            ref: table,
+                            refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+    
+                        })
+                        break
+                    case "optional":
+                    case "none":
+                        cols.push({
+                            dif: "1:1",
+                            type,
+                            columnName: `${f.name}_ptr`,
+                            fieldName: f.name,
+                            ref: table,
+                            modification: f.part.FieldType.modification
+                        })
 
-                    })
-                } else {
-                    cols.push({
-                        dif: "1:1",
-                        type,
-                        columnName: `${f.name}_ptr`,
-                        fieldName: f.name,
-                        ref: table
-                    })
                 }
-                
                 structSet.delete(type.name)
                 return
 
             case "Primitive":
-                if (type.isArray) {
-                    cols.push({
-                        dif: "prim[]",
-                        type: type,
-                        columnName: f.name,
-                        fieldName: f.name,
-    
-                    })
-                } else {
-                    cols.push({
-                        dif: "prim",
-                        type,
-                        columnName: f.name,
-                        fieldName: f.name
-                    })
-            }
+                cols.push({
+                    dif: "prim",
+                    modification: f.part.FieldType.modification,
+                    type,
+                    columnName: f.name,
+                    fieldName: f.name
+                })
+                break
+            default:assertNever(type)
                 
         }
     })
@@ -75,6 +72,7 @@ type PrimitiveColumn = {
     type: CompiledTypes.PrimitiveEntity
     columnName: string
     fieldName: string
+    modification: CompiledTypes.TypeModification
 }
 
 type StructArrayCol = {
@@ -90,17 +88,11 @@ type StructRefCol = {
     type: CompiledTypes.Struct
     columnName: string
     fieldName: string
-    ref: StoreCommander
+    ref: StoreCommander,
+    modification: "optional" | "none"
 }
 
-type PrimitiveArrayColumn = {
-    dif: "prim[]"
-    type: CompiledTypes.PrimitiveEntity
-    columnName: string
-    fieldName: string
-}
-
-type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | PrimitiveArrayColumn
+type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol
 
 function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 
@@ -157,9 +149,18 @@ export class StoreCommander {
         this.columns.forEach(c => {
             switch(c.dif) {
                 case "prim":
-                case "prim[]":     
                     const typeStr = toPostgresType(c.type)
-                    cols.push(`${c.columnName}\t${typeStr}${c.dif === "prim[]" ? "[]" : ''}`)
+                    let appendStr = ''
+                    switch (c.modification) {
+                        case "array":
+                            appendStr = "[]"
+                            break;
+                        case "none":
+                            appendStr = " NOT NULL"
+
+                        
+                    }
+                    cols.push(`${c.columnName}\t${typeStr}${appendStr}`)
                     break;
                     
                 
@@ -216,7 +217,6 @@ export class StoreCommander {
         this.columns.forEach(c => {
             switch(c.dif) {
                 case "prim":
-                case "prim[]":
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
                     array.push(`&${varname}.${c.fieldName}`)

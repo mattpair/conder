@@ -8,13 +8,13 @@ function testFailsWhen(description: string, file: string) {
 
 testFailsWhen("dependent struct is not in scope ", `
 struct m1 {
-    M2 m2
+    m2: M2
 }
 `)
 
 testFailsWhen("naming an entity after a keyword ", `
 struct function {
-    int32 i
+    i: int32
 }
 `)
 
@@ -24,13 +24,13 @@ enum AttemptToStore {
     No
 }
 
-myBadStore: AttemptToStore[] = []
+myBadStore: Array AttemptToStore = []
 `)
 
 testFailsWhen("attempting to store non-array", `
 
 struct Singleton {
-    string value
+    value: string 
 }
 
 singletonStore: Singleton = []
@@ -42,7 +42,7 @@ singletonStore: Singleton = []
 testFailsWhen("not returning anything", `
 
 struct Singleton {
-    string value
+    value: string
 }
 
 function echosSingleton(s: Singleton) Singleton {

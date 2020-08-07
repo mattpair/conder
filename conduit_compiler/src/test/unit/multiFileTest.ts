@@ -25,17 +25,17 @@ function testFailsWhen(description: string, files: Record<string, string>) {
 protoCompileTest("simple multi file", {
     "conduit_a.cdt": `
     struct m1 {
-        double d
+        d: double
     }
     `,
 
     "conduit_b.cdt": `
 
     struct m2 {
-        double d
+        d: double
     }
     struct m3 {
-        m2 m
+        m: m2
     }
     `
 })
@@ -43,14 +43,14 @@ protoCompileTest("simple multi file", {
 protoCompileTest("dependency multi file", {
     "conduit_a.cdt": `
     struct m1 {
-        double d
+        d: double
     }
     `,
 
     "conduit_b.cdt": `
 
     struct m2 {
-        m1 m
+        m:m1
     }
     `
 })
@@ -58,58 +58,16 @@ protoCompileTest("dependency multi file", {
 testFailsWhen("Self referencing type", {
     "conduit_a.cdt": `
     struct m1 {
-        m1 d
+        d: m1
     }
     `,
 
-})
-
-protoCompileTest("dependency subdirs", {
-    "conduit_a.cdt": `
-    struct m1 {
-        double d
-    }
-    `,
-
-    "conduit_d.cdt": `
-
-    struct D {
-        m2 my_m2
-    }
-    `,
-
-    "sub/conduit_b.cdt": `
-
-    struct m2 {
-        m1 m
-    }
-    `,
-
-    "sub/conduit_c.cdt": `
-    
-
-    struct m3 {
-        m1 m1
-        m2 m2
-    }
-    `
 })
 
 testFailsWhen("function with unknown types", {
     "conduit_a.cdt": `
     function letsGetFuncy(a: SomeType, b: Foreign.Type) {
 
-    }
-
-    `
-})
-
-testFailsWhen("attempted import", {
-    "conduit_a.cdt": `
-    import 'conduit_b.cdt' as c
-    
-    struct m2 {
-        c.m1 m
     }
 
     `
@@ -127,7 +85,7 @@ testFailsWhen("function with void returns type", {
     "conduit_a.cdt": `
 
     struct SomeType {
-        string m
+        m: string
     }
 
     function funk(a: SomeType) {
@@ -140,7 +98,7 @@ testFailsWhen("function with type return returns none", {
     "conduit_a.cdt": `
 
     struct SomeType {
-        string m
+        m: string
     }
 
     function funk() SomeType {
@@ -152,7 +110,7 @@ protoCompileTest("simple echo function", {
     "conduit_a.cdt": `
 
     struct Shout {
-        string m
+        m: string
     }
 
     function echo(s: Shout) Shout {

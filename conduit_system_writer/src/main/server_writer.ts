@@ -208,13 +208,18 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                                         field_type_str = 'u8'
                                         break;
                                 }
-                                if (field.isRequired) {
-                                    if (field.part.FieldType.isArray) {
+                                switch(field.part.FieldType.modification) {
+                                    case "array":
                                         return `${field.name}: Vec<${field_type_str}>`
-                                    }
-                                    return `${field.name}: ${field_type_str}`   
+                                    case "none":
+                                        return `${field.name}: ${field_type_str}`   
+
+                                    case "optional":
+                                        return `${field.name}: Option<${field_type_str}>`
+
+                                    default: assertNever(field.part.FieldType.modification)
                                 }
-                                return `${field.name}: Option<${field_type_str}>`
+                                
                             }).join(",\n")}
                         }
                     `)

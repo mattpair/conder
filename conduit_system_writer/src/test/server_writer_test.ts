@@ -13,42 +13,42 @@ function TestCodeGen(description: string, conduit: string) {
 
 TestCodeGen("only one struct", `
 struct test {
-    bool onlyField
+    onlyField: bool 
 }
 `)
 
 TestCodeGen("struct containing struct stored", `
 struct inner {
-    double fieldA
+    fieldA: double 
 }
 
 struct outer {
-    inner inner
+    inner: inner
 }
 
-outerStore: outer[] = []
+outerStore: Array outer = []
 
 `)
 
 TestCodeGen("store containing struct containing array", `
 struct inner {
-    int32 fieldA
+    fieldA: int32 
 }
 
 struct outer {
-    inner[] inners
+    inners: Array inner
 }
 
-outerStore: outer[] = []
+outerStore: Array outer = []
 
 `)
 
 TestCodeGen("inserting simple struct", `
 struct simple {
-    double data
+    data:double 
 }
 
-simpleStore: simple[] = []
+simpleStore: Array simple = []
 
 function insert(s: simple) {
     simpleStore.append(s)
@@ -57,14 +57,14 @@ function insert(s: simple) {
 
 TestCodeGen("inserting struct containing struct", `
 struct simple {
-    bool data
+    data: bool 
 }
 
 struct wrapper {
-    simple innard
+    innard: simple 
 }
 
-wrapStore: wrapper[] = []
+wrapStore: Array wrapper = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
@@ -73,14 +73,14 @@ function insert(s: wrapper) {
 
 TestCodeGen("inserting struct containing struct containing primitive array", `
 struct simple {
-    string[] data
+    data: Array string
 }
 
 struct wrapper {
-    simple innard
+    innard: simple 
 }
 
-wrapStore: wrapper[] = []
+wrapStore: Array wrapper = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)
@@ -89,14 +89,14 @@ function insert(s: wrapper) {
 
 TestCodeGen("inserting struct containing struct array", `
 struct simple {
-    string data
+    data: string 
 }
 
 struct wrapper {
-    simple[] innard
+    innard: Array simple
 }
 
-wrapStore: wrapper[] = []
+wrapStore: Array wrapper = []
 
 function insert(s: wrapper) {
     wrapStore.append(s)

@@ -129,7 +129,7 @@ Array [
                 
                         
         CREATE TABLE simpleStore (
-            data	double precision,
+            data	double precision NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
@@ -290,7 +290,7 @@ Array [
                 
                         
         CREATE TABLE wrapStore_innard (
-            data	text,
+            data	text NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
@@ -612,7 +612,7 @@ Array [
                 
                         
         CREATE TABLE wrapStore_innard (
-            data	boolean,
+            data	boolean NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
@@ -870,7 +870,7 @@ Array [
                 
                         
         CREATE TABLE outerStore_inners (
-            fieldA	integer,
+            fieldA	integer NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
@@ -1015,7 +1015,7 @@ Array [
                 
                         
         CREATE TABLE outerStore_inner (
-            fieldA	double precision,
+            fieldA	double precision NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS ENTITY ID,
 PRIMARY KEY(conduit_entity_id)
         );
