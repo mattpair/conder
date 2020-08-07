@@ -31,11 +31,12 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
     
 
     let previousReturn = false
+    let retNum = 0 
+    let retGen = () => retNum++
     f.body.statements.forEach((stmt, i) => {
         switch(stmt.kind) {
             case "Append":
-                let retNum = 0 
-                let retGen = () => retNum++
+                
                 const inserts = storeMap.get(stmt.into.name).insert(stmt.inserting.name, {kind: "drop"}, retGen)
                 statements.push(inserts.join("\n"))
                 break;
@@ -54,20 +55,8 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
             
             case "StoreReference":
                 if (previousReturn) {
-                    statements.push(`
-                    let mut allin = client.query("select * from ${stmt.from.name}", &[]).await?;
- 
-                    let mut out = Vec::with_capacity(allin.len());
-            
-                    while let Some(row) = allin.pop() {
-                        out.push(${stmt.returnType.val.name} {
-                            ${stmt.from.stores.children.Field.map((field, index) => `${field.name}: row.get(${index})`).join(",\n")}
-
-                        })
-                    }
-                    return Ok(out);
-
-                    `)
+                    statements.push(storeMap.get(stmt.from.name).getAll("out", retGen))
+                    statements.push("return Ok(out);")
                     break
                 } else {
                     throw Error(`Currently don't support all in queries outside of returns`)

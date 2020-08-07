@@ -59,7 +59,7 @@ function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>,
         }
     })
 
-    return new StoreCommander(nextTableName, cols)
+    return new StoreCommander(nextTableName, cols, struct.name)
 }
 
 export type ReturnInstruction = Readonly<{
@@ -132,10 +132,12 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 export class StoreCommander {
     private readonly name: string
     private readonly columns: CommanderColumn[]
+    private readonly typeName: string
 
-    constructor(name: string, children: CommanderColumn[]) {
+    constructor(name: string, children: CommanderColumn[], typeName: string) {
         this.name = name
         this.columns = children
+        this.typeName = typeName
     }
 
     public get create() : string {
@@ -156,10 +158,9 @@ export class StoreCommander {
                             appendStr = "[]"
                             break;
                         case "none":
-                            appendStr = " NOT NULL"
-
-                        
+                            appendStr = " NOT NULL"   
                     }
+
                     cols.push(`${c.columnName}\t${typeStr}${appendStr}`)
                     break;
                     
@@ -283,6 +284,23 @@ export class StoreCommander {
         }
         
         return inserts
+    }
+
+    public getAll(ret: string, nextReturnId: () => number): string {
+        const rs = this.columns.map((col, index) => `${col.fieldName}: row.get(${index})`)
+
+        return `
+        let mut allin = client.query("select * from ${this.name}", &[]).await?;
+
+        let mut ${ret} = Vec::with_capacity(allin.len());
+
+        while let Some(row) = allin.pop() {
+            out.push(${this.typeName} {
+                ${rs.join(",\n")}
+            })
+        }
+
+        `
     }
     
 }

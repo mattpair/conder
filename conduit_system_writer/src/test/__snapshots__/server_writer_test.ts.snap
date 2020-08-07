@@ -231,19 +231,18 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
             
-                    let mut allin = client.query(\\"select * from simpleStore\\", &[]).await?;
- 
-                    let mut out = Vec::with_capacity(allin.len());
-            
-                    while let Some(row) = allin.pop() {
-                        out.push(simple {
-                            data: row.get(0)
+        let mut allin = client.query(\\"select * from simpleStore\\", &[]).await?;
 
-                        })
-                    }
-                    return Ok(out);
+        let mut out = Vec::with_capacity(allin.len());
 
-                    
+        while let Some(row) = allin.pop() {
+            out.push(simple {
+                data: row.get(0)
+            })
+        }
+
+        
+return Ok(out);
         }
 
         async fn external_get(data: web::Data<AppData>) -> impl Responder {
@@ -411,19 +410,18 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-                    let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
- 
-                    let mut out = Vec::with_capacity(allin.len());
-            
-                    while let Some(row) = allin.pop() {
-                        out.push(wrapper {
-                            innard: row.get(0)
+        let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
 
-                        })
-                    }
-                    return Ok(out);
+        let mut out = Vec::with_capacity(allin.len());
 
-                    
+        while let Some(row) = allin.pop() {
+            out.push(wrapper {
+                innard: row.get(0)
+            })
+        }
+
+        
+return Ok(out);
         }
 
         async fn external_get(data: web::Data<AppData>) -> impl Responder {
@@ -600,19 +598,18 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-                    let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
- 
-                    let mut out = Vec::with_capacity(allin.len());
-            
-                    while let Some(row) = allin.pop() {
-                        out.push(wrapper {
-                            innard: row.get(0)
+        let mut allin = client.query(\\"select * from wrapStore\\", &[]).await?;
 
-                        })
-                    }
-                    return Ok(out);
+        let mut out = Vec::with_capacity(allin.len());
 
-                    
+        while let Some(row) = allin.pop() {
+            out.push(wrapper {
+                innard: row.get(0)
+            })
+        }
+
+        
+return Ok(out);
         }
 
         async fn external_get(data: web::Data<AppData>) -> impl Responder {
