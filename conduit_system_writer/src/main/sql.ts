@@ -299,7 +299,7 @@ export class StoreCommander {
                 case "prim":
                     structFieldAssignment.push(`${col.fieldName}: ${rowVarName}.get("${col.columnName}")`)
                     break;
-                case "1:1":
+                case "1:1": {
                     const childRetName = `all${col.type.name}${nextReturnId()}`
                     const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
                     childrenFetches.push(col.ref.getAll(
@@ -328,10 +328,71 @@ export class StoreCommander {
                     structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
 
                     break;
+                }
 
-                case "1:many":
+                case "1:many": {
+                    const childRetName = `all${col.type.name}${nextReturnId()}`
+                    const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
+                    childrenFetches.push(col.ref.getAll(
+                        childRetName, 
+                        nextReturnId,
+                        `WHERE conduit_entity_id in (select right from ${col.refTableName})`
+                    ))
+
+                    
+                    const childRowVar = `row${nextReturnId()}`
+                    
+                    childrenFetches.push(`
+                    let mut ${childMapVar} = HashMap::with_capacity(${childRetName}.len());
+                    while let Some(${childRowVar}) = ${childRetName}.pop() {
+                        ${childMapVar}.insert(${childRowVar}.conduit_entity_id, ${childRowVar})
+                    }
+                    `)
+
+                    const lrquery = `lr${nextReturnId()}`
+                    const lrmap = `lrmap${nextReturnId()}`
+                    const lrrow = `lrrow${nextReturnId()}`
+                    const l = `l${nextReturnId()}`
+                    const e = `e${nextReturnId()}`
+                    
+                    childrenFetches.push(`
+                    let mut ${lrquery} = client.query("select left, right from ${col.refTableName}", &[]).await?;
+                    let mut ${lrmap}: HashMap<i32, Vec<i32>> = HashMap::new();
+                    while let Some(${lrrow}) = ${lrquery}.pop() {
+                        let l = ${lrrow}.get("left");
+                        ${lrmap}.entry(${l})
+                            .and_modify(|${e}| { ${e}.push(${lrrow}.get("right")) })
+                            .or_insert(vec![${lrrow}.get("right")]);
+                    }
+
+                    `)
+                    
+                    const extracted = `extracted${col.type.name}${nextReturnId()}`
+                    const entries = `entries${col.type.name}${nextReturnId()}`
+                    const childInstances = `instances${col.type.name}${nextReturnId()}`
+                    const childPtr = `child${nextReturnId()}`
+                    extractions.push(`
+                    // Extracting ${col.type.name}s
+                    let ${entries} = match ${lrmap}.get(${thisEntityIdVar}) {
+                        Some(ptrs) => ptrs,
+                        None => vec![]
+                    };
+                    
+                    let mut ${childInstances}: Vec<${col.type.name}> = Vec::with_capacity(${entries}.len());
+
+                    while let ${childPtr} = entries.pop() {
+                        match ${childMapVar}.get(childPtr) {
+                            Some(real) => ${childInstances}.push(real),
+                            None => panic!("could not find expected ${col.type.name}")
+                        };
+                    }
+                    `)
+
+                    
+                    structFieldAssignment.push(`${col.fieldName}: ${childInstances}` )
+
                     break;
-
+                }
 
                 default: assertNever(col)
             }

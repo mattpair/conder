@@ -82,3 +82,23 @@ function insert(s: wrapper) {
     wrapStore.append(s)
 }
 `)
+
+TestCodeGen("inserting struct containing struct array", `
+struct simple {
+    data: string 
+}
+
+struct wrapper {
+    innard: Array<simple>
+}
+
+wrapStore: Array<wrapper> = []
+
+function insert(s: wrapper) {
+    wrapStore.append(s)
+}
+
+function get() Array<wrapper> {
+    return wrapStore
+}
+`)
