@@ -169,23 +169,17 @@ export class StoreCommander {
                 case "1:1":
                     creates.push(c.ref.create)
                     cols.push(`${c.columnName}\tINT`)
-                    constraints.push(`constraint fk_${c.fieldName}
-                        FOREIGN KEY(${c.fieldName})
-                            REFERENCES ${c.ref.name}(conduit_entity_id)`)
+                    constraints.push(`FOREIGN KEY(${c.fieldName}) REFERENCES ${c.ref.name}(conduit_entity_id)`)
                     break;
 
                 case "1:many":
                     creates.push(c.ref.create)
                     rels.push(`
                     CREATE TABLE ${c.refTableName} (
-                        left INT,
-                        right INT,
-                        constraint fk_${c.ref.name}_right
-                            FOREIGN KEY(right)
-                                REFERENCES ${c.ref.name}(conduit_entity_id)
-                        constraint fk_${this.name}_left
-                            FOREIGN KEY(left)
-                                REFERENCES ${this.name}(conduit_entity_id)
+                        left_ptr INT,
+                        right_ptr INT,
+                        FOREIGN KEY(right_ptr) REFERENCES ${c.ref.name}(conduit_entity_id),
+                        FOREIGN KEY(left_ptr) REFERENCES ${this.name}(conduit_entity_id)
                     );`)
                     break;
 
@@ -228,10 +222,10 @@ export class StoreCommander {
                     const vecVarName = `vec_${manyRet}`
                     const rowVarName = `row${nextReturnId()}`
                     const forLoop = `
-                    let mut ${vecVarName} = Vec::new();
+                    let mut ${vecVarName}: Vec<i32> = Vec::new();
                     for ${rowVarName} in &${varname}.${c.fieldName} {
                         ${c.ref.insert(`${rowVarName}`, {kind: "save", name: manyRet}, nextReturnId).join("\n")}
-                        vec${manyRet}.push(${manyRet}.get(0));
+                        ${vecVarName}.push(${manyRet}[0].get(0));
                     }
                     `
 
@@ -252,9 +246,15 @@ export class StoreCommander {
             }
         })
 
+        let insertionSql = ''
+        if (columns.length === 0) {
+            insertionSql = `insert into ${this.name} default values`
+        } else {
+            const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
+            insertionSql = `insert into ${tableAndColumns} values (${values.join(", ")})`
 
-        const tableAndColumns: string = `${this.name}(${columns.join(", ")})`
-        const insertionSql = `insert into ${tableAndColumns} values (${values.join(", ")})`
+        }
+        values.push("NULL")
         if (postInsertPtrs.length > 0 && ret.kind !== "save") {
             ret = {kind: "save", name: `ret${nextReturnId()}`}
         }
@@ -264,11 +264,14 @@ export class StoreCommander {
                 const returnName = ret.name
                 const completequery = `${insertionSql} RETURNING conduit_entity_id`
                 const rustCode = `let ${returnName} = client.query("${completequery}", &[${array}]).await?;`
+                const entId = `ent${nextReturnId()}`
                 inserts.push(rustCode)
                 postInsertPtrs.forEach(post => {
                     inserts.push(`
+
+                    let ${entId}: i32 = ${returnName}[0].get(0);
                     while let Some(child_id) = ${post.ptrVec}.pop() {
-                        client.query("insert into ${post.relTableName}(left, right) values ($1, $2)", &[&${returnName}, &child_id]).await?;
+                        client.query("insert into ${post.relTableName}(left_ptr, right_ptr) values ($1, $2)", &[&${entId}, &child_id]).await?;
                     }
                         
                     `)
@@ -310,7 +313,7 @@ export class StoreCommander {
                     const childRowVar = `row${nextReturnId()}`
                     
                     childrenFetches.push(`
-                    let mut ${childMapVar} = HashMap::with_capacity(${childRetName}.len());
+                    let mut ${childMapVar}: HashMap<i32, &${col.type.name}> = HashMap::with_capacity(${childRetName}.len());
                     while let Some(${childRowVar}) = ${childRetName}.pop() {
                         ${childMapVar}.insert(${childRowVar}.conduit_entity_id, ${childRowVar})
                     }
@@ -336,16 +339,16 @@ export class StoreCommander {
                     childrenFetches.push(col.ref.getAll(
                         childRetName, 
                         nextReturnId,
-                        `WHERE conduit_entity_id in (select right from ${col.refTableName})`
+                        `WHERE conduit_entity_id in (select right_ptr from ${col.refTableName})`
                     ))
 
                     
                     const childRowVar = `row${nextReturnId()}`
                     
                     childrenFetches.push(`
-                    let mut ${childMapVar} = HashMap::with_capacity(${childRetName}.len());
+                    let mut ${childMapVar}: HashMap<i32, ${col.type.name}> = HashMap::with_capacity(${childRetName}.len());
                     while let Some(${childRowVar}) = ${childRetName}.pop() {
-                        ${childMapVar}.insert(${childRowVar}.conduit_entity_id, ${childRowVar})
+                        ${childMapVar}.insert(${childRowVar}.conduit_entity_id.unwrap(), ${childRowVar});
                     }
                     `)
 
@@ -356,33 +359,34 @@ export class StoreCommander {
                     const e = `e${nextReturnId()}`
                     
                     childrenFetches.push(`
-                    let mut ${lrquery} = client.query("select left, right from ${col.refTableName}", &[]).await?;
+                    let mut ${lrquery} = client.query("select left_ptr, right_ptr from ${col.refTableName}", &[]).await?;
                     let mut ${lrmap}: HashMap<i32, Vec<i32>> = HashMap::new();
                     while let Some(${lrrow}) = ${lrquery}.pop() {
-                        let l = ${lrrow}.get("left");
+                        let ${l} = ${lrrow}.get("left_ptr");
                         ${lrmap}.entry(${l})
-                            .and_modify(|${e}| { ${e}.push(${lrrow}.get("right")) })
-                            .or_insert(vec![${lrrow}.get("right")]);
+                            .and_modify(|${e}| { ${e}.push(${lrrow}.get("right_ptr")) })
+                            .or_insert(vec![${lrrow}.get("right_ptr")]);
                     }
 
                     `)
                     
-                    const extracted = `extracted${col.type.name}${nextReturnId()}`
                     const entries = `entries${col.type.name}${nextReturnId()}`
                     const childInstances = `instances${col.type.name}${nextReturnId()}`
                     const childPtr = `child${nextReturnId()}`
+                    const empty = `empty${nextReturnId()}`
                     extractions.push(`
                     // Extracting ${col.type.name}s
-                    let ${entries} = match ${lrmap}.get(${thisEntityIdVar}) {
+                    let ${empty} = Vec::with_capacity(0);
+                    let ${entries} = match ${lrmap}.get(&${thisEntityIdVar}) {
                         Some(ptrs) => ptrs,
-                        None => vec![]
+                        None => &${empty}
                     };
-                    
+
                     let mut ${childInstances}: Vec<${col.type.name}> = Vec::with_capacity(${entries}.len());
 
-                    while let ${childPtr} = entries.pop() {
-                        match ${childMapVar}.get(childPtr) {
-                            Some(real) => ${childInstances}.push(real),
+                    for ${childPtr} in ${entries} {
+                        match ${childMapVar}.get(&${childPtr}) {
+                            Some(real) => ${childInstances}.push(real.clone()),
                             None => panic!("could not find expected ${col.type.name}")
                         };
                     }

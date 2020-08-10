@@ -200,7 +200,7 @@ function generateRustStructs(val: CompiledTypes.Struct): string {
     })
 
     const makeStruct = (prefix: string, strFields: string[]) =>  `
-    #[derive(Serialize, Deserialize)]
+    #[derive(Serialize, Deserialize, Clone)]
     struct ${prefix}${val.name} {
         ${strFields.join(",\n")}
     }

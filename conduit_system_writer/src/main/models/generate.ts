@@ -22,7 +22,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                                 suffix = "| null"
                                 break;
                             case  "array":
-                                prefix = "Vec<"
+                                prefix = "Array<"
                                 suffix = ">"
                         }
                         switch (type.kind) {
