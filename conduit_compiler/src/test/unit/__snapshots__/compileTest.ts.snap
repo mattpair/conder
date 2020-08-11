@@ -91,7 +91,6 @@ Object {
       },
       "size": 2,
     },
-    "name": "default",
   },
 }
 `;
@@ -530,7 +529,6 @@ Object {
       },
       "size": 3,
     },
-    "name": "default",
   },
 }
 `;
@@ -623,7 +621,6 @@ Object {
       },
       "size": 1,
     },
-    "name": "default",
   },
 }
 `;
@@ -716,7 +713,6 @@ Object {
       },
       "size": 1,
     },
-    "name": "default",
   },
 }
 `;
@@ -858,7 +854,6 @@ Object {
       },
       "size": 2,
     },
-    "name": "default",
   },
 }
 `;
@@ -1029,7 +1024,6 @@ Object {
       },
       "size": 2,
     },
-    "name": "default",
   },
 }
 `;
@@ -1215,7 +1209,6 @@ Object {
       },
       "size": 1,
     },
-    "name": "default",
   },
 }
 `;
@@ -1420,7 +1413,6 @@ Object {
       },
       "size": 2,
     },
-    "name": "default",
   },
 }
 `;
@@ -1606,7 +1598,6 @@ Object {
       },
       "size": 1,
     },
-    "name": "default",
   },
 }
 `;

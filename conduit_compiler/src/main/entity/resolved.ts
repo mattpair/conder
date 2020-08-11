@@ -76,7 +76,6 @@ export type Function =  basic.NamedIntrafile<"Function", {
 
 
 export type Namespace = {
-    readonly name: "default"
     readonly inScope: EntityMap<Struct | Enum | Function | Store>
 }
 

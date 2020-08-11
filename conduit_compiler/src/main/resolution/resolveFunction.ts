@@ -207,7 +207,7 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
     })
 
     return {
-        namespace: {name: "default", inScope: new EntityMap(entityMapInternal)},
+        namespace: {inScope: new EntityMap(entityMapInternal)},
         fns: functions
     }
 }
