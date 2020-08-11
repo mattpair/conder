@@ -176,7 +176,7 @@ export class StoreCommander {
                 case "1:1":
                     creates.push(c.ref.create)
                     cols.push(`${c.columnName}\tINT`)
-                    constraints.push(`FOREIGN KEY(${c.fieldName}) REFERENCES ${c.ref.name}(conduit_entity_id)`)
+                    constraints.push(`FOREIGN KEY(${c.columnName}) REFERENCES ${c.ref.name}(conduit_entity_id)`)
                     break;
 
                 case "1:many":
@@ -242,10 +242,33 @@ export class StoreCommander {
 
                 case "1:1":
                     const returnedId = `ret${nextReturnId()}`
-                    inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
-                    columns.push(c.columnName)
-                    values.push(`$${++colCount}`)
-                    array.push(`&(${returnedId}.get(0))`)
+                    
+                    if (c.modification === "optional") {
+                        const unwrapped = `unwrapped${nextReturnId()}`
+                        const optionalChildInsertions = c.ref.insert(unwrapped, {kind: "save", name: returnedId}, nextReturnId)
+                        const optionalReturnId = `optional${nextReturnId()}`
+                        inserts.push(`
+                            let ${optionalReturnId}: Option<i32> = match ${varname}.${c.fieldName} {
+                                Some(${unwrapped}) => {
+                                    ${optionalChildInsertions.join('\n')}
+
+                                    Some(${returnedId}[0].get(0))
+                                },
+                                None => None
+                            };
+                        `)
+                        columns.push(c.columnName)
+                        values.push(`$${++colCount}`)
+                        array.push(`&${optionalReturnId}`)
+                    } else {
+
+                        inserts.push(...c.ref.insert(`${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
+                        columns.push(c.columnName)
+                        values.push(`$${++colCount}`)
+                        array.push(`&(${returnedId}.get(0))`)
+    
+                    }
+                    
                     break;
                     
                 
@@ -311,31 +334,47 @@ export class StoreCommander {
                     break;
                 case "1:1": {
                     const childRetName = `all${col.type.name}${nextReturnId()}`
-                    const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
                     childrenFetches.push(col.ref.getAll(
                         childRetName, 
                         nextReturnId,
                         `WHERE conduit_entity_id in (select ${col.columnName} from ${this.name})`
                     ))
-                    const childRowVar = `row${nextReturnId()}`
-                    
-                    childrenFetches.push(`
-                    let mut ${childMapVar}: HashMap<i32, &${col.type.name}> = HashMap::with_capacity(${childRetName}.len());
-                    while let Some(${childRowVar}) = ${childRetName}.pop() {
-                        ${childMapVar}.insert(${childRowVar}.conduit_entity_id, ${childRowVar})
-                    }
-                    `)
-                    const extractedVarName = `extracted${col.type.name}${nextReturnId()}`
-                    extractions.push(`
-                    // Extracting ${col.type.name}
-                    let ${extractedVarName} = match ${childMapVar}.get(&${rowVarName}.get("${col.columnName}")) {
-                        Some(t) => t,
-                        None => panic("did not get an expected ${col.columnName}")
-                    }
-                    `)
+                    const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
+                        
+                        const childRowVar = `row${nextReturnId()}`
+                        
+                        childrenFetches.push(`
+                        let mut ${childMapVar}: HashMap<i32, ${col.type.name}> = HashMap::with_capacity(${childRetName}.len());
+                        while let Some(${childRowVar}) = ${childRetName}.pop() {
+                            ${childMapVar}.insert(${childRowVar}.conduit_entity_id.unwrap(), ${childRowVar});
+                        }
+                        `)
+                        const extractedVarName = `extracted${col.type.name}${nextReturnId()}`
+                        
 
+                    if (col.modification === "optional") {
+                        extractions.push(`
+                        // Extracting ${col.type.name}
+                        let ${extractedVarName} = match ${rowVarName}.get("${col.columnName}") {
+                            Some(ptr) => ${childMapVar}.get(&ptr),
+                            None => None
+                        };
+                        
+                        `)
+
+                        structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}.map(|i| i.clone())` )
+
+                    } else {
+                        extractions.push(`
+                        // Extracting ${col.type.name}
+                        let ${extractedVarName} = match ${childMapVar}.get(&${rowVarName}.get("${col.columnName}")) {
+                            Some(t) => t,
+                            None => panic!("did not get an expected ${col.columnName}")
+                        };
+                        `)
+                        structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
+                    }
                     
-                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
 
                     break;
                 }
