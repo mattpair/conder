@@ -64,7 +64,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
 
 export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
     const models: string[] = []
-    manifest.namespace.inScope.forEach(v => {
+    manifest.inScope.forEach(v => {
         if (v.kind === "Function" || v.kind === "StoreDefinition") {
             return
         }

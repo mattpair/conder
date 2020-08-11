@@ -215,7 +215,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
     func: ({manifest}) => {
         const structs: string[] = []
         const stores: Map<string, StoreCommander> = new Map()
-        manifest.namespace.inScope.forEach(val => {
+        manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Function":
                     break;
