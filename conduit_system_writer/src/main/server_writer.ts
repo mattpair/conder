@@ -138,7 +138,7 @@ function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<st
     return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name, method: func.method === "POST" ? "post" : 'get'}
 }
 
-function generateRustStructs(val: CompiledTypes.Struct): string {
+function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
     const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
         const field_type = field.part.FieldType.differentiate()
         let field_type_str = ''
@@ -176,13 +176,19 @@ function generateRustStructs(val: CompiledTypes.Struct): string {
                     default: Utilities.assertNever(field_type.val)
                 }
                 break;
-            case "Struct":
-                field_type_str = field_type.name
-                break;
-
-            case "Enum":
-                field_type_str = 'u8'
-                break;
+           
+            case "custom":
+                const ent = inScope.getEntityOfType(field_type.name, "Enum", "Struct")
+                switch (ent.kind) {
+                    case "Struct":
+                        field_type_str = field_type.name
+                        break;
+        
+                    case "Enum":
+                        field_type_str = 'u8'
+                        break;
+                }
+                
         }
         switch(field.part.FieldType.modification) {
             case "array":
@@ -217,7 +223,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
-                    structs.push(generateRustStructs(val))
+                    structs.push(generateRustStructs(val, manifest.inScope))
                     break
                 case "StoreDefinition":
                     stores.set(val.name, generateStoreCommands(val, manifest.inScope))

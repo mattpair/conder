@@ -1,7 +1,7 @@
 import { generateClients } from '../clients';
 import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
 
-function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
+function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap): string {
     switch(ent.kind) {
         case "Enum":
             return `
@@ -50,9 +50,9 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum): string {
                                 }
 
                                 return `${f.name}: ${prefix}${primstring}${suffix}`
-                            case "Enum":
-                            case "Struct":
-                                return `${f.name}: ${prefix}${type.name}${suffix}`
+                            case "custom":
+                                const ent = inScope.getEntityOfType(type.name, "Struct", "Enum")
+                                return `${f.name}: ${prefix}${ent.name}${suffix}`
 
                             default: Utilities.assertNever(type)
                         }
@@ -68,7 +68,7 @@ export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
         if (v.kind === "Function" || v.kind === "StoreDefinition") {
             return
         }
-        models.push(modelFor(v))
+        models.push(modelFor(v, manifest.inScope))
     })
     return models
 }

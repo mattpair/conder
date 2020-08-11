@@ -4,7 +4,7 @@ import { FileLocation } from '../utils';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type PrimitiveEntity = basic.PrimitiveEntity
-export type ResolvedType = Struct | Enum | basic.PrimitiveEntity
+export type ResolvedType = Readonly<{kind: "custom", name: string} | basic.PrimitiveEntity>
 export type FieldType = basic.BaseFieldType<() => ResolvedType> & {readonly modification: basic.TypeModification}
 export type TypeModification = basic.TypeModification
     
@@ -34,16 +34,17 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
         return this.map.has(key)
     }
 
-    getEntityOfType<TYPE extends ENTS["kind"]> (key: string, type: TYPE): Extract<ENTS, {kind: TYPE}> {
+    getEntityOfType<TYPE extends ENTS["kind"]> (key: string, ...types: TYPE[]): Extract<ENTS, {kind: TYPE}> {
         const got = this.map.get(key)
         if (got === undefined) {
-            throw new Error(`Could not find a ${type} named ${key}`)
+            throw new Error(`Could not find a ${types} named ${key}`)
         }
-        if (got.kind === type)  {
+        //@ts-ignore
+        if (types.includes(got.kind))  {
             //@ts-ignore
             return got
         }
-        throw new Error(`${key} is a ${got.kind} not a ${type}`)
+        throw new Error(`${key} is a ${got.kind} not a ${types}`)
     }
     
 }

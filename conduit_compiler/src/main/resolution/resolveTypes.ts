@@ -39,7 +39,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     throw new Error(`Field may not reference ${alreadyResolved.kind} ${name}`)
                 case "Struct":
                 case "Enum":
-                    return alreadyResolved
+                    return {kind: "custom", name: alreadyResolved.name}
 
                 default: assertNever(alreadyResolved)
             }

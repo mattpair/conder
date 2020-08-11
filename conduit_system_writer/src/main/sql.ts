@@ -3,7 +3,7 @@ import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 
 
-function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): StoreCommander {
+function assembleStoreTree(inScope: CompiledTypes.ScopeMap, struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): StoreCommander {
     const cols: CommanderColumn[] = []
 
     
@@ -11,40 +11,47 @@ function assembleStoreTree(struct: CompiledTypes.Struct, structSet: Set<string>,
         const type = f.part.FieldType.differentiate()
 
         switch(type.kind) {
-            case "Enum":
-                throw Error("Don't support enum stores yet")
-            case "Struct":
-                if (structSet.has(type.name)) {
-                    throw Error(`Cannot store type ${struct.name} because ${type.name} is recursive`)
-                }
-                structSet.add(type.name)
-                const table = assembleStoreTree(type, structSet, `${nextTableName}_${f.name}`)
-                switch(f.part.FieldType.modification){
-                    case "array":
-                        cols.push({
-                            dif: "1:many",
-                            type,
-                            fieldName: f.name,
-                            ref: table,
-                            refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
-    
-                        })
-                        break
-                    case "optional":
-                    case "none":
-                        cols.push({
-                            dif: "1:1",
-                            type,
-                            columnName: `${f.name}_ptr`,
-                            fieldName: f.name,
-                            ref: table,
-                            modification: f.part.FieldType.modification
-                        })
+            case "custom": {
+                const entity = inScope.getEntityOfType(type.name, "Struct", "Enum")
+                switch (entity.kind) {
+                    case "Enum":
+                        throw Error("Don't support enum stores yet")
 
-                }
-                structSet.delete(type.name)
-                return
+                    case "Struct":
+                        if (structSet.has(type.name)) {
+                            throw Error(`Cannot store type ${struct.name} because ${entity.name} is recursive`)
+                        }
+                        structSet.add(entity.name)
+                        const table = assembleStoreTree(inScope, entity, structSet, `${nextTableName}_${f.name}`)
+                        switch(f.part.FieldType.modification){
+                            case "array":
+                                cols.push({
+                                    dif: "1:many",
+                                    type: entity,
+                                    fieldName: f.name,
+                                    ref: table,
+                                    refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+            
+                                })
+                                break
+                            case "optional":
+                            case "none":
+                                cols.push({
+                                    dif: "1:1",
+                                    type: entity,
+                                    columnName: `${f.name}_ptr`,
+                                    fieldName: f.name,
+                                    ref: table,
+                                    modification: f.part.FieldType.modification
+                                })
 
+                        }
+                        structSet.delete(type.name)
+                        return
+                }
+                
+            }
+            
             case "Primitive":
                 cols.push({
                     dif: "prim",
@@ -426,7 +433,10 @@ export class StoreCommander {
 }
 
 export function generateStoreCommands(val: CompiledTypes.Store, inScope: CompiledTypes.ScopeMap): StoreCommander {
-    const store: StoreCommander = assembleStoreTree(inScope.getEntityOfType(val.stores, "Struct"),  new Set([val.stores]), val.name)
+    const store: StoreCommander = assembleStoreTree(
+        inScope,
+        inScope.getEntityOfType(val.stores, "Struct"),  
+        new Set([val.stores]), val.name)
 
     return store
 }
