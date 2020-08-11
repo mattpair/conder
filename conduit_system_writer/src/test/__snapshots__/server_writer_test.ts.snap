@@ -696,40 +696,40 @@ let client = &data.client;
 
         
         // Gettting all simple
-        let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+        let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
 
         
 
-        let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+        let mut allsimple3 = Vec::with_capacity(allsimple5.len());
 
-        while let Some(row5) = allsimple6.pop() {
-            let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
+        while let Some(row4) = allsimple5.pop() {
+            let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
             
             allsimple3.push(simple {
-                data: row5.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId7)
+                data: row4.get(\\"data\\"),
+                conduit_entity_id: Some(simpleEntityId6)
             })
         }
 
         
 
-                    let mut entityIdTosimple4: HashMap<i32, &simple> = HashMap::with_capacity(allsimple3.len());
-                    while let Some(row8) = allsimple3.pop() {
-                        entityIdTosimple4.insert(row8.conduit_entity_id, row8)
-                    }
-                    
+                        let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                        while let Some(row8) = allsimple3.pop() {
+                            entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
+                        }
+                        
 
         let mut out = Vec::with_capacity(allwrapper1.len());
 
         while let Some(row0) = allwrapper1.pop() {
             let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
             
-                    // Extracting simple
-                    let extractedsimple9 = match entityIdTosimple4.get(&row0.get(\\"innard_ptr\\")) {
-                        Some(t) => t,
-                        None => panic(\\"did not get an expected innard_ptr\\")
-                    }
-                    
+                        // Extracting simple
+                        let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                            Some(t) => t,
+                            None => panic!(\\"did not get an expected innard_ptr\\")
+                        };
+                        
             out.push(wrapper {
                 innard: extractedsimple9,
                 conduit_entity_id: Some(wrapperEntityId2)
@@ -839,7 +839,7 @@ PRIMARY KEY(conduit_entity_id)
         CREATE TABLE wrapStore (
             innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
-FOREIGN KEY(innard) REFERENCES wrapStore_innard(conduit_entity_id),
+FOREIGN KEY(innard_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
         );
                         
@@ -922,40 +922,40 @@ let client = &data.client;
 
         
         // Gettting all simple
-        let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+        let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
 
         
 
-        let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+        let mut allsimple3 = Vec::with_capacity(allsimple5.len());
 
-        while let Some(row5) = allsimple6.pop() {
-            let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
+        while let Some(row4) = allsimple5.pop() {
+            let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
             
             allsimple3.push(simple {
-                data: row5.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId7)
+                data: row4.get(\\"data\\"),
+                conduit_entity_id: Some(simpleEntityId6)
             })
         }
 
         
 
-                    let mut entityIdTosimple4: HashMap<i32, &simple> = HashMap::with_capacity(allsimple3.len());
-                    while let Some(row8) = allsimple3.pop() {
-                        entityIdTosimple4.insert(row8.conduit_entity_id, row8)
-                    }
-                    
+                        let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                        while let Some(row8) = allsimple3.pop() {
+                            entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
+                        }
+                        
 
         let mut out = Vec::with_capacity(allwrapper1.len());
 
         while let Some(row0) = allwrapper1.pop() {
             let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
             
-                    // Extracting simple
-                    let extractedsimple9 = match entityIdTosimple4.get(&row0.get(\\"innard_ptr\\")) {
-                        Some(t) => t,
-                        None => panic(\\"did not get an expected innard_ptr\\")
-                    }
-                    
+                        // Extracting simple
+                        let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                            Some(t) => t,
+                            None => panic!(\\"did not get an expected innard_ptr\\")
+                        };
+                        
             out.push(wrapper {
                 innard: extractedsimple9,
                 conduit_entity_id: Some(wrapperEntityId2)
@@ -1065,7 +1065,7 @@ PRIMARY KEY(conduit_entity_id)
         CREATE TABLE wrapStore (
             innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
-FOREIGN KEY(innard) REFERENCES wrapStore_innard(conduit_entity_id),
+FOREIGN KEY(innard_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
         );
                         
