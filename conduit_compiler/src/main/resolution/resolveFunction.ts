@@ -89,8 +89,8 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
                     throw Error(`Cannot find variable ${stmt.variableName}`)
                 }
                 const into = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
-                if (into.stores !== variable.type.val) {
-                    throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores.name}`)
+                if (into.stores !== variable.type.val.name) {
+                    throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores}`)
                 }
                 resolvedStmt = {
                     kind: "Append",
@@ -111,7 +111,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
                         kind: "StoreReference",
                         loc: stmt.loc,
                         from: store,
-                        returnType: { kind: "real type", isArray: true, val: store.stores}
+                        returnType: { kind: "real type", isArray: true, val: namespace.inScope.getEntityOfType(store.stores, "Struct")}
                     }
                    break
                 }

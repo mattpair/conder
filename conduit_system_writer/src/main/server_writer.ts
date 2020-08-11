@@ -220,7 +220,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                     structs.push(generateRustStructs(val))
                     break
                 case "StoreDefinition":
-                    stores.set(val.name, generateStoreCommands(val))
+                    stores.set(val.name, generateStoreCommands(val, manifest.inScope))
                     break;
                 // TODO: enable enums
                 // default: assertNever(val)

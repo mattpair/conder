@@ -49,42 +49,7 @@ Object {
           "startLineNumber": 3,
         },
         "name": "myFirstStore",
-        "stores": Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 11,
-                  "endLineNumber": 2,
-                  "startColNumber": 19,
-                  "startLineNumber": 1,
-                },
-                "name": "s",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                    "modification": "none",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "testFile.cdt",
-            "name": "testFile.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 19,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "stored",
-        },
+        "stores": "stored",
       },
     },
     "size": 2,
@@ -161,42 +126,7 @@ Object {
                   "startLineNumber": 3,
                 },
                 "name": "secondStore",
-                "stores": Object {
-                  "children": Object {
-                    "Field": Array [
-                      Object {
-                        "kind": "Field",
-                        "loc": Object {
-                          "endColNumber": 11,
-                          "endLineNumber": 2,
-                          "startColNumber": 19,
-                          "startLineNumber": 1,
-                        },
-                        "name": "s",
-                        "part": Object {
-                          "FieldType": Object {
-                            "differentiate": [Function],
-                            "kind": "FieldType",
-                            "modification": "none",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  "file": FileLocation {
-                    "dir": "",
-                    "fullname": "testFile.cdt",
-                    "name": "testFile.cdt",
-                  },
-                  "kind": "Struct",
-                  "loc": Object {
-                    "endColNumber": 19,
-                    "endLineNumber": 1,
-                    "startColNumber": 0,
-                    "startLineNumber": 0,
-                  },
-                  "name": "stored",
-                },
+                "stores": "stored",
               },
               "kind": "StoreReference",
               "loc": Object {
@@ -312,42 +242,7 @@ Object {
           "startLineNumber": 3,
         },
         "name": "secondStore",
-        "stores": Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 11,
-                  "endLineNumber": 2,
-                  "startColNumber": 19,
-                  "startLineNumber": 1,
-                },
-                "name": "s",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                    "modification": "none",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "testFile.cdt",
-            "name": "testFile.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 19,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "stored",
-        },
+        "stores": "stored",
       },
     },
     "size": 3,

@@ -141,7 +141,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                             kind: "StoreDefinition",
                             loc: firstPassEnt.loc,
                             name: firstPassEnt.name,
-                            stores: secondPassScope.get(firstPassEnt.part.CustomType.type) as Struct
+                            stores: firstPassEnt.part.CustomType.type
                         })
                         return
                     default: 

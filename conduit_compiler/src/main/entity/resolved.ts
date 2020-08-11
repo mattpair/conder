@@ -12,7 +12,7 @@ export type Field = basic.BaseField<FieldType>
 
 export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
 export type Enum = basic.Enum & {readonly file: FileLocation}
-export type Store = basic.NamedIntrafile<"StoreDefinition", {readonly stores: Struct}>
+export type Store = basic.NamedIntrafile<"StoreDefinition", {readonly stores: string}>
 
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
@@ -76,8 +76,9 @@ export type Function =  basic.NamedIntrafile<"Function", {
 
 
 
+export type ScopeMap = EntityMap<Struct | Enum | Function | Store>
     
 
 export type Manifest = {
-    readonly inScope: EntityMap<Struct | Enum | Function | Store>
+    readonly inScope: ScopeMap
 }

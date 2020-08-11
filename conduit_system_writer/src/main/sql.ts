@@ -425,8 +425,8 @@ export class StoreCommander {
     
 }
 
-export function generateStoreCommands(val: CompiledTypes.Store): StoreCommander {
-    const store: StoreCommander = assembleStoreTree(val.stores,  new Set([val.stores.name]), val.name)
+export function generateStoreCommands(val: CompiledTypes.Store, inScope: CompiledTypes.ScopeMap): StoreCommander {
+    const store: StoreCommander = assembleStoreTree(inScope.getEntityOfType(val.stores, "Struct"),  new Set([val.stores]), val.name)
 
     return store
 }
