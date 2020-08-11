@@ -6,7 +6,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: Compi
         case "Enum":
             return `
                 export enum ${ent.name} {
-                    ${ent.children.EnumMember.map(e => e.name).join(",\n")}
+                    ${ent.children.EnumMember.map((e, i) => `${e.name}=${i}`).join(",\n")}
                 }
                 `
     

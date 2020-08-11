@@ -1,5 +1,6 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { Primitives } from 'conduit_compiler/dist/src/main/lexicon';
 
 
 
@@ -15,7 +16,13 @@ function assembleStoreTree(inScope: CompiledTypes.ScopeMap, struct: CompiledType
                 const entity = inScope.getEntityOfType(type.name, "Struct", "Enum")
                 switch (entity.kind) {
                     case "Enum":
-                        throw Error("Don't support enum stores yet")
+                        if (f.part.FieldType.modification === "optional") {
+                            throw Error(`Enum fields may not be optional`)
+                        }
+
+                        cols.push({dif: "enum", type: entity, columnName: f.name, fieldName: f.name, modification: f.part.FieldType.modification})
+
+                        return
 
                     case "Struct":
                         if (structSet.has(type.name)) {
@@ -72,7 +79,7 @@ function assembleStoreTree(inScope: CompiledTypes.ScopeMap, struct: CompiledType
 export type ReturnInstruction = Readonly<{
     kind: "save"
     name: string
-} | {kind: "drop"}> 
+} | {kind: "drop"}>
 
 type PrimitiveColumn = {
     dif: "prim"
@@ -80,6 +87,14 @@ type PrimitiveColumn = {
     columnName: string
     fieldName: string
     modification: CompiledTypes.TypeModification
+}
+
+type EnumColumn = {
+    dif: "enum"
+    type: CompiledTypes.Enum
+    columnName: string
+    fieldName: string
+    modification: Exclude<CompiledTypes.TypeModification, "optional">
 }
 
 type StructArrayCol = {
@@ -99,7 +114,7 @@ type StructRefCol = {
     modification: "optional" | "none"
 }
 
-type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol
+type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn
 
 function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 
@@ -135,6 +150,18 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
     }
 }
 
+function makePrimitiveColumn(c: PrimitiveColumn | EnumColumn): string {
+    const typeStr = c.dif === "enum" ? "smallint" : toPostgresType(c.type)
+    let appendStr = ''
+    switch (c.modification) {
+        case "array":
+            appendStr = "[]"
+            break;
+        case "none":
+            appendStr = " NOT NULL"   
+    }
+    return `${c.columnName}\t${typeStr}${appendStr}`
+}
 
 export class StoreCommander {
     private readonly name: string
@@ -158,20 +185,9 @@ export class StoreCommander {
         this.columns.forEach(c => {
             switch(c.dif) {
                 case "prim":
-                    const typeStr = toPostgresType(c.type)
-                    let appendStr = ''
-                    switch (c.modification) {
-                        case "array":
-                            appendStr = "[]"
-                            break;
-                        case "none":
-                            appendStr = " NOT NULL"   
-                    }
-
-                    cols.push(`${c.columnName}\t${typeStr}${appendStr}`)
+                case "enum":
+                    cols.push(makePrimitiveColumn(c))
                     break;
-                    
-                
 
                 case "1:1":
                     creates.push(c.ref.create)
@@ -218,6 +234,7 @@ export class StoreCommander {
         let colCount = 0
         this.columns.forEach(c => {
             switch(c.dif) {
+                case "enum":
                 case "prim":
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
@@ -329,6 +346,7 @@ export class StoreCommander {
 
         this.columns.forEach((col) => {
             switch (col.dif) {
+                case "enum":
                 case "prim":
                     structFieldAssignment.push(`${col.fieldName}: ${rowVarName}.get("${col.columnName}")`)
                     break;

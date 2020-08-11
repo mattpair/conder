@@ -185,7 +185,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
                         break;
         
                     case "Enum":
-                        field_type_str = 'u8'
+                        field_type_str = 'i16'
                         break;
                 }
                 
@@ -228,6 +228,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                 case "StoreDefinition":
                     stores.set(val.name, generateStoreCommands(val, manifest.inScope))
                     break;
+                case "Enum":
                 // TODO: enable enums
                 // default: assertNever(val)
             }

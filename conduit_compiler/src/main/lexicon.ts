@@ -23,7 +23,8 @@ export enum Symbol {
     return="return",
     array="\[\]",
     Array="Array",
-    Optional="Optional"
+    Optional="Optional",
+    type="type"
 }
 
 export const Operators: [
