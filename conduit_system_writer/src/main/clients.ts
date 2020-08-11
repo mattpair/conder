@@ -17,7 +17,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
             return fetch(url)
         }
 
-        ${manifest.service.functions.map(fn => {
+        ${manifest.fns.map(fn => {
             const param = fn.parameter.differentiate()
             const ret = fn.returnType
 

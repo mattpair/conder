@@ -230,7 +230,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
             }
         })
 
-        const functions = generateFunctions(manifest.service.functions, stores)
+        const functions = generateFunctions(manifest.fns, stores)
         const creates: string[] = []
         stores.forEach(v => creates.push(v.create))
 

@@ -82,12 +82,5 @@ export type Namespace = {
 
 export type Manifest = {
     namespace: Namespace,
-    service: Service
-}
-
-type ServiceKind = "public"
-
-type Service = {
-    readonly functions: Function[]
-    readonly kind: ServiceKind
+    fns: Function[]
 }

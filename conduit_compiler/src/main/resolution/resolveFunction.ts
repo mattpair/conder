@@ -208,9 +208,6 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
     return {
         namespace: {name: "default", inScope: new EntityMap(entityMapInternal)},
-        service: {
-            functions,
-            kind: "public"
-        }
+        fns: functions
     }
 }

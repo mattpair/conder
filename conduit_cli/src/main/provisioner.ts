@@ -125,7 +125,7 @@ export const deployOnToCluster: Utilities.StepDefinition<
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
-            const serviceName = `${manifest.service.kind}-${namespace}`
+            const serviceName = `public-${namespace}`
             const mainPodName = `${serviceName}-pod-main`
             const pgPodName = `${namespace}-pod-pg`
             
