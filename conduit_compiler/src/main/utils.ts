@@ -67,8 +67,17 @@ export class Sequence<INPUT extends {}, OUTPUT extends {}> {
                 
             },
         })
-
     }
+
+    inject<ADD extends {}>(add: ADD): Sequence<INPUT, INPUT & OUTPUT & ADD> {
+        return new Sequence({
+            stepName: this.def.stepName,
+            func: async (arg0: INPUT) => {
+                return this.def.func(arg0).then(out =>  ({...out, ...arg0, ...add}))
+            }  
+        })
+
+    } 
 
     run(i: INPUT): Promise<OUTPUT> {
         return this.def.func(i)

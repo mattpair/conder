@@ -78,7 +78,7 @@ const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: ConduitBu
 }
 
 export const writeClientFile: Utilities.StepDefinition<{clients: string, buildConf: ConduitBuildConfig}, {}> = {
-    stepName: "generating all clients",
+    stepName: "writing all clients",
     func: ({buildConf, clients}) => {
         const p = []
         for (const dir in buildConf.dependents) {
@@ -91,12 +91,14 @@ export const writeClientFile: Utilities.StepDefinition<{clients: string, buildCo
 }
 
 const commands: Record<string, (dep: DependencyFactory) => void> = {
-    async models() {
-        console.warn("Models functionality hasn't been supported in a while and may require updating")
+    async stubs() {
         await new Utilities.Sequence(loadBuildConfig)
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
         .then(generateModels)
+        .inject({endpoint: "fake-url"})
+        .then(generateAllClients)
+        .then(writeClientFile)
         .run({})
     },
 
