@@ -29,7 +29,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
 
     const secondPassScope: Map<string, TypeResolved.TopLevelEntities> = new Map()
 
-    function tryResolveFieldType(name: string): ResolvedType | undefined  {
+    function tryResolveFieldType(name: string, modification: basic.TypeModification): ResolvedType | undefined  {
         const alreadyResolved = secondPassScope.get(name)
             
         if (alreadyResolved !== undefined) {
@@ -37,8 +37,12 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 case "StoreDefinition":
                 case "Function":
                     throw new Error(`Field may not reference ${alreadyResolved.kind} ${name}`)
-                case "Struct":
                 case "Enum":
+                    if (modification === "optional") {
+                        throw new Error(`Enum fields may not be optional`)
+                    }
+                case "Struct":
+                
                     return {kind: "custom", name: alreadyResolved.name}
 
                 default: assertNever(alreadyResolved)
@@ -70,7 +74,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                         //TODO: eventually allow types to contain instances of self.
                         throw new Error(`Currently do not support self-referencing types: ${ent.name}`)
                     }
-                    const alreadyResolved = tryResolveFieldType(type.type)
+                    const alreadyResolved = tryResolveFieldType(type.type, type.modification)
                     if (alreadyResolved !== undefined) {
                         newType = alreadyResolved
                         break
@@ -81,7 +85,8 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                         throw new Error(`Unable to resolve type of field ${type.type} from struct: ${ent.name}`)
                     }  
                     resolveEntity(notYetResolved)
-                    newType = tryResolveFieldType(notYetResolved.name)
+                    
+                    newType = tryResolveFieldType(notYetResolved.name, type.modification)
                     break
             
 

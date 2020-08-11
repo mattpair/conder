@@ -49,3 +49,31 @@ function echosSingleton(s: Singleton) Singleton {
     s
 }
 `)
+
+testFailsWhen("creating an optional enum", `
+
+enum MyEnum {
+    A,
+    B
+}
+struct Container {
+    e: Optional<MyEnum>
+}
+
+`)
+
+testFailsWhen("creating an optional array", `
+
+struct Container {
+    e: Optional<Array<int32>>
+}
+
+`)
+
+testFailsWhen("creating an array optional", `
+
+struct Container {
+    e: Array<Optional<int32>>
+}
+
+`)

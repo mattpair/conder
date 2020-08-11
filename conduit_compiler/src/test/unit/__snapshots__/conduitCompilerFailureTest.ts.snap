@@ -4,6 +4,26 @@ exports[`attempting to store enums 1`] = `"Stores may not reference Enum"`;
 
 exports[`attempting to store non-array 1`] = `"Global instances must be arrays for now"`;
 
+exports[`creating an array optional 1`] = `
+"Unable to parse required FieldType entity at {\\"startColNumber\\":18,\\"startLineNumber\\":2,\\"endColNumber\\":7,\\"endLineNumber\\":3}
+
+ <int32>>
+}
+
+"
+`;
+
+exports[`creating an optional array 1`] = `
+"Unable to parse required FieldType entity at {\\"startColNumber\\":18,\\"startLineNumber\\":2,\\"endColNumber\\":7,\\"endLineNumber\\":3}
+
+ <int32>>
+}
+
+"
+`;
+
+exports[`creating an optional enum 1`] = `"Enum fields may not be optional"`;
+
 exports[`dependent struct is not in scope  1`] = `"Unable to resolve type of field M2 from struct: m1"`;
 
 exports[`naming an entity after a keyword  1`] = `
