@@ -192,14 +192,12 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
 
 export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
-    const functions: Function[] = []
     const entityMapInternal: Map<string, Struct | Enum | Function | Store> = new Map()
     
     
     namespace.inScope.forEach(val => {
         if (val.kind === "Function") {
             const func = resolveFunction(namespace, val)
-            functions.push(func)
             entityMapInternal.set(val.name, func)
         } else {
             entityMapInternal.set(val.name, val)
@@ -208,6 +206,5 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
     return {
         inScope: new EntityMap(entityMapInternal),
-        fns: functions
     }
 }

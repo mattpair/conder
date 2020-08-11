@@ -80,5 +80,4 @@ export type Function =  basic.NamedIntrafile<"Function", {
 
 export type Manifest = {
     readonly inScope: EntityMap<Struct | Enum | Function | Store>
-    fns: Function[]
 }

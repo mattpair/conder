@@ -62,20 +62,20 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 return Ok(())
         }
 
-        async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-            let s = input.into_inner();
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
 let client = &data.client;
-            return match internal_insert(s,client).await {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                
-        }
-                
-        
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -204,20 +204,20 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 return Ok(())
         }
 
-        async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-            let s = input.into_inner();
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
 let client = &data.client;
-            return match internal_insert(s,client).await {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                
-        }
-                
-        
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
 
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
@@ -292,18 +292,18 @@ let client = &data.client;
 return Ok(out);
         }
 
-        async fn external_get(data: web::Data<AppData>) -> impl Responder {
-            let client = &data.client;
-            return match internal_get(client).await {
-                    Ok(out) => HttpResponse::Ok().json(out),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest().finish()
-                    }
-                };
-        }
-                
-        
+    async fn external_get(data: web::Data<AppData>) -> impl Responder {
+        let client = &data.client;
+        return match internal_get(client).await {
+                Ok(out) => HttpResponse::Ok().json(out),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest().finish()
+                }
+            };
+    }
+            
+    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -483,20 +483,20 @@ conduit_entity_id: Option<i32>
 return Ok(())
         }
 
-        async fn external_insert(input: web::Json<simple>, data: web::Data<AppData>) -> impl Responder {
-            let s = input.into_inner();
+    async fn external_insert(input: web::Json<simple>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
 let client = &data.client;
-            return match internal_insert(s,client).await {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                
-        }
-                
-        
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
 
 
         async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
@@ -521,18 +521,18 @@ let client = &data.client;
 return Ok(out);
         }
 
-        async fn external_get(data: web::Data<AppData>) -> impl Responder {
-            let client = &data.client;
-            return match internal_get(client).await {
-                    Ok(out) => HttpResponse::Ok().json(out),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest().finish()
-                    }
-                };
-        }
-                
-        
+    async fn external_get(data: web::Data<AppData>) -> impl Responder {
+        let client = &data.client;
+        return match internal_get(client).await {
+                Ok(out) => HttpResponse::Ok().json(out),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest().finish()
+                }
+            };
+    }
+            
+    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -673,20 +673,20 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 return Ok(())
         }
 
-        async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-            let s = input.into_inner();
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
 let client = &data.client;
-            return match internal_insert(s,client).await {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                
-        }
-                
-        
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
 
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
@@ -740,18 +740,18 @@ let client = &data.client;
 return Ok(out);
         }
 
-        async fn external_get(data: web::Data<AppData>) -> impl Responder {
-            let client = &data.client;
-            return match internal_get(client).await {
-                    Ok(out) => HttpResponse::Ok().json(out),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest().finish()
-                    }
-                };
-        }
-                
-        
+    async fn external_get(data: web::Data<AppData>) -> impl Responder {
+        let client = &data.client;
+        return match internal_get(client).await {
+                Ok(out) => HttpResponse::Ok().json(out),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest().finish()
+                }
+            };
+    }
+            
+    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -899,20 +899,20 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 return Ok(())
         }
 
-        async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-            let s = input.into_inner();
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
 let client = &data.client;
-            return match internal_insert(s,client).await {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                
-        }
-                
-        
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
 
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
@@ -966,18 +966,18 @@ let client = &data.client;
 return Ok(out);
         }
 
-        async fn external_get(data: web::Data<AppData>) -> impl Responder {
-            let client = &data.client;
-            return match internal_get(client).await {
-                    Ok(out) => HttpResponse::Ok().json(out),
-                    Err(err) => {
-                        eprintln!(\\"Failure caused by: {}\\", err);
-                        HttpResponse::BadRequest().finish()
-                    }
-                };
-        }
-                
-        
+    async fn external_get(data: web::Data<AppData>) -> impl Responder {
+        let client = &data.client;
+        return match internal_get(client).await {
+                Ok(out) => HttpResponse::Ok().json(out),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest().finish()
+                }
+            };
+    }
+            
+    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {

@@ -82,62 +82,60 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
-function generateFunctions(functions: CompiledTypes.Function[], storeMap: ReadonlyMap<string, StoreCommander>): FunctionDef[] {
-    return functions.map(func => {
+function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, StoreCommander>): FunctionDef {
 
-        const internal = generateInternalFunction(func, storeMap) 
-        const param = func.parameter.differentiate()
-        
-        let parameters: string[] = []
-        let extractors: string[] = []
+    const internal = generateInternalFunction(func, storeMap) 
+    const param = func.parameter.differentiate()
+    
+    let parameters: string[] = []
+    let extractors: string[] = []
 
-        if (param.kind === "UnaryParameter") {
-            const ptype = param.type
-            parameters.push(`input: web::Json<${toRustType(ptype)}>`)
-            extractors.push(`let ${param.name} = input.into_inner();`)
-        }
+    if (param.kind === "UnaryParameter") {
+        const ptype = param.type
+        parameters.push(`input: web::Json<${toRustType(ptype)}>`)
+        extractors.push(`let ${param.name} = input.into_inner();`)
+    }
 
-        if (func.requiresDbClient) {
-            parameters.push("data: web::Data<AppData>")
-            extractors.push("let client = &data.client;")
-        }
+    if (func.requiresDbClient) {
+        parameters.push("data: web::Data<AppData>")
+        extractors.push("let client = &data.client;")
+    }
 
-        const returnType = func.returnType
-        let externalFuncBody = ''
+    const returnType = func.returnType
+    let externalFuncBody = ''
 
-        switch (returnType.kind) {
-            case "VoidReturnType":
-                externalFuncBody = `match ${internal.invocation} {
-                    Ok(()) => HttpResponse::Ok(),
-                    Err(err) => {
-                        eprintln!("Failure caused by: {}", err);
-                        HttpResponse::BadRequest()
-                    }
-                };
-                `
-                break;
-            case "real type":
-                externalFuncBody = `match ${internal.invocation} {
-                    Ok(out) => HttpResponse::Ok().json(out),
-                    Err(err) => {
-                        eprintln!("Failure caused by: {}", err);
-                        HttpResponse::BadRequest().finish()
-                    }
-                };`
-                break;
+    switch (returnType.kind) {
+        case "VoidReturnType":
+            externalFuncBody = `match ${internal.invocation} {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!("Failure caused by: {}", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            `
+            break;
+        case "real type":
+            externalFuncBody = `match ${internal.invocation} {
+                Ok(out) => HttpResponse::Ok().json(out),
+                Err(err) => {
+                    eprintln!("Failure caused by: {}", err);
+                    HttpResponse::BadRequest().finish()
+                }
+            };`
+            break;
 
-            default: Utilities.assertNever(returnType)
-        }
-        
-        const external = `
-        async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
-            ${extractors.join("\n")}
-            return ${externalFuncBody}
-        }
-                
-        `
-        return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name, method: func.method === "POST" ? "post" : 'get'}
-    })
+        default: Utilities.assertNever(returnType)
+    }
+    
+    const external = `
+    async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
+        ${extractors.join("\n")}
+        return ${externalFuncBody}
+    }
+            
+    `
+    return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name, method: func.method === "POST" ? "post" : 'get'}
 }
 
 function generateRustStructs(val: CompiledTypes.Struct): string {
@@ -215,10 +213,9 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
     func: ({manifest}) => {
         const structs: string[] = []
         const stores: Map<string, StoreCommander> = new Map()
+        const functions: FunctionDef[] = []
         manifest.inScope.forEach(val => {
             switch (val.kind) {
-                case "Function":
-                    break;
                 case "Struct":
                     structs.push(generateRustStructs(val))
                     break
@@ -230,7 +227,13 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
             }
         })
 
-        const functions = generateFunctions(manifest.fns, stores)
+        manifest.inScope.forEach(val => {
+            if (val.kind === "Function") {
+                functions.push(generateFunction(val, stores))
+            }
+        })
+
+        
         const creates: string[] = []
         stores.forEach(v => creates.push(v.create))
 

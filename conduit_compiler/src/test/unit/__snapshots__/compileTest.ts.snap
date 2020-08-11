@@ -2,7 +2,6 @@
 
 exports[`defining a store 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "stored" => Object {
@@ -95,179 +94,6 @@ Object {
 
 exports[`getting all data from store 1`] = `
 Object {
-  "fns": Array [
-    Object {
-      "body": Object {
-        "kind": "FunctionBody",
-        "loc": Object {
-          "endColNumber": 41,
-          "endLineNumber": 7,
-          "startColNumber": 39,
-          "startLineNumber": 7,
-        },
-        "statements": Array [
-          Object {
-            "kind": "ReturnStatement",
-            "loc": Object {
-              "endColNumber": 15,
-              "endLineNumber": 8,
-              "startColNumber": 41,
-              "startLineNumber": 7,
-            },
-          },
-          Object {
-            "from": Object {
-              "kind": "StoreDefinition",
-              "loc": Object {
-                "endColNumber": 17,
-                "endLineNumber": 5,
-                "startColNumber": 5,
-                "startLineNumber": 3,
-              },
-              "name": "secondStore",
-              "stores": Object {
-                "children": Object {
-                  "Field": Array [
-                    Object {
-                      "kind": "Field",
-                      "loc": Object {
-                        "endColNumber": 11,
-                        "endLineNumber": 2,
-                        "startColNumber": 19,
-                        "startLineNumber": 1,
-                      },
-                      "name": "s",
-                      "part": Object {
-                        "FieldType": Object {
-                          "differentiate": [Function],
-                          "kind": "FieldType",
-                          "modification": "none",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "file": FileLocation {
-                  "dir": "",
-                  "fullname": "testFile.cdt",
-                  "name": "testFile.cdt",
-                },
-                "kind": "Struct",
-                "loc": Object {
-                  "endColNumber": 19,
-                  "endLineNumber": 1,
-                  "startColNumber": 0,
-                  "startLineNumber": 0,
-                },
-                "name": "stored",
-              },
-            },
-            "kind": "StoreReference",
-            "loc": Object {
-              "endColNumber": 26,
-              "endLineNumber": 8,
-              "startColNumber": 15,
-              "startLineNumber": 8,
-            },
-            "returnType": Object {
-              "isArray": true,
-              "kind": "real type",
-              "val": Object {
-                "children": Object {
-                  "Field": Array [
-                    Object {
-                      "kind": "Field",
-                      "loc": Object {
-                        "endColNumber": 11,
-                        "endLineNumber": 2,
-                        "startColNumber": 19,
-                        "startLineNumber": 1,
-                      },
-                      "name": "s",
-                      "part": Object {
-                        "FieldType": Object {
-                          "differentiate": [Function],
-                          "kind": "FieldType",
-                          "modification": "none",
-                        },
-                      },
-                    },
-                  ],
-                },
-                "file": FileLocation {
-                  "dir": "",
-                  "fullname": "testFile.cdt",
-                  "name": "testFile.cdt",
-                },
-                "kind": "Struct",
-                "loc": Object {
-                  "endColNumber": 19,
-                  "endLineNumber": 1,
-                  "startColNumber": 0,
-                  "startLineNumber": 0,
-                },
-                "name": "stored",
-              },
-            },
-          },
-        ],
-      },
-      "kind": "Function",
-      "loc": Object {
-        "endColNumber": 23,
-        "endLineNumber": 7,
-        "startColNumber": 35,
-        "startLineNumber": 5,
-      },
-      "method": "GET",
-      "name": "getAllData",
-      "parameter": Object {
-        "differentiate": [Function],
-        "kind": "Parameter",
-      },
-      "requiresDbClient": true,
-      "returnType": Object {
-        "isArray": true,
-        "kind": "real type",
-        "val": Object {
-          "children": Object {
-            "Field": Array [
-              Object {
-                "kind": "Field",
-                "loc": Object {
-                  "endColNumber": 11,
-                  "endLineNumber": 2,
-                  "startColNumber": 19,
-                  "startLineNumber": 1,
-                },
-                "name": "s",
-                "part": Object {
-                  "FieldType": Object {
-                    "differentiate": [Function],
-                    "kind": "FieldType",
-                    "modification": "none",
-                  },
-                },
-              },
-            ],
-          },
-          "file": FileLocation {
-            "dir": "",
-            "fullname": "testFile.cdt",
-            "name": "testFile.cdt",
-          },
-          "kind": "Struct",
-          "loc": Object {
-            "endColNumber": 19,
-            "endLineNumber": 1,
-            "startColNumber": 0,
-            "startLineNumber": 0,
-          },
-          "name": "stored",
-        },
-      },
-    },
-  ],
   "inScope": EntityMap {
     "map": Map {
       "stored" => Object {
@@ -531,7 +357,6 @@ Object {
 
 exports[`should allow enums 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "PurchaseCategory" => Object {
@@ -621,7 +446,6 @@ Object {
 
 exports[`should allow enums separated by whitespace 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "PurchaseCategory" => Object {
@@ -711,7 +535,6 @@ Object {
 
 exports[`should allow multiple enums separated by whitespace 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "PurchaseCategory" => Object {
@@ -850,7 +673,6 @@ Object {
 
 exports[`should allow one struct to reference another 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "m1" => Object {
@@ -1018,7 +840,6 @@ Object {
 
 exports[`should allow the specification of optional fields 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "Mystruct" => Object {
@@ -1201,7 +1022,6 @@ Object {
 
 exports[`should convert multiple conduit into manifest 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "m1" => Object {
@@ -1403,7 +1223,6 @@ Object {
 
 exports[`should convert simple conduit into manifest 1`] = `
 Object {
-  "fns": Array [],
   "inScope": EntityMap {
     "map": Map {
       "Mystruct" => Object {
