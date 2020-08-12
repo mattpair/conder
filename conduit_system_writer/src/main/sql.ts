@@ -167,11 +167,55 @@ export class StoreCommander {
     private readonly name: string
     private readonly columns: CommanderColumn[]
     private readonly typeName: string
+    private readonly specName: string
 
     constructor(name: string, children: CommanderColumn[], typeName: string) {
         this.name = name
         this.columns = children
         this.typeName = typeName
+        this.specName = `querySpec_${name}`
+    }
+
+    public get querySpecs(): string {
+        const plainColumnStrs: string[] = []
+        const childSpecs: string[] = []
+        const fields: string[] = []
+        this.columns.forEach(col => {
+            switch (col.dif) {
+                case "prim":
+                case "enum":
+                    plainColumnStrs.push(`const ${this.name}_${col.columnName}: &'static str = "${col.columnName}";`)
+                    break
+
+                case "1:many":
+                case "1:1":
+                    fields.push(`spec_${col.fieldName}: ${col.ref.specName}`)
+                    childSpecs.push(col.ref.querySpecs)
+                    
+                    break
+
+                default: assertNever(col)
+            }
+        })
+
+        if (childSpecs.length > 0) {
+            fields.push("requiresThisId: bool")
+        }
+        if (plainColumnStrs.length > 0) {
+        
+            fields.push("simpleSelections: Vec<u16>")
+        }
+        
+        return ` 
+        ${plainColumnStrs.join("\n")}
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct ${this.specName} {
+            ${fields.join(",\n")}
+        }
+        
+        ${childSpecs.join("\n")}
+        `
     }
 
     public get create() : string {

@@ -242,7 +242,8 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
 
         
         const creates: string[] = []
-        stores.forEach(v => creates.push(v.create))
+        const querySpecs: string[] = []
+        stores.forEach(v => {creates.push(v.create); querySpecs.push(v.querySpecs)})
 
         return Promise.resolve({
             backend: {
@@ -300,6 +301,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             
                     
                             ${structs.join("\n")}
+                            ${querySpecs.join("\n")}
                     
                             ${functions.map(f => f.def).join("\n\n")}
                     

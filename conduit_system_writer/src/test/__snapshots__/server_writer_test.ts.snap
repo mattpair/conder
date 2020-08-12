@@ -40,6 +40,26 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                             
+        
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            spec_innard: querySpec_wrapStore_innard,
+requiresThisId: bool
+        }
+        
+         
+        const wrapStore_innard_data: &'static str = \\"data\\";
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard {
+            simpleSelections: Vec<u16>
+        }
+        
+        
+        
+        
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
@@ -182,6 +202,26 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                             
+        
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            spec_innard: querySpec_wrapStore_innard,
+requiresThisId: bool
+        }
+        
+         
+        const wrapStore_innard_data: &'static str = \\"data\\";
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard {
+            simpleSelections: Vec<u16>
+        }
+        
+        
+        
+        
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
@@ -476,6 +516,16 @@ Array [
 conduit_entity_id: Option<i32>
     }
     
+                             
+        const simpleStore_data: &'static str = \\"data\\";
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_simpleStore {
+            simpleSelections: Vec<u16>
+        }
+        
+        
+        
                     
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
@@ -665,6 +715,26 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                             
+        
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            spec_innard: querySpec_wrapStore_innard,
+requiresThisId: bool
+        }
+        
+         
+        const wrapStore_innard_data: &'static str = \\"data\\";
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard {
+            simpleSelections: Vec<u16>
+        }
+        
+        
+        
+        
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
@@ -891,6 +961,26 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                             
+        
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            spec_innard: querySpec_wrapStore_innard,
+requiresThisId: bool
+        }
+        
+         
+        const wrapStore_innard_data: &'static str = \\"data\\";
+        
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard {
+            simpleSelections: Vec<u16>
+        }
+        
+        
+        
+        
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
