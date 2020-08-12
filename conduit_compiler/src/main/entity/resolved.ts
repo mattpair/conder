@@ -83,38 +83,38 @@ export type Manifest = {
     readonly inScope: ScopeMap
 }
 
-export type PrimitiveColumn = {
+export type PrimitiveColumn = Readonly<{
     dif: "prim"
     type: PrimitiveEntity
     columnName: string
     fieldName: string
     modification: TypeModification
-}
+}>
 
-export type EnumColumn = {
+export type EnumColumn = Readonly<{
     dif: "enum"
     type: Enum
     columnName: string
     fieldName: string
     modification: Exclude<TypeModification, "optional">
-}
+}>
 
-export type StructArrayCol = {
+export type StructArrayCol = Readonly<{
     dif: "1:many"
     type: Struct
     fieldName: string
     refTableName: string
     ref: HierarchicalStore
-}
+}>
 
-export type StructRefCol = {
+export type StructRefCol = Readonly<{
     dif: "1:1"
     type: Struct
     columnName: string
     fieldName: string
     ref: HierarchicalStore,
     modification: "optional" | "none"
-}
+}>
 
 export type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn
 
