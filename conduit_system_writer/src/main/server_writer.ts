@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQuerySpecsFor, generateQueryInterpreter} from './sql'
+import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -208,12 +208,14 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
 
     const makeStruct = (prefix: string, strFields: string[]) =>  `
     #[derive(Serialize, Deserialize, Clone)]
-    struct ${prefix}${val.name} {
+    struct ${prefix}${val.name}${strFields.length > 0 ? ` {
         ${strFields.join(",\n")}
-    }
+    }` : `;`}
     `
-
-    return makeStruct('', [...fields, `conduit_entity_id: Option<i32>`])
+    if (!val.isConduitGenerated) {
+        fields.push(`conduit_entity_id: Option<i32>`)
+    }
+    return makeStruct('', fields)
 }
 
 
@@ -242,11 +244,9 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
 
         
         const creates: string[] = []
-        const querySpecs: string[] = []
         const interpreters: string[] = []
         stores.forEach(v => {
             creates.push(createSQLFor(v)); 
-            querySpecs.push(generateQuerySpecsFor(v))
             interpreters.push(generateQueryInterpreter(v))
         })
 
@@ -306,8 +306,6 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             
                             // STRUCTS
                             ${structs.join("\n")}
-                            // QUERY SPECS
-                            ${querySpecs.join("\n")}
                             // INTERPRETERS
                             ${interpreters.join("\n")}
                             // FUNCTIONS

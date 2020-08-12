@@ -249,7 +249,6 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         resolveEntity(val)
     })
 
-
     return {name: "default", inScope: new EntityMap(secondPassScope)}
 
 }

@@ -40,23 +40,15 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
-                            // QUERY SPECS
-                             
+
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard;
     
-    
+
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
         innard: querySpec_wrapStore_innard
     }
-    
-     
-    
-    
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
-    
-    
     
                             // INTERPRETERS
                             
@@ -274,23 +266,15 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
-                            // QUERY SPECS
-                             
+
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard;
     
-    
+
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
         innard: querySpec_wrapStore_innard
     }
-    
-     
-    
-    
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
-    
-    
     
                             // INTERPRETERS
                             
@@ -594,14 +578,9 @@ Array [
 conduit_entity_id: Option<i32>
     }
     
-                            // QUERY SPECS
-                             
-    
-    
+
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_simpleStore;
-    
-    
     
                             // INTERPRETERS
                             
@@ -798,23 +777,15 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
-                            // QUERY SPECS
-                             
+
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard;
     
-    
+
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
         innard: querySpec_wrapStore_innard
     }
-    
-     
-    
-    
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
-    
-    
     
                             // INTERPRETERS
                             
@@ -1050,23 +1021,15 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
-                            // QUERY SPECS
-                             
+
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard;
     
-    
+
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
         innard: querySpec_wrapStore_innard
     }
-    
-     
-    
-    
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
-    
-    
     
                             // INTERPRETERS
                             

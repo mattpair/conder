@@ -1,5 +1,5 @@
 import { Parse } from '../parse';
-import { Manifest, Function, Statement, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, FunctionBody, Variable } from "../entity/resolved";
+import { Manifest, Function, Statement, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, FunctionBody, Variable, Field } from "../entity/resolved";
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from "../utils";
 
@@ -190,9 +190,11 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
     }
 }
 
+type InternalMap = Map<string, Struct | Enum | Function | HierarchicalStore>
+
 export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
-    const entityMapInternal: Map<string, Struct | Enum | Function | HierarchicalStore> = new Map()
+    const entityMapInternal: InternalMap = new Map()
     
     
     namespace.inScope.forEach(val => {
@@ -204,7 +206,62 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
         }
     })
 
+    //Add system generated stuff here... move eventually
+    namespace.inScope.forEach(v => {
+        switch(v.kind) {
+            case "HierarchicalStore":
+                
+                generateSystemStructs(v).forEach(struct => {
+                    if (entityMapInternal.has(struct.name)) {
+                        throw Error(`Unexpected collision on struct name ${struct.name}`)
+                    }
+                    entityMapInternal.set(struct.name, struct)
+                })
+                
+        }
+    })
+
     return {
         inScope: new EntityMap(entityMapInternal),
     }
+}
+
+function generateSystemStructs(store: HierarchicalStore): Struct[] {
+
+    const fields: Field[] = []
+    const children: Struct[] = []
+    store.columns.forEach(col => {
+        switch (col.dif) {
+            case "prim":
+            case "enum":
+                // plainColumnStrs.push(`const ${store.name}_${col.columnName}: &'static str = "${col.columnName}";`)
+                break
+
+            case "1:many":
+            case "1:1":
+                fields.push({
+                    kind: "Field", 
+                    part: {
+                        FieldType: {
+                            kind: "FieldType",
+                            differentiate: () => ({kind: "custom", name: col.ref.specName}),
+                            modification: "none"
+                        }
+                    },
+                    name: col.fieldName
+                })
+                children.push(...generateSystemStructs(col.ref))
+                break
+
+            default: assertNever(col)
+        }
+    })
+    return [...children, {
+        kind: "Struct", 
+        name: store.specName, 
+        children: {
+            Field: fields
+        },
+        isConduitGenerated: true
+    }]
 }

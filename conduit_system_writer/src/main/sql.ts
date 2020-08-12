@@ -54,45 +54,6 @@ function makePrimitiveColumn(c: CompiledTypes.PrimitiveColumn | CompiledTypes.En
     return `${c.columnName}\t${typeStr}${appendStr}`
 }
 
-
-export function generateQuerySpecsFor(store: CompiledTypes.HierarchicalStore): string {
-    const plainColumnStrs: string[] = []
-    const childSpecs: string[] = []
-    const fields: string[] = []
-    store.columns.forEach(col => {
-        switch (col.dif) {
-            case "prim":
-            case "enum":
-                // plainColumnStrs.push(`const ${store.name}_${col.columnName}: &'static str = "${col.columnName}";`)
-                break
-
-            case "1:many":
-            case "1:1":
-                fields.push(`${col.fieldName}: ${col.ref.specName}`)
-                childSpecs.push(generateQuerySpecsFor(col.ref))
-                break
-
-            default: assertNever(col)
-        }
-    })
-
-    // if (plainColumnStrs.length > 0) {
-    
-    //     fields.push("simpleSelections: Vec<u16>")
-    // }
-    
-    return ` 
-    ${plainColumnStrs.join("\n")}
-    
-    #[derive(Serialize, Deserialize, Clone)]
-    struct ${store.specName}${fields.length > 0 ? ` {
-        ${fields.join(",\n")}
-    }` : `;`}
-    
-    ${childSpecs.join("\n")}
-    `
-}
-
 export function createSQLFor(store: CompiledTypes.HierarchicalStore) : string {
     const creates: string[] = []
 

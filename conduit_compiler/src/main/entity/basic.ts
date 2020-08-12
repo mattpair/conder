@@ -58,7 +58,7 @@ export type ParentOfMany<K extends Entity<EntityKinds>> = {children: {readonly [
 export type RequiresOne<K extends Entity<EntityKinds>> = {readonly part: {[P in K["kind"]]: K}}
 
 export type IntrafileEntity<KIND extends IntrafileEntityKinds, DATA extends any> = {
-    readonly loc: EntityLocation
+    readonly loc?: EntityLocation
 } & Entity<KIND> & Readonly<DATA>
 
 export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> = IntrafileEntity<KIND, DATA & {

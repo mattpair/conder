@@ -65,8 +65,16 @@ Object {
         "specName": "querySpec_myFirstStore",
         "typeName": "stored",
       },
+      "querySpec_myFirstStore" => Object {
+        "children": Object {
+          "Field": Array [],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_myFirstStore",
+      },
     },
-    "size": 2,
+    "size": 3,
   },
 }
 `;
@@ -286,8 +294,16 @@ Object {
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
+      "querySpec_secondStore" => Object {
+        "children": Object {
+          "Field": Array [],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_secondStore",
+      },
     },
-    "size": 3,
+    "size": 4,
   },
 }
 `;

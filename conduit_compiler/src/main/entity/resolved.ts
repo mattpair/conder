@@ -10,7 +10,7 @@ export type TypeModification = basic.TypeModification
     
 export type Field = basic.BaseField<FieldType>
 
-export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
+export type Struct = basic.BaseStruct<Field> & {readonly file?: FileLocation, readonly isConduitGenerated?: boolean}
 export type Enum = basic.Enum & {readonly file: FileLocation}
 
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
