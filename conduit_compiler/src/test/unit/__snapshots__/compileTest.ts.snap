@@ -41,15 +41,29 @@ Object {
         "name": "stored",
       },
       "myFirstStore" => Object {
-        "kind": "StoreDefinition",
-        "loc": Object {
-          "endColNumber": 18,
-          "endLineNumber": 5,
-          "startColNumber": 5,
-          "startLineNumber": 3,
-        },
+        "columns": Array [
+          Object {
+            "columnName": "s",
+            "dif": "prim",
+            "fieldName": "s",
+            "modification": "none",
+            "type": Object {
+              "kind": "Primitive",
+              "loc": Object {
+                "endColNumber": 17,
+                "endLineNumber": 2,
+                "startColNumber": 11,
+                "startLineNumber": 2,
+              },
+              "modification": "none",
+              "val": "string",
+            },
+          },
+        ],
+        "kind": "HierarchicalStore",
         "name": "myFirstStore",
-        "stores": "stored",
+        "specName": "querySpec_myFirstStore",
+        "typeName": "stored",
       },
     },
     "size": 2,
@@ -118,15 +132,29 @@ Object {
             },
             Object {
               "from": Object {
-                "kind": "StoreDefinition",
-                "loc": Object {
-                  "endColNumber": 17,
-                  "endLineNumber": 5,
-                  "startColNumber": 5,
-                  "startLineNumber": 3,
-                },
+                "columns": Array [
+                  Object {
+                    "columnName": "s",
+                    "dif": "prim",
+                    "fieldName": "s",
+                    "modification": "none",
+                    "type": Object {
+                      "kind": "Primitive",
+                      "loc": Object {
+                        "endColNumber": 17,
+                        "endLineNumber": 2,
+                        "startColNumber": 11,
+                        "startLineNumber": 2,
+                      },
+                      "modification": "none",
+                      "val": "string",
+                    },
+                  },
+                ],
+                "kind": "HierarchicalStore",
                 "name": "secondStore",
-                "stores": "stored",
+                "specName": "querySpec_secondStore",
+                "typeName": "stored",
               },
               "kind": "StoreReference",
               "loc": Object {
@@ -234,15 +262,29 @@ Object {
         },
       },
       "secondStore" => Object {
-        "kind": "StoreDefinition",
-        "loc": Object {
-          "endColNumber": 17,
-          "endLineNumber": 5,
-          "startColNumber": 5,
-          "startLineNumber": 3,
-        },
+        "columns": Array [
+          Object {
+            "columnName": "s",
+            "dif": "prim",
+            "fieldName": "s",
+            "modification": "none",
+            "type": Object {
+              "kind": "Primitive",
+              "loc": Object {
+                "endColNumber": 17,
+                "endLineNumber": 2,
+                "startColNumber": 11,
+                "startLineNumber": 2,
+              },
+              "modification": "none",
+              "val": "string",
+            },
+          },
+        ],
+        "kind": "HierarchicalStore",
         "name": "secondStore",
-        "stores": "stored",
+        "specName": "querySpec_secondStore",
+        "typeName": "stored",
       },
     },
     "size": 3,

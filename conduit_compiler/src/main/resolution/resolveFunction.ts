@@ -1,5 +1,5 @@
 import { Parse } from '../parse';
-import { Manifest, Function, Statement, Struct, Enum, EntityMap, Store, ReturnType, Parameter, FunctionBody, Variable } from "../entity/resolved";
+import { Manifest, Function, Statement, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, FunctionBody, Variable } from "../entity/resolved";
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from "../utils";
 
@@ -88,9 +88,9 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
                 if (variable === undefined) {
                     throw Error(`Cannot find variable ${stmt.variableName}`)
                 }
-                const into = namespace.inScope.getEntityOfType(stmt.storeName, "StoreDefinition")
-                if (into.stores !== variable.type.val.name) {
-                    throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.stores}`)
+                const into = namespace.inScope.getEntityOfType(stmt.storeName, "HierarchicalStore")
+                if (into.typeName !== variable.type.val.name) {
+                    throw Error(`Cannot store ${variable.name} in ${into.name} because it stores ${into.typeName}`)
                 }
                 resolvedStmt = {
                     kind: "Append",
@@ -106,12 +106,12 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
             case "VariableReference": {
                 const variable = variableLookup.get(stmt.val)
                 if (variable === undefined) {
-                    const store = namespace.inScope.getEntityOfType(stmt.val, "StoreDefinition")
+                    const store = namespace.inScope.getEntityOfType(stmt.val, "HierarchicalStore")
                     resolvedStmt = {
                         kind: "StoreReference",
                         loc: stmt.loc,
                         from: store,
-                        returnType: { kind: "real type", isArray: true, val: namespace.inScope.getEntityOfType(store.stores, "Struct")}
+                        returnType: { kind: "real type", isArray: true, val: namespace.inScope.getEntityOfType(store.typeName, "Struct")}
                     }
                    break
                 }
@@ -192,7 +192,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
 
 export function resolveFunctions(namespace: TypeResolved.Namespace): Manifest {
 
-    const entityMapInternal: Map<string, Struct | Enum | Function | Store> = new Map()
+    const entityMapInternal: Map<string, Struct | Enum | Function | HierarchicalStore> = new Map()
     
     
     namespace.inScope.forEach(val => {

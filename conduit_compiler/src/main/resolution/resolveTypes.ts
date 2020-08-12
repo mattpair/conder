@@ -1,7 +1,7 @@
 
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
-import { Struct, Field, ResolvedType, EntityMap} from '../entity/resolved';
+import { Struct, Field, ResolvedType, EntityMap, HierarchicalStore,CommanderColumn } from '../entity/resolved';
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
@@ -34,7 +34,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
             
         if (alreadyResolved !== undefined) {
             switch(alreadyResolved.kind) {
-                case "StoreDefinition":
+                case "HierarchicalStore":
                 case "Function":
                     throw new Error(`Field may not reference ${alreadyResolved.kind} ${name}`)
                 case "Enum":
@@ -120,6 +120,89 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         return
     }
 
+    function resolveHierarchicalStore(struct: Struct, structSet: Set<string>, nextTableName: string): HierarchicalStore {
+        const cols: CommanderColumn[] = []
+    
+        
+        struct.children.Field.forEach(f => {
+            const type = f.part.FieldType.differentiate()
+    
+            switch(type.kind) {
+                case "custom": {
+                    let entity = secondPassScope.get(type.name)
+                    if (entity === undefined) {
+                        resolveEntity(firstPassScope.get(type.name))
+                        entity = secondPassScope.get(type.name)
+                    }
+                    
+                    switch (entity.kind) {
+                        case "Enum":
+                            if (f.part.FieldType.modification === "optional") {
+                                throw Error(`Enum fields may not be optional`)
+                            }
+    
+                            cols.push({dif: "enum", type: entity, columnName: f.name, fieldName: f.name, modification: f.part.FieldType.modification})
+    
+                            break
+    
+                        case "Struct":
+                            if (structSet.has(type.name)) {
+                                throw Error(`Cannot store type ${struct.name} because ${entity.name} is recursive`)
+                            }
+                            structSet.add(entity.name)
+                            const table = resolveHierarchicalStore(entity, structSet, `${nextTableName}_${f.name}`)
+                            switch(f.part.FieldType.modification){
+                                case "array":
+                                    cols.push({
+                                        dif: "1:many",
+                                        type: entity,
+                                        fieldName: f.name,
+                                        ref: table,
+                                        refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+                
+                                    })
+                                    break
+                                case "optional":
+                                case "none":
+                                    cols.push({
+                                        dif: "1:1",
+                                        type: entity,
+                                        columnName: `${f.name}_ptr`,
+                                        fieldName: f.name,
+                                        ref: table,
+                                        modification: f.part.FieldType.modification
+                                    })
+    
+                            }
+                            structSet.delete(type.name)
+                    }
+                    break
+                }
+                
+                case "Primitive":
+                    cols.push({
+                        dif: "prim",
+                        modification: f.part.FieldType.modification,
+                        type,
+                        columnName: f.name,
+                        fieldName: f.name
+                    })
+                    break
+                default:assertNever(type)
+                    
+            }
+        })
+    
+        return {
+            kind: "HierarchicalStore",
+            name: nextTableName, 
+            columns: cols, 
+            typeName: struct.name,
+            specName: `querySpec_${nextTableName}`
+        }
+    }
+    
+
     
     function resolveEntity(firstPassEnt: FirstPassEntity): void {
         if (secondPassScope.has(firstPassEnt.name)) {
@@ -142,12 +225,11 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 switch(t.kind) {
                     case "Struct":
                         resolveMessage(t)
-                        secondPassScope.set(firstPassEnt.name, {
-                            kind: "StoreDefinition",
-                            loc: firstPassEnt.loc,
-                            name: firstPassEnt.name,
-                            stores: firstPassEnt.part.CustomType.type
-                        })
+                        secondPassScope.set(firstPassEnt.name, 
+                            resolveHierarchicalStore(
+                                secondPassScope.get(firstPassEnt.part.CustomType.type) as Struct, 
+                                new Set(),
+                                firstPassEnt.name))
                         return
                     default: 
                         throw Error(`Stores may not reference ${t.kind}`)
@@ -166,6 +248,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
     firstPassScope.forEach((val) => {
         resolveEntity(val)
     })
+
 
     return {name: "default", inScope: new EntityMap(secondPassScope)}
 

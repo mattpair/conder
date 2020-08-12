@@ -12,7 +12,6 @@ export type Field = basic.BaseField<FieldType>
 
 export type Struct = basic.BaseStruct<Field> & {readonly file: FileLocation}
 export type Enum = basic.Enum & {readonly file: FileLocation}
-export type Store = basic.NamedIntrafile<"StoreDefinition", {readonly stores: string}>
 
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
@@ -59,8 +58,8 @@ export type Variable = Readonly<{
 
 type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
     basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
-export type Append = BaseStatement<"Append", {inserting: Variable, into: Store}, basic.VoidReturn>
-export type StoreReference = BaseStatement<"StoreReference", {from: Store}, RealType>
+export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
+export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
 export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
 export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
 export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
@@ -77,9 +76,52 @@ export type Function =  basic.NamedIntrafile<"Function", {
 
 
 
-export type ScopeMap = EntityMap<Struct | Enum | Function | Store>
+export type ScopeMap = EntityMap<Struct | Enum | Function | HierarchicalStore>
     
 
 export type Manifest = {
     readonly inScope: ScopeMap
 }
+
+export type PrimitiveColumn = {
+    dif: "prim"
+    type: PrimitiveEntity
+    columnName: string
+    fieldName: string
+    modification: TypeModification
+}
+
+export type EnumColumn = {
+    dif: "enum"
+    type: Enum
+    columnName: string
+    fieldName: string
+    modification: Exclude<TypeModification, "optional">
+}
+
+export type StructArrayCol = {
+    dif: "1:many"
+    type: Struct
+    fieldName: string
+    refTableName: string
+    ref: HierarchicalStore
+}
+
+export type StructRefCol = {
+    dif: "1:1"
+    type: Struct
+    columnName: string
+    fieldName: string
+    ref: HierarchicalStore,
+    modification: "optional" | "none"
+}
+
+export type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn
+
+export type HierarchicalStore = Readonly<{
+    kind: "HierarchicalStore"
+    name: string
+    columns: CommanderColumn[]
+    typeName: string
+    specName: string
+}>

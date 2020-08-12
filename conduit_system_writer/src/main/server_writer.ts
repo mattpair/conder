@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateHierarchicalStore, generateInsertRustCode, generateRustGetAllQuerySpec, HierarchicalStore, createSQLFor, generateQuerySpecsFor, generateQueryInterpreter} from './sql'
+import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQuerySpecsFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -16,7 +16,7 @@ function toRustType(p: CompiledTypes.ReturnType): string {
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, HierarchicalStore>): InternalFunction {
+function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): InternalFunction {
     const ret = f.returnType
     const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
@@ -85,7 +85,7 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
-function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, HierarchicalStore>): FunctionDef {
+function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): FunctionDef {
 
     const internal = generateInternalFunction(func, storeMap) 
     const param = func.parameter.differentiate()
@@ -221,15 +221,15 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const structs: string[] = []
-        const stores: Map<string, HierarchicalStore> = new Map()
+        const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
         const functions: FunctionDef[] = []
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
                     structs.push(generateRustStructs(val, manifest.inScope))
                     break
-                case "StoreDefinition":
-                    stores.set(val.name, generateHierarchicalStore(val, manifest.inScope))
+                case "HierarchicalStore":
+                    stores.set(val.name, val)
                     break;
             }
         })

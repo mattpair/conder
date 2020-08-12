@@ -1,129 +1,11 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
-function assembleStoreTree(inScope: CompiledTypes.ScopeMap, struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): HierarchicalStore {
-    const cols: CommanderColumn[] = []
-
-    
-    struct.children.Field.forEach(f => {
-        const type = f.part.FieldType.differentiate()
-
-        switch(type.kind) {
-            case "custom": {
-                const entity = inScope.getEntityOfType(type.name, "Struct", "Enum")
-                switch (entity.kind) {
-                    case "Enum":
-                        if (f.part.FieldType.modification === "optional") {
-                            throw Error(`Enum fields may not be optional`)
-                        }
-
-                        cols.push({dif: "enum", type: entity, columnName: f.name, fieldName: f.name, modification: f.part.FieldType.modification})
-
-                        return
-
-                    case "Struct":
-                        if (structSet.has(type.name)) {
-                            throw Error(`Cannot store type ${struct.name} because ${entity.name} is recursive`)
-                        }
-                        structSet.add(entity.name)
-                        const table = assembleStoreTree(inScope, entity, structSet, `${nextTableName}_${f.name}`)
-                        switch(f.part.FieldType.modification){
-                            case "array":
-                                cols.push({
-                                    dif: "1:many",
-                                    type: entity,
-                                    fieldName: f.name,
-                                    ref: table,
-                                    refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
-            
-                                })
-                                break
-                            case "optional":
-                            case "none":
-                                cols.push({
-                                    dif: "1:1",
-                                    type: entity,
-                                    columnName: `${f.name}_ptr`,
-                                    fieldName: f.name,
-                                    ref: table,
-                                    modification: f.part.FieldType.modification
-                                })
-
-                        }
-                        structSet.delete(type.name)
-                        return
-                }
-                
-            }
-            
-            case "Primitive":
-                cols.push({
-                    dif: "prim",
-                    modification: f.part.FieldType.modification,
-                    type,
-                    columnName: f.name,
-                    fieldName: f.name
-                })
-                break
-            default:assertNever(type)
-                
-        }
-    })
-
-    return {
-        name: nextTableName, 
-        columns: cols, 
-        typeName: struct.name,
-        specName: `querySpec_${nextTableName}`
-    }
-}
 
 export type ReturnInstruction = Readonly<{
     kind: "save"
     name: string
 } | {kind: "drop"}>
-
-type PrimitiveColumn = {
-    dif: "prim"
-    type: CompiledTypes.PrimitiveEntity
-    columnName: string
-    fieldName: string
-    modification: CompiledTypes.TypeModification
-}
-
-type EnumColumn = {
-    dif: "enum"
-    type: CompiledTypes.Enum
-    columnName: string
-    fieldName: string
-    modification: Exclude<CompiledTypes.TypeModification, "optional">
-}
-
-type StructArrayCol = {
-    dif: "1:many"
-    type: CompiledTypes.Struct
-    fieldName: string
-    refTableName: string
-    ref: HierarchicalStore
-}
-
-type StructRefCol = {
-    dif: "1:1"
-    type: CompiledTypes.Struct
-    columnName: string
-    fieldName: string
-    ref: HierarchicalStore,
-    modification: "optional" | "none"
-}
-
-type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn
-
-export type HierarchicalStore = Readonly<{
-    name: string
-    columns: CommanderColumn[]
-    typeName: string
-    specName: string
-}>
 
 function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 
@@ -159,7 +41,7 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
     }
 }
 
-function makePrimitiveColumn(c: PrimitiveColumn | EnumColumn): string {
+function makePrimitiveColumn(c: CompiledTypes.PrimitiveColumn | CompiledTypes.EnumColumn): string {
     const typeStr = c.dif === "enum" ? "smallint" : toPostgresType(c.type)
     let appendStr = ''
     switch (c.modification) {
@@ -173,7 +55,7 @@ function makePrimitiveColumn(c: PrimitiveColumn | EnumColumn): string {
 }
 
 
-export function generateQuerySpecsFor(store: HierarchicalStore): string {
+export function generateQuerySpecsFor(store: CompiledTypes.HierarchicalStore): string {
     const plainColumnStrs: string[] = []
     const childSpecs: string[] = []
     const fields: string[] = []
@@ -211,7 +93,7 @@ export function generateQuerySpecsFor(store: HierarchicalStore): string {
     `
 }
 
-export function createSQLFor(store: HierarchicalStore) : string {
+export function createSQLFor(store: CompiledTypes.HierarchicalStore) : string {
     const creates: string[] = []
 
     const constraints: string[] = []
@@ -261,7 +143,7 @@ export function createSQLFor(store: HierarchicalStore) : string {
     return `${creates.join("\n")}${rels.join("\n")}`
 }
 
-export function generateInsertRustCode(store: HierarchicalStore, varname: string, ret: ReturnInstruction, nextReturnId: () => number): string[] {
+export function generateInsertRustCode(store: CompiledTypes.HierarchicalStore, varname: string, ret: ReturnInstruction, nextReturnId: () => number): string[] {
 
     const columns: string[] = []
     const values: string[] = []
@@ -373,7 +255,7 @@ export function generateInsertRustCode(store: HierarchicalStore, varname: string
     return inserts
 }
 
-function generateQueryInterpreterInternal(specVarName: string, store: HierarchicalStore, nextReturnId: () => number, returnVecName: string, whereClause: string): string {
+function generateQueryInterpreterInternal(specVarName: string, store: CompiledTypes.HierarchicalStore, nextReturnId: () => number, returnVecName: string, whereClause: string): string {
     const structFieldAssignment:string[] = []
     const childrenFetches: string[] = []
     const extractions: string[] = []
@@ -530,7 +412,7 @@ function generateQueryInterpreterInternal(specVarName: string, store: Hierarchic
 }
 
 
-export function generateQueryInterpreter(store: HierarchicalStore): string {
+export function generateQueryInterpreter(store: CompiledTypes.HierarchicalStore): string {
     let n = 0
 
     return `
@@ -543,7 +425,7 @@ export function generateQueryInterpreter(store: HierarchicalStore): string {
 }
 
 
-export function generateRustGetAllQuerySpec(store: HierarchicalStore): string {
+export function generateRustGetAllQuerySpec(store: CompiledTypes.HierarchicalStore): string {
     const fields: string[] = []
     store.columns.forEach(col => {
         switch(col.dif) {
@@ -564,11 +446,4 @@ export function generateRustGetAllQuerySpec(store: HierarchicalStore): string {
     }
     return `${store.specName}`
     
-}
-    
-export function generateHierarchicalStore(val: CompiledTypes.Store, inScope: CompiledTypes.ScopeMap): HierarchicalStore {
-    return assembleStoreTree(
-        inScope,
-        inScope.getEntityOfType(val.stores, "Struct"),  
-        new Set([val.stores]), val.name)
 }
