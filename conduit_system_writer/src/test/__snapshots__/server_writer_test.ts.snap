@@ -41,44 +41,44 @@ conduit_entity_id: Option<i32>
     }
     
                              
-        
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore {
-            spec_innard: querySpec_wrapStore_innard,
+    
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore {
+        spec_innard: querySpec_wrapStore_innard,
 requiresThisId: bool
-        }
-        
-         
-        const wrapStore_innard_data: &'static str = \\"data\\";
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore_innard {
-            simpleSelections: Vec<u16>
-        }
-        
-        
-        
-        
+    }
+    
+     
+    const wrapStore_innard_data: &'static str = \\"data\\";
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard {
+        simpleSelections: Vec<u16>
+    }
+    
+    
+    
+    
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
-                    let mut vec_ret0: Vec<i32> = Vec::new();
-                    for row1 in &s.innard {
-                        let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
-                        vec_ret0.push(ret0[0].get(0));
-                    }
-                    
+                let mut vec_ret0: Vec<i32> = Vec::new();
+                for row1 in &s.innard {
+                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
+                    vec_ret0.push(ret0[0].get(0));
+                }
+                
 let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
 
 
-                    let ent4: i32 = ret3[0].get(0);
-                    while let Some(child_id) = vec_ret0.pop() {
-                        client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
-                    }
-                        
+                let ent4: i32 = ret3[0].get(0);
+                while let Some(child_id) = vec_ret0.pop() {
+                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
+                }
                     
+                
 return Ok(())
         }
 
@@ -203,44 +203,44 @@ conduit_entity_id: Option<i32>
     }
     
                              
-        
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore {
-            spec_innard: querySpec_wrapStore_innard,
+    
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore {
+        spec_innard: querySpec_wrapStore_innard,
 requiresThisId: bool
-        }
-        
-         
-        const wrapStore_innard_data: &'static str = \\"data\\";
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore_innard {
-            simpleSelections: Vec<u16>
-        }
-        
-        
-        
-        
+    }
+    
+     
+    const wrapStore_innard_data: &'static str = \\"data\\";
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard {
+        simpleSelections: Vec<u16>
+    }
+    
+    
+    
+    
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
-                    let mut vec_ret0: Vec<i32> = Vec::new();
-                    for row1 in &s.innard {
-                        let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
-                        vec_ret0.push(ret0[0].get(0));
-                    }
-                    
+                let mut vec_ret0: Vec<i32> = Vec::new();
+                for row1 in &s.innard {
+                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
+                    vec_ret0.push(ret0[0].get(0));
+                }
+                
 let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
 
 
-                    let ent4: i32 = ret3[0].get(0);
-                    while let Some(child_id) = vec_ret0.pop() {
-                        client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
-                    }
-                        
+                let ent4: i32 = ret3[0].get(0);
+                while let Some(child_id) = vec_ret0.pop() {
+                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
+                }
                     
+                
 return Ok(())
         }
 
@@ -262,73 +262,73 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-        // Gettting all wrapper
-        let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
+    // Gettting all wrapper
+    let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
+    
+    // Gettting all simple
+    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_wrapper_and_simple)\\", &[]).await?;
+
+    
+
+    let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+
+    while let Some(row5) = allsimple6.pop() {
+        let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
         
-        // Gettting all simple
-        let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_wrapper_and_simple)\\", &[]).await?;
+        allsimple3.push(simple {
+            data: row5.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId7)
+        })
+    }
 
+    
+
+                let mut entityIdTosimple4: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                while let Some(row8) = allsimple3.pop() {
+                    entityIdTosimple4.insert(row8.conduit_entity_id.unwrap(), row8);
+                }
+                
+
+                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_wrapper_and_simple\\", &[]).await?;
+                let mut lrmap10: HashMap<i32, Vec<i32>> = HashMap::new();
+                while let Some(lrrow11) = lr9.pop() {
+                    let l12 = lrrow11.get(\\"left_ptr\\");
+                    lrmap10.entry(l12)
+                        .and_modify(|e13| { e13.push(lrrow11.get(\\"right_ptr\\")) })
+                        .or_insert(vec![lrrow11.get(\\"right_ptr\\")]);
+                }
+
+                
+
+    let mut out = Vec::with_capacity(allwrapper1.len());
+
+    while let Some(row0) = allwrapper1.pop() {
+        let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
         
+                // Extracting simples
+                let empty17 = Vec::with_capacity(0);
+                let entriessimple14 = match lrmap10.get(&wrapperEntityId2) {
+                    Some(ptrs) => ptrs,
+                    None => &empty17
+                };
 
-        let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+                let mut instancessimple15: Vec<simple> = Vec::with_capacity(entriessimple14.len());
 
-        while let Some(row5) = allsimple6.pop() {
-            let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
-            
-            allsimple3.push(simple {
-                data: row5.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId7)
-            })
-        }
-
-        
-
-                    let mut entityIdTosimple4: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
-                    while let Some(row8) = allsimple3.pop() {
-                        entityIdTosimple4.insert(row8.conduit_entity_id.unwrap(), row8);
-                    }
-                    
-
-                    let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_wrapper_and_simple\\", &[]).await?;
-                    let mut lrmap10: HashMap<i32, Vec<i32>> = HashMap::new();
-                    while let Some(lrrow11) = lr9.pop() {
-                        let l12 = lrrow11.get(\\"left_ptr\\");
-                        lrmap10.entry(l12)
-                            .and_modify(|e13| { e13.push(lrrow11.get(\\"right_ptr\\")) })
-                            .or_insert(vec![lrrow11.get(\\"right_ptr\\")]);
-                    }
-
-                    
-
-        let mut out = Vec::with_capacity(allwrapper1.len());
-
-        while let Some(row0) = allwrapper1.pop() {
-            let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
-            
-                    // Extracting simples
-                    let empty17 = Vec::with_capacity(0);
-                    let entriessimple14 = match lrmap10.get(&wrapperEntityId2) {
-                        Some(ptrs) => ptrs,
-                        None => &empty17
+                for child16 in entriessimple14 {
+                    match entityIdTosimple4.get(&child16) {
+                        Some(real) => instancessimple15.push(real.clone()),
+                        None => panic!(\\"could not find expected simple\\")
                     };
+                }
+                
+        out.push(wrapper {
+            innard: instancessimple15,
+            conduit_entity_id: Some(wrapperEntityId2)
+        })
+    }
 
-                    let mut instancessimple15: Vec<simple> = Vec::with_capacity(entriessimple14.len());
-
-                    for child16 in entriessimple14 {
-                        match entityIdTosimple4.get(&child16) {
-                            Some(real) => instancessimple15.push(real.clone()),
-                            None => panic!(\\"could not find expected simple\\")
-                        };
-                    }
-                    
-            out.push(wrapper {
-                innard: instancessimple15,
-                conduit_entity_id: Some(wrapperEntityId2)
-            })
-        }
-
-        
+    
 return Ok(out);
         }
 
@@ -422,22 +422,22 @@ Array [
                         );
                 
                         
-        CREATE TABLE wrapStore_innard (
-            data	text NOT NULL,
+    CREATE TABLE wrapStore_innard (
+        data	text NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
 
-        CREATE TABLE wrapStore (
-            conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
+    CREATE TABLE wrapStore (
+        conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
-                    CREATE TABLE rel_wrapStore_wrapper_and_simple (
-                        left_ptr INT,
-                        right_ptr INT,
-                        FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
-                        FOREIGN KEY(left_ptr) REFERENCES wrapStore(conduit_entity_id)
-                    );
+    );
+                CREATE TABLE rel_wrapStore_wrapper_and_simple (
+                    left_ptr INT,
+                    right_ptr INT,
+                    FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
+                    FOREIGN KEY(left_ptr) REFERENCES wrapStore(conduit_entity_id)
+                );
                         
                         
                         insert into cities(name, location)
@@ -458,22 +458,22 @@ Array [
                         );
                 
                         
-        CREATE TABLE wrapStore_innard (
-            data	text NOT NULL,
+    CREATE TABLE wrapStore_innard (
+        data	text NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
 
-        CREATE TABLE wrapStore (
-            conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
+    CREATE TABLE wrapStore (
+        conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
-                    CREATE TABLE rel_wrapStore_wrapper_and_simple (
-                        left_ptr INT,
-                        right_ptr INT,
-                        FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
-                        FOREIGN KEY(left_ptr) REFERENCES wrapStore(conduit_entity_id)
-                    );
+    );
+                CREATE TABLE rel_wrapStore_wrapper_and_simple (
+                    left_ptr INT,
+                    right_ptr INT,
+                    FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
+                    FOREIGN KEY(left_ptr) REFERENCES wrapStore(conduit_entity_id)
+                );
                         
                         
                         insert into cities(name, location)
@@ -517,15 +517,15 @@ conduit_entity_id: Option<i32>
     }
     
                              
-        const simpleStore_data: &'static str = \\"data\\";
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_simpleStore {
-            simpleSelections: Vec<u16>
-        }
-        
-        
-        
+    const simpleStore_data: &'static str = \\"data\\";
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_simpleStore {
+        simpleSelections: Vec<u16>
+    }
+    
+    
+    
                     
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
@@ -551,23 +551,23 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
             
-        // Gettting all simple
-        let mut allsimple1 = client.query(\\"select * from simpleStore \\", &[]).await?;
+    // Gettting all simple
+    let mut allsimple1 = client.query(\\"select * from simpleStore \\", &[]).await?;
 
+    
+
+    let mut out = Vec::with_capacity(allsimple1.len());
+
+    while let Some(row0) = allsimple1.pop() {
+        let simpleEntityId2 = row0.get(\\"conduit_entity_id\\");
         
+        out.push(simple {
+            data: row0.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId2)
+        })
+    }
 
-        let mut out = Vec::with_capacity(allsimple1.len());
-
-        while let Some(row0) = allsimple1.pop() {
-            let simpleEntityId2 = row0.get(\\"conduit_entity_id\\");
-            
-            out.push(simple {
-                data: row0.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId2)
-            })
-        }
-
-        
+    
 return Ok(out);
         }
 
@@ -661,11 +661,11 @@ Array [
                         );
                 
                         
-        CREATE TABLE simpleStore (
-            data	double precision NOT NULL,
+    CREATE TABLE simpleStore (
+        data	double precision NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
                         
                         
                         insert into cities(name, location)
@@ -716,25 +716,25 @@ conduit_entity_id: Option<i32>
     }
     
                              
-        
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore {
-            spec_innard: querySpec_wrapStore_innard,
+    
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore {
+        spec_innard: querySpec_wrapStore_innard,
 requiresThisId: bool
-        }
-        
-         
-        const wrapStore_innard_data: &'static str = \\"data\\";
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore_innard {
-            simpleSelections: Vec<u16>
-        }
-        
-        
-        
-        
+    }
+    
+     
+    const wrapStore_innard_data: &'static str = \\"data\\";
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard {
+        simpleSelections: Vec<u16>
+    }
+    
+    
+    
+    
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
@@ -761,52 +761,52 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-        // Gettting all wrapper
-        let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
+    // Gettting all wrapper
+    let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
+    
+    // Gettting all simple
+    let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+
+    
+
+    let mut allsimple3 = Vec::with_capacity(allsimple5.len());
+
+    while let Some(row4) = allsimple5.pop() {
+        let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
         
-        // Gettting all simple
-        let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+        allsimple3.push(simple {
+            data: row4.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId6)
+        })
+    }
 
+    
+
+                    let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                    while let Some(row8) = allsimple3.pop() {
+                        entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
+                    }
+                    
+
+    let mut out = Vec::with_capacity(allwrapper1.len());
+
+    while let Some(row0) = allwrapper1.pop() {
+        let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
         
+                    // Extracting simple
+                    let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                        Some(t) => t,
+                        None => panic!(\\"did not get an expected innard_ptr\\")
+                    };
+                    
+        out.push(wrapper {
+            innard: extractedsimple9,
+            conduit_entity_id: Some(wrapperEntityId2)
+        })
+    }
 
-        let mut allsimple3 = Vec::with_capacity(allsimple5.len());
-
-        while let Some(row4) = allsimple5.pop() {
-            let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
-            
-            allsimple3.push(simple {
-                data: row4.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId6)
-            })
-        }
-
-        
-
-                        let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
-                        while let Some(row8) = allsimple3.pop() {
-                            entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
-                        }
-                        
-
-        let mut out = Vec::with_capacity(allwrapper1.len());
-
-        while let Some(row0) = allwrapper1.pop() {
-            let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
-            
-                        // Extracting simple
-                        let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
-                            Some(t) => t,
-                            None => panic!(\\"did not get an expected innard_ptr\\")
-                        };
-                        
-            out.push(wrapper {
-                innard: extractedsimple9,
-                conduit_entity_id: Some(wrapperEntityId2)
-            })
-        }
-
-        
+    
 return Ok(out);
         }
 
@@ -900,18 +900,18 @@ Array [
                         );
                 
                         
-        CREATE TABLE wrapStore_innard (
-            data	text[],
+    CREATE TABLE wrapStore_innard (
+        data	text[],
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
 
-        CREATE TABLE wrapStore (
-            innard_ptr	INT,
+    CREATE TABLE wrapStore (
+        innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 FOREIGN KEY(innard_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
                         
                         
                         insert into cities(name, location)
@@ -962,25 +962,25 @@ conduit_entity_id: Option<i32>
     }
     
                              
-        
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore {
-            spec_innard: querySpec_wrapStore_innard,
+    
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore {
+        spec_innard: querySpec_wrapStore_innard,
 requiresThisId: bool
-        }
-        
-         
-        const wrapStore_innard_data: &'static str = \\"data\\";
-        
-        #[derive(Serialize, Deserialize, Clone)]
-        struct querySpec_wrapStore_innard {
-            simpleSelections: Vec<u16>
-        }
-        
-        
-        
-        
+    }
+    
+     
+    const wrapStore_innard_data: &'static str = \\"data\\";
+    
+    #[derive(Serialize, Deserialize, Clone)]
+    struct querySpec_wrapStore_innard {
+        simpleSelections: Vec<u16>
+    }
+    
+    
+    
+    
                     
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
@@ -1007,52 +1007,52 @@ let client = &data.client;
 
         async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
             
-        // Gettting all wrapper
-        let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
+    // Gettting all wrapper
+    let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
+    
+    // Gettting all simple
+    let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+
+    
+
+    let mut allsimple3 = Vec::with_capacity(allsimple5.len());
+
+    while let Some(row4) = allsimple5.pop() {
+        let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
         
-        // Gettting all simple
-        let mut allsimple5 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select innard_ptr from wrapStore)\\", &[]).await?;
+        allsimple3.push(simple {
+            data: row4.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId6)
+        })
+    }
 
+    
+
+                    let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                    while let Some(row8) = allsimple3.pop() {
+                        entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
+                    }
+                    
+
+    let mut out = Vec::with_capacity(allwrapper1.len());
+
+    while let Some(row0) = allwrapper1.pop() {
+        let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
         
+                    // Extracting simple
+                    let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                        Some(t) => t,
+                        None => panic!(\\"did not get an expected innard_ptr\\")
+                    };
+                    
+        out.push(wrapper {
+            innard: extractedsimple9,
+            conduit_entity_id: Some(wrapperEntityId2)
+        })
+    }
 
-        let mut allsimple3 = Vec::with_capacity(allsimple5.len());
-
-        while let Some(row4) = allsimple5.pop() {
-            let simpleEntityId6 = row4.get(\\"conduit_entity_id\\");
-            
-            allsimple3.push(simple {
-                data: row4.get(\\"data\\"),
-                conduit_entity_id: Some(simpleEntityId6)
-            })
-        }
-
-        
-
-                        let mut entityIdTosimple7: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
-                        while let Some(row8) = allsimple3.pop() {
-                            entityIdTosimple7.insert(row8.conduit_entity_id.unwrap(), row8);
-                        }
-                        
-
-        let mut out = Vec::with_capacity(allwrapper1.len());
-
-        while let Some(row0) = allwrapper1.pop() {
-            let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
-            
-                        // Extracting simple
-                        let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
-                            Some(t) => t,
-                            None => panic!(\\"did not get an expected innard_ptr\\")
-                        };
-                        
-            out.push(wrapper {
-                innard: extractedsimple9,
-                conduit_entity_id: Some(wrapperEntityId2)
-            })
-        }
-
-        
+    
 return Ok(out);
         }
 
@@ -1146,18 +1146,18 @@ Array [
                         );
                 
                         
-        CREATE TABLE wrapStore_innard (
-            data	boolean NOT NULL,
+    CREATE TABLE wrapStore_innard (
+        data	boolean NOT NULL,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
 
-        CREATE TABLE wrapStore (
-            innard_ptr	INT,
+    CREATE TABLE wrapStore (
+        innard_ptr	INT,
 conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 FOREIGN KEY(innard_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
 PRIMARY KEY(conduit_entity_id)
-        );
+    );
                         
                         
                         insert into cities(name, location)

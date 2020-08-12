@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateStoreCommands, StoreCommander} from './sql'
+import {generateHierarchicalStore, generateInsertRustCode, getAll, HierarchicalStore, createSQLFor, generateQuerySpecsFor} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -16,7 +16,7 @@ function toRustType(p: CompiledTypes.ReturnType): string {
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, StoreCommander>): InternalFunction {
+function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, HierarchicalStore>): InternalFunction {
     const ret = f.returnType
     const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
     const statements: string[] = []
@@ -37,7 +37,9 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
         switch(stmt.kind) {
             case "Append":
                 
-                const inserts = storeMap.get(stmt.into.name).insert(stmt.inserting.name, {kind: "drop"}, retGen)
+                const inserts = generateInsertRustCode(storeMap.get(stmt.into.name), stmt.inserting.name, {kind: "drop"}, retGen)
+                
+                
                 statements.push(inserts.join("\n"))
                 break;
 
@@ -55,7 +57,7 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
             
             case "StoreReference":
                 if (previousReturn) {
-                    statements.push(storeMap.get(stmt.from.name).getAll("out", retGen))
+                    statements.push(getAll(storeMap.get(stmt.from.name), "out", retGen))
                     statements.push("return Ok(out);")
                     break
                 } else {
@@ -82,7 +84,7 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
-function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, StoreCommander>): FunctionDef {
+function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, HierarchicalStore>): FunctionDef {
 
     const internal = generateInternalFunction(func, storeMap) 
     const param = func.parameter.differentiate()
@@ -218,7 +220,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const structs: string[] = []
-        const stores: Map<string, StoreCommander> = new Map()
+        const stores: Map<string, HierarchicalStore> = new Map()
         const functions: FunctionDef[] = []
         manifest.inScope.forEach(val => {
             switch (val.kind) {
@@ -226,7 +228,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                     structs.push(generateRustStructs(val, manifest.inScope))
                     break
                 case "StoreDefinition":
-                    stores.set(val.name, generateStoreCommands(val, manifest.inScope))
+                    stores.set(val.name, generateHierarchicalStore(val, manifest.inScope))
                     break;
                 case "Enum":
                 // TODO: enable enums
@@ -243,7 +245,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
         
         const creates: string[] = []
         const querySpecs: string[] = []
-        stores.forEach(v => {creates.push(v.create); querySpecs.push(v.querySpecs)})
+        stores.forEach(v => {creates.push(createSQLFor(v)); querySpecs.push(generateQuerySpecsFor(v))})
 
         return Promise.resolve({
             backend: {
