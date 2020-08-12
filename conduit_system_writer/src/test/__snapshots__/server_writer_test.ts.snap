@@ -25,7 +25,7 @@ Array [
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             
     #[derive(Serialize, Deserialize, Clone)]
     struct simple {
@@ -40,27 +40,99 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                            // QUERY SPECS
                              
     
     
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
-        spec_innard: querySpec_wrapStore_innard,
-requiresThisId: bool
+        innard: querySpec_wrapStore_innard
     }
     
      
-    const wrapStore_innard_data: &'static str = \\"data\\";
+    
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard {
-        simpleSelections: Vec<u16>
+    struct querySpec_wrapStore_innard;
+    
+    
+    
+    
+                            // INTERPRETERS
+                            
+    async fn query_interpreter_wrapStore(querySpec: querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
+        
+    // Gettting all wrapper
+    let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
+
+    
+    // Gettting all simple
+    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_wrapper_and_simple)\\", &[]).await?;
+
+    
+
+    let mut allsimple3 = Vec::with_capacity(allsimple6.len());
+
+    while let Some(row5) = allsimple6.pop() {
+        let simpleEntityId7 = row5.get(\\"conduit_entity_id\\");
+        
+        allsimple3.push(simple {
+            data: row5.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId7)
+        })
+    }
+
+    
+
+                let mut entityIdTosimple4: HashMap<i32, simple> = HashMap::with_capacity(allsimple3.len());
+                while let Some(row8) = allsimple3.pop() {
+                    entityIdTosimple4.insert(row8.conduit_entity_id.unwrap(), row8);
+                }
+                
+
+                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_wrapper_and_simple\\", &[]).await?;
+                let mut lrmap10: HashMap<i32, Vec<i32>> = HashMap::new();
+                while let Some(lrrow11) = lr9.pop() {
+                    let l12 = lrrow11.get(\\"left_ptr\\");
+                    lrmap10.entry(l12)
+                        .and_modify(|e13| { e13.push(lrrow11.get(\\"right_ptr\\")) })
+                        .or_insert(vec![lrrow11.get(\\"right_ptr\\")]);
+                }
+
+                
+
+    let mut out = Vec::with_capacity(allwrapper1.len());
+
+    while let Some(row0) = allwrapper1.pop() {
+        let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
+        
+                // Extracting simples
+                let empty17 = Vec::with_capacity(0);
+                let entriessimple14 = match lrmap10.get(&wrapperEntityId2) {
+                    Some(ptrs) => ptrs,
+                    None => &empty17
+                };
+
+                let mut instancessimple15: Vec<simple> = Vec::with_capacity(entriessimple14.len());
+
+                for child16 in entriessimple14 {
+                    match entityIdTosimple4.get(&child16) {
+                        Some(real) => instancessimple15.push(real.clone()),
+                        None => panic!(\\"could not find expected simple\\")
+                    };
+                }
+                
+        out.push(wrapper {
+            innard: instancessimple15,
+            conduit_entity_id: Some(wrapperEntityId2)
+        })
+    }
+
+    
+        return Ok(out);
     }
     
-    
-    
-    
-                    
+                            // FUNCTIONS
                             
         async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
             
@@ -187,7 +259,7 @@ Array [
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             
     #[derive(Serialize, Deserialize, Clone)]
     struct simple {
@@ -202,66 +274,28 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                            // QUERY SPECS
                              
     
     
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
-        spec_innard: querySpec_wrapStore_innard,
-requiresThisId: bool
+        innard: querySpec_wrapStore_innard
     }
     
      
-    const wrapStore_innard_data: &'static str = \\"data\\";
+    
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard {
-        simpleSelections: Vec<u16>
-    }
+    struct querySpec_wrapStore_innard;
     
     
     
     
-                    
+                            // INTERPRETERS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            
-                let mut vec_ret0: Vec<i32> = Vec::new();
-                for row1 in &s.innard {
-                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
-                    vec_ret0.push(ret0[0].get(0));
-                }
-                
-let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
-
-
-                let ent4: i32 = ret3[0].get(0);
-                while let Some(child_id) = vec_ret0.pop() {
-                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
-                }
-                    
-                
-return Ok(())
-        }
-
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-            
-    }
-            
-    
-
-
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            
+    async fn query_interpreter_wrapStore(querySpec: querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
+        
     // Gettting all wrapper
     let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
@@ -329,7 +363,51 @@ let client = &data.client;
     }
 
     
-return Ok(out);
+        return Ok(out);
+    }
+    
+                            // FUNCTIONS
+                            
+        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
+            
+                let mut vec_ret0: Vec<i32> = Vec::new();
+                for row1 in &s.innard {
+                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
+                    vec_ret0.push(ret0[0].get(0));
+                }
+                
+let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
+
+
+                let ent4: i32 = ret3[0].get(0);
+                while let Some(child_id) = vec_ret0.pop() {
+                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
+                }
+                    
+                
+return Ok(())
+        }
+
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
+let client = &data.client;
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
+
+
+        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
+            return query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await;
         }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
@@ -508,7 +586,7 @@ Array [
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             
     #[derive(Serialize, Deserialize, Clone)]
     struct simple {
@@ -516,17 +594,40 @@ Array [
 conduit_entity_id: Option<i32>
     }
     
+                            // QUERY SPECS
                              
-    const simpleStore_data: &'static str = \\"data\\";
+    
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_simpleStore {
-        simpleSelections: Vec<u16>
+    struct querySpec_simpleStore;
+    
+    
+    
+                            // INTERPRETERS
+                            
+    async fn query_interpreter_simpleStore(querySpec: querySpec_simpleStore, client: &Client) -> Result<Vec<simple>, Error> {
+        
+    // Gettting all simple
+    let mut allsimple1 = client.query(\\"select * from simpleStore \\", &[]).await?;
+
+    
+
+    let mut out = Vec::with_capacity(allsimple1.len());
+
+    while let Some(row0) = allsimple1.pop() {
+        let simpleEntityId2 = row0.get(\\"conduit_entity_id\\");
+        
+        out.push(simple {
+            data: row0.get(\\"data\\"),
+            conduit_entity_id: Some(simpleEntityId2)
+        })
+    }
+
+    
+        return Ok(out);
     }
     
-    
-    
-                    
+                            // FUNCTIONS
                             
         async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
             client.query(\\"insert into simpleStore(data) values ($1)\\", &[&s.data]).await?;
@@ -550,25 +651,7 @@ let client = &data.client;
 
 
         async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
-            
-    // Gettting all simple
-    let mut allsimple1 = client.query(\\"select * from simpleStore \\", &[]).await?;
-
-    
-
-    let mut out = Vec::with_capacity(allsimple1.len());
-
-    while let Some(row0) = allsimple1.pop() {
-        let simpleEntityId2 = row0.get(\\"conduit_entity_id\\");
-        
-        out.push(simple {
-            data: row0.get(\\"data\\"),
-            conduit_entity_id: Some(simpleEntityId2)
-        })
-    }
-
-    
-return Ok(out);
+            return query_interpreter_simpleStore(querySpec_simpleStore, client).await;
         }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
@@ -700,7 +783,7 @@ Array [
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             
     #[derive(Serialize, Deserialize, Clone)]
     struct simple {
@@ -715,52 +798,28 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                            // QUERY SPECS
                              
     
     
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
-        spec_innard: querySpec_wrapStore_innard,
-requiresThisId: bool
+        innard: querySpec_wrapStore_innard
     }
     
      
-    const wrapStore_innard_data: &'static str = \\"data\\";
+    
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard {
-        simpleSelections: Vec<u16>
-    }
+    struct querySpec_wrapStore_innard;
     
     
     
     
-                    
+                            // INTERPRETERS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-return Ok(())
-        }
-
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-            
-    }
-            
-    
-
-
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            
+    async fn query_interpreter_wrapStore(querySpec: querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
+        
     // Gettting all wrapper
     let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
@@ -807,7 +866,37 @@ let client = &data.client;
     }
 
     
-return Ok(out);
+        return Ok(out);
+    }
+    
+                            // FUNCTIONS
+                            
+        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
+            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
+return Ok(())
+        }
+
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
+let client = &data.client;
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
+
+
+        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
+            return query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await;
         }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
@@ -946,7 +1035,7 @@ Array [
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             
     #[derive(Serialize, Deserialize, Clone)]
     struct simple {
@@ -961,52 +1050,28 @@ conduit_entity_id: Option<i32>
 conduit_entity_id: Option<i32>
     }
     
+                            // QUERY SPECS
                              
     
     
     #[derive(Serialize, Deserialize, Clone)]
     struct querySpec_wrapStore {
-        spec_innard: querySpec_wrapStore_innard,
-requiresThisId: bool
+        innard: querySpec_wrapStore_innard
     }
     
      
-    const wrapStore_innard_data: &'static str = \\"data\\";
+    
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard {
-        simpleSelections: Vec<u16>
-    }
+    struct querySpec_wrapStore_innard;
     
     
     
     
-                    
+                            // INTERPRETERS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-return Ok(())
-        }
-
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-            
-    }
-            
-    
-
-
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            
+    async fn query_interpreter_wrapStore(querySpec: querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
+        
     // Gettting all wrapper
     let mut allwrapper1 = client.query(\\"select * from wrapStore \\", &[]).await?;
 
@@ -1053,7 +1118,37 @@ let client = &data.client;
     }
 
     
-return Ok(out);
+        return Ok(out);
+    }
+    
+                            // FUNCTIONS
+                            
+        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
+            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
+return Ok(())
+        }
+
+    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
+        let s = input.into_inner();
+let client = &data.client;
+        return match internal_insert(s,client).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!(\\"Failure caused by: {}\\", err);
+                    HttpResponse::BadRequest()
+                }
+            };
+            
+    }
+            
+    
+
+
+        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
+            return query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await;
         }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {

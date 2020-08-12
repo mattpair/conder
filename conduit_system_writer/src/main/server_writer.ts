@@ -1,7 +1,7 @@
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateHierarchicalStore, generateInsertRustCode, getAll, HierarchicalStore, createSQLFor, generateQuerySpecsFor} from './sql'
+import {generateHierarchicalStore, generateInsertRustCode, generateRustGetAllQuerySpec, HierarchicalStore, createSQLFor, generateQuerySpecsFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 
 type InternalFunction = {
@@ -57,8 +57,9 @@ function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyM
             
             case "StoreReference":
                 if (previousReturn) {
-                    statements.push(getAll(storeMap.get(stmt.from.name), "out", retGen))
-                    statements.push("return Ok(out);")
+                    const getAllStore = storeMap.get(stmt.from.name)
+                    
+                    statements.push(`return query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await;`)
                     break
                 } else {
                     throw Error(`Currently don't support all in queries outside of returns`)
@@ -230,9 +231,6 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                 case "StoreDefinition":
                     stores.set(val.name, generateHierarchicalStore(val, manifest.inScope))
                     break;
-                case "Enum":
-                // TODO: enable enums
-                // default: assertNever(val)
             }
         })
 
@@ -245,7 +243,12 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
         
         const creates: string[] = []
         const querySpecs: string[] = []
-        stores.forEach(v => {creates.push(createSQLFor(v)); querySpecs.push(generateQuerySpecsFor(v))})
+        const interpreters: string[] = []
+        stores.forEach(v => {
+            creates.push(createSQLFor(v)); 
+            querySpecs.push(generateQuerySpecsFor(v))
+            interpreters.push(generateQueryInterpreter(v))
+        })
 
         return Promise.resolve({
             backend: {
@@ -301,10 +304,13 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                                 location: i32
                             }
                             
-                    
+                            // STRUCTS
                             ${structs.join("\n")}
+                            // QUERY SPECS
                             ${querySpecs.join("\n")}
-                    
+                            // INTERPRETERS
+                            ${interpreters.join("\n")}
+                            // FUNCTIONS
                             ${functions.map(f => f.def).join("\n\n")}
                     
                             #[actix_rt::main]

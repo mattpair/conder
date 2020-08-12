@@ -184,12 +184,12 @@ export function generateQuerySpecsFor(store: HierarchicalStore): string {
         switch (col.dif) {
             case "prim":
             case "enum":
-                plainColumnStrs.push(`const ${store.name}_${col.columnName}: &'static str = "${col.columnName}";`)
+                // plainColumnStrs.push(`const ${store.name}_${col.columnName}: &'static str = "${col.columnName}";`)
                 break
 
             case "1:many":
             case "1:1":
-                fields.push(`spec_${col.fieldName}: ${col.ref.specName}`)
+                fields.push(`${col.fieldName}: ${col.ref.specName}`)
                 childSpecs.push(generateQuerySpecsFor(col.ref))
                 break
 
@@ -197,21 +197,18 @@ export function generateQuerySpecsFor(store: HierarchicalStore): string {
         }
     })
 
-    if (childSpecs.length > 0) {
-        fields.push("requiresThisId: bool")
-    }
-    if (plainColumnStrs.length > 0) {
+    // if (plainColumnStrs.length > 0) {
     
-        fields.push("simpleSelections: Vec<u16>")
-    }
+    //     fields.push("simpleSelections: Vec<u16>")
+    // }
     
     return ` 
     ${plainColumnStrs.join("\n")}
     
     #[derive(Serialize, Deserialize, Clone)]
-    struct ${store.specName} {
+    struct ${store.specName}${fields.length > 0 ? ` {
         ${fields.join(",\n")}
-    }
+    }` : `;`}
     
     ${childSpecs.join("\n")}
     `
@@ -379,7 +376,7 @@ export function generateInsertRustCode(store: HierarchicalStore, varname: string
     return inserts
 }
 
-export function getAll(store: HierarchicalStore, returnVecName: string, nextReturnId: () => number, whereClause:string=''): string {
+function generateQueryInterpreterInternal(specVarName: string, store: HierarchicalStore, nextReturnId: () => number, returnVecName: string, whereClause: string): string {
     const structFieldAssignment:string[] = []
     const childrenFetches: string[] = []
     const extractions: string[] = []
@@ -395,10 +392,11 @@ export function getAll(store: HierarchicalStore, returnVecName: string, nextRetu
                 break;
             case "1:1": {
                 const childRetName = `all${col.type.name}${nextReturnId()}`
-                childrenFetches.push(getAll(
+                childrenFetches.push(generateQueryInterpreterInternal(
+                    '',    
                     col.ref,
-                    childRetName, 
                     nextReturnId,
+                    childRetName, 
                     `WHERE conduit_entity_id in (select ${col.columnName} from ${store.name})`
                 ))
                 const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
@@ -444,10 +442,11 @@ export function getAll(store: HierarchicalStore, returnVecName: string, nextRetu
             case "1:many": {
                 const childRetName = `all${col.type.name}${nextReturnId()}`
                 const childMapVar = `entityIdTo${col.type.name}${nextReturnId()}`
-                childrenFetches.push(getAll(
+                childrenFetches.push(generateQueryInterpreterInternal(
+                    '',
                     col.ref,
-                    childRetName, 
                     nextReturnId,
+                    childRetName, 
                     `WHERE conduit_entity_id in (select right_ptr from ${col.refTableName})`
                 ))
 
@@ -530,6 +529,44 @@ export function getAll(store: HierarchicalStore, returnVecName: string, nextRetu
     }
 
     `
+
+}
+
+
+export function generateQueryInterpreter(store: HierarchicalStore): string {
+    let n = 0
+
+    return `
+    async fn query_interpreter_${store.name}(querySpec: ${store.specName}, client: &Client) -> Result<Vec<${store.typeName}>, Error> {
+        ${generateQueryInterpreterInternal("querySpec", store, () => n++, "out", '')}
+        return Ok(out);
+    }
+    `
+
+}
+
+
+export function generateRustGetAllQuerySpec(store: HierarchicalStore): string {
+    const fields: string[] = []
+    store.columns.forEach(col => {
+        switch(col.dif) {
+            case "1:1":
+            case "1:many":
+                fields.push(`${col.fieldName}: ${generateRustGetAllQuerySpec(col.ref)}`)
+                break
+            case "enum":
+            case "prim":
+                break
+            default: assertNever(col)
+        }
+    }) 
+    if (fields.length > 0) {
+        return `${store.specName} {
+            ${fields.join(",\n")}
+        }`
+    }
+    return `${store.specName}`
+    
 }
     
 export function generateHierarchicalStore(val: CompiledTypes.Store, inScope: CompiledTypes.ScopeMap): HierarchicalStore {
