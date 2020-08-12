@@ -1,8 +1,5 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
-import { Primitives } from 'conduit_compiler/dist/src/main/lexicon';
-
-
 
 function assembleStoreTree(inScope: CompiledTypes.ScopeMap, struct: CompiledTypes.Struct, structSet: Set<string>, nextTableName: string): HierarchicalStore {
     const cols: CommanderColumn[] = []
