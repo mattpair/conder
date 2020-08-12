@@ -190,8 +190,7 @@ export class StoreCommander {
                 case "1:many":
                 case "1:1":
                     fields.push(`spec_${col.fieldName}: ${col.ref.specName}`)
-                    childSpecs.push(col.ref.querySpecs)
-                    
+                    childSpecs.push(col.ref.querySpecs)                    
                     break
 
                 default: assertNever(col)
