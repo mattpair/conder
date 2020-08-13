@@ -4,7 +4,7 @@ import { CompiledTypes } from "conduit_compiler";
 export function writeOperationInterpreter(manifest: CompiledTypes.Manifest): string {
     const op_match: string[] = []
     const op_type: string[] = []
-    const op_result: string[] = [
+    const runtime_ent: string[] = [
         "None",
         "Err(String)"
     ]
@@ -34,7 +34,7 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest): str
                 const op_name = `Query_${op.storeName}`
                 op_type.push(`${op_name}(${store.specName})`)
                 const result_name = `QueryResult${op.storeName}`
-                op_result.push(`${result_name}(Vec<${store.typeName}>)`)
+                runtime_ent.push(`${result_name}(Vec<${store.typeName}>)`)
                 op_match.push(`
                 Op::${op_name}(v) => {
                     return match query_interpreter_${store.name}(v, &client).await {
@@ -58,11 +58,11 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest): str
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = "kind")]
-    enum OpResult {
-        ${op_result.join(",\n")}
+    enum RuntimeEnt {
+        ${runtime_ent.join(",\n")}
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
             ${op_match.join(",\n")}
         };

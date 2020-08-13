@@ -136,27 +136,27 @@ Query_wrapStore(querySpec_wrapStore)
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\")]
-    enum OpResult {
+    enum RuntimeEnt {
         None,
 Err(String),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
-            Noop => OpResult::None,
+            Op::Noop => OpResult::None,
 
-                Insert_wrapStore(v) => {
+                Op::Insert_wrapStore(v) => {
                     return match insert_wrapStore(&client, v).await {
                         Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 },
 
-                Query_wrapStore(v) => {
+                Op::Query_wrapStore(v) => {
                     return match query_interpreter_wrapStore(v, &client).await {
                         Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 }
         };
@@ -166,7 +166,6 @@ QueryResultwrapStore(Vec<wrapper>)
                             // FUNCTIONS
                             
             async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let body = input.into_inner();
                 
                 let mut vec_ret0: Vec<i32> = Vec::new();
                 for row1 in &body.innard {
@@ -189,10 +188,8 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return 
-            let body = input.into_inner();
-
-            match insert_wrapStore(&client, body).await {
+let body = input.into_inner();
+        return  match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -404,27 +401,27 @@ Query_wrapStore(querySpec_wrapStore)
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\")]
-    enum OpResult {
+    enum RuntimeEnt {
         None,
 Err(String),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
-            Noop => OpResult::None,
+            Op::Noop => OpResult::None,
 
-                Insert_wrapStore(v) => {
+                Op::Insert_wrapStore(v) => {
                     return match insert_wrapStore(&client, v).await {
                         Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 },
 
-                Query_wrapStore(v) => {
+                Op::Query_wrapStore(v) => {
                     return match query_interpreter_wrapStore(v, &client).await {
                         Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 }
         };
@@ -434,7 +431,6 @@ QueryResultwrapStore(Vec<wrapper>)
                             // FUNCTIONS
                             
             async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let body = input.into_inner();
                 
                 let mut vec_ret0: Vec<i32> = Vec::new();
                 for row1 in &body.innard {
@@ -457,10 +453,8 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return 
-            let body = input.into_inner();
-
-            match insert_wrapStore(&client, body).await {
+let body = input.into_inner();
+        return  match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -699,27 +693,27 @@ Query_simpleStore(querySpec_simpleStore)
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\")]
-    enum OpResult {
+    enum RuntimeEnt {
         None,
 Err(String),
 QueryResultsimpleStore(Vec<simple>)
     }
 
-    async fn op_interpreter(op: Op) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
-            Noop => OpResult::None,
+            Op::Noop => OpResult::None,
 
-                Insert_simpleStore(v) => {
+                Op::Insert_simpleStore(v) => {
                     return match insert_simpleStore(&client, v).await {
                         Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 },
 
-                Query_simpleStore(v) => {
+                Op::Query_simpleStore(v) => {
                     return match query_interpreter_simpleStore(v, &client).await {
                         Ok(out) => OpResult::QueryResultsimpleStore(out),
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 }
         };
@@ -729,7 +723,6 @@ QueryResultsimpleStore(Vec<simple>)
                             // FUNCTIONS
                             
             async fn insert_simpleStore(client: &Client, body: simple) -> Result<(), Error> {
-                let body = input.into_inner();
                 client.query(\\"insert into simpleStore(data) values ($1)\\", &[&body.data]).await?;
                 return Ok(());
             }
@@ -737,10 +730,8 @@ QueryResultsimpleStore(Vec<simple>)
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
         let client = &data.client;
-        return 
-            let body = input.into_inner();
-
-            match insert_simpleStore(&client, body).await {
+let body = input.into_inner();
+        return  match insert_simpleStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -972,27 +963,27 @@ Query_wrapStore(querySpec_wrapStore)
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\")]
-    enum OpResult {
+    enum RuntimeEnt {
         None,
 Err(String),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
-            Noop => OpResult::None,
+            Op::Noop => OpResult::None,
 
-                Insert_wrapStore(v) => {
+                Op::Insert_wrapStore(v) => {
                     return match insert_wrapStore(&client, v).await {
                         Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 },
 
-                Query_wrapStore(v) => {
+                Op::Query_wrapStore(v) => {
                     return match query_interpreter_wrapStore(v, &client).await {
                         Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 }
         };
@@ -1002,7 +993,6 @@ QueryResultwrapStore(Vec<wrapper>)
                             // FUNCTIONS
                             
             async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let body = input.into_inner();
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
                 return Ok(());
@@ -1011,10 +1001,8 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return 
-            let body = input.into_inner();
-
-            match insert_wrapStore(&client, body).await {
+let body = input.into_inner();
+        return  match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -1255,27 +1243,27 @@ Query_wrapStore(querySpec_wrapStore)
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\")]
-    enum OpResult {
+    enum RuntimeEnt {
         None,
 Err(String),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op) -> OpResult {
+    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
         return match op {
-            Noop => OpResult::None,
+            Op::Noop => OpResult::None,
 
-                Insert_wrapStore(v) => {
+                Op::Insert_wrapStore(v) => {
                     return match insert_wrapStore(&client, v).await {
                         Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 },
 
-                Query_wrapStore(v) => {
+                Op::Query_wrapStore(v) => {
                     return match query_interpreter_wrapStore(v, &client).await {
                         Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err)
+                        Err(err) => OpResult::Err(err.to_string())
                     };
                 }
         };
@@ -1285,7 +1273,6 @@ QueryResultwrapStore(Vec<wrapper>)
                             // FUNCTIONS
                             
             async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let body = input.into_inner();
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
                 return Ok(());
@@ -1294,10 +1281,8 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return 
-            let body = input.into_inner();
-
-            match insert_wrapStore(&client, body).await {
+let body = input.into_inner();
+        return  match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
