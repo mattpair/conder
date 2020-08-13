@@ -124,9 +124,48 @@ conduit_entity_id: Option<i32>
         return Ok(out);
     }
     
+                            // OP INTERPRETER
+                            
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum Op {
+        Noop,
+Insert_wrapStore(wrapper),
+Query_wrapStore(querySpec_wrapStore)
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum OpResult {
+        None,
+Err(String),
+QueryResultwrapStore(Vec<wrapper>)
+    }
+
+    async fn op_interpreter(op: Op) -> OpResult {
+        return match op {
+            Noop => OpResult::None,
+
+                Insert_wrapStore(v) => {
+                    return match insert_wrapStore(&client, v).await {
+                        Ok(()) => OpResult::None,
+                        Err(err) => OpResult::Err(err)
+                    };
+                },
+
+                Query_wrapStore(v) => {
+                    return match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => OpResult::QueryResultwrapStore(out),
+                        Err(err) => OpResult::Err(err)
+                    };
+                }
+        };
+    }
+        
+    
                             // FUNCTIONS
                             
-            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
                 let body = input.into_inner();
                 
                 let mut vec_ret0: Vec<i32> = Vec::new();
@@ -150,7 +189,10 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return match internal_insert(&client, input).await {
+        return 
+            let body = input.into_inner();
+
+            match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -350,9 +392,48 @@ conduit_entity_id: Option<i32>
         return Ok(out);
     }
     
+                            // OP INTERPRETER
+                            
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum Op {
+        Noop,
+Insert_wrapStore(wrapper),
+Query_wrapStore(querySpec_wrapStore)
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum OpResult {
+        None,
+Err(String),
+QueryResultwrapStore(Vec<wrapper>)
+    }
+
+    async fn op_interpreter(op: Op) -> OpResult {
+        return match op {
+            Noop => OpResult::None,
+
+                Insert_wrapStore(v) => {
+                    return match insert_wrapStore(&client, v).await {
+                        Ok(()) => OpResult::None,
+                        Err(err) => OpResult::Err(err)
+                    };
+                },
+
+                Query_wrapStore(v) => {
+                    return match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => OpResult::QueryResultwrapStore(out),
+                        Err(err) => OpResult::Err(err)
+                    };
+                }
+        };
+    }
+        
+    
                             // FUNCTIONS
                             
-            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
                 let body = input.into_inner();
                 
                 let mut vec_ret0: Vec<i32> = Vec::new();
@@ -376,7 +457,10 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return match internal_insert(&client, input).await {
+        return 
+            let body = input.into_inner();
+
+            match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -603,9 +687,48 @@ conduit_entity_id: Option<i32>
         return Ok(out);
     }
     
+                            // OP INTERPRETER
+                            
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum Op {
+        Noop,
+Insert_simpleStore(simple),
+Query_simpleStore(querySpec_simpleStore)
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum OpResult {
+        None,
+Err(String),
+QueryResultsimpleStore(Vec<simple>)
+    }
+
+    async fn op_interpreter(op: Op) -> OpResult {
+        return match op {
+            Noop => OpResult::None,
+
+                Insert_simpleStore(v) => {
+                    return match insert_simpleStore(&client, v).await {
+                        Ok(()) => OpResult::None,
+                        Err(err) => OpResult::Err(err)
+                    };
+                },
+
+                Query_simpleStore(v) => {
+                    return match query_interpreter_simpleStore(v, &client).await {
+                        Ok(out) => OpResult::QueryResultsimpleStore(out),
+                        Err(err) => OpResult::Err(err)
+                    };
+                }
+        };
+    }
+        
+    
                             // FUNCTIONS
                             
-            async fn internal_insert(client: &Client, input: web::Json<simple>) -> Result<(), Error> {
+            async fn insert_simpleStore(client: &Client, body: simple) -> Result<(), Error> {
                 let body = input.into_inner();
                 client.query(\\"insert into simpleStore(data) values ($1)\\", &[&body.data]).await?;
                 return Ok(());
@@ -614,7 +737,10 @@ conduit_entity_id: Option<i32>
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
         let client = &data.client;
-        return match internal_insert(&client, input).await {
+        return 
+            let body = input.into_inner();
+
+            match insert_simpleStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -834,9 +960,48 @@ conduit_entity_id: Option<i32>
         return Ok(out);
     }
     
+                            // OP INTERPRETER
+                            
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum Op {
+        Noop,
+Insert_wrapStore(wrapper),
+Query_wrapStore(querySpec_wrapStore)
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum OpResult {
+        None,
+Err(String),
+QueryResultwrapStore(Vec<wrapper>)
+    }
+
+    async fn op_interpreter(op: Op) -> OpResult {
+        return match op {
+            Noop => OpResult::None,
+
+                Insert_wrapStore(v) => {
+                    return match insert_wrapStore(&client, v).await {
+                        Ok(()) => OpResult::None,
+                        Err(err) => OpResult::Err(err)
+                    };
+                },
+
+                Query_wrapStore(v) => {
+                    return match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => OpResult::QueryResultwrapStore(out),
+                        Err(err) => OpResult::Err(err)
+                    };
+                }
+        };
+    }
+        
+    
                             // FUNCTIONS
                             
-            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
                 let body = input.into_inner();
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
@@ -846,7 +1011,10 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return match internal_insert(&client, input).await {
+        return 
+            let body = input.into_inner();
+
+            match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -1075,9 +1243,48 @@ conduit_entity_id: Option<i32>
         return Ok(out);
     }
     
+                            // OP INTERPRETER
+                            
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum Op {
+        Noop,
+Insert_wrapStore(wrapper),
+Query_wrapStore(querySpec_wrapStore)
+    }
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\")]
+    enum OpResult {
+        None,
+Err(String),
+QueryResultwrapStore(Vec<wrapper>)
+    }
+
+    async fn op_interpreter(op: Op) -> OpResult {
+        return match op {
+            Noop => OpResult::None,
+
+                Insert_wrapStore(v) => {
+                    return match insert_wrapStore(&client, v).await {
+                        Ok(()) => OpResult::None,
+                        Err(err) => OpResult::Err(err)
+                    };
+                },
+
+                Query_wrapStore(v) => {
+                    return match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => OpResult::QueryResultwrapStore(out),
+                        Err(err) => OpResult::Err(err)
+                    };
+                }
+        };
+    }
+        
+    
                             // FUNCTIONS
                             
-            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
                 let body = input.into_inner();
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
@@ -1087,7 +1294,10 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
 
     async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
         let client = &data.client;
-        return match internal_insert(&client, input).await {
+        return 
+            let body = input.into_inner();
+
+            match insert_wrapStore(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);

@@ -3,11 +3,8 @@ import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { writeOperationInterpreter } from './interpreter_writer';
 
-type InternalFunction = {
-    readonly definition: string,
-    readonly invocation: string
-}
 
 function toRustType(p: CompiledTypes.ReturnType): string {
     if (p.kind === "VoidReturnType") {
@@ -59,16 +56,16 @@ function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<st
             
             let retNum = 0 
             let retGen = () => retNum++
-            const funcname = `internal_${func.name}`
+            const funcname = `insert_${func.operation.storeName}`
             
             preFunction = `
-            async fn ${funcname}(client: &Client, input: web::Json<${store.typeName}>) -> Result<(), Error> {
-                let body = input.into_inner();
+            async fn ${funcname}(client: &Client, body: ${store.typeName}) -> Result<(), Error> {
                 ${generateInsertRustCode(store, "body", {kind: "drop"}, retGen).join("\n")}
                 return Ok(());
             }
             `
-            statement = `match ${funcname}(&client, input).await {
+            extractors.push('let body = input.into_inner();')
+            statement = ` match ${funcname}(&client, body).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!("Failure caused by: {}", err);
@@ -256,6 +253,8 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
                             ${structs.join("\n")}
                             // INTERPRETERS
                             ${interpreters.join("\n")}
+                            // OP INTERPRETER
+                            ${writeOperationInterpreter(manifest)}
                             // FUNCTIONS
                             ${functions.map(f => f.def).join("\n\n")}
                     
