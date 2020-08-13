@@ -1,4 +1,5 @@
 import { CompiledTypes, Utilities } from 'conduit_compiler';
+import { RealType } from 'conduit_compiler/dist/src/main/entity/resolved';
 
 export const a: string = `${12}`
 
@@ -12,7 +13,6 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
         if (fn.kind !== "Function") {
             return
         }
-        const param = fn.parameter.differentiate()
         const ret = fn.returnType
 
         let returnType = ''
@@ -20,10 +20,13 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
         let body =  ''
         let paramString = ''
         let beforeReq = ''
+        let method: "GET" | "POST" = "GET"
 
-        switch(param.kind) {
-            case "UnaryParameter":
-                paramString = `a: ${typeToTS(param.type)}`
+        switch(fn.operation.kind) {
+            case "return input":
+                returnType = `: Promise<${typeToTS(fn.returnType as RealType)}>`
+                paramString = `a: ${typeToTS(fn.returnType as RealType)}`
+                followOn = '.then( data=> data.json())'
                 beforeReq = 'const body = JSON.stringify(a)'
                 body = `
                 body,
@@ -32,21 +35,36 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
                     "content-length": \`\${body.length}\`
                 },
                 `
-                break;
-            case "NoParameter":
-                break;
+                method = "POST"
 
-            default: Utilities.assertNever(param)
-        }
-        switch (ret.kind) {
-            case "real type":
-                returnType = `: Promise<${typeToTS(ret)}>`
+                break
+            case "insert":
+                
+                const store = manifest.inScope.getEntityOfType(fn.operation.storeName, "HierarchicalStore")
+                paramString = `a: ${store.typeName}`
+                beforeReq = 'const body = JSON.stringify(a)'
+                body = `
+                body,
+                headers: {
+                    "content-type": "application/json",
+                    "content-length": \`\${body.length}\`
+                },
+                `
+                method = "POST"
+                break
+
+            case "noop":
+                break
+
+            case "get all":
+                returnType = `: Promise<${typeToTS(fn.returnType as RealType)}>`
                 followOn = '.then( data=> data.json())'
+                
+                
                 break;
-            case "VoidReturnType":
-                break;
+            
 
-            default: Utilities.assertNever(ret)
+            default: Utilities.assertNever(fn.operation)
         }
 
         clients.push(`
@@ -54,7 +72,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
             ${beforeReq}
             return fetch("${url}/${fn.name}", {
                 ${body}
-                method: "${fn.method}"
+                method: "${method}"
             })${followOn}
 
         }`) 

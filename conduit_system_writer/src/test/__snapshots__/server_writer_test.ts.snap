@@ -126,10 +126,11 @@ conduit_entity_id: Option<i32>
     
                             // FUNCTIONS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            
+            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+                let body = input.into_inner();
+                
                 let mut vec_ret0: Vec<i32> = Vec::new();
-                for row1 in &s.innard {
+                for row1 in &body.innard {
                     let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
                     vec_ret0.push(ret0[0].get(0));
                 }
@@ -143,20 +144,19 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
                 }
                     
                 
-return Ok(())
-        }
+                return Ok(());
+            }
+            
 
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
+    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+        let client = &data.client;
+        return match internal_insert(&client, input).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
                     HttpResponse::BadRequest()
                 }
             };
-            
     }
             
     
@@ -352,10 +352,11 @@ conduit_entity_id: Option<i32>
     
                             // FUNCTIONS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            
+            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+                let body = input.into_inner();
+                
                 let mut vec_ret0: Vec<i32> = Vec::new();
-                for row1 in &s.innard {
+                for row1 in &body.innard {
                     let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
                     vec_ret0.push(ret0[0].get(0));
                 }
@@ -369,34 +370,30 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
                 }
                     
                 
-return Ok(())
-        }
+                return Ok(());
+            }
+            
 
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
+    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+        let client = &data.client;
+        return match internal_insert(&client, input).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
                     HttpResponse::BadRequest()
                 }
             };
-            
     }
             
     
 
 
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            return query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await;
-        }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
         let client = &data.client;
-        return match internal_get(client).await {
+        return match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await {
                 Ok(out) => HttpResponse::Ok().json(out),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -608,34 +605,31 @@ conduit_entity_id: Option<i32>
     
                             // FUNCTIONS
                             
-        async fn internal_insert(s: simple, client: &Client)  -> Result<(), Error> {
-            client.query(\\"insert into simpleStore(data) values ($1)\\", &[&s.data]).await?;
-return Ok(())
-        }
+            async fn internal_insert(client: &Client, input: web::Json<simple>) -> Result<(), Error> {
+                let body = input.into_inner();
+                client.query(\\"insert into simpleStore(data) values ($1)\\", &[&body.data]).await?;
+                return Ok(());
+            }
+            
 
-    async fn external_insert(input: web::Json<simple>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
+    async fn external_insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
+        let client = &data.client;
+        return match internal_insert(&client, input).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
                     HttpResponse::BadRequest()
                 }
             };
-            
     }
             
     
 
 
-        async fn internal_get(client: &Client)  -> Result<Vec<simple>, Error> {
-            return query_interpreter_simpleStore(querySpec_simpleStore, client).await;
-        }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
         let client = &data.client;
-        return match internal_get(client).await {
+        return match query_interpreter_simpleStore(querySpec_simpleStore, client).await {
                 Ok(out) => HttpResponse::Ok().json(out),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -842,37 +836,34 @@ conduit_entity_id: Option<i32>
     
                             // FUNCTIONS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+                let body = input.into_inner();
+                let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-return Ok(())
-        }
+                return Ok(());
+            }
+            
 
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
+    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+        let client = &data.client;
+        return match internal_insert(&client, input).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
                     HttpResponse::BadRequest()
                 }
             };
-            
     }
             
     
 
 
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            return query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await;
-        }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
         let client = &data.client;
-        return match internal_get(client).await {
+        return match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await {
                 Ok(out) => HttpResponse::Ok().json(out),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
@@ -1086,37 +1077,34 @@ conduit_entity_id: Option<i32>
     
                             // FUNCTIONS
                             
-        async fn internal_insert(s: wrapper, client: &Client)  -> Result<(), Error> {
-            let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&s.innard.data]).await?;
+            async fn internal_insert(client: &Client, input: web::Json<wrapper>) -> Result<(), Error> {
+                let body = input.into_inner();
+                let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
 client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-return Ok(())
-        }
+                return Ok(());
+            }
+            
 
-    async fn external_insert(input: web::Json<wrapper>, data: web::Data<AppData>) -> impl Responder {
-        let s = input.into_inner();
-let client = &data.client;
-        return match internal_insert(s,client).await {
+    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+        let client = &data.client;
+        return match internal_insert(&client, input).await {
                 Ok(()) => HttpResponse::Ok(),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);
                     HttpResponse::BadRequest()
                 }
             };
-            
     }
             
     
 
 
-        async fn internal_get(client: &Client)  -> Result<Vec<wrapper>, Error> {
-            return query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await;
-        }
 
     async fn external_get(data: web::Data<AppData>) -> impl Responder {
         let client = &data.client;
-        return match internal_get(client).await {
+        return match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, client).await {
                 Ok(out) => HttpResponse::Ok().json(out),
                 Err(err) => {
                     eprintln!(\\"Failure caused by: {}\\", err);

@@ -16,129 +16,77 @@ function toRustType(p: CompiledTypes.ReturnType): string {
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
-function generateInternalFunction(f: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): InternalFunction {
-    const ret = f.returnType
-    const returnTypeSpec = ` -> Result<${toRustType(ret)}, Error>`
-    const statements: string[] = []
-    const param = f.parameter.differentiate()
-    const parameterList: {name: string, type: string}[] = []
-    if (param.kind !== "NoParameter") {
-        parameterList.push({name: param.name, type: toRustType(param.type)})
-    }
-    if (f.requiresDbClient) {
-        parameterList.push({name: "client", type: "&Client"})
-    }
-    
-
-    let previousReturn = false
-    let retNum = 0 
-    let retGen = () => retNum++
-    f.body.statements.forEach((stmt, i) => {
-        switch(stmt.kind) {
-            case "Append":
-                
-                const inserts = generateInsertRustCode(storeMap.get(stmt.into.name), stmt.inserting.name, {kind: "drop"}, retGen)
-                
-                
-                statements.push(inserts.join("\n"))
-                break;
-
-            case "ReturnStatement":
-                previousReturn = true
-                break;
-
-            case "VariableReference":
-                if (previousReturn) {
-                    statements.push(`return Ok(${stmt.name});`)
-                } else {
-                    throw Error(`Useless variable reference ${stmt.name}`)
-                }
-                break;
-            
-            case "StoreReference":
-                if (previousReturn) {
-                    const getAllStore = storeMap.get(stmt.from.name)
-                    
-                    statements.push(`return query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await;`)
-                    break
-                } else {
-                    throw Error(`Currently don't support all in queries outside of returns`)
-                }
-
-            default: Utilities.assertNever(stmt)
-        }
-    })
-
-    if (ret.kind === "VoidReturnType") {
-        statements.push(`return Ok(())`)
-    }
-    
-    
-    return {
-        definition: `
-        ${f.requiresDbClient ? "async ": ""}fn internal_${f.name}(${parameterList.map(p => `${p.name}: ${p.type}`).join(", ")}) ${returnTypeSpec} {
-            ${statements.join("\n")}
-        }`, 
-        invocation: `internal_${f.name}(${parameterList.map(p => p.name)})${f.requiresDbClient ? ".await" : ""}`
-    }
-}
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
 function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): FunctionDef {
-
-    const internal = generateInternalFunction(func, storeMap) 
-    const param = func.parameter.differentiate()
     
     let parameters: string[] = []
     let extractors: string[] = []
+    let method: "post" | "get" = "get"
+    let statement: string = ''
+    let preFunction: string = ''
 
-    if (param.kind === "UnaryParameter") {
-        const ptype = param.type
-        parameters.push(`input: web::Json<${toRustType(ptype)}>`)
-        extractors.push(`let ${param.name} = input.into_inner();`)
-    }
+    switch (func.operation.kind) {
+        case "noop":
+            statement = `HttpResponse::Ok();`
+            break
+        case "return input":
+            method = "post"
+            extractors.push(`let body = input.into_inner();`)
+            parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
+            statement = `HttpResponse::Ok().json(body);`
+            break
+        case "get all":
+            const getAllStore = storeMap.get(func.operation.storeName)
+            extractors.push("let client = &data.client;")
+            parameters.push("data: web::Data<AppData>")
 
-    if (func.requiresDbClient) {
-        parameters.push("data: web::Data<AppData>")
-        extractors.push("let client = &data.client;")
-    }
-
-    const returnType = func.returnType
-    let externalFuncBody = ''
-
-    switch (returnType.kind) {
-        case "VoidReturnType":
-            externalFuncBody = `match ${internal.invocation} {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!("Failure caused by: {}", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-            `
-            break;
-        case "real type":
-            externalFuncBody = `match ${internal.invocation} {
+            statement = `match query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await {
                 Ok(out) => HttpResponse::Ok().json(out),
                 Err(err) => {
                     eprintln!("Failure caused by: {}", err);
                     HttpResponse::BadRequest().finish()
                 }
             };`
-            break;
+            break
+        case "insert":
+            method = "post"
+            const store =storeMap.get(func.operation.storeName)
+            parameters.push("data: web::Data<AppData>")
+            parameters.push(`input: web::Json<${store.typeName}>`)
+            extractors.push("let client = &data.client;")
+            
+            let retNum = 0 
+            let retGen = () => retNum++
+            const funcname = `internal_${func.name}`
+            
+            preFunction = `
+            async fn ${funcname}(client: &Client, input: web::Json<${store.typeName}>) -> Result<(), Error> {
+                let body = input.into_inner();
+                ${generateInsertRustCode(store, "body", {kind: "drop"}, retGen).join("\n")}
+                return Ok(());
+            }
+            `
+            statement = `match ${funcname}(&client, input).await {
+                Ok(()) => HttpResponse::Ok(),
+                Err(err) => {
+                    eprintln!("Failure caused by: {}", err);
+                    HttpResponse::BadRequest()
+                }
+            };`
+            break
 
-        default: Utilities.assertNever(returnType)
+        default: assertNever(func.operation)
     }
-    
     const external = `
     async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
         ${extractors.join("\n")}
-        return ${externalFuncBody}
+        return ${statement}
     }
             
     `
-    return {def: `${internal.definition}\n${external}`, func_name: `external_${func.name}`, path: func.name, method: func.method === "POST" ? "post" : 'get'}
+    return {def: `${preFunction}\n${external}`, func_name: `external_${func.name}`, path: func.name, method}
 }
 
 function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {

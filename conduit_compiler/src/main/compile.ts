@@ -4,6 +4,7 @@ import { Manifest } from "./entity/resolved";
 import { toNamespace } from "./resolution/resolveTypes";
 import { FileLocation } from "./utils";
 import { resolveFunctions } from "./resolution/resolveFunction";
+import {procedurize} from "./resolution/procedurization"
 
 export function compileFiles(files: Record<string, () => string>): Manifest {
     const conduits: Parse.File[] = []
@@ -11,5 +12,5 @@ export function compileFiles(files: Record<string, () => string>): Manifest {
         conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
     }
 
-    return resolveFunctions(toNamespace(conduits))
+    return procedurize(resolveFunctions(toNamespace(conduits)))
 } 

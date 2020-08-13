@@ -56,31 +56,45 @@ export type Variable = Readonly<{
     type: WithArrayIndicator<Struct>
 }>
 
-type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
-    basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
-export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
-export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
-export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
-export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
-export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
-
 export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>
 export type ReturnType = RealType | basic.VoidReturn
-export type Function =  basic.NamedIntrafile<"Function", {
-    requiresDbClient: boolean,
-    returnType: ReturnType,
-    parameter: Parameter,
-    body: FunctionBody,
-    method: "POST" | "GET"
+export namespace PreProcedurization {
+
+    type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
+    basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
+    export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
+    export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
+    export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
+    export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
+    export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
+    export type Function =  basic.NamedIntrafile<"Function", {
+        requiresDbClient: boolean,
+        returnType: ReturnType,
+        parameter: Parameter,
+        body: FunctionBody,
+        method: "POST" | "GET"
+    }>
+
+    export type ScopeMap = EntityMap<Struct | Enum | PreProcedurization.Function | HierarchicalStore>
+}
+
+export type Operation = {readonly kind: "return input"} 
+| {readonly kind: "noop"} 
+| {readonly kind: "insert", readonly storeName: string}
+| {readonly kind: "get all", readonly storeName: string}
+
+export type Function = basic.NamedIntrafile<"Function", {
+    returnType: ReturnType
+    operation: Operation
 }>
+export type Entity = Struct | Enum | Function | HierarchicalStore
+export type ScopeMap = EntityMap<Entity>
 
-
-
-export type ScopeMap = EntityMap<Struct | Enum | Function | HierarchicalStore>
     
 
 export type Manifest = {
     readonly inScope: ScopeMap
+    readonly supportedOperations: Operation[]
 }
 
 export type PrimitiveColumn = Readonly<{
