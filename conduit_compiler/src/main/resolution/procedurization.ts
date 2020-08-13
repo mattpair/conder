@@ -16,7 +16,7 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
 
             case "HierarchicalStore":
                 inScope.set(i.name, i)
-                supportedOperations.push({kind: "insert", storeName: i.name}, {kind: "get all", storeName: i.name})
+                supportedOperations.push({kind: "insert", storeName: i.name}, {kind: "query", storeName: i.name})
                 break
             case "Function":
                 const operation: Operation = convertToOp(i)
@@ -55,7 +55,7 @@ function convertToOp(i: PreProcedurization.Function): Operation | undefined {
         const ref = i.body.statements[i.body.statements.length - 1]
         if (ref.kind === "StoreReference") {
             return {
-                kind: "get all",
+                kind: "query",
                 storeName: ref.from.name
             }
         }

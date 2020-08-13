@@ -88,7 +88,7 @@ Object {
       "storeName": "myFirstStore",
     },
     Object {
-      "kind": "get all",
+      "kind": "query",
       "storeName": "myFirstStore",
     },
   ],
@@ -139,7 +139,7 @@ Object {
         "kind": "Function",
         "name": "getAllData",
         "operation": Object {
-          "kind": "get all",
+          "kind": "query",
           "storeName": "secondStore",
         },
         "returnType": Object {
@@ -231,7 +231,7 @@ Object {
       "storeName": "secondStore",
     },
     Object {
-      "kind": "get all",
+      "kind": "query",
       "storeName": "secondStore",
     },
   ],

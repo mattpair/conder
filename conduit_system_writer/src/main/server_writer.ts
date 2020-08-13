@@ -37,7 +37,7 @@ function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<st
             parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
             statement = `HttpResponse::Ok().json(body);`
             break
-        case "get all":
+        case "query":
             const getAllStore = storeMap.get(func.operation.storeName)
             extractors.push("let client = &data.client;")
             parameters.push("data: web::Data<AppData>")

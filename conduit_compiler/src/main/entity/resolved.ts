@@ -81,7 +81,7 @@ export namespace PreProcedurization {
 export type Operation = {readonly kind: "return input"} 
 | {readonly kind: "noop"} 
 | {readonly kind: "insert", readonly storeName: string}
-| {readonly kind: "get all", readonly storeName: string}
+| {readonly kind: "query", readonly storeName: string}
 
 export type Function = basic.NamedIntrafile<"Function", {
     returnType: ReturnType

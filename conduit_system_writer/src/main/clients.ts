@@ -56,7 +56,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
             case "noop":
                 break
 
-            case "get all":
+            case "query":
                 returnType = `: Promise<${typeToTS(fn.returnType as RealType)}>`
                 followOn = '.then( data=> data.json())'
                 
