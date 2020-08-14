@@ -4,7 +4,7 @@ import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter_writer';
 
 
-type Instr<s extends string, DATA={}> = Readonly<{type: "instr", kind: s} & DATA>
+type Instr<s extends string, DATA={}> = Readonly<{kind: s} & DATA>
 
 export type AnyOp = 
 | Instr<"insert", {storeName: string}>
@@ -27,8 +27,8 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
     
                 case "HierarchicalStore":
                     addedOperations.push(
-                        {type: "instr", kind: "insert", storeName: i.name}, 
-                        {type: "instr", kind: "query", storeName: i.name})
+                        {kind: "insert", storeName: i.name}, 
+                        {kind: "query", storeName: i.name})
                     break
                 default: assertNever(i)
             }
