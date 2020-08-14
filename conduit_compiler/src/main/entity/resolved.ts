@@ -93,7 +93,7 @@ export type Function = basic.NamedIntrafile<"Function", {
     operations: AnyOp[]
     param: Parameter
 }>
-export type Entity = Struct | Enum | Function | HierarchicalStore
+export type Entity = Struct | Enum  | HierarchicalStore
 export type ScopeMap = EntityMap<Entity>
 
     

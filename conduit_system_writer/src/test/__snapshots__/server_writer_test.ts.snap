@@ -126,79 +126,95 @@ conduit_entity_id: Option<i32>
     
                             // OP INTERPRETER
                             
+
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum Op {
-        Noop,
-Insert_wrapStore(wrapper),
-Query_wrapStore(querySpec_wrapStore)
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Instr {
+        
+    Insert_wrapStore{insert_var_name: String}
+Query_wrapStore{data: querySpec_wrapStore}
+    
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum RuntimeEnt {
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType {
         None,
 Err(String),
+simpleInstance(simple),
+wrapperInstance(wrapper),
+querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
+querySpec_wrapStoreInstance(querySpec_wrapStore),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
-        return match op {
-            Op::Noop => OpResult::None,
+    // ControlFlow Interpreter:
+    enum CF {
+        Return(string),
+        ReturnPrevious
+    }
 
-                Op::Insert_wrapStore(v) => {
-                    return match insert_wrapStore(&client, v).await {
-                        Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err.to_string())
+
+    enum CONDUIT_BYTE_CODE {
+        ControlFlow(CF),
+        Instruction(Instr)
+    }
+
+    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+        let mut prev: AnyType= AnyType::None;
+        while let Some(o) = ops.pop() {
+            match o {
+                ControlFlow(c) => {
+                    match c {
+                        ReturnPrevious => {
+                            return HttpResponse::Ok().json(prev);
+                        },
+
+                        Return(s) => state.get(&s) {
+                            Some(data) => {
+                                return HttpResponse::Ok().json(out);
+                            },
+                            None => panic!(\\"attempting to return a value that doesn't exist\\")
+                        }
+                    };
+                },
+                Instruction(i) => {
+                    prev = match i {
+                        
+                Instr::Insert_wrapStore{insert_var_name} => {
+                    let to_insert = match state.get(insert_var_name).unwrap() {
+                        wrapperInstance(r) => r,
+                        _ => panic!(\\"invalid insertion type\\")
+                    };
+
+                    match insert_wrapStore(&client, to_insert).await {
+                        Ok(()) => AnyType::None,
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 },
 
-                Op::Query_wrapStore(v) => {
-                    return match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err.to_string())
+                Instr::Query_wrapStore(v) => {
+                    match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => AnyType::QueryResultwrapStore(out),
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 }
-        };
+                    };
+
+                    if let Err(e) = prev {
+                        println!(\\"Error: {}\\", e);
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }
+            };
+        }
+        return HttpResponse::Ok().json(AnyType::None);
+
     }
-        
+
     
                             // FUNCTIONS
                             
-            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                
-                let mut vec_ret0: Vec<i32> = Vec::new();
-                for row1 in &body.innard {
-                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
-                    vec_ret0.push(ret0[0].get(0));
-                }
-                
-let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
-
-
-                let ent4: i32 = ret3[0].get(0);
-                while let Some(child_id) = vec_ret0.pop() {
-                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
-                }
-                    
-                
-                return Ok(());
-            }
-            
-
-    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-        let client = &data.client;
-let body = input.into_inner();
-        return  match insert_wrapStore(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-    }
-            
-    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -206,7 +222,7 @@ let body = input.into_inner();
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        .route(\\"/insert\\", web::post().to(external_insert))
+                                        
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -391,96 +407,95 @@ conduit_entity_id: Option<i32>
     
                             // OP INTERPRETER
                             
+
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum Op {
-        Noop,
-Insert_wrapStore(wrapper),
-Query_wrapStore(querySpec_wrapStore)
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Instr {
+        
+    Insert_wrapStore{insert_var_name: String}
+Query_wrapStore{data: querySpec_wrapStore}
+    
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum RuntimeEnt {
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType {
         None,
 Err(String),
+simpleInstance(simple),
+wrapperInstance(wrapper),
+querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
+querySpec_wrapStoreInstance(querySpec_wrapStore),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
-        return match op {
-            Op::Noop => OpResult::None,
+    // ControlFlow Interpreter:
+    enum CF {
+        Return(string),
+        ReturnPrevious
+    }
 
-                Op::Insert_wrapStore(v) => {
-                    return match insert_wrapStore(&client, v).await {
-                        Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err.to_string())
+
+    enum CONDUIT_BYTE_CODE {
+        ControlFlow(CF),
+        Instruction(Instr)
+    }
+
+    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+        let mut prev: AnyType= AnyType::None;
+        while let Some(o) = ops.pop() {
+            match o {
+                ControlFlow(c) => {
+                    match c {
+                        ReturnPrevious => {
+                            return HttpResponse::Ok().json(prev);
+                        },
+
+                        Return(s) => state.get(&s) {
+                            Some(data) => {
+                                return HttpResponse::Ok().json(out);
+                            },
+                            None => panic!(\\"attempting to return a value that doesn't exist\\")
+                        }
+                    };
+                },
+                Instruction(i) => {
+                    prev = match i {
+                        
+                Instr::Insert_wrapStore{insert_var_name} => {
+                    let to_insert = match state.get(insert_var_name).unwrap() {
+                        wrapperInstance(r) => r,
+                        _ => panic!(\\"invalid insertion type\\")
+                    };
+
+                    match insert_wrapStore(&client, to_insert).await {
+                        Ok(()) => AnyType::None,
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 },
 
-                Op::Query_wrapStore(v) => {
-                    return match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err.to_string())
+                Instr::Query_wrapStore(v) => {
+                    match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => AnyType::QueryResultwrapStore(out),
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 }
-        };
+                    };
+
+                    if let Err(e) = prev {
+                        println!(\\"Error: {}\\", e);
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }
+            };
+        }
+        return HttpResponse::Ok().json(AnyType::None);
+
     }
-        
+
     
                             // FUNCTIONS
                             
-            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                
-                let mut vec_ret0: Vec<i32> = Vec::new();
-                for row1 in &body.innard {
-                    let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&row1.data]).await?;
-                    vec_ret0.push(ret0[0].get(0));
-                }
-                
-let ret3 = client.query(\\"insert into wrapStore default values RETURNING conduit_entity_id\\", &[]).await?;
-
-
-                let ent4: i32 = ret3[0].get(0);
-                while let Some(child_id) = vec_ret0.pop() {
-                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
-                }
-                    
-                
-                return Ok(());
-            }
-            
-
-    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-        let client = &data.client;
-let body = input.into_inner();
-        return  match insert_wrapStore(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-    }
-            
-    
-
-
-
-    async fn external_get(data: web::Data<AppData>) -> impl Responder {
-        let client = &data.client;
-        return match query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await {
-                Ok(out) => HttpResponse::Ok().json(out),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest().finish()
-                }
-            };
-    }
-            
-    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -488,8 +503,7 @@ let body = input.into_inner();
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        .route(\\"/insert\\", web::post().to(external_insert))
-.route(\\"/get\\", web::get().to(external_get))
+                                        
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -683,79 +697,93 @@ conduit_entity_id: Option<i32>
     
                             // OP INTERPRETER
                             
+
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum Op {
-        Noop,
-Insert_simpleStore(simple),
-Query_simpleStore(querySpec_simpleStore)
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Instr {
+        
+    Insert_simpleStore{insert_var_name: String}
+Query_simpleStore{data: querySpec_simpleStore}
+    
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum RuntimeEnt {
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType {
         None,
 Err(String),
+simpleInstance(simple),
+querySpec_simpleStoreInstance(querySpec_simpleStore),
 QueryResultsimpleStore(Vec<simple>)
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
-        return match op {
-            Op::Noop => OpResult::None,
+    // ControlFlow Interpreter:
+    enum CF {
+        Return(string),
+        ReturnPrevious
+    }
 
-                Op::Insert_simpleStore(v) => {
-                    return match insert_simpleStore(&client, v).await {
-                        Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err.to_string())
+
+    enum CONDUIT_BYTE_CODE {
+        ControlFlow(CF),
+        Instruction(Instr)
+    }
+
+    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+        let mut prev: AnyType= AnyType::None;
+        while let Some(o) = ops.pop() {
+            match o {
+                ControlFlow(c) => {
+                    match c {
+                        ReturnPrevious => {
+                            return HttpResponse::Ok().json(prev);
+                        },
+
+                        Return(s) => state.get(&s) {
+                            Some(data) => {
+                                return HttpResponse::Ok().json(out);
+                            },
+                            None => panic!(\\"attempting to return a value that doesn't exist\\")
+                        }
+                    };
+                },
+                Instruction(i) => {
+                    prev = match i {
+                        
+                Instr::Insert_simpleStore{insert_var_name} => {
+                    let to_insert = match state.get(insert_var_name).unwrap() {
+                        simpleInstance(r) => r,
+                        _ => panic!(\\"invalid insertion type\\")
+                    };
+
+                    match insert_simpleStore(&client, to_insert).await {
+                        Ok(()) => AnyType::None,
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 },
 
-                Op::Query_simpleStore(v) => {
-                    return match query_interpreter_simpleStore(v, &client).await {
-                        Ok(out) => OpResult::QueryResultsimpleStore(out),
-                        Err(err) => OpResult::Err(err.to_string())
+                Instr::Query_simpleStore(v) => {
+                    match query_interpreter_simpleStore(v, &client).await {
+                        Ok(out) => AnyType::QueryResultsimpleStore(out),
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 }
-        };
+                    };
+
+                    if let Err(e) = prev {
+                        println!(\\"Error: {}\\", e);
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }
+            };
+        }
+        return HttpResponse::Ok().json(AnyType::None);
+
     }
-        
+
     
                             // FUNCTIONS
                             
-            async fn insert_simpleStore(client: &Client, body: simple) -> Result<(), Error> {
-                client.query(\\"insert into simpleStore(data) values ($1)\\", &[&body.data]).await?;
-                return Ok(());
-            }
-            
-
-    async fn external_insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
-        let client = &data.client;
-let body = input.into_inner();
-        return  match insert_simpleStore(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-    }
-            
-    
-
-
-
-    async fn external_get(data: web::Data<AppData>) -> impl Responder {
-        let client = &data.client;
-        return match query_interpreter_simpleStore(querySpec_simpleStore, client).await {
-                Ok(out) => HttpResponse::Ok().json(out),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest().finish()
-                }
-            };
-    }
-            
-    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -763,8 +791,7 @@ let body = input.into_inner();
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        .route(\\"/insert\\", web::post().to(external_insert))
-.route(\\"/get\\", web::get().to(external_get))
+                                        
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -953,82 +980,95 @@ conduit_entity_id: Option<i32>
     
                             // OP INTERPRETER
                             
+
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum Op {
-        Noop,
-Insert_wrapStore(wrapper),
-Query_wrapStore(querySpec_wrapStore)
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Instr {
+        
+    Insert_wrapStore{insert_var_name: String}
+Query_wrapStore{data: querySpec_wrapStore}
+    
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum RuntimeEnt {
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType {
         None,
 Err(String),
+simpleInstance(simple),
+wrapperInstance(wrapper),
+querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
+querySpec_wrapStoreInstance(querySpec_wrapStore),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
-        return match op {
-            Op::Noop => OpResult::None,
+    // ControlFlow Interpreter:
+    enum CF {
+        Return(string),
+        ReturnPrevious
+    }
 
-                Op::Insert_wrapStore(v) => {
-                    return match insert_wrapStore(&client, v).await {
-                        Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err.to_string())
+
+    enum CONDUIT_BYTE_CODE {
+        ControlFlow(CF),
+        Instruction(Instr)
+    }
+
+    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+        let mut prev: AnyType= AnyType::None;
+        while let Some(o) = ops.pop() {
+            match o {
+                ControlFlow(c) => {
+                    match c {
+                        ReturnPrevious => {
+                            return HttpResponse::Ok().json(prev);
+                        },
+
+                        Return(s) => state.get(&s) {
+                            Some(data) => {
+                                return HttpResponse::Ok().json(out);
+                            },
+                            None => panic!(\\"attempting to return a value that doesn't exist\\")
+                        }
+                    };
+                },
+                Instruction(i) => {
+                    prev = match i {
+                        
+                Instr::Insert_wrapStore{insert_var_name} => {
+                    let to_insert = match state.get(insert_var_name).unwrap() {
+                        wrapperInstance(r) => r,
+                        _ => panic!(\\"invalid insertion type\\")
+                    };
+
+                    match insert_wrapStore(&client, to_insert).await {
+                        Ok(()) => AnyType::None,
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 },
 
-                Op::Query_wrapStore(v) => {
-                    return match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err.to_string())
+                Instr::Query_wrapStore(v) => {
+                    match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => AnyType::QueryResultwrapStore(out),
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 }
-        };
+                    };
+
+                    if let Err(e) = prev {
+                        println!(\\"Error: {}\\", e);
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }
+            };
+        }
+        return HttpResponse::Ok().json(AnyType::None);
+
     }
-        
+
     
                             // FUNCTIONS
                             
-            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-                return Ok(());
-            }
-            
-
-    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-        let client = &data.client;
-let body = input.into_inner();
-        return  match insert_wrapStore(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-    }
-            
-    
-
-
-
-    async fn external_get(data: web::Data<AppData>) -> impl Responder {
-        let client = &data.client;
-        return match query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await {
-                Ok(out) => HttpResponse::Ok().json(out),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest().finish()
-                }
-            };
-    }
-            
-    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -1036,8 +1076,7 @@ let body = input.into_inner();
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        .route(\\"/insert\\", web::post().to(external_insert))
-.route(\\"/get\\", web::get().to(external_get))
+                                        
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -1233,82 +1272,95 @@ conduit_entity_id: Option<i32>
     
                             // OP INTERPRETER
                             
+
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum Op {
-        Noop,
-Insert_wrapStore(wrapper),
-Query_wrapStore(querySpec_wrapStore)
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Instr {
+        
+    Insert_wrapStore{insert_var_name: String}
+Query_wrapStore{data: querySpec_wrapStore}
+    
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = \\"kind\\")]
-    enum RuntimeEnt {
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType {
         None,
 Err(String),
+simpleInstance(simple),
+wrapperInstance(wrapper),
+querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
+querySpec_wrapStoreInstance(querySpec_wrapStore),
 QueryResultwrapStore(Vec<wrapper>)
     }
 
-    async fn op_interpreter(op: Op, client: &Client) -> RuntimeEnt {
-        return match op {
-            Op::Noop => OpResult::None,
+    // ControlFlow Interpreter:
+    enum CF {
+        Return(string),
+        ReturnPrevious
+    }
 
-                Op::Insert_wrapStore(v) => {
-                    return match insert_wrapStore(&client, v).await {
-                        Ok(()) => OpResult::None,
-                        Err(err) => OpResult::Err(err.to_string())
+
+    enum CONDUIT_BYTE_CODE {
+        ControlFlow(CF),
+        Instruction(Instr)
+    }
+
+    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+        let mut prev: AnyType= AnyType::None;
+        while let Some(o) = ops.pop() {
+            match o {
+                ControlFlow(c) => {
+                    match c {
+                        ReturnPrevious => {
+                            return HttpResponse::Ok().json(prev);
+                        },
+
+                        Return(s) => state.get(&s) {
+                            Some(data) => {
+                                return HttpResponse::Ok().json(out);
+                            },
+                            None => panic!(\\"attempting to return a value that doesn't exist\\")
+                        }
+                    };
+                },
+                Instruction(i) => {
+                    prev = match i {
+                        
+                Instr::Insert_wrapStore{insert_var_name} => {
+                    let to_insert = match state.get(insert_var_name).unwrap() {
+                        wrapperInstance(r) => r,
+                        _ => panic!(\\"invalid insertion type\\")
+                    };
+
+                    match insert_wrapStore(&client, to_insert).await {
+                        Ok(()) => AnyType::None,
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 },
 
-                Op::Query_wrapStore(v) => {
-                    return match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => OpResult::QueryResultwrapStore(out),
-                        Err(err) => OpResult::Err(err.to_string())
+                Instr::Query_wrapStore(v) => {
+                    match query_interpreter_wrapStore(v, &client).await {
+                        Ok(out) => AnyType::QueryResultwrapStore(out),
+                        Err(err) => AnyType::Err(err.to_string())
                     };
                 }
-        };
+                    };
+
+                    if let Err(e) = prev {
+                        println!(\\"Error: {}\\", e);
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }
+            };
+        }
+        return HttpResponse::Ok().json(AnyType::None);
+
     }
-        
+
     
                             // FUNCTIONS
                             
-            async fn insert_wrapStore(client: &Client, body: wrapper) -> Result<(), Error> {
-                let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
-                return Ok(());
-            }
-            
-
-    async fn external_insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-        let client = &data.client;
-let body = input.into_inner();
-        return  match insert_wrapStore(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest()
-                }
-            };
-    }
-            
-    
-
-
-
-    async fn external_get(data: web::Data<AppData>) -> impl Responder {
-        let client = &data.client;
-        return match query_interpreter_wrapStore(querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        }, client).await {
-                Ok(out) => HttpResponse::Ok().json(out),
-                Err(err) => {
-                    eprintln!(\\"Failure caused by: {}\\", err);
-                    HttpResponse::BadRequest().finish()
-                }
-            };
-    }
-            
-    
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -1316,8 +1368,7 @@ let body = input.into_inner();
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        .route(\\"/insert\\", web::post().to(external_insert))
-.route(\\"/get\\", web::get().to(external_get))
+                                        
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()

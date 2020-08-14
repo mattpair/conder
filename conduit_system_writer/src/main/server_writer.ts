@@ -35,65 +35,12 @@ function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<st
     }
 
 
-
-    if (func.operations.some(o => ["insert", "query"].includes(o.kind))) {
-
-    }
-
-    // switch (func.operations.kind) {
-    
-    //     case "return input":
-    //         method = "post"
-    //         extractors.push(`let body = input.into_inner();`)
-    //         parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
-    //         statement = `HttpResponse::Ok().json(body);`
-    //         break
-    //     case "query":
-    //         const getAllStore = storeMap.get(func.operation.storeName)
-
-    //         statement = `match query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await {
-    //             Ok(out) => HttpResponse::Ok().json(out),
-    //             Err(err) => {
-    //                 eprintln!("Failure caused by: {}", err);
-    //                 HttpResponse::BadRequest().finish()
-    //             }
-    //         };`
-    //         break
-    //     case "insert":
-    //         method = "post"
-    //         const store =storeMap.get(func.operations.storeName)
-    //         parameters.push("data: web::Data<AppData>")
-    //         parameters.push(`input: web::Json<${store.typeName}>`)
-    //         extractors.push("let client = &data.client;")
-            
-    //         let retNum = 0 
-    //         let retGen = () => retNum++
-    //         const funcname = `insert_${func.operations.storeName}`
-            
-    //         preFunction = `
-    //         async fn ${funcname}(client: &Client, body: ${store.typeName}) -> Result<(), Error> {
-    //             ${generateInsertRustCode(store, "body", {kind: "drop"}, retGen).join("\n")}
-    //             return Ok(());
-    //         }
-    //         `
-    //         extractors.push('let body = input.into_inner();')
-    //         statement = ` match ${funcname}(&client, body).await {
-    //             Ok(()) => HttpResponse::Ok(),
-    //             Err(err) => {
-    //                 eprintln!("Failure caused by: {}", err);
-    //                 HttpResponse::BadRequest()
-    //             }
-    //         };`
-    //         break
-
-    //     default: assertNever(func.operation)
-    // }
     const external = `
     async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
         let mut state = HashMap::new();
         ${extractors.join("\n")}
         
-        return conduit_byte_code_interpreter(&client, &state, )
+        return conduit_byte_code_interpreter(&client, &state, vec![]).await;
     }
             
     `
@@ -195,11 +142,11 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: Com
             }
         })
 
-        manifest.inScope.forEach(val => {
-            if (val.kind === "Function") {
-                functions.push(generateFunction(val, stores))
-            }
-        })
+        // manifest.inScope.forEach(val => {
+        //     if (val.kind === "Function") {
+        //         functions.push(generateFunction(val, stores))
+        //     }
+        // })
 
         
         const creates: string[] = []

@@ -22,19 +22,6 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
                     {type: "instr", kind: "query", storeName: i.name})
                 break
             case "Function":
-                const operations: AnyOp[] = convertToOps(i)
-                
-                
-                if (operations === undefined) {
-                    throw Error(`Unable to convert function ${i.name} into an operation`)
-                }
-                inScope.set(i.name, {
-                    kind: "Function",
-                    name: i.name,
-                    operations,
-                    returnType: i.returnType,
-                    param: i.parameter
-                })
                 break
             default: assertNever(i)
         }
@@ -46,36 +33,36 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
     }
 }
 
-function convertToOps(i: PreProcedurization.Function): AnyOp[] {
-    if (i.body.statements.length === 0) {
-        return []
-    }
+// function convertToOps(i: PreProcedurization.Function): AnyOp[] {
+//     if (i.body.statements.length === 0) {
+//         return []
+//     }
 
-    const param =i.parameter.differentiate()
-    if (param.kind === "NoParameter") {
+//     const param =i.parameter.differentiate()
+//     if (param.kind === "NoParameter") {
     
-        const ref = i.body.statements[i.body.statements.length - 1]
-        if (ref.kind === "StoreReference") {
-            return [{
-                type: "instr",
-                kind: "query",
-                storeName: ref.from.name
-            }, {type: "control flow", kind: 'return', name: "__query"}]
-        }
+//         const ref = i.body.statements[i.body.statements.length - 1]
+//         if (ref.kind === "StoreReference") {
+//             return [{
+//                 type: "instr",
+//                 kind: "query",
+//                 storeName: ref.from.name
+//             }, {type: "control flow", kind: 'return', name: "__query"}]
+//         }
         
-    } else {
-        const insert = i.body.statements.find(s => s.kind === "Append") as PreProcedurization.Append
-        if (insert !== undefined) {
-            return [{
-                type: "instr",
-                kind: "insert",
-                storeName: insert.into.name
-            }]
-        }
-        return [{
-            type: "control flow",
-            kind: "return",
-            name: "__input"
-        }]
-    }
-}
+//     } else {
+//         const insert = i.body.statements.find(s => s.kind === "Append") as PreProcedurization.Append
+//         if (insert !== undefined) {
+//             return [{
+//                 type: "instr",
+//                 kind: "insert",
+//                 storeName: insert.into.name
+//             }]
+//         }
+//         return [{
+//             type: "control flow",
+//             kind: "return",
+//             name: "__input"
+//         }]
+//     }
+// }
