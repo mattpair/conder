@@ -4,7 +4,7 @@ import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
-import { writeOperationInterpreter } from './interpreter_writer';
+import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 
 function toRustType(p: CompiledTypes.ReturnType): string {
     if (p.kind === "VoidReturnType") {

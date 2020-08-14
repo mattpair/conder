@@ -1,7 +1,7 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from '../sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
-import { writeOperationInterpreter } from '../interpreter_writer';
+import { writeOperationInterpreter } from './interpreter_writer';
 
 export type ControlFlowOp = Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
 

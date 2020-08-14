@@ -1,4 +1,4 @@
-import { AnyOp } from './interpreter/derive_supported_ops';
+import { AnyOp } from './derive_supported_ops';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { CompiledTypes } from "conduit_compiler";
 
