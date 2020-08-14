@@ -1,10 +1,13 @@
+import { deriveSupportedOperations } from './../main/server_writer';
 import { writeRustAndContainerCode } from "../main/server_writer"
-import { CompiledTypes, Lexicon, compileFiles } from "conduit_compiler"
+import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_compiler"
 
 function TestCodeGen(description: string, conduit: string) {
     test(description, async () => {
-        
-        const r = await writeRustAndContainerCode.func({manifest: compileFiles({test: () => conduit})})
+        const manifest = compileFiles({test: () => conduit})
+        const r = await new Utilities.Sequence(deriveSupportedOperations)
+        .then(writeRustAndContainerCode)
+        .run({manifest})
         const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
         expect(mainFiles).toMatchSnapshot("main files")
         expect(r.backend.postgres.files).toMatchSnapshot("postgres files")

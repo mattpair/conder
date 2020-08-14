@@ -124,8 +124,18 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
     return makeStruct('', fields)
 }
 
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: CompiledTypes.AnyOp[]}> = {
+    stepName: "deriving supported operations",
+    func: ({manifest}) => {
+        return Promise.resolve({supportedOps:manifest.supportedOperations })
+    }
+}
 
-export const writeRustAndContainerCode: Utilities.StepDefinition<{ manifest: CompiledTypes.Manifest}, WrittenCode> = {
+
+export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
+    manifest: CompiledTypes.Manifest,
+    supportedOps: CompiledTypes.AnyOp[]
+}, WrittenCode> = {
     stepName: "writing deployment files",
     func: ({manifest}) => {
         const structs: string[] = []
