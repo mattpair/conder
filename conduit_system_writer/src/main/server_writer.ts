@@ -124,32 +124,6 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
     return makeStruct('', fields)
 }
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: CompiledTypes.AnyOp[]}> = {
-    stepName: "deriving supported operations",
-    func: ({manifest}) => {
-        const addedOperations: CompiledTypes.AnyOp[] = [
-        ]
-
-        manifest.inScope.forEach(i => {
-            switch(i.kind) {
-                case "Enum":
-                case "Struct":
-                    break
-    
-                case "HierarchicalStore":
-                    addedOperations.push(
-                        {type: "instr", kind: "insert", storeName: i.name}, 
-                        {type: "instr", kind: "query", storeName: i.name})
-                    break
-                default: assertNever(i)
-            }
-        })
-
-        return Promise.resolve({supportedOps: addedOperations })
-    }
-}
-
-
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
     supportedOps: CompiledTypes.AnyOp[]

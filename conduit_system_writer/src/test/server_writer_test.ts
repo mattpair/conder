@@ -1,4 +1,4 @@
-import { deriveSupportedOperations } from './../main/server_writer';
+import { deriveSupportedOperations } from './../main/interpreter/derive_supported_ops';
 import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_compiler"
 
