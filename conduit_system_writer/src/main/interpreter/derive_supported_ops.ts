@@ -3,15 +3,14 @@ import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, gener
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter_writer';
 
-export type ControlFlowOp = Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
 
 type Instr<s extends string, DATA={}> = Readonly<{type: "instr", kind: s} & DATA>
 
-export type Instruction = 
+export type AnyOp = 
 | Instr<"insert", {storeName: string}>
 | Instr<"query", {storeName: string}>
+| Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
 
-export type AnyOp = ControlFlowOp | Instruction
 
 export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: AnyOp[]}> = {
     stepName: "deriving supported operations",
