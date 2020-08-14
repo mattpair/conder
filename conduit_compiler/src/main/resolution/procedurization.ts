@@ -1,5 +1,5 @@
 import { assertNever } from '../utils';
-import { PreProcedurization, Manifest, Entity, AnyOp, EntityMap } from "../entity/resolved";
+import { PreProcedurization, Manifest, Entity, EntityMap } from "../entity/resolved";
 
 
 export function procedurize(input: PreProcedurization.ScopeMap): Manifest {

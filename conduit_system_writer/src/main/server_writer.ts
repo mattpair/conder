@@ -1,10 +1,10 @@
+import { AnyOp } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter_writer';
-
 
 function toRustType(p: CompiledTypes.ReturnType): string {
     if (p.kind === "VoidReturnType") {
@@ -126,7 +126,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
 
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
-    supportedOps: CompiledTypes.AnyOp[]
+    supportedOps: AnyOp[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
     func: ({manifest, supportedOps}) => {

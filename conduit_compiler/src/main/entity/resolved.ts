@@ -78,16 +78,6 @@ export namespace PreProcedurization {
     export type ScopeMap = EntityMap<Struct | Enum | PreProcedurization.Function | HierarchicalStore>
 }
 
-export type ControlFlowOp = Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
-
-type Instr<s extends string, DATA={}> = Readonly<{type: "instr", kind: s} & DATA>
-
-export type Instruction = 
-| Instr<"insert", {storeName: string}>
-| Instr<"query", {storeName: string}>
-
-export type AnyOp = ControlFlowOp | Instruction
-
 export type Entity = Struct | Enum  | HierarchicalStore
 export type ScopeMap = EntityMap<Entity>
 

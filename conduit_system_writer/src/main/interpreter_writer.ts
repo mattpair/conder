@@ -1,7 +1,8 @@
+import { AnyOp } from './interpreter/derive_supported_ops';
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { CompiledTypes } from "conduit_compiler";
 
-export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supportedOps: CompiledTypes.AnyOp[]): string {
+export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supportedOps: AnyOp[]): string {
     
     const op_match: string[] = []
     const op_type: {name: string, containing: {name: string, type: string}[]}[] = []

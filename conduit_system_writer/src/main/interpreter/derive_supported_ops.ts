@@ -3,11 +3,20 @@ import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, gener
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from '../interpreter_writer';
 
+export type ControlFlowOp = Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: CompiledTypes.AnyOp[]}> = {
+type Instr<s extends string, DATA={}> = Readonly<{type: "instr", kind: s} & DATA>
+
+export type Instruction = 
+| Instr<"insert", {storeName: string}>
+| Instr<"query", {storeName: string}>
+
+export type AnyOp = ControlFlowOp | Instruction
+
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: AnyOp[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
-        const addedOperations: CompiledTypes.AnyOp[] = [
+        const addedOperations: AnyOp[] = [
         ]
 
         manifest.inScope.forEach(i => {
