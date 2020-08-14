@@ -1,4 +1,4 @@
-import { AnyOp } from './interpreter/derive_supported_ops';
+import { OpDef } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
@@ -126,7 +126,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
 
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
-    supportedOps: AnyOp[]
+    supportedOps: OpDef[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
     func: ({manifest, supportedOps}) => {
@@ -143,13 +143,6 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                     break;
             }
         })
-
-        // manifest.inScope.forEach(val => {
-        //     if (val.kind === "Function") {
-        //         functions.push(generateFunction(val, stores))
-        //     }
-        // })
-
         
         const creates: string[] = []
         const interpreters: string[] = []

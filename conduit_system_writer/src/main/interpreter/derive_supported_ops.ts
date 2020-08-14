@@ -4,19 +4,34 @@ import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter_writer';
 
 
-type Instr<s extends string, DATA={}> = Readonly<{kind: s} & DATA>
-
-export type AnyOp = 
-| Instr<"insert", {storeName: string}>
-| Instr<"query", {storeName: string}>
-| Instr<"return", {name: string}> 
-| Instr<"returnPrevious">
+export interface OpDef {
+    readonly rustEnumMember: string
+    readonly rustOpHandler: string
+}
 
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: AnyOp[]}> = {
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
-        const addedOperations: AnyOp[] = [
+        const addedOperations: OpDef[] = [
+            {
+                rustEnumMember: `Return(String)`,
+                rustOpHandler: `
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!("attempting to return a value that doesn't exist");
+                        return HttpResponse::BadRequest().finish();
+                    }
+                }`
+            },
+            {
+                rustEnumMember: `ReturnPrev`,
+                rustOpHandler: `
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev)`
+            }
         ]
 
         manifest.inScope.forEach(i => {
@@ -26,9 +41,33 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     break
     
                 case "HierarchicalStore":
-                    addedOperations.push(
-                        {kind: "insert", storeName: i.name}, 
-                        {kind: "query", storeName: i.name})
+                    const store = i                
+                
+                    addedOperations.push({
+                        rustOpHandler: `
+                        Op::Insert_${store.name}(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::${store.typeName}(r) => r,
+                                _ => panic!("invalid insertion type")
+                            };
+
+                            match insert_${store.name}(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }`,
+                        rustEnumMember: `Insert_${store.name}(String)`
+                    })
+
+                    addedOperations.push({
+                        rustEnumMember: `Query_${store.name}(${store.specName})`,
+                        rustOpHandler: `Op::Query_${store.name}(spec) => {
+                            match query_interpreter_${store.name}(spec, &client).await {
+                                Ok(out) => AnyType::${store.name}Result(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }`
+                    })
                     break
                 default: assertNever(i)
             }

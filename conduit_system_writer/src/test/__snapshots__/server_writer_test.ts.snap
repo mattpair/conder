@@ -129,11 +129,11 @@ conduit_entity_id: Option<i32>
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum Instr {
-        
-    Insert_wrapStore{insert_var_name: String}
-Query_wrapStore{data: querySpec_wrapStore}
-    
+    enum Op {
+        Return(String),
+ReturnPrev,
+Insert_wrapStore(String),
+Query_wrapStore(querySpec_wrapStore)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -141,72 +141,54 @@ Query_wrapStore{data: querySpec_wrapStore}
     enum AnyType {
         None,
 Err(String),
-simpleInstance(simple),
-wrapperInstance(wrapper),
-querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
-querySpec_wrapStoreInstance(querySpec_wrapStore),
-QueryResultwrapStore(Vec<wrapper>)
-    }
-
-    // ControlFlow Interpreter:
-    enum CF {
-        Return(string),
-        ReturnPrevious
+simple(simple),
+wrapper(wrapper),
+wrapStoreResult(Vec<wrapper>),
+querySpec_wrapStore_innard(querySpec_wrapStore_innard),
+querySpec_wrapStore(querySpec_wrapStore)
     }
 
 
-    enum CONDUIT_BYTE_CODE {
-        ControlFlow(CF),
-        Instruction(Instr)
-    }
-
-    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         while let Some(o) = ops.pop() {
-            match o {
-                ControlFlow(c) => {
-                    match c {
-                        ReturnPrevious => {
-                            return HttpResponse::Ok().json(prev);
-                        },
-
-                        Return(s) => state.get(&s) {
-                            Some(data) => {
-                                return HttpResponse::Ok().json(out);
-                            },
-                            None => panic!(\\"attempting to return a value that doesn't exist\\")
-                        }
-                    };
-                },
-                Instruction(i) => {
-                    prev = match i {
-                        
-                Instr::Insert_wrapStore{insert_var_name} => {
-                    let to_insert = match state.get(insert_var_name).unwrap() {
-                        wrapperInstance(r) => r,
-                        _ => panic!(\\"invalid insertion type\\")
-                    };
-
-                    match insert_wrapStore(&client, to_insert).await {
-                        Ok(()) => AnyType::None,
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                },
-
-                Instr::Query_wrapStore(v) => {
-                    match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => AnyType::QueryResultwrapStore(out),
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                }
-                    };
-
-                    if let Err(e) = prev {
-                        println!(\\"Error: {}\\", e);
+            let prev = match o {
+                
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
-                }
+                },
+
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+
+                        Op::Insert_wrapStore(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::wrapper(r) => r,
+                                _ => panic!(\\"invalid insertion type\\")
+                            };
+
+                            match insert_wrapStore(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        },
+Op::Query_wrapStore(spec) => {
+                            match query_interpreter_wrapStore(spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }
             };
+
+            if let Err(e) = prev {
+                println!(\\"Error: {}\\", e);
+                return HttpResponse::BadRequest().finish();
+            }
         }
         return HttpResponse::Ok().json(AnyType::None);
 
@@ -410,11 +392,11 @@ conduit_entity_id: Option<i32>
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum Instr {
-        
-    Insert_wrapStore{insert_var_name: String}
-Query_wrapStore{data: querySpec_wrapStore}
-    
+    enum Op {
+        Return(String),
+ReturnPrev,
+Insert_wrapStore(String),
+Query_wrapStore(querySpec_wrapStore)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -422,72 +404,54 @@ Query_wrapStore{data: querySpec_wrapStore}
     enum AnyType {
         None,
 Err(String),
-simpleInstance(simple),
-wrapperInstance(wrapper),
-querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
-querySpec_wrapStoreInstance(querySpec_wrapStore),
-QueryResultwrapStore(Vec<wrapper>)
-    }
-
-    // ControlFlow Interpreter:
-    enum CF {
-        Return(string),
-        ReturnPrevious
+simple(simple),
+wrapper(wrapper),
+wrapStoreResult(Vec<wrapper>),
+querySpec_wrapStore_innard(querySpec_wrapStore_innard),
+querySpec_wrapStore(querySpec_wrapStore)
     }
 
 
-    enum CONDUIT_BYTE_CODE {
-        ControlFlow(CF),
-        Instruction(Instr)
-    }
-
-    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         while let Some(o) = ops.pop() {
-            match o {
-                ControlFlow(c) => {
-                    match c {
-                        ReturnPrevious => {
-                            return HttpResponse::Ok().json(prev);
-                        },
-
-                        Return(s) => state.get(&s) {
-                            Some(data) => {
-                                return HttpResponse::Ok().json(out);
-                            },
-                            None => panic!(\\"attempting to return a value that doesn't exist\\")
-                        }
-                    };
-                },
-                Instruction(i) => {
-                    prev = match i {
-                        
-                Instr::Insert_wrapStore{insert_var_name} => {
-                    let to_insert = match state.get(insert_var_name).unwrap() {
-                        wrapperInstance(r) => r,
-                        _ => panic!(\\"invalid insertion type\\")
-                    };
-
-                    match insert_wrapStore(&client, to_insert).await {
-                        Ok(()) => AnyType::None,
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                },
-
-                Instr::Query_wrapStore(v) => {
-                    match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => AnyType::QueryResultwrapStore(out),
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                }
-                    };
-
-                    if let Err(e) = prev {
-                        println!(\\"Error: {}\\", e);
+            let prev = match o {
+                
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
-                }
+                },
+
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+
+                        Op::Insert_wrapStore(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::wrapper(r) => r,
+                                _ => panic!(\\"invalid insertion type\\")
+                            };
+
+                            match insert_wrapStore(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        },
+Op::Query_wrapStore(spec) => {
+                            match query_interpreter_wrapStore(spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }
             };
+
+            if let Err(e) = prev {
+                println!(\\"Error: {}\\", e);
+                return HttpResponse::BadRequest().finish();
+            }
         }
         return HttpResponse::Ok().json(AnyType::None);
 
@@ -700,11 +664,11 @@ conduit_entity_id: Option<i32>
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum Instr {
-        
-    Insert_simpleStore{insert_var_name: String}
-Query_simpleStore{data: querySpec_simpleStore}
-    
+    enum Op {
+        Return(String),
+ReturnPrev,
+Insert_simpleStore(String),
+Query_simpleStore(querySpec_simpleStore)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -712,70 +676,52 @@ Query_simpleStore{data: querySpec_simpleStore}
     enum AnyType {
         None,
 Err(String),
-simpleInstance(simple),
-querySpec_simpleStoreInstance(querySpec_simpleStore),
-QueryResultsimpleStore(Vec<simple>)
-    }
-
-    // ControlFlow Interpreter:
-    enum CF {
-        Return(string),
-        ReturnPrevious
+simple(simple),
+simpleStoreResult(Vec<simple>),
+querySpec_simpleStore(querySpec_simpleStore)
     }
 
 
-    enum CONDUIT_BYTE_CODE {
-        ControlFlow(CF),
-        Instruction(Instr)
-    }
-
-    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         while let Some(o) = ops.pop() {
-            match o {
-                ControlFlow(c) => {
-                    match c {
-                        ReturnPrevious => {
-                            return HttpResponse::Ok().json(prev);
-                        },
-
-                        Return(s) => state.get(&s) {
-                            Some(data) => {
-                                return HttpResponse::Ok().json(out);
-                            },
-                            None => panic!(\\"attempting to return a value that doesn't exist\\")
-                        }
-                    };
-                },
-                Instruction(i) => {
-                    prev = match i {
-                        
-                Instr::Insert_simpleStore{insert_var_name} => {
-                    let to_insert = match state.get(insert_var_name).unwrap() {
-                        simpleInstance(r) => r,
-                        _ => panic!(\\"invalid insertion type\\")
-                    };
-
-                    match insert_simpleStore(&client, to_insert).await {
-                        Ok(()) => AnyType::None,
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                },
-
-                Instr::Query_simpleStore(v) => {
-                    match query_interpreter_simpleStore(v, &client).await {
-                        Ok(out) => AnyType::QueryResultsimpleStore(out),
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                }
-                    };
-
-                    if let Err(e) = prev {
-                        println!(\\"Error: {}\\", e);
+            let prev = match o {
+                
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
-                }
+                },
+
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+
+                        Op::Insert_simpleStore(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::simple(r) => r,
+                                _ => panic!(\\"invalid insertion type\\")
+                            };
+
+                            match insert_simpleStore(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        },
+Op::Query_simpleStore(spec) => {
+                            match query_interpreter_simpleStore(spec, &client).await {
+                                Ok(out) => AnyType::simpleStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }
             };
+
+            if let Err(e) = prev {
+                println!(\\"Error: {}\\", e);
+                return HttpResponse::BadRequest().finish();
+            }
         }
         return HttpResponse::Ok().json(AnyType::None);
 
@@ -983,11 +929,11 @@ conduit_entity_id: Option<i32>
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum Instr {
-        
-    Insert_wrapStore{insert_var_name: String}
-Query_wrapStore{data: querySpec_wrapStore}
-    
+    enum Op {
+        Return(String),
+ReturnPrev,
+Insert_wrapStore(String),
+Query_wrapStore(querySpec_wrapStore)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -995,72 +941,54 @@ Query_wrapStore{data: querySpec_wrapStore}
     enum AnyType {
         None,
 Err(String),
-simpleInstance(simple),
-wrapperInstance(wrapper),
-querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
-querySpec_wrapStoreInstance(querySpec_wrapStore),
-QueryResultwrapStore(Vec<wrapper>)
-    }
-
-    // ControlFlow Interpreter:
-    enum CF {
-        Return(string),
-        ReturnPrevious
+simple(simple),
+wrapper(wrapper),
+wrapStoreResult(Vec<wrapper>),
+querySpec_wrapStore_innard(querySpec_wrapStore_innard),
+querySpec_wrapStore(querySpec_wrapStore)
     }
 
 
-    enum CONDUIT_BYTE_CODE {
-        ControlFlow(CF),
-        Instruction(Instr)
-    }
-
-    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         while let Some(o) = ops.pop() {
-            match o {
-                ControlFlow(c) => {
-                    match c {
-                        ReturnPrevious => {
-                            return HttpResponse::Ok().json(prev);
-                        },
-
-                        Return(s) => state.get(&s) {
-                            Some(data) => {
-                                return HttpResponse::Ok().json(out);
-                            },
-                            None => panic!(\\"attempting to return a value that doesn't exist\\")
-                        }
-                    };
-                },
-                Instruction(i) => {
-                    prev = match i {
-                        
-                Instr::Insert_wrapStore{insert_var_name} => {
-                    let to_insert = match state.get(insert_var_name).unwrap() {
-                        wrapperInstance(r) => r,
-                        _ => panic!(\\"invalid insertion type\\")
-                    };
-
-                    match insert_wrapStore(&client, to_insert).await {
-                        Ok(()) => AnyType::None,
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                },
-
-                Instr::Query_wrapStore(v) => {
-                    match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => AnyType::QueryResultwrapStore(out),
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                }
-                    };
-
-                    if let Err(e) = prev {
-                        println!(\\"Error: {}\\", e);
+            let prev = match o {
+                
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
-                }
+                },
+
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+
+                        Op::Insert_wrapStore(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::wrapper(r) => r,
+                                _ => panic!(\\"invalid insertion type\\")
+                            };
+
+                            match insert_wrapStore(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        },
+Op::Query_wrapStore(spec) => {
+                            match query_interpreter_wrapStore(spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }
             };
+
+            if let Err(e) = prev {
+                println!(\\"Error: {}\\", e);
+                return HttpResponse::BadRequest().finish();
+            }
         }
         return HttpResponse::Ok().json(AnyType::None);
 
@@ -1275,11 +1203,11 @@ conduit_entity_id: Option<i32>
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum Instr {
-        
-    Insert_wrapStore{insert_var_name: String}
-Query_wrapStore{data: querySpec_wrapStore}
-    
+    enum Op {
+        Return(String),
+ReturnPrev,
+Insert_wrapStore(String),
+Query_wrapStore(querySpec_wrapStore)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1287,72 +1215,54 @@ Query_wrapStore{data: querySpec_wrapStore}
     enum AnyType {
         None,
 Err(String),
-simpleInstance(simple),
-wrapperInstance(wrapper),
-querySpec_wrapStore_innardInstance(querySpec_wrapStore_innard),
-querySpec_wrapStoreInstance(querySpec_wrapStore),
-QueryResultwrapStore(Vec<wrapper>)
-    }
-
-    // ControlFlow Interpreter:
-    enum CF {
-        Return(string),
-        ReturnPrevious
+simple(simple),
+wrapper(wrapper),
+wrapStoreResult(Vec<wrapper>),
+querySpec_wrapStore_innard(querySpec_wrapStore_innard),
+querySpec_wrapStore(querySpec_wrapStore)
     }
 
 
-    enum CONDUIT_BYTE_CODE {
-        ControlFlow(CF),
-        Instruction(Instr)
-    }
-
-    async fn conduit_byte_code_interpreter(client: &Client, state: mut &HashMap<String, AnyType>, ops: Vec<CONDUIT_BYTE_CODE>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         while let Some(o) = ops.pop() {
-            match o {
-                ControlFlow(c) => {
-                    match c {
-                        ReturnPrevious => {
-                            return HttpResponse::Ok().json(prev);
-                        },
-
-                        Return(s) => state.get(&s) {
-                            Some(data) => {
-                                return HttpResponse::Ok().json(out);
-                            },
-                            None => panic!(\\"attempting to return a value that doesn't exist\\")
-                        }
-                    };
-                },
-                Instruction(i) => {
-                    prev = match i {
-                        
-                Instr::Insert_wrapStore{insert_var_name} => {
-                    let to_insert = match state.get(insert_var_name).unwrap() {
-                        wrapperInstance(r) => r,
-                        _ => panic!(\\"invalid insertion type\\")
-                    };
-
-                    match insert_wrapStore(&client, to_insert).await {
-                        Ok(()) => AnyType::None,
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                },
-
-                Instr::Query_wrapStore(v) => {
-                    match query_interpreter_wrapStore(v, &client).await {
-                        Ok(out) => AnyType::QueryResultwrapStore(out),
-                        Err(err) => AnyType::Err(err.to_string())
-                    };
-                }
-                    };
-
-                    if let Err(e) = prev {
-                        println!(\\"Error: {}\\", e);
+            let prev = match o {
+                
+                Op::Return(varname) => match state.get(&varname) {
+                    Some(data) => {
+                        return HttpResponse::Ok().json(data);
+                    },
+                    None => {
+                        println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
-                }
+                },
+
+                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+
+                        Op::Insert_wrapStore(insert_var_name) => {
+                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                                AnyType::wrapper(r) => r,
+                                _ => panic!(\\"invalid insertion type\\")
+                            };
+
+                            match insert_wrapStore(&client, to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        },
+Op::Query_wrapStore(spec) => {
+                            match query_interpreter_wrapStore(spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            };
+                        }
             };
+
+            if let Err(e) = prev {
+                println!(\\"Error: {}\\", e);
+                return HttpResponse::BadRequest().finish();
+            }
         }
         return HttpResponse::Ok().json(AnyType::None);
 
