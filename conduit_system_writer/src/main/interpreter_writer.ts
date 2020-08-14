@@ -1,7 +1,7 @@
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { CompiledTypes } from "conduit_compiler";
 
-export function writeOperationInterpreter(manifest: CompiledTypes.Manifest): string {
+export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supportedOps: CompiledTypes.AnyOp[]): string {
     
     const op_match: string[] = []
     const op_type: {name: string, containing: {name: string, type: string}[]}[] = []
@@ -17,7 +17,7 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest): str
         ALL_TYPES_UNION.push({name: `${v.name}Instance`, type: v.name})
     })
 
-    manifest.supportedOperations.forEach(op => {
+    supportedOps.forEach(op => {
         if (op.type === "control flow") {
             return
         }

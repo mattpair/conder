@@ -95,7 +95,6 @@ export type ScopeMap = EntityMap<Entity>
 
 export type Manifest = {
     readonly inScope: ScopeMap
-    readonly supportedOperations: AnyOp[]
 }
 
 export type PrimitiveColumn = Readonly<{

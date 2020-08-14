@@ -5,8 +5,6 @@ import { PreProcedurization, Manifest, Entity, AnyOp, EntityMap } from "../entit
 export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
 
     const inScope: Map<string, Entity> = new Map()
-    const addedOperations: AnyOp[] = [
-    ]
 
     input.forEach(i => {
         switch(i.kind) {
@@ -17,9 +15,6 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
 
             case "HierarchicalStore":
                 inScope.set(i.name, i)
-                addedOperations.push(
-                    {type: "instr", kind: "insert", storeName: i.name}, 
-                    {type: "instr", kind: "query", storeName: i.name})
                 break
             case "Function":
                 break
@@ -28,7 +23,6 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
     })
 
     return {
-        supportedOperations: addedOperations,
         inScope: new EntityMap(inScope)
     }
 }

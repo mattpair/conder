@@ -127,7 +127,25 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
 export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: CompiledTypes.AnyOp[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
-        return Promise.resolve({supportedOps:manifest.supportedOperations })
+        const addedOperations: CompiledTypes.AnyOp[] = [
+        ]
+
+        manifest.inScope.forEach(i => {
+            switch(i.kind) {
+                case "Enum":
+                case "Struct":
+                    break
+    
+                case "HierarchicalStore":
+                    addedOperations.push(
+                        {type: "instr", kind: "insert", storeName: i.name}, 
+                        {type: "instr", kind: "query", storeName: i.name})
+                    break
+                default: assertNever(i)
+            }
+        })
+
+        return Promise.resolve({supportedOps: addedOperations })
     }
 }
 
@@ -137,7 +155,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
     supportedOps: CompiledTypes.AnyOp[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
-    func: ({manifest}) => {
+    func: ({manifest, supportedOps}) => {
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
         const functions: FunctionDef[] = []
@@ -225,7 +243,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             // INTERPRETERS
                             ${interpreters.join("\n")}
                             // OP INTERPRETER
-                            ${writeOperationInterpreter(manifest)}
+                            ${writeOperationInterpreter(manifest, supportedOps)}
                             // FUNCTIONS
                             ${functions.map(f => f.def).join("\n\n")}
                     
