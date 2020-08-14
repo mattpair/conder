@@ -88,11 +88,6 @@ export type Instruction =
 
 export type AnyOp = ControlFlowOp | Instruction
 
-export type Function = basic.NamedIntrafile<"Function", {
-    returnType: ReturnType
-    operations: AnyOp[]
-    param: Parameter
-}>
 export type Entity = Struct | Enum  | HierarchicalStore
 export type ScopeMap = EntityMap<Entity>
 

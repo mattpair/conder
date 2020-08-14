@@ -16,36 +16,36 @@ function toRustType(p: CompiledTypes.ReturnType): string {
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
-function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): FunctionDef {
+// function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): FunctionDef {
     
-    let parameters: string[] = []
-    let extractors: string[] = []
-    let method: "post" | "get" = "get"
-    let statement: string = ''
-    let preFunction: string = ''
+//     let parameters: string[] = []
+//     let extractors: string[] = []
+//     let method: "post" | "get" = "get"
+//     let statement: string = ''
+//     let preFunction: string = ''
 
-    extractors.push("let client = &data.client;")
-    parameters.push("data: web::Data<AppData>")
+//     extractors.push("let client = &data.client;")
+//     parameters.push("data: web::Data<AppData>")
 
-    const param = func.param.differentiate()
-    if (param.kind === "UnaryParameter") {
-        method = "post"
-        extractors.push(`state.insert("__input".to_string(), AnyType::${param.type.val.name}Instance(input.into_inner())); `)
-        parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
-    }
+//     const param = func.param.differentiate()
+//     if (param.kind === "UnaryParameter") {
+//         method = "post"
+//         extractors.push(`state.insert("__input".to_string(), AnyType::${param.type.val.name}Instance(input.into_inner())); `)
+//         parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
+//     }
 
 
-    const external = `
-    async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
-        let mut state = HashMap::new();
-        ${extractors.join("\n")}
+//     const external = `
+//     async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
+//         let mut state = HashMap::new();
+//         ${extractors.join("\n")}
         
-        return conduit_byte_code_interpreter(&client, &state, vec![]).await;
-    }
+//         return conduit_byte_code_interpreter(&client, &state, vec![]).await;
+//     }
             
-    `
-    return {def: `${preFunction}\n${external}`, func_name: `external_${func.name}`, path: func.name, method}
-}
+//     `
+//     return {def: `${preFunction}\n${external}`, func_name: `external_${func.name}`, path: func.name, method}
+// }
 
 function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
     const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
