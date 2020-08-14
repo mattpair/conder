@@ -19,9 +19,6 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supp
     })
 
     supportedOps.forEach(op => {
-        if (op.type === "control flow") {
-            return
-        }
         switch(op.kind) {
             case "insert": {
                 const store = manifest.inScope.getEntityOfType(op.storeName, "HierarchicalStore")
@@ -58,6 +55,11 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supp
                 }`)
                 break
             }
+
+            case "returnPrevious":
+            case "return":
+                break
+            
             default: assertNever(op)
         }
     })
