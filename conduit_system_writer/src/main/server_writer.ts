@@ -24,62 +24,76 @@ function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<st
     let statement: string = ''
     let preFunction: string = ''
 
-    switch (func.operation.kind) {
-        case "noop":
-            statement = `HttpResponse::Ok();`
-            break
-        case "return input":
-            method = "post"
-            extractors.push(`let body = input.into_inner();`)
-            parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
-            statement = `HttpResponse::Ok().json(body);`
-            break
-        case "query":
-            const getAllStore = storeMap.get(func.operation.storeName)
-            extractors.push("let client = &data.client;")
-            parameters.push("data: web::Data<AppData>")
+    extractors.push("let client = &data.client;")
+    parameters.push("data: web::Data<AppData>")
 
-            statement = `match query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await {
-                Ok(out) => HttpResponse::Ok().json(out),
-                Err(err) => {
-                    eprintln!("Failure caused by: {}", err);
-                    HttpResponse::BadRequest().finish()
-                }
-            };`
-            break
-        case "insert":
-            method = "post"
-            const store =storeMap.get(func.operation.storeName)
-            parameters.push("data: web::Data<AppData>")
-            parameters.push(`input: web::Json<${store.typeName}>`)
-            extractors.push("let client = &data.client;")
-            
-            let retNum = 0 
-            let retGen = () => retNum++
-            const funcname = `insert_${func.operation.storeName}`
-            
-            preFunction = `
-            async fn ${funcname}(client: &Client, body: ${store.typeName}) -> Result<(), Error> {
-                ${generateInsertRustCode(store, "body", {kind: "drop"}, retGen).join("\n")}
-                return Ok(());
-            }
-            `
-            extractors.push('let body = input.into_inner();')
-            statement = ` match ${funcname}(&client, body).await {
-                Ok(()) => HttpResponse::Ok(),
-                Err(err) => {
-                    eprintln!("Failure caused by: {}", err);
-                    HttpResponse::BadRequest()
-                }
-            };`
-            break
-
-        default: assertNever(func.operation)
+    const param = func.param.differentiate()
+    if (param.kind === "UnaryParameter") {
+        method = "post"
+        extractors.push(`state.insert("__input".to_string(), AnyType::${param.type.val.name}Instance(input.into_inner())); `)
+        parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
     }
+
+
+
+    if (func.operations.some(o => ["insert", "query"].includes(o.kind))) {
+
+    }
+
+    // switch (func.operations.kind) {
+    
+    //     case "return input":
+    //         method = "post"
+    //         extractors.push(`let body = input.into_inner();`)
+    //         parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
+    //         statement = `HttpResponse::Ok().json(body);`
+    //         break
+    //     case "query":
+    //         const getAllStore = storeMap.get(func.operation.storeName)
+
+    //         statement = `match query_interpreter_${getAllStore.name}(${generateRustGetAllQuerySpec(getAllStore)}, client).await {
+    //             Ok(out) => HttpResponse::Ok().json(out),
+    //             Err(err) => {
+    //                 eprintln!("Failure caused by: {}", err);
+    //                 HttpResponse::BadRequest().finish()
+    //             }
+    //         };`
+    //         break
+    //     case "insert":
+    //         method = "post"
+    //         const store =storeMap.get(func.operations.storeName)
+    //         parameters.push("data: web::Data<AppData>")
+    //         parameters.push(`input: web::Json<${store.typeName}>`)
+    //         extractors.push("let client = &data.client;")
+            
+    //         let retNum = 0 
+    //         let retGen = () => retNum++
+    //         const funcname = `insert_${func.operations.storeName}`
+            
+    //         preFunction = `
+    //         async fn ${funcname}(client: &Client, body: ${store.typeName}) -> Result<(), Error> {
+    //             ${generateInsertRustCode(store, "body", {kind: "drop"}, retGen).join("\n")}
+    //             return Ok(());
+    //         }
+    //         `
+    //         extractors.push('let body = input.into_inner();')
+    //         statement = ` match ${funcname}(&client, body).await {
+    //             Ok(()) => HttpResponse::Ok(),
+    //             Err(err) => {
+    //                 eprintln!("Failure caused by: {}", err);
+    //                 HttpResponse::BadRequest()
+    //             }
+    //         };`
+    //         break
+
+    //     default: assertNever(func.operation)
+    // }
     const external = `
     async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
+        let mut state = HashMap::new();
         ${extractors.join("\n")}
-        return ${statement}
+        
+        return conduit_byte_code_interpreter(&client, &state, )
     }
             
     `

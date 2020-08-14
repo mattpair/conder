@@ -1,11 +1,12 @@
 import { assertNever } from '../utils';
-import { PreProcedurization, Manifest, Entity, Operation, EntityMap } from "../entity/resolved";
+import { PreProcedurization, Manifest, Entity, AnyOp, EntityMap } from "../entity/resolved";
 
 
 export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
 
     const inScope: Map<string, Entity> = new Map()
-    const supportedOperations: Operation[] = [{kind: "return input"}, {kind: "noop"}]
+    const addedOperations: AnyOp[] = [
+    ]
 
     input.forEach(i => {
         switch(i.kind) {
@@ -16,20 +17,23 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
 
             case "HierarchicalStore":
                 inScope.set(i.name, i)
-                supportedOperations.push({kind: "insert", storeName: i.name}, {kind: "query", storeName: i.name})
+                addedOperations.push(
+                    {type: "instr", kind: "insert", storeName: i.name}, 
+                    {type: "instr", kind: "query", storeName: i.name})
                 break
             case "Function":
-                const operation: Operation = convertToOp(i)
+                const operations: AnyOp[] = convertToOps(i)
                 
                 
-                if (operation === undefined) {
+                if (operations === undefined) {
                     throw Error(`Unable to convert function ${i.name} into an operation`)
                 }
                 inScope.set(i.name, {
                     kind: "Function",
                     name: i.name,
-                    operation,
-                    returnType: i.returnType
+                    operations,
+                    returnType: i.returnType,
+                    param: i.parameter
                 })
                 break
             default: assertNever(i)
@@ -37,16 +41,14 @@ export function procedurize(input: PreProcedurization.ScopeMap): Manifest {
     })
 
     return {
-        supportedOperations,
+        supportedOperations: addedOperations,
         inScope: new EntityMap(inScope)
     }
 }
 
-function convertToOp(i: PreProcedurization.Function): Operation | undefined {
+function convertToOps(i: PreProcedurization.Function): AnyOp[] {
     if (i.body.statements.length === 0) {
-        return {
-            kind: "noop"
-        }
+        return []
     }
 
     const param =i.parameter.differentiate()
@@ -54,22 +56,26 @@ function convertToOp(i: PreProcedurization.Function): Operation | undefined {
     
         const ref = i.body.statements[i.body.statements.length - 1]
         if (ref.kind === "StoreReference") {
-            return {
+            return [{
+                type: "instr",
                 kind: "query",
                 storeName: ref.from.name
-            }
+            }, {type: "control flow", kind: 'return', name: "__query"}]
         }
         
     } else {
         const insert = i.body.statements.find(s => s.kind === "Append") as PreProcedurization.Append
         if (insert !== undefined) {
-            return {
+            return [{
+                type: "instr",
                 kind: "insert",
                 storeName: insert.into.name
-            }
+            }]
         }
-        return {
-            kind: "return input"
-        }
+        return [{
+            type: "control flow",
+            kind: "return",
+            name: "__input"
+        }]
     }
 }

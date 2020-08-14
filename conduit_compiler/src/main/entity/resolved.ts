@@ -78,14 +78,20 @@ export namespace PreProcedurization {
     export type ScopeMap = EntityMap<Struct | Enum | PreProcedurization.Function | HierarchicalStore>
 }
 
-export type Operation = {readonly kind: "return input"} 
-| {readonly kind: "noop"} 
-| {readonly kind: "insert", readonly storeName: string}
-| {readonly kind: "query", readonly storeName: string}
+export type ControlFlowOp = Readonly<{type: "control flow", kind: "return", name: string} | {type: "control flow", kind: "return previous"}>
+
+type Instr<s extends string, DATA={}> = Readonly<{type: "instr", kind: s} & DATA>
+
+export type Instruction = 
+| Instr<"insert", {storeName: string}>
+| Instr<"query", {storeName: string}>
+
+export type AnyOp = ControlFlowOp | Instruction
 
 export type Function = basic.NamedIntrafile<"Function", {
     returnType: ReturnType
-    operation: Operation
+    operations: AnyOp[]
+    param: Parameter
 }>
 export type Entity = Struct | Enum | Function | HierarchicalStore
 export type ScopeMap = EntityMap<Entity>
@@ -94,7 +100,7 @@ export type ScopeMap = EntityMap<Entity>
 
 export type Manifest = {
     readonly inScope: ScopeMap
-    readonly supportedOperations: Operation[]
+    readonly supportedOperations: AnyOp[]
 }
 
 export type PrimitiveColumn = Readonly<{
