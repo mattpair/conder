@@ -17,7 +17,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             {
                 rustEnumMember: `Return(String)`,
                 rustOpHandler: `
-                Op::Return(varname) => match state.get(&varname) {
+                Op::Return(varname) => match state.get(varname) {
                     Some(data) => {
                         return HttpResponse::Ok().json(data);
                     },
@@ -46,15 +46,15 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     addedOperations.push({
                         rustOpHandler: `
                         Op::Insert_${store.name}(insert_var_name) => {
-                            let to_insert = match state.get(&insert_var_name).unwrap() {
+                            let to_insert = match state.get(insert_var_name).unwrap() {
                                 AnyType::${store.typeName}(r) => r,
                                 _ => panic!("invalid insertion type")
                             };
 
-                            match insert_${store.name}(&client, to_insert).await {
+                            match insert_${store.name}(&client, &to_insert).await {
                                 Ok(()) => AnyType::None,
                                 Err(err) => AnyType::Err(err.to_string())
-                            };
+                            }
                         }`,
                         rustEnumMember: `Insert_${store.name}(String)`
                     })
@@ -65,7 +65,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             match query_interpreter_${store.name}(spec, &client).await {
                                 Ok(out) => AnyType::${store.name}Result(out),
                                 Err(err) => AnyType::Err(err.to_string())
-                            };
+                            }
                         }`
                     })
                     break

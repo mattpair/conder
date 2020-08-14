@@ -16,37 +16,6 @@ function toRustType(p: CompiledTypes.ReturnType): string {
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
-// function generateFunction(func: CompiledTypes.Function, storeMap: ReadonlyMap<string, CompiledTypes.HierarchicalStore>): FunctionDef {
-    
-//     let parameters: string[] = []
-//     let extractors: string[] = []
-//     let method: "post" | "get" = "get"
-//     let statement: string = ''
-//     let preFunction: string = ''
-
-//     extractors.push("let client = &data.client;")
-//     parameters.push("data: web::Data<AppData>")
-
-//     const param = func.param.differentiate()
-//     if (param.kind === "UnaryParameter") {
-//         method = "post"
-//         extractors.push(`state.insert("__input".to_string(), AnyType::${param.type.val.name}Instance(input.into_inner())); `)
-//         parameters.push(`input: web::Json<${toRustType(func.returnType)}>`)
-//     }
-
-
-//     const external = `
-//     async fn external_${func.name}(${parameters.join(", ")}) -> impl Responder {
-//         let mut state = HashMap::new();
-//         ${extractors.join("\n")}
-        
-//         return conduit_byte_code_interpreter(&client, &state, vec![]).await;
-//     }
-            
-//     `
-//     return {def: `${preFunction}\n${external}`, func_name: `external_${func.name}`, path: func.name, method}
-// }
-
 function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
     const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
         const field_type = field.part.FieldType.differentiate()
@@ -149,6 +118,18 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
         stores.forEach(v => {
             creates.push(createSQLFor(v)); 
             interpreters.push(generateQueryInterpreter(v))
+            let retNum = 0 
+            let retGen = () => retNum++
+            const funcname = `insert_${v.name}`
+
+            const insertInterpreter = `
+            async fn ${funcname}(client: &Client, body: &${v.typeName}) -> Result<(), Error> {
+                ${generateInsertRustCode(v, "body", {kind: "drop"}, retGen).join("\n")}
+                return Ok(());
+            }
+            `
+
+            interpreters.push(insertInterpreter)
         })
 
         return Promise.resolve({
@@ -187,6 +168,8 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             #![allow(non_snake_case)]
                             #![allow(non_camel_case_types)]
                             #![allow(redundant_semicolon)]
+                            #![allow(unused_variables)]
+                            #![allow(dead_code)]
                             use tokio_postgres::{NoTls, Client};
                             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
                             use std::env;

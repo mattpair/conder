@@ -145,7 +145,7 @@ export function generateInsertRustCode(store: CompiledTypes.HierarchicalStore, v
                     const optionalChildInsertions = generateInsertRustCode(c.ref, unwrapped, {kind: "save", name: returnedId}, nextReturnId)
                     const optionalReturnId = `optional${nextReturnId()}`
                     inserts.push(`
-                        let ${optionalReturnId}: Option<i32> = match ${varname}.${c.fieldName} {
+                        let ${optionalReturnId}: Option<i32> = match &${varname}.${c.fieldName} {
                             Some(${unwrapped}) => {
                                 ${optionalChildInsertions.join('\n')}
 
@@ -377,7 +377,7 @@ export function generateQueryInterpreter(store: CompiledTypes.HierarchicalStore)
     let n = 0
 
     return `
-    async fn query_interpreter_${store.name}(querySpec: ${store.specName}, client: &Client) -> Result<Vec<${store.typeName}>, Error> {
+    async fn query_interpreter_${store.name}(querySpec: &${store.specName}, client: &Client) -> Result<Vec<${store.typeName}>, Error> {
         ${generateQueryInterpreterInternal("querySpec", store, () => n++, "out", '')}
         return Ok(out);
     }

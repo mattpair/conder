@@ -38,15 +38,18 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supp
 
     async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
-        while let Some(o) = ops.pop() {
-            let prev = match o {
+        for o in &ops {
+            prev = match o {
                 ${supportedOps.map(o => o.rustOpHandler).join(",\n")}
             };
 
-            if let Err(e) = prev {
-                println!("Error: {}", e);
-                return HttpResponse::BadRequest().finish();
-            }
+            match prev {
+                AnyType::Err(e) => {
+                    println!("Error: {}", e);
+                    return HttpResponse::BadRequest().finish();
+                },
+                _ => {}  
+            };
         }
         return HttpResponse::Ok().json(AnyType::None);
 
