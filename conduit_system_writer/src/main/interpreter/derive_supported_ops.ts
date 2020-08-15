@@ -9,6 +9,18 @@ export interface OpDef {
     readonly rustOpHandler: string
 }
 
+interface OpInstance {
+    // These fields are based on the Interpreter writer's op field.
+    kind: string
+    data: any
+}
+
+export interface OpFactory {
+    makeReturnVariableOp(varname: string): OpInstance
+    makeReturnPrevious(): OpInstance
+    makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance
+    makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance
+}
 
 export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[]}> = {
     stepName: "deriving supported operations",
