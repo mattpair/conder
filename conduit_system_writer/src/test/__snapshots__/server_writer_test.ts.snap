@@ -189,23 +189,23 @@ querySpec_wrapStore(querySpec_wrapStore)
 
                 Op::ReturnPrev => return HttpResponse::Ok().json(prev),
 
-                        Op::Insert_wrapStore(insert_var_name) => {
-                            let to_insert = match state.get(insert_var_name).unwrap() {
-                                AnyType::wrapper(r) => r,
-                                _ => panic!(\\"invalid insertion type\\")
-                            };
+            Op::Insert_wrapStore(insert_var_name) => {
+                let to_insert = match state.get(insert_var_name).unwrap() {
+                    AnyType::wrapper(r) => r,
+                    _ => panic!(\\"invalid insertion type\\")
+                };
 
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        },
+                match insert_wrapStore(&client, &to_insert).await {
+                    Ok(()) => AnyType::None,
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            },
 Op::Query_wrapStore(spec) => {
-                            match query_interpreter_wrapStore(spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        }
+                match query_interpreter_wrapStore(spec, &client).await {
+                    Ok(out) => AnyType::wrapStoreResult(out),
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            }
             };
 
             match prev {
@@ -478,23 +478,23 @@ querySpec_wrapStore(querySpec_wrapStore)
 
                 Op::ReturnPrev => return HttpResponse::Ok().json(prev),
 
-                        Op::Insert_wrapStore(insert_var_name) => {
-                            let to_insert = match state.get(insert_var_name).unwrap() {
-                                AnyType::wrapper(r) => r,
-                                _ => panic!(\\"invalid insertion type\\")
-                            };
+            Op::Insert_wrapStore(insert_var_name) => {
+                let to_insert = match state.get(insert_var_name).unwrap() {
+                    AnyType::wrapper(r) => r,
+                    _ => panic!(\\"invalid insertion type\\")
+                };
 
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        },
+                match insert_wrapStore(&client, &to_insert).await {
+                    Ok(()) => AnyType::None,
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            },
 Op::Query_wrapStore(spec) => {
-                            match query_interpreter_wrapStore(spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        }
+                match query_interpreter_wrapStore(spec, &client).await {
+                    Ok(out) => AnyType::wrapStoreResult(out),
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            }
             };
 
             match prev {
@@ -759,23 +759,23 @@ querySpec_simpleStore(querySpec_simpleStore)
 
                 Op::ReturnPrev => return HttpResponse::Ok().json(prev),
 
-                        Op::Insert_simpleStore(insert_var_name) => {
-                            let to_insert = match state.get(insert_var_name).unwrap() {
-                                AnyType::simple(r) => r,
-                                _ => panic!(\\"invalid insertion type\\")
-                            };
+            Op::Insert_simpleStore(insert_var_name) => {
+                let to_insert = match state.get(insert_var_name).unwrap() {
+                    AnyType::simple(r) => r,
+                    _ => panic!(\\"invalid insertion type\\")
+                };
 
-                            match insert_simpleStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        },
+                match insert_simpleStore(&client, &to_insert).await {
+                    Ok(()) => AnyType::None,
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            },
 Op::Query_simpleStore(spec) => {
-                            match query_interpreter_simpleStore(spec, &client).await {
-                                Ok(out) => AnyType::simpleStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        }
+                match query_interpreter_simpleStore(spec, &client).await {
+                    Ok(out) => AnyType::simpleStoreResult(out),
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            }
             };
 
             match prev {
@@ -1038,23 +1038,23 @@ querySpec_wrapStore(querySpec_wrapStore)
 
                 Op::ReturnPrev => return HttpResponse::Ok().json(prev),
 
-                        Op::Insert_wrapStore(insert_var_name) => {
-                            let to_insert = match state.get(insert_var_name).unwrap() {
-                                AnyType::wrapper(r) => r,
-                                _ => panic!(\\"invalid insertion type\\")
-                            };
+            Op::Insert_wrapStore(insert_var_name) => {
+                let to_insert = match state.get(insert_var_name).unwrap() {
+                    AnyType::wrapper(r) => r,
+                    _ => panic!(\\"invalid insertion type\\")
+                };
 
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        },
+                match insert_wrapStore(&client, &to_insert).await {
+                    Ok(()) => AnyType::None,
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            },
 Op::Query_wrapStore(spec) => {
-                            match query_interpreter_wrapStore(spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        }
+                match query_interpreter_wrapStore(spec, &client).await {
+                    Ok(out) => AnyType::wrapStoreResult(out),
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            }
             };
 
             match prev {
@@ -1324,23 +1324,23 @@ querySpec_wrapStore(querySpec_wrapStore)
 
                 Op::ReturnPrev => return HttpResponse::Ok().json(prev),
 
-                        Op::Insert_wrapStore(insert_var_name) => {
-                            let to_insert = match state.get(insert_var_name).unwrap() {
-                                AnyType::wrapper(r) => r,
-                                _ => panic!(\\"invalid insertion type\\")
-                            };
+            Op::Insert_wrapStore(insert_var_name) => {
+                let to_insert = match state.get(insert_var_name).unwrap() {
+                    AnyType::wrapper(r) => r,
+                    _ => panic!(\\"invalid insertion type\\")
+                };
 
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        },
+                match insert_wrapStore(&client, &to_insert).await {
+                    Ok(()) => AnyType::None,
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            },
 Op::Query_wrapStore(spec) => {
-                            match query_interpreter_wrapStore(spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
-                            }
-                        }
+                match query_interpreter_wrapStore(spec, &client).await {
+                    Ok(out) => AnyType::wrapStoreResult(out),
+                    Err(err) => AnyType::Err(err.to_string())
+                }
+            }
             };
 
             match prev {
