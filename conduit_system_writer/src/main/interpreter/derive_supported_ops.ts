@@ -24,11 +24,17 @@ export interface OpFactory {
 class TheOpFactory implements OpFactory {
 
     makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance {
-        return undefined
+        return {
+            kind: this.insertOpName(store),
+            data: varname
+        }
     }
 
     makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance {
-        return undefined
+        return {
+            kind: this.queryOpName(store),
+            data: undefined
+        }
     }
 
     private insertOpName(store: CompiledTypes.HierarchicalStore): string {
@@ -69,11 +75,17 @@ class TheOpFactory implements OpFactory {
     }
 
     makeReturnVariableOp(varname: string): OpInstance {
-        return undefined
+        return {
+            kind: "Return",
+            data: varname
+        }
     }
 
     makeReturnPrevious(): OpInstance {
-        return undefined
+        return {
+            kind: "ReturnPrev",
+            data: undefined
+        }
     }
 }
 
