@@ -63,8 +63,8 @@ class TheOpFactory implements OpFactory {
         }
         const queryOp = {
             rustEnumMember: `${this.queryOpName(store)}(${store.specName})`,
-            rustOpHandler: `Op::${this.queryOpName(store)}(spec) => {
-                match query_interpreter_${store.name}(spec, &client).await {
+            rustOpHandler: `Op::${this.queryOpName(store)} => {
+                match query_interpreter_${store.name}(${store.name}spec, &client).await {
                     Ok(out) => AnyType::${store.name}Result(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }

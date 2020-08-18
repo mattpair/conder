@@ -200,8 +200,8 @@ querySpec_wrapStore(querySpec_wrapStore)
                     Err(err) => AnyType::Err(err.to_string())
                 }
             },
-Op::Query_wrapStore(spec) => {
-                match query_interpreter_wrapStore(spec, &client).await {
+Op::Query_wrapStore => {
+                match query_interpreter_wrapStore(wrapStorespec, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -489,8 +489,8 @@ querySpec_wrapStore(querySpec_wrapStore)
                     Err(err) => AnyType::Err(err.to_string())
                 }
             },
-Op::Query_wrapStore(spec) => {
-                match query_interpreter_wrapStore(spec, &client).await {
+Op::Query_wrapStore => {
+                match query_interpreter_wrapStore(wrapStorespec, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -770,8 +770,8 @@ querySpec_simpleStore(querySpec_simpleStore)
                     Err(err) => AnyType::Err(err.to_string())
                 }
             },
-Op::Query_simpleStore(spec) => {
-                match query_interpreter_simpleStore(spec, &client).await {
+Op::Query_simpleStore => {
+                match query_interpreter_simpleStore(simpleStorespec, &client).await {
                     Ok(out) => AnyType::simpleStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -1049,8 +1049,8 @@ querySpec_wrapStore(querySpec_wrapStore)
                     Err(err) => AnyType::Err(err.to_string())
                 }
             },
-Op::Query_wrapStore(spec) => {
-                match query_interpreter_wrapStore(spec, &client).await {
+Op::Query_wrapStore => {
+                match query_interpreter_wrapStore(wrapStorespec, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -1335,8 +1335,8 @@ querySpec_wrapStore(querySpec_wrapStore)
                     Err(err) => AnyType::Err(err.to_string())
                 }
             },
-Op::Query_wrapStore(spec) => {
-                match query_interpreter_wrapStore(spec, &client).await {
+Op::Query_wrapStore => {
+                match query_interpreter_wrapStore(wrapStorespec, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
