@@ -31,10 +31,18 @@ class TheOpFactory implements OpFactory {
         return undefined
     }
 
+    private insertOpName(store: CompiledTypes.HierarchicalStore): string {
+        return `Insert_${store.name}`
+    }
+
+    private queryOpName(store: CompiledTypes.HierarchicalStore): string {
+        return `Query_${store.name}`      
+    }
+
     inferStoreOps(store: CompiledTypes.HierarchicalStore): OpDef[] {
         const insertOp = {
             rustOpHandler: `
-            Op::Insert_${store.name}(insert_var_name) => {
+            Op::${this.insertOpName(store)}(insert_var_name) => {
                 let to_insert = match state.get(insert_var_name).unwrap() {
                     AnyType::${store.typeName}(r) => r,
                     _ => panic!("invalid insertion type")
@@ -45,11 +53,11 @@ class TheOpFactory implements OpFactory {
                     Err(err) => AnyType::Err(err.to_string())
                 }
             }`,
-            rustEnumMember: `Insert_${store.name}(String)`
+            rustEnumMember: `${this.insertOpName(store)}(String)`
         }
         const queryOp = {
-            rustEnumMember: `Query_${store.name}(${store.specName})`,
-            rustOpHandler: `Op::Query_${store.name}(spec) => {
+            rustEnumMember: `${this.queryOpName(store)}(${store.specName})`,
+            rustOpHandler: `Op::${this.queryOpName(store)}(spec) => {
                 match query_interpreter_${store.name}(spec, &client).await {
                     Ok(out) => AnyType::${store.name}Result(out),
                     Err(err) => AnyType::Err(err.to_string())
