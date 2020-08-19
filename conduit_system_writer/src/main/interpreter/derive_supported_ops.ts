@@ -15,9 +15,9 @@ export interface OpInstance {
 }
 
 export interface OpFactory {
-    makeReturnVariableOp(varname: string): OpInstance
+    makeReturnVariableOp(var_id: number): OpInstance
     makeReturnPrevious(): OpInstance
-    makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance
+    makeInsert(store: CompiledTypes.HierarchicalStore, varname: number): OpInstance
     makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance
 }
 
@@ -45,7 +45,7 @@ class DataContainingType implements AllTypeInternal {
 
 class TheOpFactory implements OpFactory {
 
-    makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance {
+    makeInsert(store: CompiledTypes.HierarchicalStore, varname: number): OpInstance {
         return {
             kind: this.insertOpName(store),
             data: varname
@@ -70,10 +70,22 @@ class TheOpFactory implements OpFactory {
     inferStoreOps(store: CompiledTypes.HierarchicalStore): OpDef[] {
         const insertOp = {
             rustOpHandler: `
-            Op::${this.insertOpName(store)}(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::${store.typeName}(r) => r,
-                    _ => panic!("invalid insertion type")
+            Op::${this.insertOpName(store)}(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::${store.typeName}(r) => r,
+                        _ => {
+                            println!("invalid insertion type");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!("Could not find variable for insertion");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_${store.name}(&client, &to_insert).await {
@@ -81,7 +93,7 @@ class TheOpFactory implements OpFactory {
                     Err(err) => AnyType::Err(err.to_string())
                 }
             }`,
-            rustEnumMember: `${this.insertOpName(store)}(String)`
+            rustEnumMember: `${this.insertOpName(store)}(usize)`
         }
         const queryOp = {
             rustEnumMember: `${this.queryOpName(store)}`,
@@ -97,7 +109,7 @@ class TheOpFactory implements OpFactory {
         return [insertOp, queryOp]
     }
 
-    makeReturnVariableOp(varname: string): OpInstance {
+    makeReturnVariableOp(varname: number): OpInstance {
         return {
             kind: "Return",
             data: varname
@@ -148,9 +160,9 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         const opFactory = new TheOpFactory()
         const addedOperations: OpDef[] = [
             {
-                rustEnumMember: `Return(String)`,
+                rustEnumMember: `Return(usize)`,
                 rustOpHandler: `
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => ${returnAnyType("data")},
                     None => {
                         println!("attempting to return a value that doesn't exist");

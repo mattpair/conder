@@ -8,6 +8,7 @@ export type WritableFunction = Readonly<{
     method: "POST" | "GET"
     body: OpInstance[],
     parameter: Parameter
+    maximumNumberOfVariables: number
 }>
 
 export const functionToByteCode: Utilities.StepDefinition<
@@ -30,15 +31,40 @@ export const functionToByteCode: Utilities.StepDefinition<
     }
 }
 
+class VarMap extends Map<string, number> {
+    private count = 0
+    maximumVars = 0
+
+    public add(s: string): number {
+        super.set(s, this.count);
+        const v = this.count++
+        this.maximumVars = Math.max(this.maximumVars, v)
+        return v
+    }
+    
+    public get(s: string): number {
+        const ret = super.get(s)
+        if (ret === undefined) {
+            throw Error(`Failure looking up variable ${s}`)
+        }
+        return ret
+    }
+}
+
 function convertFunction(f: CompiledTypes.Function, factory: OpFactory): WritableFunction {
     const body: OpInstance[] = []
+    const varmap = new VarMap()
+    const parameter = f.parameter.differentiate()
+    if (parameter.kind === "UnaryParameter") {
+        varmap.add(parameter.name)
+    }
 
     for (let j = 0; j < f.body.statements.length; j++) {
         const stmt = f.body.statements[j]
         switch(stmt.kind) {
             
             case "Append":
-                body.push(factory.makeInsert(stmt.into, stmt.inserting.name))
+                body.push(factory.makeInsert(stmt.into, varmap.get(stmt.inserting.name)))
                 break
             
             case "ReturnStatement":
@@ -64,7 +90,8 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory): Writabl
                         )
                         break
                     case "VariableReference":
-                        body.push(factory.makeReturnVariableOp(next.name))
+                        const varindex = varmap.get(next.name)                        
+                        body.push(factory.makeReturnVariableOp(varindex))
                         break
                     default: assertNever(next)
                 }
@@ -80,6 +107,7 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory): Writabl
         name: f.name,
         method: f.method,
         body,
-        parameter: f.parameter
+        parameter: f.parameter,
+        maximumNumberOfVariables: varmap.maximumVars
     }
 }

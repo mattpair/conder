@@ -121,7 +121,7 @@ function writeFunction(f: WritableFunction): FunctionDef {
     {
         param: `, input: web::Json<${toRustType(param.type)}>`, 
         extract: `
-        state.insert("${param.name}".to_string(), ${toAnyType(param.type)}(input.into_inner()));
+        state.push(${toAnyType(param.type)}(input.into_inner()));
         `
     }
 
@@ -130,7 +130,7 @@ function writeFunction(f: WritableFunction): FunctionDef {
         def: `
         
         async fn ${f.name}(data: web::Data<AppData>${input.param}) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(${f.maximumNumberOfVariables});
             ${input.extract}
             return conduit_byte_code_interpreter(&data.client, &state, &data.${exec_name}).await;
         }

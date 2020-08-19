@@ -154,9 +154,9 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(String),
+        Return(usize),
 ReturnPrev,
-Insert_wrapStore(String),
+Insert_wrapStore(usize),
 Query_wrapStore
     }
 
@@ -177,12 +177,12 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
                 
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
@@ -218,10 +218,22 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             }
             ,
 
-            Op::Insert_wrapStore(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::wrapper(r) => r,
-                    _ => panic!(\\"invalid insertion type\\")
+            Op::Insert_wrapStore(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::wrapper(r) => r,
+                        _ => {
+                            println!(\\"invalid insertion type\\");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!(\\"Could not find variable for insertion\\");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_wrapStore(&client, &to_insert).await {
@@ -257,9 +269,9 @@ Op::Query_wrapStore => {
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.insert(\\"s\\".to_string(), AnyType::wrapper(input.into_inner()));
+        state.push(AnyType::wrapper(input.into_inner()));
         
             return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
         }
@@ -324,7 +336,7 @@ Op::Query_wrapStore => {
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
-    \\"data\\": \\"s\\"
+    \\"data\\": 0
   }
 ]\\"#####).unwrap()
                                 });
@@ -490,9 +502,9 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(String),
+        Return(usize),
 ReturnPrev,
-Insert_wrapStore(String),
+Insert_wrapStore(usize),
 Query_wrapStore
     }
 
@@ -513,12 +525,12 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
                 
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
@@ -554,10 +566,22 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             }
             ,
 
-            Op::Insert_wrapStore(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::wrapper(r) => r,
-                    _ => panic!(\\"invalid insertion type\\")
+            Op::Insert_wrapStore(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::wrapper(r) => r,
+                        _ => {
+                            println!(\\"invalid insertion type\\");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!(\\"Could not find variable for insertion\\");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_wrapStore(&client, &to_insert).await {
@@ -593,9 +617,9 @@ Op::Query_wrapStore => {
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.insert(\\"s\\".to_string(), AnyType::wrapper(input.into_inner()));
+        state.push(AnyType::wrapper(input.into_inner()));
         
             return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
         }
@@ -604,7 +628,7 @@ Op::Query_wrapStore => {
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
         }
@@ -670,7 +694,7 @@ Op::Query_wrapStore => {
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
-    \\"data\\": \\"s\\"
+    \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -838,9 +862,9 @@ conduit_entity_id: Option<i32>
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(String),
+        Return(usize),
 ReturnPrev,
-Insert_simpleStore(String),
+Insert_simpleStore(usize),
 Query_simpleStore
     }
 
@@ -857,12 +881,12 @@ ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
                 
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
@@ -890,10 +914,22 @@ AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(out
             }
             ,
 
-            Op::Insert_simpleStore(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::simple(r) => r,
-                    _ => panic!(\\"invalid insertion type\\")
+            Op::Insert_simpleStore(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::simple(r) => r,
+                        _ => {
+                            println!(\\"invalid insertion type\\");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!(\\"Could not find variable for insertion\\");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_simpleStore(&client, &to_insert).await {
@@ -927,9 +963,9 @@ Op::Query_simpleStore => {
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.insert(\\"s\\".to_string(), AnyType::simple(input.into_inner()));
+        state.push(AnyType::simple(input.into_inner()));
         
             return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
         }
@@ -938,7 +974,7 @@ Op::Query_simpleStore => {
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
         }
@@ -1004,7 +1040,7 @@ Op::Query_simpleStore => {
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_simpleStore\\",
-    \\"data\\": \\"s\\"
+    \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -1168,9 +1204,9 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(String),
+        Return(usize),
 ReturnPrev,
-Insert_wrapStore(String),
+Insert_wrapStore(usize),
 Query_wrapStore
     }
 
@@ -1191,12 +1227,12 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
                 
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
@@ -1232,10 +1268,22 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             }
             ,
 
-            Op::Insert_wrapStore(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::wrapper(r) => r,
-                    _ => panic!(\\"invalid insertion type\\")
+            Op::Insert_wrapStore(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::wrapper(r) => r,
+                        _ => {
+                            println!(\\"invalid insertion type\\");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!(\\"Could not find variable for insertion\\");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_wrapStore(&client, &to_insert).await {
@@ -1271,9 +1319,9 @@ Op::Query_wrapStore => {
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.insert(\\"s\\".to_string(), AnyType::wrapper(input.into_inner()));
+        state.push(AnyType::wrapper(input.into_inner()));
         
             return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
         }
@@ -1282,7 +1330,7 @@ Op::Query_wrapStore => {
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
         }
@@ -1348,7 +1396,7 @@ Op::Query_wrapStore => {
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
-    \\"data\\": \\"s\\"
+    \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -1519,9 +1567,9 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(String),
+        Return(usize),
 ReturnPrev,
-Insert_wrapStore(String),
+Insert_wrapStore(usize),
 Query_wrapStore
     }
 
@@ -1542,12 +1590,12 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
                 
-                Op::Return(varname) => match state.get(&varname.to_string()) {
+                Op::Return(var_id) => match state.get(*var_id) {
                     Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
@@ -1583,10 +1631,22 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             }
             ,
 
-            Op::Insert_wrapStore(insert_var_name) => {
-                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
-                    AnyType::wrapper(r) => r,
-                    _ => panic!(\\"invalid insertion type\\")
+            Op::Insert_wrapStore(var_id) => {
+                
+
+                let to_insert = match state.get(*var_id) {
+                
+                    Some(v) => match v {
+                        AnyType::wrapper(r) => r,
+                        _ => {
+                            println!(\\"invalid insertion type\\");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    },
+                    None => {
+                        println!(\\"Could not find variable for insertion\\");
+                        return HttpResponse::BadRequest().finish();
+                    }
                 };
 
                 match insert_wrapStore(&client, &to_insert).await {
@@ -1622,9 +1682,9 @@ Op::Query_wrapStore => {
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.insert(\\"s\\".to_string(), AnyType::wrapper(input.into_inner()));
+        state.push(AnyType::wrapper(input.into_inner()));
         
             return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
         }
@@ -1633,7 +1693,7 @@ Op::Query_wrapStore => {
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: HashMap<String, AnyType> = HashMap::new();
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
         }
@@ -1699,7 +1759,7 @@ Op::Query_wrapStore => {
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
-    \\"data\\": \\"s\\"
+    \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
