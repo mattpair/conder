@@ -37,9 +37,9 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supp
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &HashMap<String, AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
-        for o in &ops {
+        for o in ops {
             prev = match o {
                 ${supportedOps.map(o => o.rustOpHandler).join(",\n")}
             };

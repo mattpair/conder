@@ -4,7 +4,7 @@ import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
-import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations} from 'conduit_system_writer'
+import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_system_writer'
 import {compileFiles, CompiledTypes, Utilities} from 'conduit_compiler'
 
 export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
@@ -108,6 +108,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(conduitsToTypeResolved)
         .then(loadMediumForRun)
         .then(deriveSupportedOperations)
+        .then(functionToByteCode)
         .then(writeRustAndContainerCode)
         .then(containerize)
         .then(pushContainer)

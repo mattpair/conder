@@ -49,7 +49,7 @@ class TheOpFactory implements OpFactory {
         const insertOp = {
             rustOpHandler: `
             Op::${this.insertOpName(store)}(insert_var_name) => {
-                let to_insert = match state.get(insert_var_name).unwrap() {
+                let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
                     AnyType::${store.typeName}(r) => r,
                     _ => panic!("invalid insertion type")
                 };
@@ -62,9 +62,10 @@ class TheOpFactory implements OpFactory {
             rustEnumMember: `${this.insertOpName(store)}(String)`
         }
         const queryOp = {
-            rustEnumMember: `${this.queryOpName(store)}(${store.specName})`,
+            rustEnumMember: `${this.queryOpName(store)}`,
             rustOpHandler: `Op::${this.queryOpName(store)} => {
-                match query_interpreter_${store.name}(${store.name}spec, &client).await {
+                let spec = ${generateRustGetAllQuerySpec(store)};
+                match query_interpreter_${store.name}(&spec, &client).await {
                     Ok(out) => AnyType::${store.name}Result(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -98,7 +99,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             {
                 rustEnumMember: `Return(String)`,
                 rustOpHandler: `
-                Op::Return(varname) => match state.get(varname) {
+                Op::Return(varname) => match state.get(&varname.to_string()) {
                     Some(data) => {
                         return HttpResponse::Ok().json(data);
                     },

@@ -156,7 +156,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
         Return(String),
 ReturnPrev,
 Insert_wrapStore(String),
-Query_wrapStore(querySpec_wrapStore)
+Query_wrapStore
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -205,7 +205,9 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
                 }
             },
 Op::Query_wrapStore => {
-                match query_interpreter_wrapStore(wrapStorespec, &client).await {
+                match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -227,12 +229,12 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
-        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+        const insert_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
     \\"data\\": \\"s\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state = HashMap::new();
@@ -465,7 +467,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
         Return(String),
 ReturnPrev,
 Insert_wrapStore(String),
-Query_wrapStore(querySpec_wrapStore)
+Query_wrapStore
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -514,7 +516,9 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
                 }
             },
 Op::Query_wrapStore => {
-                match query_interpreter_wrapStore(wrapStorespec, &client).await {
+                match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -536,12 +540,12 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
-        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+        const insert_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
     \\"data\\": \\"s\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state = HashMap::new();
@@ -554,14 +558,14 @@ Op::Query_wrapStore => {
         
 
 
-        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+        const get_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Query_wrapStore\\"
   },
   {
     \\"kind\\": \\"ReturnPrev\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state = HashMap::new();
@@ -787,7 +791,7 @@ conduit_entity_id: Option<i32>
         Return(String),
 ReturnPrev,
 Insert_simpleStore(String),
-Query_simpleStore(querySpec_simpleStore)
+Query_simpleStore
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -832,7 +836,7 @@ ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
                 }
             },
 Op::Query_simpleStore => {
-                match query_interpreter_simpleStore(simpleStorespec, &client).await {
+                match query_interpreter_simpleStore(querySpec_simpleStore, &client).await {
                     Ok(out) => AnyType::simpleStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -854,12 +858,12 @@ Op::Query_simpleStore => {
     
                             // FUNCTIONS
                             
-        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+        const insert_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_simpleStore\\",
     \\"data\\": \\"s\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
             let mut state = HashMap::new();
@@ -872,14 +876,14 @@ Op::Query_simpleStore => {
         
 
 
-        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+        const get_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Query_simpleStore\\"
   },
   {
     \\"kind\\": \\"ReturnPrev\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state = HashMap::new();
@@ -1101,7 +1105,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
         Return(String),
 ReturnPrev,
 Insert_wrapStore(String),
-Query_wrapStore(querySpec_wrapStore)
+Query_wrapStore
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1150,7 +1154,9 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
                 }
             },
 Op::Query_wrapStore => {
-                match query_interpreter_wrapStore(wrapStorespec, &client).await {
+                match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -1172,12 +1178,12 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
-        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+        const insert_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
     \\"data\\": \\"s\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state = HashMap::new();
@@ -1190,14 +1196,14 @@ Op::Query_wrapStore => {
         
 
 
-        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+        const get_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Query_wrapStore\\"
   },
   {
     \\"kind\\": \\"ReturnPrev\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state = HashMap::new();
@@ -1426,7 +1432,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
         Return(String),
 ReturnPrev,
 Insert_wrapStore(String),
-Query_wrapStore(querySpec_wrapStore)
+Query_wrapStore
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1475,7 +1481,9 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
                 }
             },
 Op::Query_wrapStore => {
-                match query_interpreter_wrapStore(wrapStorespec, &client).await {
+                match query_interpreter_wrapStore(querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }, &client).await {
                     Ok(out) => AnyType::wrapStoreResult(out),
                     Err(err) => AnyType::Err(err.to_string())
                 }
@@ -1497,12 +1505,12 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
-        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+        const insert_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Insert_wrapStore\\",
     \\"data\\": \\"s\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state = HashMap::new();
@@ -1515,14 +1523,14 @@ Op::Query_wrapStore => {
         
 
 
-        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+        const get_executable: Vec<Op> = serde_json::from_str(r#####\\"[
   {
     \\"kind\\": \\"Query_wrapStore\\"
   },
   {
     \\"kind\\": \\"ReturnPrev\\"
   }
-]\\").unwrap();
+]\\"#####).unwrap();
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state = HashMap::new();

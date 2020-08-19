@@ -21,7 +21,19 @@ function toAnyType(p: CompiledTypes.RealType): string {
     return `AnyType::${p.val.name}`
 }
 
-type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
+type ConstDataAddition = {
+    name: string
+    type: string
+    initializer: string
+}
+
+type FunctionDef = Readonly<{
+    def: string, 
+    func_name: string, 
+    path: string, 
+    method: "get" | "post",
+    allDataAdditions: ConstDataAddition[]
+}>
 
 function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
     const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
@@ -109,26 +121,31 @@ function writeFunction(f: WritableFunction): FunctionDef {
     {
         param: `, input: web::Json<${toRustType(param.type)}>`, 
         extract: `
-        state.insert("${param.name}", ${toAnyType(param.type)}(input.into_inner()));
+        state.insert("${param.name}".to_string(), ${toAnyType(param.type)}(input.into_inner()));
         `
     }
 
 
     return {
         def: `
-        const ${exec_name}: Vec<Op> = serde_json::from_str("${JSON.stringify(f.body, null, 2)}").unwrap();
         
         async fn ${f.name}(data: web::Data<AppData>${input.param}) -> impl Responder {
-            let mut state = HashMap::new();
-            let client = &data.client;
+            let mut state: HashMap<String, AnyType> = HashMap::new();
             ${input.extract}
-            return conduit_byte_code_interpreter(&client, &state, &${exec_name}).await;
+            return conduit_byte_code_interpreter(&data.client, &state, &data.${exec_name}).await;
         }
         `,
         //@ts-ignore
         method: f.method.toLocaleLowerCase(),
         path: f.name,
-        func_name: f.name
+        func_name: f.name,
+        allDataAdditions: [
+            {
+                name: exec_name,
+                type: "Vec<Op>",
+                initializer: `serde_json::from_str(r#####"${JSON.stringify(f.body, null, 2)}"#####).unwrap()`
+            }
+        ]
     }
 }
 
@@ -142,6 +159,9 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
         const f_defs: FunctionDef[] = functions.map(writeFunction)
+        const app_data_adds: ConstDataAddition[] = []
+        f_defs.forEach(f => app_data_adds.push(...f.allDataAdditions))
+
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
@@ -219,7 +239,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                 
                 
                             struct AppData {
-                                client: Client
+                                ${[`client: Client`, app_data_adds.map(a => `${a.name}: ${a.type}`)].join(",\n")}
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -293,6 +313,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                                 
                                 return Ok(AppData {
                                     client: client,
+                                    ${app_data_adds.map(a => `${a.name}: ${a.initializer}`).join(",\n")}
                                 });
                             }
                             
