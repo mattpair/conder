@@ -1,3 +1,4 @@
+import { functionToByteCode } from './../main/statement_converter';
 import { deriveSupportedOperations } from './../main/interpreter/derive_supported_ops';
 import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_compiler"
@@ -6,6 +7,7 @@ function TestCodeGen(description: string, conduit: string) {
     test(description, async () => {
         const manifest = compileFiles({test: () => conduit})
         const r = await new Utilities.Sequence(deriveSupportedOperations)
+        .then(functionToByteCode)
         .then(writeRustAndContainerCode)
         .run({manifest})
         const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))

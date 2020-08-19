@@ -1,5 +1,5 @@
 import { Parse } from '../parse';
-import { Manifest, PreProcedurization, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, Variable, Field } from "../entity/resolved";
+import { Function, FunctionBody, Statement, ScopeMap, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, Variable, Field } from "../entity/resolved";
 import { TypeResolved } from "../entity/TypeResolved";
 import { assertNever } from "../utils";
 
@@ -59,7 +59,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
 }
 
 
-function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolved.Function, parameter: Parameter, ret: ReturnType): PreProcedurization.FunctionBody {
+function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolved.Function, parameter: Parameter, ret: ReturnType): FunctionBody {
     
     const variableLookup = new Map<string, Variable>()
     const p = parameter.differentiate()
@@ -77,11 +77,11 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
 
         default: assertNever(p)
     }
-    const resolved: PreProcedurization.Statement[] = []
+    const resolved: Statement[] = []
     let hitReturnStatement = false
     for (let i = 0; i < func.part.FunctionBody.children.Statement.length; i++) {
         const stmt = func.part.FunctionBody.children.Statement[i].differentiate();
-        let resolvedStmt: Exclude<PreProcedurization.Statement, {kind: "ReturnStatement"}>
+        let resolvedStmt: Exclude<Statement, {kind: "ReturnStatement"}>
         switch (stmt.kind) {
             case "Append": {
                 const variable = variableLookup.get(stmt.variableName)
@@ -171,7 +171,7 @@ function resolveFunctionBody(namespace: TypeResolved.Namespace, func: TypeResolv
 }
 
 
-function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.Function): PreProcedurization.Function {
+function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.Function): Function {
     const parameter = resolveParameter(namespace, func.part.Parameter)
     const returnType = getReturnType(func.part.ReturnTypeSpec, namespace)
 
@@ -182,7 +182,7 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
         kind: "Function",
         loc: func.loc,
         name: func.name,
-        requiresDbClient: f.statements.some((s: PreProcedurization.Statement) => ["Append", "StoreReference"].includes(s.kind)),
+        requiresDbClient: f.statements.some((s: Statement) => ["Append", "StoreReference"].includes(s.kind)),
         returnType: returnType,
         parameter,
         body: f,
@@ -190,9 +190,9 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
     }
 }
 
-type InternalMap = Map<string, Struct | Enum | PreProcedurization.Function | HierarchicalStore>
+type InternalMap = Map<string, Struct | Enum | Function | HierarchicalStore>
 
-export function resolveFunctions(namespace: TypeResolved.Namespace): PreProcedurization.ScopeMap {
+export function resolveFunctions(namespace: TypeResolved.Namespace): ScopeMap {
 
     const entityMapInternal: InternalMap = new Map()
     

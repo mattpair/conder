@@ -5,6 +5,7 @@ import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_compiler/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
+import { WritableFunction } from './statement_converter';
 
 function toRustType(p: CompiledTypes.ReturnType): string {
     if (p.kind === "VoidReturnType") {
@@ -13,6 +14,12 @@ function toRustType(p: CompiledTypes.ReturnType): string {
     return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
 }
 
+function toAnyType(p: CompiledTypes.RealType): string {
+    if (p.isArray) {
+        return `AnyType::Many${p.val.name}`
+    }
+    return `AnyType::${p.val.name}`
+}
 
 type FunctionDef = Readonly<{def: string, func_name: string, path: string, method: "get" | "post"}>
 
@@ -93,15 +100,48 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
     return makeStruct('', fields)
 }
 
+function writeFunction(f: WritableFunction): FunctionDef {
+    const exec_name = `${f.name}_executable`
+    const param = f.parameter.differentiate()
+    const input: {param: string, extract: string} = param.kind === "NoParameter" ? 
+    {param: "", extract: ""}
+        :
+    {
+        param: `, input: web::Json<${toRustType(param.type)}>`, 
+        extract: `
+        state.insert("${param.name}", ${toAnyType(param.type)}(input.into_inner()));
+        `
+    }
+
+
+    return {
+        def: `
+        const ${exec_name}: Vec<Op> = serde_json::from_str("${JSON.stringify(f.body, null, 2)}").unwrap();
+        
+        async fn ${f.name}(data: web::Data<AppData>${input.param}) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            ${input.extract}
+            return conduit_byte_code_interpreter(&client, &state, &${exec_name}).await;
+        }
+        `,
+        //@ts-ignore
+        method: f.method.toLocaleLowerCase(),
+        path: f.name,
+        func_name: f.name
+    }
+}
+
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
-    supportedOps: OpDef[]
+    supportedOps: OpDef[],
+    functions: WritableFunction[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
-    func: ({manifest, supportedOps}) => {
+    func: ({manifest, supportedOps, functions}) => {
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
-        const functions: FunctionDef[] = []
+        const f_defs: FunctionDef[] = functions.map(writeFunction)
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
@@ -195,7 +235,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             // OP INTERPRETER
                             ${writeOperationInterpreter(manifest, supportedOps)}
                             // FUNCTIONS
-                            ${functions.map(f => f.def).join("\n\n")}
+                            ${f_defs.map(f => f.def).join("\n\n")}
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -203,7 +243,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route("/", web::get().to(index))
-                                        ${functions.map(f => `.route("/${f.path}", web::${f.method}().to(${f.func_name}))`).join("\n")}
+                                        ${f_defs.map(f => `.route("/${f.path}", web::${f.method}().to(${f.func_name}))`).join("\n")}
                                 })
                                 .bind("0.0.0.0:8080")?
                                 .run()

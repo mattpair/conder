@@ -14,6 +14,7 @@ export function writeOperationInterpreter(manifest: CompiledTypes.Manifest, supp
         switch (v.kind) {
             case "Struct":
                 ALL_TYPES_UNION.push({name: v.name, type: v.name})
+                ALL_TYPES_UNION.push({name: `Many${v.name}`, type: `Vec<${v.name}>`})
                 break
             case "HierarchicalStore":
                 

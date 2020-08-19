@@ -165,10 +165,14 @@ Query_wrapStore(querySpec_wrapStore)
         None,
 Err(String),
 simple(simple),
+Manysimple(Vec<simple>),
 wrapper(wrapper),
+Manywrapper(Vec<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-querySpec_wrapStore(querySpec_wrapStore)
+ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+querySpec_wrapStore(querySpec_wrapStore),
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
@@ -223,6 +227,22 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
+        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"data\\": \\"s\\"
+  }
+]\\").unwrap();
+        
+        async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+        state.insert(\\"s\\", AnyType::wrapper(input.into_inner()));
+        
+            return conduit_byte_code_interpreter(&client, &state, &insert_executable).await;
+        }
+        
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -230,7 +250,7 @@ Op::Query_wrapStore => {
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        
+                                        .route(\\"/insert\\", web::post().to(insert))
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -454,10 +474,14 @@ Query_wrapStore(querySpec_wrapStore)
         None,
 Err(String),
 simple(simple),
+Manysimple(Vec<simple>),
 wrapper(wrapper),
+Manywrapper(Vec<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-querySpec_wrapStore(querySpec_wrapStore)
+ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+querySpec_wrapStore(querySpec_wrapStore),
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
@@ -512,6 +536,40 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
+        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"data\\": \\"s\\"
+  }
+]\\").unwrap();
+        
+        async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+        state.insert(\\"s\\", AnyType::wrapper(input.into_inner()));
+        
+            return conduit_byte_code_interpreter(&client, &state, &insert_executable).await;
+        }
+        
+
+
+        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Query_wrapStore\\"
+  },
+  {
+    \\"kind\\": \\"ReturnPrev\\"
+  }
+]\\").unwrap();
+        
+        async fn get(data: web::Data<AppData>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+            return conduit_byte_code_interpreter(&client, &state, &get_executable).await;
+        }
+        
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -519,7 +577,8 @@ Op::Query_wrapStore => {
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        
+                                        .route(\\"/insert\\", web::post().to(insert))
+.route(\\"/get\\", web::get().to(get))
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -737,8 +796,10 @@ Query_simpleStore(querySpec_simpleStore)
         None,
 Err(String),
 simple(simple),
+Manysimple(Vec<simple>),
 simpleStoreResult(Vec<simple>),
-querySpec_simpleStore(querySpec_simpleStore)
+querySpec_simpleStore(querySpec_simpleStore),
+ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
     }
 
 
@@ -793,6 +854,40 @@ Op::Query_simpleStore => {
     
                             // FUNCTIONS
                             
+        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Insert_simpleStore\\",
+    \\"data\\": \\"s\\"
+  }
+]\\").unwrap();
+        
+        async fn insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+        state.insert(\\"s\\", AnyType::simple(input.into_inner()));
+        
+            return conduit_byte_code_interpreter(&client, &state, &insert_executable).await;
+        }
+        
+
+
+        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Query_simpleStore\\"
+  },
+  {
+    \\"kind\\": \\"ReturnPrev\\"
+  }
+]\\").unwrap();
+        
+        async fn get(data: web::Data<AppData>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+            return conduit_byte_code_interpreter(&client, &state, &get_executable).await;
+        }
+        
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -800,7 +895,8 @@ Op::Query_simpleStore => {
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        
+                                        .route(\\"/insert\\", web::post().to(insert))
+.route(\\"/get\\", web::get().to(get))
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -1014,10 +1110,14 @@ Query_wrapStore(querySpec_wrapStore)
         None,
 Err(String),
 simple(simple),
+Manysimple(Vec<simple>),
 wrapper(wrapper),
+Manywrapper(Vec<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-querySpec_wrapStore(querySpec_wrapStore)
+ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+querySpec_wrapStore(querySpec_wrapStore),
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
@@ -1072,6 +1172,40 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
+        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"data\\": \\"s\\"
+  }
+]\\").unwrap();
+        
+        async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+        state.insert(\\"s\\", AnyType::wrapper(input.into_inner()));
+        
+            return conduit_byte_code_interpreter(&client, &state, &insert_executable).await;
+        }
+        
+
+
+        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Query_wrapStore\\"
+  },
+  {
+    \\"kind\\": \\"ReturnPrev\\"
+  }
+]\\").unwrap();
+        
+        async fn get(data: web::Data<AppData>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+            return conduit_byte_code_interpreter(&client, &state, &get_executable).await;
+        }
+        
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -1079,7 +1213,8 @@ Op::Query_wrapStore => {
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        
+                                        .route(\\"/insert\\", web::post().to(insert))
+.route(\\"/get\\", web::get().to(get))
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()
@@ -1300,10 +1435,14 @@ Query_wrapStore(querySpec_wrapStore)
         None,
 Err(String),
 simple(simple),
+Manysimple(Vec<simple>),
 wrapper(wrapper),
+Manywrapper(Vec<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-querySpec_wrapStore(querySpec_wrapStore)
+ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+querySpec_wrapStore(querySpec_wrapStore),
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
@@ -1358,6 +1497,40 @@ Op::Query_wrapStore => {
     
                             // FUNCTIONS
                             
+        const insert_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"data\\": \\"s\\"
+  }
+]\\").unwrap();
+        
+        async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+        state.insert(\\"s\\", AnyType::wrapper(input.into_inner()));
+        
+            return conduit_byte_code_interpreter(&client, &state, &insert_executable).await;
+        }
+        
+
+
+        const get_executable: Vec<Op> = serde_json::from_str(\\"[
+  {
+    \\"kind\\": \\"Query_wrapStore\\"
+  },
+  {
+    \\"kind\\": \\"ReturnPrev\\"
+  }
+]\\").unwrap();
+        
+        async fn get(data: web::Data<AppData>) -> impl Responder {
+            let mut state = HashMap::new();
+            let client = &data.client;
+            
+            return conduit_byte_code_interpreter(&client, &state, &get_executable).await;
+        }
+        
                     
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
@@ -1365,7 +1538,8 @@ Op::Query_wrapStore => {
                                     App::new()
                                         .data_factory(|| make_app_data())
                                         .route(\\"/\\", web::get().to(index))
-                                        
+                                        .route(\\"/insert\\", web::post().to(insert))
+.route(\\"/get\\", web::get().to(get))
                                 })
                                 .bind(\\"0.0.0.0:8080\\")?
                                 .run()

@@ -58,27 +58,24 @@ export type Variable = Readonly<{
 
 export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>
 export type ReturnType = RealType | basic.VoidReturn
-export namespace PreProcedurization {
 
-    type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
-    basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
-    export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
-    export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
-    export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
-    export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
-    export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
-    export type Function =  basic.NamedIntrafile<"Function", {
-        requiresDbClient: boolean,
-        returnType: ReturnType,
-        parameter: Parameter,
-        body: FunctionBody,
-        method: "POST" | "GET"
-    }>
+type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
+basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
+export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
+export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
+export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
+export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
+export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
+export type Function =  basic.NamedIntrafile<"Function", {
+    requiresDbClient: boolean,
+    returnType: ReturnType,
+    parameter: Parameter,
+    body: FunctionBody,
+    method: "POST" | "GET"
+}>
 
-    export type ScopeMap = EntityMap<Struct | Enum | PreProcedurization.Function | HierarchicalStore>
-}
 
-export type Entity = Struct | Enum  | HierarchicalStore
+export type Entity = Struct | Enum  | HierarchicalStore | Function
 export type ScopeMap = EntityMap<Entity>
 
     

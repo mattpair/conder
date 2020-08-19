@@ -68,6 +68,9 @@ export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
         if (v.kind === "HierarchicalStore") {
             return
         }
+        if (v.kind === "Function") {
+            return
+        }
         models.push(modelFor(v, manifest.inScope))
     })
     return models

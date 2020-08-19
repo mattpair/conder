@@ -8,7 +8,7 @@ export interface OpDef {
     readonly rustOpHandler: string
 }
 
-interface OpInstance {
+export interface OpInstance {
     // These fields are based on the Interpreter writer's op field.
     kind: string
     data: any
@@ -119,6 +119,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             switch(i.kind) {
                 case "Enum":
                 case "Struct":
+                case "Function":
                     break
     
                 case "HierarchicalStore":                
