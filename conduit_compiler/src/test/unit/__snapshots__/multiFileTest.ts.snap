@@ -81,14 +81,6 @@ Object {
     },
     "size": 2,
   },
-  "supportedOperations": Array [
-    Object {
-      "kind": "return input",
-    },
-    Object {
-      "kind": "noop",
-    },
-  ],
 }
 `;
 
@@ -141,11 +133,130 @@ Object {
         "name": "Shout",
       },
       "echo" => Object {
-        "kind": "Function",
-        "name": "echo",
-        "operation": Object {
-          "kind": "return input",
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 35,
+            "endLineNumber": 6,
+            "startColNumber": 34,
+            "startLineNumber": 6,
+          },
+          "statements": Array [
+            Object {
+              "kind": "ReturnStatement",
+              "loc": Object {
+                "endColNumber": 15,
+                "endLineNumber": 7,
+                "startColNumber": 35,
+                "startLineNumber": 6,
+              },
+            },
+            Object {
+              "kind": "VariableReference",
+              "loc": Object {
+                "endColNumber": 16,
+                "endLineNumber": 7,
+                "startColNumber": 15,
+                "startLineNumber": 7,
+              },
+              "name": "s",
+              "returnType": Object {
+                "isArray": false,
+                "kind": "real type",
+                "val": Object {
+                  "children": Object {
+                    "Field": Array [
+                      Object {
+                        "kind": "Field",
+                        "loc": Object {
+                          "endColNumber": 11,
+                          "endLineNumber": 3,
+                          "startColNumber": 18,
+                          "startLineNumber": 2,
+                        },
+                        "name": "m",
+                        "part": Object {
+                          "FieldType": Object {
+                            "differentiate": [Function],
+                            "kind": "FieldType",
+                            "modification": "none",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  "file": FileLocation {
+                    "dir": "",
+                    "fullname": "conduit_a.cdt",
+                    "name": "conduit_a.cdt",
+                  },
+                  "kind": "Struct",
+                  "loc": Object {
+                    "endColNumber": 18,
+                    "endLineNumber": 2,
+                    "startColNumber": 0,
+                    "startLineNumber": 0,
+                  },
+                  "name": "Shout",
+                },
+              },
+              "type": Object {
+                "isArray": false,
+                "kind": "real type",
+                "val": Object {
+                  "children": Object {
+                    "Field": Array [
+                      Object {
+                        "kind": "Field",
+                        "loc": Object {
+                          "endColNumber": 11,
+                          "endLineNumber": 3,
+                          "startColNumber": 18,
+                          "startLineNumber": 2,
+                        },
+                        "name": "m",
+                        "part": Object {
+                          "FieldType": Object {
+                            "differentiate": [Function],
+                            "kind": "FieldType",
+                            "modification": "none",
+                          },
+                        },
+                      },
+                    ],
+                  },
+                  "file": FileLocation {
+                    "dir": "",
+                    "fullname": "conduit_a.cdt",
+                    "name": "conduit_a.cdt",
+                  },
+                  "kind": "Struct",
+                  "loc": Object {
+                    "endColNumber": 18,
+                    "endLineNumber": 2,
+                    "startColNumber": 0,
+                    "startLineNumber": 0,
+                  },
+                  "name": "Shout",
+                },
+              },
+            },
+          ],
         },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 17,
+          "endLineNumber": 6,
+          "startColNumber": 5,
+          "startLineNumber": 4,
+        },
+        "method": "POST",
+        "name": "echo",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "requiresDbClient": false,
         "returnType": Object {
           "isArray": false,
           "kind": "real type",
@@ -190,14 +301,6 @@ Object {
     },
     "size": 2,
   },
-  "supportedOperations": Array [
-    Object {
-      "kind": "return input",
-    },
-    Object {
-      "kind": "noop",
-    },
-  ],
 }
 `;
 
@@ -316,13 +419,5 @@ Object {
     },
     "size": 3,
   },
-  "supportedOperations": Array [
-    Object {
-      "kind": "return input",
-    },
-    Object {
-      "kind": "noop",
-    },
-  ],
 }
 `;
