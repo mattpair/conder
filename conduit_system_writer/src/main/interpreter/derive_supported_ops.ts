@@ -25,6 +25,24 @@ export type AllTypesMember = Readonly<{
     name: string, type?: string
 }>
 
+interface AllTypeInternal extends AllTypesMember  {
+    readonly returner: string
+}
+
+class DataContainingType implements AllTypeInternal {
+    readonly name: string
+    readonly type: string
+    constructor(name: string, type: string) {
+        this.name = name
+        this.type = type
+    }
+    
+    public get returner() : string {
+        return `AnyType::${this.name}(output) => return HttpResponse::Ok().json(output)`
+    }
+    
+}
+
 class TheOpFactory implements OpFactory {
 
     makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance {
@@ -97,23 +115,35 @@ class TheOpFactory implements OpFactory {
 export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: OpFactory, allTypesUnion: AllTypesMember[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
-        const allTypesUnion: AllTypesMember[] = [
-            {name: "None"},
-            {name: "Err", type: "String"}
+        const allTypesUnion: AllTypeInternal[] = [
+            {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
+            new DataContainingType("Err", "String")
         ]
         manifest.inScope.forEach(v => {
             
         
             switch (v.kind) {
                 case "Struct":
-                    allTypesUnion.push({name: v.name, type: v.name})
-                    allTypesUnion.push({name: `Many${v.name}`, type: `Vec<${v.name}>`})
+                    allTypesUnion.push(
+                        new DataContainingType(v.name, v.name),
+                        new DataContainingType(`Many${v.name}`, `Vec<${v.name}>`)
+                    )                    
                     break
                 case "HierarchicalStore":
-                    allTypesUnion.push({name: `${v.name}Result`, type: `Vec<${v.typeName}>`})
+
+                    allTypesUnion.push(
+                        new DataContainingType(`${v.name}Result`, `Vec<${v.typeName}>`)
+                    )
             }        
         })
         
+
+        const returnAnyType = (varname: string) => {
+            return `match ${varname} {
+                ${allTypesUnion.map(t => t.returner).join(",\n")}
+            }
+            `
+        }
 
         const opFactory = new TheOpFactory()
         const addedOperations: OpDef[] = [
@@ -121,9 +151,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 rustEnumMember: `Return(String)`,
                 rustOpHandler: `
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => ${returnAnyType("data")},
                     None => {
                         println!("attempting to return a value that doesn't exist");
                         return HttpResponse::BadRequest().finish();
@@ -133,7 +161,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             {
                 rustEnumMember: `ReturnPrev`,
                 rustOpHandler: `
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev)`
+                Op::ReturnPrev => ${returnAnyType("prev")}`
             }
         ]
 

@@ -183,16 +183,40 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
             prev = match o {
                 
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => match data {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
                     None => {
                         println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
                 },
 
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+                Op::ReturnPrev => match prev {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
 
             Op::Insert_wrapStore(insert_var_name) => {
                 let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
@@ -495,16 +519,40 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
             prev = match o {
                 
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => match data {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
                     None => {
                         println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
                 },
 
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+                Op::ReturnPrev => match prev {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
 
             Op::Insert_wrapStore(insert_var_name) => {
                 let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
@@ -815,16 +863,32 @@ ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
             prev = match o {
                 
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => match data {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
                     None => {
                         println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
                 },
 
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+                Op::ReturnPrev => match prev {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
 
             Op::Insert_simpleStore(insert_var_name) => {
                 let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
@@ -1133,16 +1197,40 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
             prev = match o {
                 
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => match data {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
                     None => {
                         println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
                 },
 
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+                Op::ReturnPrev => match prev {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
 
             Op::Insert_wrapStore(insert_var_name) => {
                 let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
@@ -1460,16 +1548,40 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
             prev = match o {
                 
                 Op::Return(varname) => match state.get(&varname.to_string()) {
-                    Some(data) => {
-                        return HttpResponse::Ok().json(data);
-                    },
+                    Some(data) => match data {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
                     None => {
                         println!(\\"attempting to return a value that doesn't exist\\");
                         return HttpResponse::BadRequest().finish();
                     }
                 },
 
-                Op::ReturnPrev => return HttpResponse::Ok().json(prev),
+                Op::ReturnPrev => match prev {
+                AnyType::None => return HttpResponse::Ok().finish(),
+AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::simple(output) => return HttpResponse::Ok().json(output),
+AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+            }
+            ,
 
             Op::Insert_wrapStore(insert_var_name) => {
                 let to_insert = match state.get(&insert_var_name.to_string()).unwrap() {
