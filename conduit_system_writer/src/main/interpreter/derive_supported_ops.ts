@@ -21,6 +21,10 @@ export interface OpFactory {
     makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance
 }
 
+export type AllTypesMember = Readonly<{
+    name: string, type?: string
+}>
+
 class TheOpFactory implements OpFactory {
 
     makeInsert(store: CompiledTypes.HierarchicalStore, varname: string): OpInstance {
@@ -90,9 +94,26 @@ class TheOpFactory implements OpFactory {
     }
 }
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: OpFactory}> = {
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: OpFactory, allTypesUnion: AllTypesMember[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
+        const allTypesUnion: AllTypesMember[] = [
+            {name: "None"},
+            {name: "Err", type: "String"}
+        ]
+        manifest.inScope.forEach(v => {
+            
+        
+            switch (v.kind) {
+                case "Struct":
+                    allTypesUnion.push({name: v.name, type: v.name})
+                    allTypesUnion.push({name: `Many${v.name}`, type: `Vec<${v.name}>`})
+                    break
+                case "HierarchicalStore":
+                    allTypesUnion.push({name: `${v.name}Result`, type: `Vec<${v.typeName}>`})
+            }        
+        })
+        
 
         const opFactory = new TheOpFactory()
         const addedOperations: OpDef[] = [
@@ -130,6 +151,6 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             }
         })
 
-        return Promise.resolve({supportedOps: addedOperations, opFactory})
+        return Promise.resolve({supportedOps: addedOperations, opFactory, allTypesUnion})
     }
 }

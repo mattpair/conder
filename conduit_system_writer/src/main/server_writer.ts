@@ -1,4 +1,4 @@
-import { OpDef } from './interpreter/derive_supported_ops';
+import { OpDef, AllTypesMember } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
 import { cargolockstr, maindockerfile, cargo } from './constants';
@@ -152,10 +152,11 @@ function writeFunction(f: WritableFunction): FunctionDef {
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
     supportedOps: OpDef[],
-    functions: WritableFunction[]
+    functions: WritableFunction[],
+    allTypesUnion: AllTypesMember[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
-    func: ({manifest, supportedOps, functions}) => {
+    func: ({manifest, supportedOps, functions, allTypesUnion}) => {
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
         const f_defs: FunctionDef[] = functions.map(writeFunction)
@@ -253,7 +254,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             // INTERPRETERS
                             ${interpreters.join("\n")}
                             // OP INTERPRETER
-                            ${writeOperationInterpreter(manifest, supportedOps)}
+                            ${writeOperationInterpreter(supportedOps, allTypesUnion)}
                             // FUNCTIONS
                             ${f_defs.map(f => f.def).join("\n\n")}
                     
