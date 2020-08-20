@@ -24,83 +24,133 @@ export const functionToByteCode: Utilities.StepDefinition<
                 gatheredFunctions.push(f)
             }
         })
-
-        gatheredFunctions.forEach(f => functions.push(convertFunction(f, opFactory)))
+        
+        gatheredFunctions.forEach(f => {
+            try {
+                functions.push(convertFunction(f, opFactory, manifest.inScope))
+            } catch (e) {
+                throw Error(`Within function ${f.name}: ${e}`)
+            }  
+        })
+        
+        
         
         return Promise.resolve({functions})
     }
 }
 
-class VarMap extends Map<string, number> {
+interface VarMapEntryI{
+    readonly id: number,
+    readonly type: CompiledTypes.RealType
+}
+
+class VarMapEntry implements VarMapEntryI{
+    readonly id: number
+    readonly type: CompiledTypes.RealType
+
+    constructor(id: number, type: CompiledTypes.RealType) {
+        this.id = id 
+        this.type = type
+    }
+}
+
+class VarMap extends Map<string, VarMapEntryI> {
     private count = 0
     maximumVars = 0
 
-    public add(s: string): number {
-        super.set(s, this.count);
+    public add(s: string, t: CompiledTypes.RealType): number {
+        super.set(s, new VarMapEntry(this.count, t));
         const v = this.count++
         this.maximumVars = Math.max(this.maximumVars, v)
         return v
     }
     
-    public get(s: string): number {
+    public get(s: string): VarMapEntryI {
         const ret = super.get(s)
         if (ret === undefined) {
             throw Error(`Failure looking up variable ${s}`)
         }
         return ret
     }
+
+    public tryGet(s: string): VarMapEntryI | undefined {
+        return super.get(s)
+    }
 }
 
-function convertFunction(f: CompiledTypes.Function, factory: OpFactory): WritableFunction {
+function typesAreEqual(l: CompiledTypes.RealType, r: CompiledTypes.RealType): boolean {
+    return l.isArray === r.isArray &&
+    l.val.name === r.val.name
+}
+
+
+function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
     const body: OpInstance[] = []
     const varmap = new VarMap()
     const parameter = f.parameter.differentiate()
     if (parameter.kind === "UnaryParameter") {
-        varmap.add(parameter.name)
+        varmap.add(parameter.name, parameter.type)
     }
 
     for (let j = 0; j < f.body.statements.length; j++) {
-        const stmt = f.body.statements[j]
+        const stmt = f.body.statements[j].differentiate()
         switch(stmt.kind) {
             
             case "Append":
-                body.push(factory.makeInsert(stmt.into, varmap.get(stmt.inserting.name)))
+                const v = varmap.get(stmt.variableName)
+                const sto = inScope.getEntityOfType(stmt.storeName, "HierarchicalStore")
+                if (v.type.isArray) {
+                    throw Error(`Cannot insert arrays`)
+                }
+                if (v.type.val.name !== sto.typeName) {
+                    throw Error(`Inserting unequal type`)
+                }
+                body.push(factory.makeInsert(sto, v.id))
                 break
             
             case "ReturnStatement":
-                const nextStmtI = j < f.body.statements.length - 1 ? j + 1 : -1
-                if (nextStmtI === -1){
-                    break
-                }
-                const next = f.body.statements[nextStmtI]
-                switch (next.kind) {
-                    case "Append":
-                        // This will be handled in the next loop
-                        // We don't need to do anything about the return.
-                        continue
-                    case "ReturnStatement":
-                        console.error("Double return statement")
-                        continue
-                    case "StoreReference":
-                        body.push(
-                            factory.makeQuery(next.from)
-                        )
-                        body.push(
-                            factory.makeReturnPrevious()
-                        )
+                const e = stmt.part.Returnable.differentiate()
+                switch (e.kind) {
+                    case "Nothing":
+                        if (f.returnType.kind === "real type") {
+                            throw Error(`Returning nothing when you need to return a real type`)
+                        }
+                        // TODO: add a symbol for creating none and returning previous
                         break
                     case "VariableReference":
-                        const varindex = varmap.get(next.name)                        
-                        body.push(factory.makeReturnVariableOp(varindex))
+                        if (f.returnType.kind === "VoidReturnType") {
+                            throw Error(`Returning something when you need to return nothing`)
+                        }
+                        const ref = varmap.tryGet(e.val)
+                        if (ref !== undefined) {
+                            
+                            if (!typesAreEqual(f.returnType, ref.type)) {
+                                throw Error(`Returning an unequal type`)
+                            }
+                            body.push(factory.makeReturnVariableOp(ref.id))
+                        } else {
+                            const store  = inScope.getEntityOfType(e.val, "HierarchicalStore")
+                            if (store.typeName !== f.returnType.val.name || !f.returnType.isArray) {
+                                throw Error(`Returning a store won't do here`)
+                            }
+                            body.push(
+                                factory.makeQuery(store),
+                                factory.makeReturnPrevious()
+                            )
+                        }
+                        
                         break
-                    default: assertNever(next)
+                    default: assertNever(e)
                 }
-                // No need to examine the already handled statement
-                j++;
+                                
+                
                 break
 
             default: continue
         }
+    }
+    if (f.returnType.kind !== "VoidReturnType" && body.length === 0) {
+        throw Error(`Function does nothing when it should return a type`)
     }
 
     return {

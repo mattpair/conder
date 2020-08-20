@@ -86,11 +86,7 @@ Object {
 
 exports[`function with invalid return type 1`] = `"Could not find a Struct named SomeType"`;
 
-exports[`function with type return returns none 1`] = `"Function expects non-void return type but there are no statements"`;
-
 exports[`function with unknown types 1`] = `"Unable to find end of entity for UnaryParameter at , b: Foreign.Type) {"`;
-
-exports[`function with void returns type 1`] = `"Returning SomeType but expected void return"`;
 
 exports[`simple echo function 1`] = `
 Object {
@@ -143,103 +139,8 @@ Object {
           },
           "statements": Array [
             Object {
-              "kind": "ReturnStatement",
-              "loc": Object {
-                "endColNumber": 15,
-                "endLineNumber": 7,
-                "startColNumber": 35,
-                "startLineNumber": 6,
-              },
-            },
-            Object {
-              "kind": "VariableReference",
-              "loc": Object {
-                "endColNumber": 16,
-                "endLineNumber": 7,
-                "startColNumber": 15,
-                "startLineNumber": 7,
-              },
-              "name": "s",
-              "returnType": Object {
-                "isArray": false,
-                "kind": "real type",
-                "val": Object {
-                  "children": Object {
-                    "Field": Array [
-                      Object {
-                        "kind": "Field",
-                        "loc": Object {
-                          "endColNumber": 11,
-                          "endLineNumber": 3,
-                          "startColNumber": 18,
-                          "startLineNumber": 2,
-                        },
-                        "name": "m",
-                        "part": Object {
-                          "FieldType": Object {
-                            "differentiate": [Function],
-                            "kind": "FieldType",
-                            "modification": "none",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  "file": FileLocation {
-                    "dir": "",
-                    "fullname": "conduit_a.cdt",
-                    "name": "conduit_a.cdt",
-                  },
-                  "kind": "Struct",
-                  "loc": Object {
-                    "endColNumber": 18,
-                    "endLineNumber": 2,
-                    "startColNumber": 0,
-                    "startLineNumber": 0,
-                  },
-                  "name": "Shout",
-                },
-              },
-              "type": Object {
-                "isArray": false,
-                "kind": "real type",
-                "val": Object {
-                  "children": Object {
-                    "Field": Array [
-                      Object {
-                        "kind": "Field",
-                        "loc": Object {
-                          "endColNumber": 11,
-                          "endLineNumber": 3,
-                          "startColNumber": 18,
-                          "startLineNumber": 2,
-                        },
-                        "name": "m",
-                        "part": Object {
-                          "FieldType": Object {
-                            "differentiate": [Function],
-                            "kind": "FieldType",
-                            "modification": "none",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  "file": FileLocation {
-                    "dir": "",
-                    "fullname": "conduit_a.cdt",
-                    "name": "conduit_a.cdt",
-                  },
-                  "kind": "Struct",
-                  "loc": Object {
-                    "endColNumber": 18,
-                    "endLineNumber": 2,
-                    "startColNumber": 0,
-                    "startLineNumber": 0,
-                  },
-                  "name": "Shout",
-                },
-              },
+              "differentiate": [Function],
+              "kind": "Statement",
             },
           ],
         },
@@ -256,7 +157,6 @@ Object {
           "differentiate": [Function],
           "kind": "Parameter",
         },
-        "requiresDbClient": false,
         "returnType": Object {
           "isArray": false,
           "kind": "real type",

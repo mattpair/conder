@@ -3,18 +3,36 @@ import { deriveSupportedOperations } from './../main/interpreter/derive_supporte
 import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_compiler"
 
+function testBody(conduit: string) {
+    const manifest = compileFiles({test: () => conduit})
+    return new Utilities.Sequence(deriveSupportedOperations)
+    .then(functionToByteCode)
+    .then(writeRustAndContainerCode)
+    .run({manifest})
+    
+   
+}
+
+
 function TestCodeGen(description: string, conduit: string) {
     test(description, async () => {
-        const manifest = compileFiles({test: () => conduit})
-        const r = await new Utilities.Sequence(deriveSupportedOperations)
-        .then(functionToByteCode)
-        .then(writeRustAndContainerCode)
-        .run({manifest})
+        const r = await testBody(conduit)
         const mainFiles = r.backend.main.files.filter(f => !(/Cargo/.test(f.name)))
         expect(mainFiles).toMatchSnapshot("main files")
         expect(r.backend.postgres.files).toMatchSnapshot("postgres files")
     })
 }
+
+function testFailsWhen(description: string, conduit: string) {
+    test(description, async () => {
+        let err = undefined
+        await testBody(conduit).catch(e => {err= e})
+        expect(err).toBeDefined()
+        expect(err).toMatchSnapshot()
+    })
+}
+
+
 
 TestCodeGen("simple struct", `
 struct simple {
@@ -107,3 +125,30 @@ function get() Array<wrapper> {
     return wrapStore
 }
 `)
+
+
+testFailsWhen("function with type return returns none", 
+    `
+
+    struct SomeType {
+        m: string
+    }
+
+    function funk() SomeType {
+    }
+    `
+)
+
+
+testFailsWhen("function with void returns type", 
+    `
+
+    struct SomeType {
+        m: string
+    }
+
+    function funk(a: SomeType) {
+        return a
+    }
+    `
+)

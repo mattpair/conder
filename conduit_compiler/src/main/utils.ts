@@ -46,7 +46,6 @@ export class Sequence<INPUT extends {}, OUTPUT extends {}> {
         return new Sequence<INPUT, INPUT & OUTPUT & NEXT>({
             stepName: "",
             func: async (arg0: INPUT) => {
-                try {
                     if (this.def.stepName !== "") {
                         console.log(`Running step: ${this.def.stepName}`)
                     }
@@ -59,11 +58,10 @@ export class Sequence<INPUT extends {}, OUTPUT extends {}> {
                             process.exit(1)
                         })
                         return {...arg0, ...add, ...next}
+                    }).catch(e => {
+                        // console.error(e) 
+                        return Promise.reject(e)
                     })
-                } catch (e) {
-                    console.error(`Failure in step:`, e)
-                    process.exit(1)
-                }
                 
             },
         })

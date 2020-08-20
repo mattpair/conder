@@ -58,16 +58,10 @@ export type Variable = Readonly<{
 
 export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>
 export type ReturnType = RealType | basic.VoidReturn
-
-type BaseStatement<KIND extends basic.IntrafileEntityKinds, DATA, RETURN extends ReturnType> = 
-basic.IntrafileEntity<KIND, DATA> & {readonly returnType: RETURN}
-export type Append = BaseStatement<"Append", {inserting: Variable, into: HierarchicalStore}, basic.VoidReturn>
-export type StoreReference = BaseStatement<"StoreReference", {from: HierarchicalStore}, RealType>
-export type VariableReference = BaseStatement<"VariableReference", Variable, RealType> 
-export type Statement = Append | StoreReference | VariableReference | basic.ReturnStatement | StoreReference
-export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Statement[]}>
+export type Statement = Parse.Statement
+export type ReturnableStatement = Parse.Returnable
+export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Parse.Statement[]}>
 export type Function =  basic.NamedIntrafile<"Function", {
-    requiresDbClient: boolean,
     returnType: ReturnType,
     parameter: Parameter,
     body: FunctionBody,

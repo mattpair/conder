@@ -1,5 +1,9 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`function with type return returns none 1`] = `[Error: Within function funk: Error: Function does nothing when it should return a type]`;
+
+exports[`function with void returns type 1`] = `[Error: Within function funk: Error: Returning something when you need to return nothing]`;
+
 exports[`inserting struct containing struct array: main files 1`] = `
 Array [
   Object {

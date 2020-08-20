@@ -20,7 +20,10 @@ export namespace Parse {
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
-    export type Statement = common.BaseStatement<() => (common.ReturnStatement | Append | VariableReference)>
+    export type Nothing = common.IntrafileEntity<"Nothing", {}>
+    export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | VariableReference>
+    export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
+    export type Statement = common.BaseStatement<() => (ReturnStatement | Append)>
 
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -166,14 +169,16 @@ export namespace Parse {
         ReturnTypeSpec |
         Parameter | 
         common.VoidReturn |
-        common.ReturnStatement | 
+        ReturnStatement | 
         Statement |
         UnaryParameterType |
         NoParameter |
         UnaryParameter | 
         StoreDefinition |
         Append |
-        VariableReference 
+        VariableReference |
+        Returnable |
+        Nothing
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -476,15 +481,20 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Append: 2, VariableReference: 4}
+            priority: {ReturnStatement: 1, Append: 2}
         },
         ReturnStatement: {
-            kind: "leaf",
-            regex: /^\s*return +/,
-            assemble(c, loc) {
+            kind: "conglomerate",
+            startRegex: /^\s*return +/,
+            endRegex: /^/,
+            requiresOne: {
+                Returnable: 1
+            },
+            assemble(start, end, loc, part) {
                 return {
                     kind: "ReturnStatement",
                     loc,
+                    part
                 }
             }
         },
@@ -524,6 +534,23 @@ export namespace Parse {
                     kind: "VariableReference",
                     loc,
                     val: c.groups.name
+                }
+            }
+        },
+        Returnable: {
+            kind: "polymorph",
+            priority: {
+                VariableReference: 1,
+                Nothing: 2
+            },
+            groupKind: "Returnable"
+        },
+        Nothing: {
+            kind: "leaf",
+            regex: /^/,
+            assemble() {
+                return {
+                    kind: "Nothing"
                 }
             }
         }

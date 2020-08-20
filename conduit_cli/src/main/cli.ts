@@ -100,6 +100,10 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(generateAllClients)
         .then(writeClientFile)
         .run({})
+        .catch(e => {
+            console.error(e)
+            process.exit(1)
+        })
     },
 
     async run() {
@@ -117,6 +121,10 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(generateAllClients)
         .then(writeClientFile)
         .run({})
+        .catch(e => {
+            console.error(e)
+            process.exit(1)
+        })
         
         console.log("done!")        
     },

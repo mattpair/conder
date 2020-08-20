@@ -130,87 +130,8 @@ Object {
           },
           "statements": Array [
             Object {
-              "kind": "ReturnStatement",
-              "loc": Object {
-                "endColNumber": 15,
-                "endLineNumber": 8,
-                "startColNumber": 41,
-                "startLineNumber": 7,
-              },
-            },
-            Object {
-              "from": Object {
-                "columns": Array [
-                  Object {
-                    "columnName": "s",
-                    "dif": "prim",
-                    "fieldName": "s",
-                    "modification": "none",
-                    "type": Object {
-                      "kind": "Primitive",
-                      "loc": Object {
-                        "endColNumber": 17,
-                        "endLineNumber": 2,
-                        "startColNumber": 11,
-                        "startLineNumber": 2,
-                      },
-                      "modification": "none",
-                      "val": "string",
-                    },
-                  },
-                ],
-                "kind": "HierarchicalStore",
-                "name": "secondStore",
-                "specName": "querySpec_secondStore",
-                "typeName": "stored",
-              },
-              "kind": "StoreReference",
-              "loc": Object {
-                "endColNumber": 26,
-                "endLineNumber": 8,
-                "startColNumber": 15,
-                "startLineNumber": 8,
-              },
-              "returnType": Object {
-                "isArray": true,
-                "kind": "real type",
-                "val": Object {
-                  "children": Object {
-                    "Field": Array [
-                      Object {
-                        "kind": "Field",
-                        "loc": Object {
-                          "endColNumber": 11,
-                          "endLineNumber": 2,
-                          "startColNumber": 19,
-                          "startLineNumber": 1,
-                        },
-                        "name": "s",
-                        "part": Object {
-                          "FieldType": Object {
-                            "differentiate": [Function],
-                            "kind": "FieldType",
-                            "modification": "none",
-                          },
-                        },
-                      },
-                    ],
-                  },
-                  "file": FileLocation {
-                    "dir": "",
-                    "fullname": "testFile.cdt",
-                    "name": "testFile.cdt",
-                  },
-                  "kind": "Struct",
-                  "loc": Object {
-                    "endColNumber": 19,
-                    "endLineNumber": 1,
-                    "startColNumber": 0,
-                    "startLineNumber": 0,
-                  },
-                  "name": "stored",
-                },
-              },
+              "differentiate": [Function],
+              "kind": "Statement",
             },
           ],
         },
@@ -227,7 +148,6 @@ Object {
           "differentiate": [Function],
           "kind": "Parameter",
         },
-        "requiresDbClient": true,
         "returnType": Object {
           "isArray": true,
           "kind": "real type",

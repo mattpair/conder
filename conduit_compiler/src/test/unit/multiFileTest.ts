@@ -81,31 +81,6 @@ testFailsWhen("function with invalid return type", {
     `
 })
 
-testFailsWhen("function with void returns type", {
-    "conduit_a.cdt": `
-
-    struct SomeType {
-        m: string
-    }
-
-    function funk(a: SomeType) {
-        return a
-    }
-    `
-})
-
-testFailsWhen("function with type return returns none", {
-    "conduit_a.cdt": `
-
-    struct SomeType {
-        m: string
-    }
-
-    function funk() SomeType {
-    }
-    `
-})
-
 protoCompileTest("simple echo function", {
     "conduit_a.cdt": `
 

@@ -23,7 +23,9 @@ export type EntityKinds =
 "Append" |
 "VariableReference" |
 "StoreReference" |
-"HierarchicalStore"
+"HierarchicalStore" |
+"Nothing" |
+"Returnable"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -46,7 +48,6 @@ export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field"
 export type BaseStruct<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Struct", ParentOfMany<FIELD_TYPE>> 
 
 
-export type ReturnStatement = IntrafileEntity<"ReturnStatement", {}>
 export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>
 export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>
 export type BaseReturnTypeSpec<DATA extends PRODUCER> = PolymorphicEntity<"ReturnTypeSpec", DATA>
