@@ -25,7 +25,9 @@ export type EntityKinds =
 "StoreReference" |
 "HierarchicalStore" |
 "Nothing" |
-"Returnable"
+"Returnable" |
+"VariableCreation" | 
+"Assignable"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

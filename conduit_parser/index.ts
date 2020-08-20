@@ -4,3 +4,4 @@ export {compileFiles}
 export * as CompiledTypes from './src/main/entity/resolved'
 export * as Lexicon from './src/main/lexicon'
 export * as Utilities from './src/main/utils'
+export {Parse} from './src/main/parse'

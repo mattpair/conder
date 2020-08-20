@@ -137,3 +137,21 @@ compileTest("functions have flexible syntax", `
         return secondStore
     }
 `)
+
+compileTest("May assign stores and inputs to variables", `
+    struct stored {
+        s: string
+    }
+
+    secondStore: Array<stored> = []
+
+    function getAllDataIntermediate(): Array<stored> {
+        result: Array<stored> = secondStore
+        return result
+    }
+
+    function returnInputIntermediate(i: Array<stored>): Array<stored> {
+        result: Array<stored> = i
+        return result
+    }
+`)

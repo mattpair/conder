@@ -132,7 +132,7 @@ function writeFunction(f: WritableFunction): FunctionDef {
         async fn ${f.name}(data: web::Data<AppData>${input.param}) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(${f.maximumNumberOfVariables});
             ${input.extract}
-            return conduit_byte_code_interpreter(&data.client, &state, &data.${exec_name}).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.${exec_name}).await;
         }
         `,
         //@ts-ignore

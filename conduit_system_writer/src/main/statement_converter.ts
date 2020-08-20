@@ -1,6 +1,5 @@
-import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { OpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes } from "conduit_parser";
+import { Utilities, CompiledTypes, Parse } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
@@ -83,6 +82,32 @@ function typesAreEqual(l: CompiledTypes.RealType, r: CompiledTypes.RealType): bo
     l.val.name === r.val.name
 }
 
+type CompilationTools = Readonly<{
+    varmap: VarMap,
+    factory: OpFactory,
+    inScope: CompiledTypes.ScopeMap
+}>
+
+// TODO: get rid of real type
+function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.RealType | Parse.CustomTypeEntity, {varmap, factory, inScope}: CompilationTools): OpInstance {
+    const assign = a.differentiate()
+    const ref = varmap.tryGet(assign.val)
+    if (ref !== undefined) {
+        
+        if (targetType.kind !== "CustomType" && !typesAreEqual(targetType, ref.type)) {
+            throw Error(`Types are not equal`)
+        }
+        return factory.echoVariable(ref.id)
+    } else {
+        const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
+        if (targetType.kind !== "CustomType" && (store.typeName !== targetType.val.name || !targetType.isArray)) {
+            throw Error(`The store contains a different type than the one desired`)
+        }
+        
+        return factory.makeQuery(store)
+    }
+}
+
 
 function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
     const body: OpInstance[] = []
@@ -108,6 +133,15 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope:
                 body.push(factory.makeInsert(sto, v.id))
                 break
             
+            case "VariableCreation":
+                body.push(
+                    assignableToOp(stmt.part.Assignable, stmt.part.CustomType, {varmap, factory, inScope})
+                )
+                varmap.add(stmt.name, {kind: "real type", isArray: stmt.part.CustomType.modification === "array", val: inScope.getEntityOfType(stmt.part.CustomType.type, "Struct")})
+                body.push(
+                    factory.savePreviousAsVariable()
+                )
+                break
             case "ReturnStatement":
                 const e = stmt.part.Returnable.differentiate()
                 switch (e.kind) {
@@ -117,36 +151,25 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope:
                         }
                         // TODO: add a symbol for creating none and returning previous
                         break
-                    case "VariableReference":
+                    case "Assignable":
+                        const a = e.differentiate()
+                        
                         if (f.returnType.kind === "VoidReturnType") {
                             throw Error(`Returning something when you need to return nothing`)
                         }
-                        const ref = varmap.tryGet(e.val)
-                        if (ref !== undefined) {
-                            
-                            if (!typesAreEqual(f.returnType, ref.type)) {
-                                throw Error(`Returning an unequal type`)
-                            }
-                            body.push(factory.makeReturnVariableOp(ref.id))
-                        } else {
-                            const store  = inScope.getEntityOfType(e.val, "HierarchicalStore")
-                            if (store.typeName !== f.returnType.val.name || !f.returnType.isArray) {
-                                throw Error(`Returning a store won't do here`)
-                            }
-                            body.push(
-                                factory.makeQuery(store),
-                                factory.makeReturnPrevious()
-                            )
-                        }
+                        body.push(
+                            assignableToOp(e, f.returnType, {varmap, factory, inScope}),
+                            factory.makeReturnPrevious()
+                        )
                         
                         break
-                    default: assertNever(e)
+                    default: Utilities.assertNever(e)
                 }
                                 
                 
                 break
 
-            default: continue
+            default: Utilities.assertNever(stmt)
         }
     }
     if (f.returnType.kind !== "VoidReturnType" && body.length === 0) {

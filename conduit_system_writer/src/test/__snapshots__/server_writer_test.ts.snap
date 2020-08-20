@@ -160,6 +160,8 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     enum Op {
         Return(usize),
 ReturnPrev,
+SavePrevAsVar,
+EchoVar(usize),
 Insert_wrapStore(usize),
 Query_wrapStore
     }
@@ -181,7 +183,7 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -221,6 +223,11 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
+Op::SavePrevAsVar => {state.push(prev); AnyType::None},
+Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                },
 
             Op::Insert_wrapStore(var_id) => {
                 
@@ -277,7 +284,7 @@ Op::Query_wrapStore => {
             
         state.push(AnyType::wrapper(input.into_inner()));
         
-            return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
         
                     
@@ -508,6 +515,8 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     enum Op {
         Return(usize),
 ReturnPrev,
+SavePrevAsVar,
+EchoVar(usize),
 Insert_wrapStore(usize),
 Query_wrapStore
     }
@@ -529,7 +538,7 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -569,6 +578,11 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
+Op::SavePrevAsVar => {state.push(prev); AnyType::None},
+Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                },
 
             Op::Insert_wrapStore(var_id) => {
                 
@@ -625,7 +639,7 @@ Op::Query_wrapStore => {
             
         state.push(AnyType::wrapper(input.into_inner()));
         
-            return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
         
 
@@ -634,7 +648,7 @@ Op::Query_wrapStore => {
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-            return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
         
                     
@@ -868,6 +882,8 @@ conduit_entity_id: Option<i32>
     enum Op {
         Return(usize),
 ReturnPrev,
+SavePrevAsVar,
+EchoVar(usize),
 Insert_simpleStore(usize),
 Query_simpleStore
     }
@@ -885,7 +901,7 @@ ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -917,6 +933,11 @@ AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
 AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
+Op::SavePrevAsVar => {state.push(prev); AnyType::None},
+Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                },
 
             Op::Insert_simpleStore(var_id) => {
                 
@@ -971,7 +992,7 @@ Op::Query_simpleStore => {
             
         state.push(AnyType::simple(input.into_inner()));
         
-            return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
         
 
@@ -980,7 +1001,7 @@ Op::Query_simpleStore => {
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-            return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
         
                     
@@ -1210,6 +1231,8 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     enum Op {
         Return(usize),
 ReturnPrev,
+SavePrevAsVar,
+EchoVar(usize),
 Insert_wrapStore(usize),
 Query_wrapStore
     }
@@ -1231,7 +1254,7 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -1271,6 +1294,11 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
+Op::SavePrevAsVar => {state.push(prev); AnyType::None},
+Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                },
 
             Op::Insert_wrapStore(var_id) => {
                 
@@ -1327,7 +1355,7 @@ Op::Query_wrapStore => {
             
         state.push(AnyType::wrapper(input.into_inner()));
         
-            return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
         
 
@@ -1336,7 +1364,7 @@ Op::Query_wrapStore => {
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-            return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
         
                     
@@ -1573,6 +1601,8 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     enum Op {
         Return(usize),
 ReturnPrev,
+SavePrevAsVar,
+EchoVar(usize),
 Insert_wrapStore(usize),
 Query_wrapStore
     }
@@ -1594,7 +1624,7 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -1634,6 +1664,11 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
+Op::SavePrevAsVar => {state.push(prev); AnyType::None},
+Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                },
 
             Op::Insert_wrapStore(var_id) => {
                 
@@ -1690,7 +1725,7 @@ Op::Query_wrapStore => {
             
         state.push(AnyType::wrapper(input.into_inner()));
         
-            return conduit_byte_code_interpreter(&data.client, &state, &data.insert_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
         
 
@@ -1699,7 +1734,7 @@ Op::Query_wrapStore => {
         async fn get(data: web::Data<AppData>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-            return conduit_byte_code_interpreter(&data.client, &state, &data.get_executable).await;
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
         
                     

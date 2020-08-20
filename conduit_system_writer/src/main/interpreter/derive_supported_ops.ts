@@ -17,6 +17,8 @@ export interface OpInstance {
 export interface OpFactory {
     makeReturnVariableOp(var_id: number): OpInstance
     makeReturnPrevious(): OpInstance
+    savePreviousAsVariable(): OpInstance
+    echoVariable(var_id: number): OpInstance
     makeInsert(store: CompiledTypes.HierarchicalStore, varname: number): OpInstance
     makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance
 }
@@ -122,6 +124,20 @@ class TheOpFactory implements OpFactory {
             data: undefined
         }
     }
+
+    savePreviousAsVariable(): OpInstance {
+        return {
+            kind: "SavePrevAsVar",
+            data: undefined
+        }
+    }
+    echoVariable(n: number): OpInstance {
+        return {
+            kind: "EchoVar",
+            data: n
+        }
+    }
+    
 }
 
 export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: OpFactory, allTypesUnion: AllTypesMember[]}> = {
@@ -174,7 +190,18 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 rustEnumMember: `ReturnPrev`,
                 rustOpHandler: `
                 Op::ReturnPrev => ${returnAnyType("prev")}`
-            }
+            },
+            {
+                rustEnumMember: `SavePrevAsVar`,
+                rustOpHandler:`Op::SavePrevAsVar => {state.push(prev); AnyType::None}`
+            },
+            {
+                rustEnumMember: `EchoVar(usize)`,
+                rustOpHandler: `Op::EchoVar(index) => match state.get(*index) {
+                    Some(d) => d.clone(),
+                    None => AnyType::Err("Echoing variable that does not exist".to_string())
+                }`
+            },
         ]
 
         manifest.inScope.forEach(i => {

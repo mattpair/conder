@@ -21,9 +21,11 @@ export namespace Parse {
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
-    export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | VariableReference>
+    export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
-    export type Statement = common.BaseStatement<() => (ReturnStatement | Append)>
+    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
+    export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
+    export type Statement = common.BaseStatement<() => ReturnStatement | Append | VariableCreation>
 
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -36,7 +38,7 @@ export namespace Parse {
     
     export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
 
-    const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})`)
+    const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})$`)
 
     type MatchResult = {hit: true, match: RegExpExecArray, loc: common.EntityLocation} | {hit: false}
     class FileCursor {
@@ -178,7 +180,9 @@ export namespace Parse {
         Append |
         VariableReference |
         Returnable |
-        Nothing
+        Nothing |
+        Assignable |
+        VariableCreation
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -508,7 +512,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Append: 2}
+            priority: {ReturnStatement: 1, Append: 2, VariableCreation: 3}
         },
         ReturnStatement: {
             kind: "conglomerate",
@@ -567,7 +571,7 @@ export namespace Parse {
         Returnable: {
             kind: "polymorph",
             priority: {
-                VariableReference: 1,
+                Assignable: 1,
                 Nothing: 2
             },
             groupKind: "Returnable"
@@ -580,6 +584,35 @@ export namespace Parse {
                     kind: "Nothing"
                 }
             }
+        },
+        VariableCreation: {
+            kind: "conglomerate",
+            startRegex: /^\s*(?<name>[a-zA-Z_]\w*) *:/,
+            endRegex: /^/,
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "VariableCreation",
+                    name: start.groups.name,
+                    part,
+                    loc
+                }
+            },
+            requiresOne: {
+                CustomType: {
+                    afterRegex: /^ *=/,
+                    order: 1
+                },
+                Assignable: {
+                    order: 2
+                }
+            }
+        },
+        Assignable: {
+            kind: "polymorph",
+            priority: {
+                VariableReference: 1
+            },
+            groupKind: "Assignable"
         }
     }
 }

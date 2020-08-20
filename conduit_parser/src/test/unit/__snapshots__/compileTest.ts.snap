@@ -1,5 +1,232 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`May assign stores and inputs to variables 1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "stored" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 2,
+                "startColNumber": 19,
+                "startLineNumber": 1,
+              },
+              "name": "s",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                  "modification": "none",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "testFile.cdt",
+          "name": "testFile.cdt",
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 19,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "stored",
+      },
+      "getAllDataIntermediate" => Object {
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 54,
+            "endLineNumber": 7,
+            "startColNumber": 52,
+            "startLineNumber": 7,
+          },
+          "statements": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+        },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 35,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
+        "method": "GET",
+        "name": "getAllDataIntermediate",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "returnType": Object {
+          "isArray": true,
+          "kind": "real type",
+          "val": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 11,
+                    "endLineNumber": 2,
+                    "startColNumber": 19,
+                    "startLineNumber": 1,
+                  },
+                  "name": "s",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                      "modification": "none",
+                    },
+                  },
+                },
+              ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 19,
+              "endLineNumber": 1,
+              "startColNumber": 0,
+              "startLineNumber": 0,
+            },
+            "name": "stored",
+          },
+        },
+      },
+      "returnInputIntermediate" => Object {
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 71,
+            "endLineNumber": 12,
+            "startColNumber": 69,
+            "startLineNumber": 12,
+          },
+          "statements": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+        },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 36,
+          "endLineNumber": 12,
+          "startColNumber": 5,
+          "startLineNumber": 10,
+        },
+        "method": "POST",
+        "name": "returnInputIntermediate",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "returnType": Object {
+          "isArray": true,
+          "kind": "real type",
+          "val": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 11,
+                    "endLineNumber": 2,
+                    "startColNumber": 19,
+                    "startLineNumber": 1,
+                  },
+                  "name": "s",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                      "modification": "none",
+                    },
+                  },
+                },
+              ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 19,
+              "endLineNumber": 1,
+              "startColNumber": 0,
+              "startLineNumber": 0,
+            },
+            "name": "stored",
+          },
+        },
+      },
+      "secondStore" => Object {
+        "columns": Array [
+          Object {
+            "columnName": "s",
+            "dif": "prim",
+            "fieldName": "s",
+            "modification": "none",
+            "type": Object {
+              "kind": "Primitive",
+              "loc": Object {
+                "endColNumber": 17,
+                "endLineNumber": 2,
+                "startColNumber": 11,
+                "startLineNumber": 2,
+              },
+              "modification": "none",
+              "val": "string",
+            },
+          },
+        ],
+        "kind": "HierarchicalStore",
+        "name": "secondStore",
+        "specName": "querySpec_secondStore",
+        "typeName": "stored",
+      },
+      "querySpec_secondStore" => Object {
+        "children": Object {
+          "Field": Array [],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_secondStore",
+      },
+    },
+    "size": 5,
+  },
+}
+`;
+
 exports[`defining a store 1`] = `
 Object {
   "inScope": EntityMap {

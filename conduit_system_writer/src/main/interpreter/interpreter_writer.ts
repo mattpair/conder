@@ -21,7 +21,7 @@ export function writeOperationInterpreter(supportedOps: OpDef[], allTypeUnion: A
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
