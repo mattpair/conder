@@ -79,6 +79,155 @@ Object {
 }
 `;
 
+exports[`functions have flexible syntax 1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "stored" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 2,
+                "startColNumber": 19,
+                "startLineNumber": 1,
+              },
+              "name": "s",
+              "part": Object {
+                "FieldType": Object {
+                  "differentiate": [Function],
+                  "kind": "FieldType",
+                  "modification": "none",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "testFile.cdt",
+          "name": "testFile.cdt",
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 19,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "stored",
+      },
+      "getAllData" => Object {
+        "body": Object {
+          "kind": "FunctionBody",
+          "loc": Object {
+            "endColNumber": 42,
+            "endLineNumber": 7,
+            "startColNumber": 40,
+            "startLineNumber": 7,
+          },
+          "statements": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+        },
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 23,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
+        "method": "GET",
+        "name": "getAllData",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "returnType": Object {
+          "isArray": true,
+          "kind": "real type",
+          "val": Object {
+            "children": Object {
+              "Field": Array [
+                Object {
+                  "kind": "Field",
+                  "loc": Object {
+                    "endColNumber": 11,
+                    "endLineNumber": 2,
+                    "startColNumber": 19,
+                    "startLineNumber": 1,
+                  },
+                  "name": "s",
+                  "part": Object {
+                    "FieldType": Object {
+                      "differentiate": [Function],
+                      "kind": "FieldType",
+                      "modification": "none",
+                    },
+                  },
+                },
+              ],
+            },
+            "file": FileLocation {
+              "dir": "",
+              "fullname": "testFile.cdt",
+              "name": "testFile.cdt",
+            },
+            "kind": "Struct",
+            "loc": Object {
+              "endColNumber": 19,
+              "endLineNumber": 1,
+              "startColNumber": 0,
+              "startLineNumber": 0,
+            },
+            "name": "stored",
+          },
+        },
+      },
+      "secondStore" => Object {
+        "columns": Array [
+          Object {
+            "columnName": "s",
+            "dif": "prim",
+            "fieldName": "s",
+            "modification": "none",
+            "type": Object {
+              "kind": "Primitive",
+              "loc": Object {
+                "endColNumber": 17,
+                "endLineNumber": 2,
+                "startColNumber": 11,
+                "startLineNumber": 2,
+              },
+              "modification": "none",
+              "val": "string",
+            },
+          },
+        ],
+        "kind": "HierarchicalStore",
+        "name": "secondStore",
+        "specName": "querySpec_secondStore",
+        "typeName": "stored",
+      },
+      "querySpec_secondStore" => Object {
+        "children": Object {
+          "Field": Array [],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_secondStore",
+      },
+    },
+    "size": 4,
+  },
+}
+`;
+
 exports[`getting all data from store 1`] = `
 Object {
   "inScope": EntityMap {

@@ -125,3 +125,15 @@ compileTest("getting all data from store", `
         return secondStore
     }
 `)
+
+compileTest("functions have flexible syntax", `
+    struct stored {
+        s: string
+    }
+
+    secondStore: Array<stored> = []
+
+    function getAllData(): Array<stored> {
+        return secondStore
+    }
+`)

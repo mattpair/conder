@@ -207,10 +207,24 @@ export namespace Parse {
                     return undefined
                 }
                 const part: any = {}
-                new Ordering(parser.requiresOne).order.forEach(req => {
+                const orderableMap: any = {}
+                Object.entries(parser.requiresOne).forEach((v) => orderableMap[v[0]] = v[1].order)
+                new Ordering(orderableMap).order.forEach(req => {
+                    const childdef = parser.requiresOne[req]
+                    if (childdef.beforeRegex !== undefined) {
+                        if (!cursor.tryMatch(childdef.beforeRegex).hit) {
+                            throw new Error(`Unable to parse prefix of ${req} for ${kind}`)
+                        }
+                    }
+
                     const depMatch = tryExtractEntity(cursor, req, parserSet)
                     if (depMatch === undefined) {
                         throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}\n\n ${cursor.getPositionHint()}`)
+                    }
+                    if (childdef.afterRegex !== undefined) {
+                        if (!cursor.tryMatch(childdef.afterRegex).hit) {
+                            throw new Error(`Unable to parse suffix of ${req} for ${kind}`)
+                        }
                     }
                     part[req] = depMatch
                 })
@@ -265,12 +279,18 @@ export namespace Parse {
         regex: RegExp
         assemble(c: RegExpExecArray, loc: common.EntityLocation): K | undefined
     }>
+
+    type ConglomerateChildParseDefinition = Readonly<{
+        beforeRegex?: RegExp
+        afterRegex?: RegExp
+        order: number
+    }>
     type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
         kind: "conglomerate"
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
-        requiresOne: Record<Extract<keyof CompleteParserV2, keyof K["part"]>, number>
+        requiresOne: Record<Extract<keyof CompleteParserV2, keyof K["part"]>, ConglomerateChildParseDefinition>
     }>
 
     type PolymorphicEntity = Extract<AnyEntity, {differentiate(): any}>
@@ -359,7 +379,7 @@ export namespace Parse {
                 }
             },
             requiresOne: {
-                FieldType: 1
+                FieldType: {order: 1}
             },
         },
 
@@ -411,7 +431,14 @@ export namespace Parse {
                     part
                 }
             },
-            requiresOne: {FunctionBody: 3, Parameter: 1, ReturnTypeSpec: 2}
+            requiresOne: {
+                FunctionBody: {order: 3}, 
+                Parameter: {order: 1}, 
+                ReturnTypeSpec: {
+                    beforeRegex: /^ *:?/,
+                    order: 2
+                }
+            }
         },
         ReturnTypeSpec: {
             kind: "polymorph",
@@ -439,7 +466,7 @@ export namespace Parse {
             kind: "conglomerate",
             startRegex: /^\(\s*(?<name>[a-zA-Z_]\w*): */,
             endRegex: /^\s*\) */,
-            requiresOne: {UnaryParameterType: 1},
+            requiresOne: {UnaryParameterType: {order: 1}},
             assemble(start, end, loc, part) {
                 return {
                     kind: "UnaryParameter",
@@ -488,7 +515,7 @@ export namespace Parse {
             startRegex: /^\s*return +/,
             endRegex: /^/,
             requiresOne: {
-                Returnable: 1
+                Returnable: {order: 1}
             },
             assemble(start, end, loc, part) {
                 return {
@@ -503,7 +530,7 @@ export namespace Parse {
             startRegex: /^\s*(?<name>[a-zA-Z]+):\s*/,
             endRegex: /^\s*=\s*\[\]/,
             requiresOne: {
-                CustomType: 1
+                CustomType: {order: 1}
             },
             assemble(start, end, loc, part) {
                 return {
