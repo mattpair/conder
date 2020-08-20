@@ -1,9 +1,9 @@
 import { OpDef, AllTypesMember } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
-import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
+import { CompiledTypes, Lexicon, Utilities} from 'conduit_parser';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
-import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 

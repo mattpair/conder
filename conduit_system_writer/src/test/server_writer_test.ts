@@ -1,7 +1,7 @@
 import { functionToByteCode } from './../main/statement_converter';
 import { deriveSupportedOperations } from './../main/interpreter/derive_supported_ops';
 import { writeRustAndContainerCode } from "../main/server_writer"
-import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_compiler"
+import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_parser"
 
 function testBody(conduit: string) {
     const manifest = compileFiles({test: () => conduit})

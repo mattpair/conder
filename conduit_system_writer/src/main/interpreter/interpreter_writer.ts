@@ -1,6 +1,6 @@
 import { OpDef, AllTypesMember } from './derive_supported_ops';
-import { assertNever } from 'conduit_compiler/dist/src/main/utils';
-import { CompiledTypes } from "conduit_compiler";
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
+import { CompiledTypes } from "conduit_parser";
 
 
 export function writeOperationInterpreter(supportedOps: OpDef[], allTypeUnion: AllTypesMember[]): string {

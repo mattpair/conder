@@ -1,4 +1,4 @@
-import { Utilities } from 'conduit_compiler';
+import { Utilities } from 'conduit_parser';
 import * as fs from 'fs';
 
 

@@ -1,5 +1,5 @@
 {
-  "name": "conduit_compiler",
+  "name": "conduit_parser",
   "version": "0.0.1",
   "scripts": {
     "test": "jest unit/",

@@ -1,5 +1,5 @@
-import { CompiledTypes, Utilities } from 'conduit_compiler';
-import { RealType } from 'conduit_compiler/dist/src/main/entity/resolved';
+import { CompiledTypes, Utilities } from 'conduit_parser';
+import { RealType } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export const a: string = `${12}`
 

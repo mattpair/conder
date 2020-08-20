@@ -5,7 +5,7 @@ import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
 import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_system_writer'
-import {compileFiles, CompiledTypes, Utilities} from 'conduit_compiler'
+import {compileFiles, CompiledTypes, Utilities} from 'conduit_parser'
 
 export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
     stepName: "compiling",

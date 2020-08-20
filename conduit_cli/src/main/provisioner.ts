@@ -1,4 +1,4 @@
-import { CompiledTypes, Utilities } from 'conduit_compiler';
+import { CompiledTypes, Utilities } from 'conduit_parser';
 import * as container from '@google-cloud/container'
 import * as k8s from '@kubernetes/client-node'
 import * as fs from 'fs'

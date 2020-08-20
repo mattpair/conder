@@ -1,6 +1,6 @@
-import { CompiledTypes, Utilities} from 'conduit_compiler';
+import { CompiledTypes, Utilities} from 'conduit_parser';
 import {generateRustGetAllQuerySpec} from '../sql'
-import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
 
 
 export interface OpDef {

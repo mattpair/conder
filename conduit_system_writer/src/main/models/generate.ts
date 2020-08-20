@@ -1,5 +1,5 @@
 import { generateClients } from '../clients';
-import { Lexicon, CompiledTypes, Utilities } from 'conduit_compiler';
+import { Lexicon, CompiledTypes, Utilities } from 'conduit_parser';
 
 function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap): string {
     switch(ent.kind) {

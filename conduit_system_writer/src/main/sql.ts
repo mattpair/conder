@@ -1,5 +1,5 @@
-import { CompiledTypes, Lexicon, Utilities} from 'conduit_compiler';
-import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { CompiledTypes, Lexicon, Utilities} from 'conduit_parser';
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
 
 
 export type ReturnInstruction = Readonly<{

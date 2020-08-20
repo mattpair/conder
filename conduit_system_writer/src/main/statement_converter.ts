@@ -1,7 +1,7 @@
-import { assertNever } from 'conduit_compiler/dist/src/main/utils';
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { OpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes } from "conduit_compiler";
-import { Parameter } from 'conduit_compiler/dist/src/main/entity/resolved';
+import { Utilities, CompiledTypes } from "conduit_parser";
+import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
     name: string

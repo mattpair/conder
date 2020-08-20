@@ -16,7 +16,7 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "conduit_compiler": "file:../conduit_compiler"
+    "conduit_parser": "file:../conduit_parser"
   },
   "jest": {
     "preset": "ts-jest",
@@ -24,7 +24,10 @@
       "**/test/**/*.[jt]s",
       "**/?(*.)+(spec|test).[tj]s"
     ],
-    "testPathIgnorePatterns": ["/node_modules/", "/dist/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ]
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
