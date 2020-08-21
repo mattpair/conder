@@ -8,20 +8,54 @@ export interface OpDef {
     readonly rustOpHandler: string
 }
 
-export interface OpInstance {
-    // These fields are based on the Interpreter writer's op field.
-    kind: string
-    data: any
+type StaticOp<KIND> = Op<KIND, "static">
+type ParamOp<KIND, P> = {kind: KIND, class: "param", paramType: P}
+
+type OpClass = "static" | "store" | "param"
+type Op<KIND, C extends OpClass, P=undefined> = 
+{kind: KIND, class: C, paramType?: P}
+
+type Ops = 
+ParamOp<"returnVariable", number> | 
+StaticOp<"returnPrevious"> |
+StaticOp<"savePrevious"> |
+ParamOp<"echoVariable", number> |
+Op<"storeInsert", "store", number> |
+Op<"storeQuery", "store">
+
+type StaticFactory<S> = OpInstance<S>
+
+type ParamFactory<P, S> = (p: P) => OpInstance<S>
+type StoreFactory<P> = P extends undefined ? (s: CompiledTypes.HierarchicalStore) => OpInstance  : (s: CompiledTypes.HierarchicalStore, p: P) => OpInstance
+
+type OpFactoryFinder<C extends Ops> = C["class"] extends "static" ? StaticFactory<C["kind"]> : 
+C["class"] extends "param" ? ParamFactory<C["paramType"], C["kind"]> :
+C["class"] extends "store" ? StoreFactory<C["paramType"]> : never
+
+export type CompleteOpFactory = {
+    readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
+};
+
+type StaticOpDef = Readonly<{kind: "static", def: OpDef}>
+type DerivedOpDef<T> = Readonly<{kind: "derived", def: (t: T) => OpDef}>
+
+type OpDefFinder<C extends Ops> = C["class"] extends "static" | "param" ? StaticOpDef: 
+C["class"] extends "store" ? DerivedOpDef<CompiledTypes.HierarchicalStore> : never
+
+
+
+export type CompleteOpSpec = {
+    readonly [P in Ops["kind"]]: {
+        factoryMethod: OpFactoryFinder<Extract<Ops, {kind: P}>>,
+        opDefinition: OpDefFinder<Extract<Ops, {kind: P}>>
+    }
 }
 
-export interface OpFactory {
-    makeReturnVariableOp(var_id: number): OpInstance
-    makeReturnPrevious(): OpInstance
-    savePreviousAsVariable(): OpInstance
-    echoVariable(var_id: number): OpInstance
-    makeInsert(store: CompiledTypes.HierarchicalStore, varname: number): OpInstance
-    makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance
-}
+export type OpInstance<S=string> = Readonly<{
+    // These fields are based on the Interpreter writer's op field.
+    kind: S
+    data: any
+}>
 
 export type AllTypesMember = Readonly<{
     name: string, type?: string
@@ -45,102 +79,9 @@ class DataContainingType implements AllTypeInternal {
     
 }
 
-class TheOpFactory implements OpFactory {
 
-    makeInsert(store: CompiledTypes.HierarchicalStore, varname: number): OpInstance {
-        return {
-            kind: this.insertOpName(store),
-            data: varname
-        }
-    }
 
-    makeQuery(store: CompiledTypes.HierarchicalStore): OpInstance {
-        return {
-            kind: this.queryOpName(store),
-            data: undefined
-        }
-    }
-
-    private insertOpName(store: CompiledTypes.HierarchicalStore): string {
-        return `Insert_${store.name}`
-    }
-
-    private queryOpName(store: CompiledTypes.HierarchicalStore): string {
-        return `Query_${store.name}`      
-    }
-
-    inferStoreOps(store: CompiledTypes.HierarchicalStore): OpDef[] {
-        const insertOp = {
-            rustOpHandler: `
-            Op::${this.insertOpName(store)}(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::${store.typeName}(r) => r,
-                        _ => {
-                            println!("invalid insertion type");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    },
-                    None => {
-                        println!("Could not find variable for insertion");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_${store.name}(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }`,
-            rustEnumMember: `${this.insertOpName(store)}(usize)`
-        }
-        const queryOp = {
-            rustEnumMember: `${this.queryOpName(store)}`,
-            rustOpHandler: `Op::${this.queryOpName(store)} => {
-                let spec = ${generateRustGetAllQuerySpec(store)};
-                match query_interpreter_${store.name}(&spec, &client).await {
-                    Ok(out) => AnyType::${store.name}Result(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }`
-        }
-
-        return [insertOp, queryOp]
-    }
-
-    makeReturnVariableOp(varname: number): OpInstance {
-        return {
-            kind: "Return",
-            data: varname
-        }
-    }
-
-    makeReturnPrevious(): OpInstance {
-        return {
-            kind: "ReturnPrev",
-            data: undefined
-        }
-    }
-
-    savePreviousAsVariable(): OpInstance {
-        return {
-            kind: "SavePrevAsVar",
-            data: undefined
-        }
-    }
-    echoVariable(n: number): OpInstance {
-        return {
-            kind: "EchoVar",
-            data: n
-        }
-    }
-    
-}
-
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: OpFactory, allTypesUnion: AllTypesMember[]}> = {
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
         const allTypesUnion: AllTypeInternal[] = [
@@ -173,36 +114,170 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             `
         }
 
-        const opFactory = new TheOpFactory()
-        const addedOperations: OpDef[] = [
-            {
-                rustEnumMember: `Return(usize)`,
-                rustOpHandler: `
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => ${returnAnyType("data")},
-                    None => {
-                        println!("attempting to return a value that doesn't exist");
-                        return HttpResponse::BadRequest().finish();
+        const OpSpec: CompleteOpSpec = {
+
+            storeInsert: {
+                factoryMethod(store: CompiledTypes.HierarchicalStore, varname: number) {
+                    return {
+                        kind: `storeInsert${store.name}`,
+                        data: varname
                     }
-                }`
+                },
+                opDefinition: {
+                    kind: "derived",
+                    def: (t) => ({
+                                rustOpHandler: `
+                    Op::storeInsert${t.name}(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::${t.typeName}(r) => r,
+                                _ => {
+                                    println!("invalid insertion type");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!("Could not find variable for insertion");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_${t.name}(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    }`,
+                    rustEnumMember: `storeInsert${t.name}(usize)`
+                    })
+                }
             },
-            {
-                rustEnumMember: `ReturnPrev`,
-                rustOpHandler: `
-                Op::ReturnPrev => ${returnAnyType("prev")}`
+        
+            storeQuery: {
+                factoryMethod(store: CompiledTypes.HierarchicalStore) {
+                    return {
+                        kind: `storeQuery${store.name}`,
+                        data: undefined
+                    }
+                },
+                opDefinition: {
+                    kind: "derived",
+                    def: (t) => ({
+                        rustEnumMember: `storeQuery${t.name}`,
+                        rustOpHandler: `Op::storeQuery${t.name} => {
+                            let spec = ${generateRustGetAllQuerySpec(t)};
+                            match query_interpreter_${t.name}(&spec, &client).await {
+                                Ok(out) => AnyType::${t.name}Result(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        }`
+                    })
+                }
             },
-            {
-                rustEnumMember: `SavePrevAsVar`,
-                rustOpHandler:`Op::SavePrevAsVar => {state.push(prev); AnyType::None}`
+        
+            returnVariable: {
+                factoryMethod(varname: number) {
+                    return {
+                        kind: "returnVariable",
+                        data: varname
+                    }
+                },
+                opDefinition: {
+                    kind: "static",
+                    def: {
+                        rustEnumMember: `returnVariable(usize)`,
+                        rustOpHandler: `
+                        Op::returnVariable(var_id) => match state.get(*var_id) {
+                            Some(data) => ${returnAnyType("data")},
+                            None => {
+                                println!("attempting to return a value that doesn't exist");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        }`
+                    }
+                }
             },
-            {
-                rustEnumMember: `EchoVar(usize)`,
-                rustOpHandler: `Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err("Echoing variable that does not exist".to_string())
-                }`
+        
+            returnPrevious: {
+                factoryMethod: {    
+                    kind: "returnPrevious",
+                    data: undefined    
+                },
+                opDefinition: {
+                    kind: "static",
+                    def: {
+                        rustEnumMember: `returnPrevious`,
+                        rustOpHandler: `
+                        Op::returnPrevious => ${returnAnyType("prev")}`
+                    }
+                }
             },
-        ]
+        
+            savePrevious: {
+                factoryMethod: {        
+                    kind: "savePrevious",
+                    data: undefined
+                },
+                opDefinition: {
+                    kind: "static",
+                    def: {
+                        rustEnumMember: `savePrevious`,
+                        rustOpHandler:`Op::savePrevious => {state.push(prev); AnyType::None}`
+                    }
+                }
+            },
+            
+            echoVariable:{
+                factoryMethod(n: number) {
+                    return {
+                        kind: "echoVariable",
+                        data: n
+                    }
+                },
+                opDefinition: {
+                    kind: "static",
+                    def: {
+                        rustEnumMember: `echoVariable(usize)`,
+                        rustOpHandler: `Op::echoVariable(index) => match state.get(*index) {
+                            Some(d) => d.clone(),
+                            None => AnyType::Err("Echoing variable that does not exist".to_string())
+                        }`
+                    }
+                }
+            }
+            
+        }
+        const addedOperations: OpDef[] = []
+        const collectedFactory: any = {}
+
+        for (const o in OpSpec) {
+            const opname = o as Ops["kind"]
+            const opdef = OpSpec[opname].opDefinition
+            switch(opdef.kind) {
+                case "derived":
+                    manifest.inScope.forEach(e => {
+                        if (e.kind !== "HierarchicalStore") {
+                            return
+                        }
+                        addedOperations.push(opdef.def(e))
+                    })
+                    
+                    
+                    break
+                case "static":
+                    addedOperations.push(opdef.def)
+                    break
+            }       
+            collectedFactory[opname] = OpSpec[opname].factoryMethod
+        }
+
+        
+        const o = Object.entries(OpSpec).map(e => {
+            return 
+        })
+        
 
         manifest.inScope.forEach(i => {
             switch(i.kind) {
@@ -212,12 +287,12 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     break
     
                 case "HierarchicalStore":                
-                    addedOperations.push(...opFactory.inferStoreOps(i))
+                    addedOperations.push()
                     break
                 default: assertNever(i)
             }
         })
 
-        return Promise.resolve({supportedOps: addedOperations, opFactory, allTypesUnion})
+        return Promise.resolve({supportedOps: addedOperations, opFactory: collectedFactory, allTypesUnion})
     }
 }

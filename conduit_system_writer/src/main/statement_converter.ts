@@ -1,4 +1,4 @@
-import { OpFactory, OpInstance } from './interpreter/derive_supported_ops';
+import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
 import { Utilities, CompiledTypes, Parse } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
@@ -11,7 +11,7 @@ export type WritableFunction = Readonly<{
 }>
 
 export const functionToByteCode: Utilities.StepDefinition<
-{manifest: CompiledTypes.Manifest, opFactory: OpFactory}, 
+{manifest: CompiledTypes.Manifest, opFactory: CompleteOpFactory}, 
 {functions: WritableFunction[]}> = {
     stepName: "Converting function to byte code",
     func({manifest, opFactory}) {   
@@ -84,7 +84,7 @@ function typesAreEqual(l: CompiledTypes.RealType, r: CompiledTypes.RealType): bo
 
 type CompilationTools = Readonly<{
     varmap: VarMap,
-    factory: OpFactory,
+    factory: CompleteOpFactory,
     inScope: CompiledTypes.ScopeMap
 }>
 
@@ -104,12 +104,12 @@ function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.RealType 
             throw Error(`The store contains a different type than the one desired`)
         }
         
-        return factory.makeQuery(store)
+        return factory.storeQuery(store)
     }
 }
 
 
-function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
+function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
     const body: OpInstance[] = []
     const varmap = new VarMap()
     const parameter = f.parameter.differentiate()
@@ -130,16 +130,17 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope:
                 if (v.type.val.name !== sto.typeName) {
                     throw Error(`Inserting unequal type`)
                 }
-                body.push(factory.makeInsert(sto, v.id))
+                body.push(factory.storeInsert(sto, v.id))
                 break
             
             case "VariableCreation":
                 body.push(
                     assignableToOp(stmt.part.Assignable, stmt.part.CustomType, {varmap, factory, inScope})
                 )
+                
                 varmap.add(stmt.name, {kind: "real type", isArray: stmt.part.CustomType.modification === "array", val: inScope.getEntityOfType(stmt.part.CustomType.type, "Struct")})
                 body.push(
-                    factory.savePreviousAsVariable()
+                    factory.savePrevious
                 )
                 break
             case "ReturnStatement":
@@ -159,7 +160,7 @@ function convertFunction(f: CompiledTypes.Function, factory: OpFactory, inScope:
                         }
                         body.push(
                             assignableToOp(e, f.returnType, {varmap, factory, inScope}),
-                            factory.makeReturnPrevious()
+                            factory.returnPrevious
                         )
                         
                         break

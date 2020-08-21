@@ -158,12 +158,12 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(usize),
+        storeInsertwrapStore(usize),
+storeQuerywrapStore,
+Return(usize),
 ReturnPrev,
 SavePrevAsVar,
-EchoVar(usize),
-Insert_wrapStore(usize),
-Query_wrapStore
+EchoVar(usize)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -188,8 +188,41 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
         for o in ops {
             prev = match o {
                 
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => match data {
+                    Op::storeInsertwrapStore(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::wrapper(r) => r,
+                                _ => {
+                                    println!(\\"invalid insertion type\\");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!(\\"Could not find variable for insertion\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_wrapStore(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    },
+Op::storeQuerywrapStore => {
+                            let spec = querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        };
+                            match query_interpreter_wrapStore(&spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        },
+
+                        Op::Return(var_id) => match state.get(*var_id) {
+                            Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -203,13 +236,13 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
-                    None => {
-                        println!(\\"attempting to return a value that doesn't exist\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                },
+                            None => {
+                                println!(\\"attempting to return a value that doesn't exist\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        },
 
-                Op::ReturnPrev => match prev {
+                        Op::ReturnPrev => match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -225,42 +258,9 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             ,
 Op::SavePrevAsVar => {state.push(prev); AnyType::None},
 Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
-                },
-
-            Op::Insert_wrapStore(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::wrapper(r) => r,
-                        _ => {
-                            println!(\\"invalid insertion type\\");
-                            return HttpResponse::BadRequest().finish();
+                            Some(d) => d.clone(),
+                            None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                         }
-                    },
-                    None => {
-                        println!(\\"Could not find variable for insertion\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_wrapStore(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            },
-Op::Query_wrapStore => {
-                let spec = querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        };
-                match query_interpreter_wrapStore(&spec, &client).await {
-                    Ok(out) => AnyType::wrapStoreResult(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }
             };
 
             match prev {
@@ -346,7 +346,7 @@ Op::Query_wrapStore => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"kind\\": \\"storeInsertwrapStore\\",
     \\"data\\": 0
   }
 ]\\"#####).unwrap()
@@ -513,12 +513,12 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(usize),
+        storeInsertwrapStore(usize),
+storeQuerywrapStore,
+Return(usize),
 ReturnPrev,
 SavePrevAsVar,
-EchoVar(usize),
-Insert_wrapStore(usize),
-Query_wrapStore
+EchoVar(usize)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -543,8 +543,41 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
         for o in ops {
             prev = match o {
                 
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => match data {
+                    Op::storeInsertwrapStore(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::wrapper(r) => r,
+                                _ => {
+                                    println!(\\"invalid insertion type\\");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!(\\"Could not find variable for insertion\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_wrapStore(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    },
+Op::storeQuerywrapStore => {
+                            let spec = querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        };
+                            match query_interpreter_wrapStore(&spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        },
+
+                        Op::Return(var_id) => match state.get(*var_id) {
+                            Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -558,13 +591,13 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
-                    None => {
-                        println!(\\"attempting to return a value that doesn't exist\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                },
+                            None => {
+                                println!(\\"attempting to return a value that doesn't exist\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        },
 
-                Op::ReturnPrev => match prev {
+                        Op::ReturnPrev => match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -580,42 +613,9 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             ,
 Op::SavePrevAsVar => {state.push(prev); AnyType::None},
 Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
-                },
-
-            Op::Insert_wrapStore(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::wrapper(r) => r,
-                        _ => {
-                            println!(\\"invalid insertion type\\");
-                            return HttpResponse::BadRequest().finish();
+                            Some(d) => d.clone(),
+                            None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                         }
-                    },
-                    None => {
-                        println!(\\"Could not find variable for insertion\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_wrapStore(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            },
-Op::Query_wrapStore => {
-                let spec = querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        };
-                match query_interpreter_wrapStore(&spec, &client).await {
-                    Ok(out) => AnyType::wrapStoreResult(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }
             };
 
             match prev {
@@ -711,16 +711,16 @@ Op::Query_wrapStore => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"kind\\": \\"storeInsertwrapStore\\",
     \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Query_wrapStore\\"
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"kind\\": \\"ReturnPrev\\"
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -880,12 +880,12 @@ conduit_entity_id: Option<i32>
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(usize),
+        storeInsertsimpleStore(usize),
+storeQuerysimpleStore,
+Return(usize),
 ReturnPrev,
 SavePrevAsVar,
-EchoVar(usize),
-Insert_simpleStore(usize),
-Query_simpleStore
+EchoVar(usize)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -906,8 +906,39 @@ ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
         for o in ops {
             prev = match o {
                 
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => match data {
+                    Op::storeInsertsimpleStore(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::simple(r) => r,
+                                _ => {
+                                    println!(\\"invalid insertion type\\");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!(\\"Could not find variable for insertion\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_simpleStore(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    },
+Op::storeQuerysimpleStore => {
+                            let spec = querySpec_simpleStore;
+                            match query_interpreter_simpleStore(&spec, &client).await {
+                                Ok(out) => AnyType::simpleStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        },
+
+                        Op::Return(var_id) => match state.get(*var_id) {
+                            Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -917,13 +948,13 @@ AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
 AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
-                    None => {
-                        println!(\\"attempting to return a value that doesn't exist\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                },
+                            None => {
+                                println!(\\"attempting to return a value that doesn't exist\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        },
 
-                Op::ReturnPrev => match prev {
+                        Op::ReturnPrev => match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -935,40 +966,9 @@ AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(out
             ,
 Op::SavePrevAsVar => {state.push(prev); AnyType::None},
 Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
-                },
-
-            Op::Insert_simpleStore(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::simple(r) => r,
-                        _ => {
-                            println!(\\"invalid insertion type\\");
-                            return HttpResponse::BadRequest().finish();
+                            Some(d) => d.clone(),
+                            None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                         }
-                    },
-                    None => {
-                        println!(\\"Could not find variable for insertion\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_simpleStore(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            },
-Op::Query_simpleStore => {
-                let spec = querySpec_simpleStore;
-                match query_interpreter_simpleStore(&spec, &client).await {
-                    Ok(out) => AnyType::simpleStoreResult(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }
             };
 
             match prev {
@@ -1064,16 +1064,16 @@ Op::Query_simpleStore => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Insert_simpleStore\\",
+    \\"kind\\": \\"storeInsertsimpleStore\\",
     \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Query_simpleStore\\"
+    \\"kind\\": \\"storeQuerysimpleStore\\"
   },
   {
-    \\"kind\\": \\"ReturnPrev\\"
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -1229,12 +1229,12 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(usize),
+        storeInsertwrapStore(usize),
+storeQuerywrapStore,
+Return(usize),
 ReturnPrev,
 SavePrevAsVar,
-EchoVar(usize),
-Insert_wrapStore(usize),
-Query_wrapStore
+EchoVar(usize)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1259,8 +1259,41 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
         for o in ops {
             prev = match o {
                 
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => match data {
+                    Op::storeInsertwrapStore(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::wrapper(r) => r,
+                                _ => {
+                                    println!(\\"invalid insertion type\\");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!(\\"Could not find variable for insertion\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_wrapStore(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    },
+Op::storeQuerywrapStore => {
+                            let spec = querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        };
+                            match query_interpreter_wrapStore(&spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        },
+
+                        Op::Return(var_id) => match state.get(*var_id) {
+                            Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -1274,13 +1307,13 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
-                    None => {
-                        println!(\\"attempting to return a value that doesn't exist\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                },
+                            None => {
+                                println!(\\"attempting to return a value that doesn't exist\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        },
 
-                Op::ReturnPrev => match prev {
+                        Op::ReturnPrev => match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -1296,42 +1329,9 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             ,
 Op::SavePrevAsVar => {state.push(prev); AnyType::None},
 Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
-                },
-
-            Op::Insert_wrapStore(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::wrapper(r) => r,
-                        _ => {
-                            println!(\\"invalid insertion type\\");
-                            return HttpResponse::BadRequest().finish();
+                            Some(d) => d.clone(),
+                            None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                         }
-                    },
-                    None => {
-                        println!(\\"Could not find variable for insertion\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_wrapStore(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            },
-Op::Query_wrapStore => {
-                let spec = querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        };
-                match query_interpreter_wrapStore(&spec, &client).await {
-                    Ok(out) => AnyType::wrapStoreResult(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }
             };
 
             match prev {
@@ -1427,16 +1427,16 @@ Op::Query_wrapStore => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"kind\\": \\"storeInsertwrapStore\\",
     \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Query_wrapStore\\"
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"kind\\": \\"ReturnPrev\\"
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -1599,12 +1599,12 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        Return(usize),
+        storeInsertwrapStore(usize),
+storeQuerywrapStore,
+Return(usize),
 ReturnPrev,
 SavePrevAsVar,
-EchoVar(usize),
-Insert_wrapStore(usize),
-Query_wrapStore
+EchoVar(usize)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1629,8 +1629,41 @@ ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
         for o in ops {
             prev = match o {
                 
-                Op::Return(var_id) => match state.get(*var_id) {
-                    Some(data) => match data {
+                    Op::storeInsertwrapStore(var_id) => {
+                        
+        
+                        let to_insert = match state.get(*var_id) {
+                        
+                            Some(v) => match v {
+                                AnyType::wrapper(r) => r,
+                                _ => {
+                                    println!(\\"invalid insertion type\\");
+                                    return HttpResponse::BadRequest().finish();
+                                }
+                            },
+                            None => {
+                                println!(\\"Could not find variable for insertion\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        };
+        
+                        match insert_wrapStore(&client, &to_insert).await {
+                            Ok(()) => AnyType::None,
+                            Err(err) => AnyType::Err(err.to_string())
+                        }
+                    },
+Op::storeQuerywrapStore => {
+                            let spec = querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        };
+                            match query_interpreter_wrapStore(&spec, &client).await {
+                                Ok(out) => AnyType::wrapStoreResult(out),
+                                Err(err) => AnyType::Err(err.to_string())
+                            }
+                        },
+
+                        Op::Return(var_id) => match state.get(*var_id) {
+                            Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -1644,13 +1677,13 @@ AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
-                    None => {
-                        println!(\\"attempting to return a value that doesn't exist\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                },
+                            None => {
+                                println!(\\"attempting to return a value that doesn't exist\\");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        },
 
-                Op::ReturnPrev => match prev {
+                        Op::ReturnPrev => match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
@@ -1666,42 +1699,9 @@ AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(outpu
             ,
 Op::SavePrevAsVar => {state.push(prev); AnyType::None},
 Op::EchoVar(index) => match state.get(*index) {
-                    Some(d) => d.clone(),
-                    None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
-                },
-
-            Op::Insert_wrapStore(var_id) => {
-                
-
-                let to_insert = match state.get(*var_id) {
-                
-                    Some(v) => match v {
-                        AnyType::wrapper(r) => r,
-                        _ => {
-                            println!(\\"invalid insertion type\\");
-                            return HttpResponse::BadRequest().finish();
+                            Some(d) => d.clone(),
+                            None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                         }
-                    },
-                    None => {
-                        println!(\\"Could not find variable for insertion\\");
-                        return HttpResponse::BadRequest().finish();
-                    }
-                };
-
-                match insert_wrapStore(&client, &to_insert).await {
-                    Ok(()) => AnyType::None,
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            },
-Op::Query_wrapStore => {
-                let spec = querySpec_wrapStore {
-            innard: querySpec_wrapStore_innard
-        };
-                match query_interpreter_wrapStore(&spec, &client).await {
-                    Ok(out) => AnyType::wrapStoreResult(out),
-                    Err(err) => AnyType::Err(err.to_string())
-                }
-            }
             };
 
             match prev {
@@ -1797,16 +1797,16 @@ Op::Query_wrapStore => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Insert_wrapStore\\",
+    \\"kind\\": \\"storeInsertwrapStore\\",
     \\"data\\": 0
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"Query_wrapStore\\"
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"kind\\": \\"ReturnPrev\\"
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
