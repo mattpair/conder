@@ -87,7 +87,8 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
                 }
                 
         }
-        switch(field.part.FieldType.modification) {
+        const modification = field.part.FieldType.differentiate().modification
+        switch(modification) {
             case "array":
                 return `${field.name}: Vec<${field_type_str}>`
             case "none":
@@ -96,7 +97,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
             case "optional":
                 return `${field.name}: Option<${field_type_str}>`
 
-            default: assertNever(field.part.FieldType.modification)
+            default: assertNever(modification)
         }  
     })
 

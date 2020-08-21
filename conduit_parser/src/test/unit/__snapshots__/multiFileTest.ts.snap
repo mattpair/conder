@@ -22,7 +22,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },
@@ -58,7 +57,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },
@@ -108,7 +106,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },
@@ -176,7 +173,6 @@ Object {
                     "FieldType": Object {
                       "differentiate": [Function],
                       "kind": "FieldType",
-                      "modification": "none",
                     },
                   },
                 },
@@ -224,7 +220,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },
@@ -260,7 +255,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },
@@ -296,7 +290,6 @@ Object {
                 "FieldType": Object {
                   "differentiate": [Function],
                   "kind": "FieldType",
-                  "modification": "none",
                 },
               },
             },

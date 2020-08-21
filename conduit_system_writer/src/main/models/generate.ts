@@ -17,7 +17,7 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: Compi
                         const type = f.part.FieldType.differentiate()
                         let prefix = ''
                         let suffix = ""
-                        switch (f.part.FieldType.modification) {
+                        switch (f.part.FieldType.differentiate().modification) {
                             case "optional":
                                 suffix = "| null"
                                 break;

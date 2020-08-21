@@ -4,8 +4,8 @@ import { FileLocation } from '../utils';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type PrimitiveEntity = basic.PrimitiveEntity
-export type ResolvedType = Readonly<{kind: "custom", name: string} | basic.PrimitiveEntity>
-export type FieldType = basic.BaseFieldType<() => ResolvedType> & {readonly modification: basic.TypeModification}
+export type ResolvedType = Readonly<{kind: "custom", name: string} | basic.PrimitiveEntity> & {readonly modification: basic.TypeModification}
+export type FieldType = basic.BaseFieldType<() => ResolvedType> 
 export type TypeModification = basic.TypeModification
     
 export type Field = basic.BaseField<FieldType>

@@ -156,8 +156,8 @@ function generateSystemStructs(store: HierarchicalStore): Struct[] {
                     part: {
                         FieldType: {
                             kind: "FieldType",
-                            differentiate: () => ({kind: "custom", name: col.ref.specName}),
-                            modification: "none"
+                            differentiate: () => ({kind: "custom", name: col.ref.specName, modification: "none"}),
+                            
                         }
                     },
                     name: col.fieldName

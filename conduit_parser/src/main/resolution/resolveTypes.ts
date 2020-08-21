@@ -43,7 +43,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     }
                 case "Struct":
                 
-                    return {kind: "custom", name: alreadyResolved.name}
+                    return {kind: "custom", name: alreadyResolved.name, modification}
 
                 default: assertNever(alreadyResolved)
             }
@@ -102,7 +102,6 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     FieldType: {
                         kind: "FieldType",
                         differentiate: () => newType,
-                        modification: field.part.FieldType.differentiate().modification
                     }
                 }
             })
@@ -137,11 +136,12 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                     
                     switch (entity.kind) {
                         case "Enum":
-                            if (f.part.FieldType.modification === "optional") {
+                            const mod = f.part.FieldType.differentiate().modification
+                            if (mod === "optional") {
                                 throw Error(`Enum fields may not be optional`)
                             }
     
-                            cols.push({dif: "enum", type: entity, columnName: f.name, fieldName: f.name, modification: f.part.FieldType.modification})
+                            cols.push({dif: "enum", type: entity, columnName: f.name, fieldName: f.name, modification: mod})
     
                             break
     
@@ -151,7 +151,8 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                             }
                             structSet.add(entity.name)
                             const table = resolveHierarchicalStore(entity, structSet, `${nextTableName}_${f.name}`)
-                            switch(f.part.FieldType.modification){
+                            const modif = f.part.FieldType.differentiate().modification
+                            switch(modif){
                                 case "array":
                                     cols.push({
                                         dif: "1:many",
@@ -170,7 +171,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                                         columnName: `${f.name}_ptr`,
                                         fieldName: f.name,
                                         ref: table,
-                                        modification: f.part.FieldType.modification
+                                        modification: modif
                                     })
     
                             }
@@ -182,7 +183,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                 case "Primitive":
                     cols.push({
                         dif: "prim",
-                        modification: f.part.FieldType.modification,
+                        modification: f.part.FieldType.differentiate().modification,
                         type,
                         columnName: f.name,
                         fieldName: f.name
