@@ -58,10 +58,10 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
                         field_type_str = "String"
                         break;
                     case Lexicon.Symbol.uint32:
-                        field_type_str = "u32"
+                        field_type_str = "i32"
                         break;
                     case Lexicon.Symbol.uint64:
-                        field_type_str = "u64"
+                        field_type_str = "i64"
                         break;
                     case Lexicon.Symbol.bool:
                         field_type_str = "bool"
@@ -82,7 +82,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
                         break;
         
                     case "Enum":
-                        field_type_str = 'i16'
+                        field_type_str = 'i64'
                         break;
                 }
                 

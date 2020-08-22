@@ -112,7 +112,7 @@ export namespace Parse {
                 children
             }
         }
-        throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}`) 
+        throw Error(`Failed to parse file entirely: ${JSON.stringify(location)}\n${cursor.getPositionHint()}`) 
     }
 
     type EntityOf<K extends WithChildren["kind"]> = Extract<WithChildren, {kind: K}>

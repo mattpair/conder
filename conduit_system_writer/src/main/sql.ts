@@ -29,6 +29,8 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
             return "bigint"
             
         case Lexicon.Symbol.uint32:
+            console.warn("storing uints as signed integers")
+            return "integer"
         case Lexicon.Symbol.uint64:
             console.warn("storing uints as signed integers")
             return "bigint"
@@ -42,7 +44,7 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
 }
 
 function makePrimitiveColumn(c: CompiledTypes.PrimitiveColumn | CompiledTypes.EnumColumn): string {
-    const typeStr = c.dif === "enum" ? "smallint" : toPostgresType(c.type)
+    const typeStr = c.dif === "enum" ? "bigint" : toPostgresType(c.type)
     let appendStr = ''
     switch (c.modification) {
         case "array":
@@ -158,11 +160,12 @@ export function generateInsertRustCode(store: CompiledTypes.HierarchicalStore, v
                     values.push(`$${++colCount}`)
                     array.push(`&${optionalReturnId}`)
                 } else {
-
+                    const entId = `entId${nextReturnId()}`
                     inserts.push(...generateInsertRustCode(c.ref, `${varname}.${c.fieldName}`, {kind: "save", name: returnedId}, nextReturnId))
                     columns.push(c.columnName)
                     values.push(`$${++colCount}`)
-                    array.push(`&(${returnedId}.get(0))`)
+                    inserts.push(`let ${entId}: i32 = ${returnedId}[0].get(0);`)
+                    array.push(` &${entId}`)
 
                 }
                 
@@ -272,7 +275,7 @@ function generateQueryInterpreterInternal(specVarName: string, store: CompiledTy
                         None => panic!("did not get an expected ${col.columnName}")
                     };
                     `)
-                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
+                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}.clone()` )
                 }
                 
 
