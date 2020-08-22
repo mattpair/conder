@@ -2,11 +2,13 @@ import { CompiledTypes, Utilities} from 'conduit_parser';
 import {generateRustGetAllQuerySpec} from '../sql'
 import { assertNever } from 'conduit_parser/dist/src/main/utils';
 
-
-export interface OpDef {
+type OpDef<K="static"> = {
+    readonly kind: K
     readonly rustEnumMember: string
     readonly rustOpHandler: string
 }
+type OpDefWithParameter = OpDef<"param"> & {readonly paramType: string}
+export type AnyOpDef = OpDef | OpDefWithParameter
 
 type StaticOp<KIND> = Op<KIND, "static">
 type ParamOp<KIND, P> = {kind: KIND, class: "param", paramType: P}
@@ -36,11 +38,12 @@ export type CompleteOpFactory = {
     readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
 };
 
-type StaticOpDef = Readonly<{kind: "static", def: OpDef}>
-type DerivedOpDef<T> = Readonly<{kind: "derived", def: (t: T) => OpDef}>
+type ChooseOpDef<O extends Ops> = O["paramType"] extends undefined ? OpDef : OpDefWithParameter
+type StoreOpDef<O extends Ops> = Readonly<{kind: "store", create: (t: CompiledTypes.HierarchicalStore) => ChooseOpDef<O>}>
 
-type OpDefFinder<C extends Ops> = C["class"] extends "static" | "param" ? StaticOpDef: 
-C["class"] extends "store" ? DerivedOpDef<CompiledTypes.HierarchicalStore> : never
+type OpDefFinder<C extends Ops> = C["class"] extends "static" ? OpDef: 
+C["class"] extends "param" ? OpDefWithParameter :
+C["class"] extends "store" ? StoreOpDef<C> : never
 
 
 
@@ -81,7 +84,7 @@ class DataContainingType implements AllTypeInternal {
 
 
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: OpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[]}> = {
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, {supportedOps: AnyOpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest}) => {
         const allTypesUnion: AllTypeInternal[] = [
@@ -124,33 +127,32 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     }
                 },
                 opDefinition: {
-                    kind: "derived",
-                    def: (t) => ({
-                                rustOpHandler: `
-                    Op::storeInsert${t.name}(var_id) => {
-                        
-        
-                        let to_insert = match state.get(*var_id) {
-                        
-                            Some(v) => match v {
-                                AnyType::${t.typeName}(r) => r,
-                                _ => {
-                                    println!("invalid insertion type");
+                    kind: "store",
+                    create: (t) => ({
+                        kind: "param",
+                        paramType: "usize",
+
+                        rustOpHandler: `
+                            let to_insert = match state.get(*op_param) {
+                    
+                                Some(v) => match v {
+                                    AnyType::${t.typeName}(r) => r,
+                                    _ => {
+                                        println!("invalid insertion type");
+                                        return HttpResponse::BadRequest().finish();
+                                    }
+                                },
+                                None => {
+                                    println!("Could not find variable for insertion");
                                     return HttpResponse::BadRequest().finish();
                                 }
-                            },
-                            None => {
-                                println!("Could not find variable for insertion");
-                                return HttpResponse::BadRequest().finish();
-                            }
-                        };
-        
-                        match insert_${t.name}(&client, &to_insert).await {
-                            Ok(()) => AnyType::None,
-                            Err(err) => AnyType::Err(err.to_string())
-                        }
-                    }`,
-                    rustEnumMember: `storeInsert${t.name}(usize)`
+                            };
+
+                            match insert_${t.name}(&client, &to_insert).await {
+                                Ok(()) => AnyType::None,
+                                Err(err) => AnyType::Err(err.to_string())
+                            }`,
+                    rustEnumMember: `storeInsert${t.name}`
                     })
                 }
             },
@@ -163,16 +165,17 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     }
                 },
                 opDefinition: {
-                    kind: "derived",
-                    def: (t) => ({
+                    kind: "store",
+                    create: (t) => ({
+                        kind: "static",
                         rustEnumMember: `storeQuery${t.name}`,
-                        rustOpHandler: `Op::storeQuery${t.name} => {
+                        rustOpHandler: `
                             let spec = ${generateRustGetAllQuerySpec(t)};
                             match query_interpreter_${t.name}(&spec, &client).await {
                                 Ok(out) => AnyType::${t.name}Result(out),
                                 Err(err) => AnyType::Err(err.to_string())
                             }
-                        }`
+                        `
                     })
                 }
             },
@@ -185,18 +188,17 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     }
                 },
                 opDefinition: {
-                    kind: "static",
-                    def: {
-                        rustEnumMember: `returnVariable(usize)`,
-                        rustOpHandler: `
-                        Op::returnVariable(var_id) => match state.get(*var_id) {
-                            Some(data) => ${returnAnyType("data")},
-                            None => {
-                                println!("attempting to return a value that doesn't exist");
-                                return HttpResponse::BadRequest().finish();
-                            }
-                        }`
-                    }
+                    kind: "param",
+                    paramType: "usize",
+                    rustEnumMember: `returnVariable`,
+                    rustOpHandler: `
+                    match state.get(*op_param) {
+                        Some(data) => ${returnAnyType("data")},
+                        None => {
+                            println!("attempting to return a value that doesn't exist");
+                            return HttpResponse::BadRequest().finish();
+                        }
+                    }`
                 }
             },
         
@@ -207,11 +209,9 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 },
                 opDefinition: {
                     kind: "static",
-                    def: {
-                        rustEnumMember: `returnPrevious`,
-                        rustOpHandler: `
-                        Op::returnPrevious => ${returnAnyType("prev")}`
-                    }
+                    rustEnumMember: `returnPrevious`,
+                    rustOpHandler: `
+                    ${returnAnyType("prev")}`
                 }
             },
         
@@ -222,10 +222,8 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 },
                 opDefinition: {
                     kind: "static",
-                    def: {
-                        rustEnumMember: `savePrevious`,
-                        rustOpHandler:`Op::savePrevious => {state.push(prev); AnyType::None}`
-                    }
+                    rustEnumMember: `savePrevious`,
+                    rustOpHandler:`state.push(prev); AnyType::None`
                 }
             },
             
@@ -236,38 +234,36 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         data: n
                     }
                 },
-                opDefinition: {
-                    kind: "static",
-                    def: {
-                        rustEnumMember: `echoVariable(usize)`,
-                        rustOpHandler: `Op::echoVariable(index) => match state.get(*index) {
-                            Some(d) => d.clone(),
-                            None => AnyType::Err("Echoing variable that does not exist".to_string())
-                        }`
-                    }
+                opDefinition: {                    
+                    kind: "param",
+                    paramType: "usize",
+                    rustEnumMember: `echoVariable`,
+                    rustOpHandler: `match state.get(*op_param) {
+                        Some(d) => d.clone(),
+                        None => AnyType::Err("Echoing variable that does not exist".to_string())
+                    }`
                 }
             }
             
         }
-        const addedOperations: OpDef[] = []
+        const addedOperations: AnyOpDef[] = []
         const collectedFactory: any = {}
 
         for (const o in OpSpec) {
             const opname = o as Ops["kind"]
             const opdef = OpSpec[opname].opDefinition
             switch(opdef.kind) {
-                case "derived":
+                case "store":
                     manifest.inScope.forEach(e => {
                         if (e.kind !== "HierarchicalStore") {
                             return
                         }
-                        addedOperations.push(opdef.def(e))
+                        addedOperations.push(opdef.create(e))
                     })
-                    
-                    
                     break
                 case "static":
-                    addedOperations.push(opdef.def)
+                case"param":
+                    addedOperations.push(opdef)
                     break
             }       
             collectedFactory[opname] = OpSpec[opname].factoryMethod

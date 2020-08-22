@@ -1,4 +1,4 @@
-import { OpDef, AllTypesMember } from './interpreter/derive_supported_ops';
+import { AnyOpDef, AllTypesMember } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_parser';
 import { cargolockstr, maindockerfile, cargo } from './constants';
@@ -152,7 +152,7 @@ function writeFunction(f: WritableFunction): FunctionDef {
 
 export const writeRustAndContainerCode: Utilities.StepDefinition<{ 
     manifest: CompiledTypes.Manifest,
-    supportedOps: OpDef[],
+    supportedOps: AnyOpDef[],
     functions: WritableFunction[],
     allTypesUnion: AllTypesMember[]
 }, WrittenCode> = {

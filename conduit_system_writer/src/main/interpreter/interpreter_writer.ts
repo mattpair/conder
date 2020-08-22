@@ -1,7 +1,7 @@
-import { OpDef, AllTypesMember } from './derive_supported_ops';
+import { AnyOpDef, AllTypesMember } from './derive_supported_ops';
 
 
-export function writeOperationInterpreter(supportedOps: OpDef[], allTypeUnion: AllTypesMember[]): string {
+export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[]): string {
     
     
     return `
@@ -9,7 +9,12 @@ export function writeOperationInterpreter(supportedOps: OpDef[], allTypeUnion: A
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = "kind", content= "data")]
     enum Op {
-        ${supportedOps.map(o => o.rustEnumMember).join(",\n")}
+        ${supportedOps.map(o => {
+            if (o.kind === "param") {
+                return `${o.rustEnumMember}(${o.paramType})`
+            }
+            return o.rustEnumMember
+        }).join(",\n")}
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -23,7 +28,15 @@ export function writeOperationInterpreter(supportedOps: OpDef[], allTypeUnion: A
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                ${supportedOps.map(o => o.rustOpHandler).join(",\n")}
+                ${supportedOps.map(o => {
+                    let header = o.rustEnumMember
+                    if (o.kind === "param") {
+                        header = `${o.rustEnumMember}(op_param)`
+                    }
+                    return `Op::${header} => {
+                        ${o.rustOpHandler}
+                    }`
+                }).join(",\n")}
             };
 
             match prev {
