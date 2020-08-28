@@ -59,7 +59,7 @@ const loadMediumForRun: Utilities.StepDefinition<{}, {mediumState: MediumState, 
         }
         const mediumController = new GCPMediumController()
         return new GCPMediumController().get(match.groups.mediumName)
-        .then(stateAndFile => ({mediumState: stateAndFile.medium, mediumController}))
+        .then(medium => ({mediumState: medium, mediumController}))
     }
 }
 
@@ -72,7 +72,7 @@ const deleteDeploymentFromMedium: Utilities.StepDefinition<{buildConf: ConduitBu
             process.exit(1)
         }
         const mediumController = new GCPMediumController()
-        return mediumController.get(on.groups.medium).then(results => destroyNamespace(results.medium, buildConf.project)).then(() => ({}))
+        return mediumController.get(on.groups.medium).then(medium => destroyNamespace(medium, buildConf.project)).then(() => ({}))
     }
 
 }
