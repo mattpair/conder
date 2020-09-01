@@ -6,7 +6,6 @@ import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, gener
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 import { toAnyType } from './toAnyType';
-import { resolvedToRustType } from './resolvedToRustType';
 import { TypeWriter } from './type_writing/type_writer';
 
 function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap): string {
@@ -15,7 +14,7 @@ function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap
             return "()";
         case "CustomType":
         case "Primitive":
-            return resolvedToRustType(p, inScope)
+            return TypeWriter.rust.reference(p, inScope)
     }
 
 }
