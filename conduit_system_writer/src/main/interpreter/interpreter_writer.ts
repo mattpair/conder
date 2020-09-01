@@ -1,6 +1,4 @@
 import { AnyOpDef, AllTypesMember } from './derive_supported_ops';
-import { Lexicon } from 'conduit_parser';
-import { primitiveToRustType } from '../primitiveToRustType';
 
 
 export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[]): string {

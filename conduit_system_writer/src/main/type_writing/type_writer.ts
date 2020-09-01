@@ -1,18 +1,31 @@
 import { CompiledTypes, Lexicon, Utilities } from "conduit_parser"
-import { primitiveToRustType } from "../primitiveToRustType"
 
 type SupportedTypeWritingLanguages = "typescript" | "rust"
 type TypeWriter = (ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap) => string
 type RefWriter = (type: CompiledTypes.ResolvedType, inScope: CompiledTypes.ScopeMap) => string
+
+type PrimitiveWriter = Record<Lexicon.PrimitiveUnion, string>
 type CompleteTypeWriter = {
     [T in SupportedTypeWritingLanguages]: {
         definition: TypeWriter
         reference: RefWriter
+        primitive: PrimitiveWriter
     }
 }
 
 export const TypeWriter: CompleteTypeWriter = {
     typescript: {
+        primitive: {
+            double: "number",
+            int32: "number",
+            int64: "number",
+            float: "number",
+            uint32: "number",
+            uint64: "number",
+            bool: "boolean",
+            string: "string",
+            bytes: "Uint8Array"
+        },
         definition: (ent, inScope) => {
             switch(ent.kind) {
                 case "Enum":
@@ -50,27 +63,7 @@ export const TypeWriter: CompleteTypeWriter = {
             }
             switch (type.kind) {
                 case "Primitive":
-                    let primstring = '';
-                    switch (type.val) {
-                        case Lexicon.Symbol.bool:
-                            primstring = 'boolean';
-                            break;
-                        case Lexicon.Symbol.bytes:
-                            throw Error("bytes not yet supported");
-                        case Lexicon.Symbol.double:
-                        case Lexicon.Symbol.float:
-                        case Lexicon.Symbol.int32:
-                        case Lexicon.Symbol.int64:
-                        case Lexicon.Symbol.uint32:
-                        case Lexicon.Symbol.uint64:
-                            primstring = 'number';
-                            break;
-                        case Lexicon.Symbol.string:
-                            primstring = 'string';
-                            break;
-        
-                        default: Utilities.assertNever(type.val);
-                    }
+                    const primstring = TypeWriter.typescript.primitive[type.val]
         
                     return `${prefix}${primstring}${suffix}`;
                 case "CustomType":
@@ -82,6 +75,17 @@ export const TypeWriter: CompleteTypeWriter = {
         }
     },
     rust: {
+        primitive: {
+            double: "f64",
+            int32: "i32",
+            int64: "i64",
+            float: "f32",
+            uint32: "i32",
+            uint64: "i64",
+            bool: "bool",
+            string: "String",
+            bytes: "Vec<u8>"
+        },
         definition: (val, inScope) => {
             if (val.kind === "Enum") {
                 return ''
@@ -107,7 +111,7 @@ export const TypeWriter: CompleteTypeWriter = {
             let base = '';
             switch (r.kind) {
                 case "Primitive":
-                    base = primitiveToRustType(r.val);
+                    base = TypeWriter.rust.primitive[r.val];
                     break;
         
                 case "CustomType":

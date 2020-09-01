@@ -1,8 +1,7 @@
 import { CompiledTypes, Utilities, Lexicon} from 'conduit_parser';
 import {generateRustGetAllQuerySpec} from '../sql'
-import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { toAnyType } from '../toAnyType';
-import { primitiveToRustType } from '../primitiveToRustType';
+import { TypeWriter } from '../type_writing/type_writer';
 
 type OpDef<K="static"> = {
     readonly kind: K
@@ -105,7 +104,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         ]
 
         Lexicon.Primitives.forEach(p => {
-            const r = primitiveToRustType(p)
+            const r = TypeWriter.rust.primitive[p]
             allTypesUnion.push(...DataContainingType.allPossibleDataContainingTypes(p, r))
             
         })
