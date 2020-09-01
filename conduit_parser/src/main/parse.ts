@@ -18,7 +18,7 @@ export namespace Parse {
     export type FieldType = common.BaseFieldType<() => CustomTypeEntity>
     export type Field = common.BaseField<FieldType>
 
-    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string}>
+    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<FieldAccess>>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
@@ -26,7 +26,7 @@ export namespace Parse {
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
     export type Statement = common.BaseStatement<() => ReturnStatement | Append | VariableCreation>
-
+    export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
     export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
@@ -182,7 +182,8 @@ export namespace Parse {
         Returnable |
         Nothing |
         Assignable |
-        VariableCreation
+        VariableCreation |
+        FieldAccess
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -558,14 +559,19 @@ export namespace Parse {
             }
         },
         VariableReference: {
-            kind: "leaf",
-            regex: /^\s*(?<name>[a-zA-Z_]\w*)/,
-            assemble(c, loc) {
+            kind: "aggregate",
+            startRegex: /^\s*(?<name>[a-zA-Z_]\w*)/,
+            endRegex: /^\s*/,
+            assemble(start, end, loc, children) {
                 return {
                     kind: "VariableReference",
                     loc,
-                    val: c.groups.name
+                    val: start.groups.name,
+                    children
                 }
+            },
+            hasMany: {
+                FieldAccess: true
             }
         },
         Returnable: {
@@ -613,6 +619,17 @@ export namespace Parse {
                 VariableReference: 1
             },
             groupKind: "Assignable"
+        },
+        FieldAccess: {
+            kind: "leaf",
+            regex: /^\.(?<name>[a-zA-Z_]\w*)/,
+            assemble: (c, loc) => {
+                return {
+                    name: c.groups.name,
+                    kind: "FieldAccess",
+                    loc
+                }
+            }
         }
     }
 }

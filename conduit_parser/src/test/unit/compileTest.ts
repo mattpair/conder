@@ -155,3 +155,21 @@ compileTest("May assign stores and inputs to variables", `
         return result
     }
 `)
+
+
+compileTest("Field referencing", `
+    struct Outermost {
+        middle: Middle
+    }
+
+    struct Middle {
+        inner: Innermost
+    }
+    struct Innermost {
+        f: string
+    }
+
+    function getAllDataIntermediate(input: Outermost): Innermost {
+        return input.middle.inner
+    }
+`)

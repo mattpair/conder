@@ -27,7 +27,8 @@ export type EntityKinds =
 "Nothing" |
 "Returnable" |
 "VariableCreation" | 
-"Assignable"
+"Assignable" |
+"FieldAccess"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
