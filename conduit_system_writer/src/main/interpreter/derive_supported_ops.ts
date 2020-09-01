@@ -80,9 +80,9 @@ class DataContainingType implements AllTypeInternal {
     }
     public static allPossibleDataContainingTypes(baseName: string, baseType: string): DataContainingType[] {
         return [
-            new DataContainingType(baseName, baseType),
-            new DataContainingType(`Many${baseName}`,`Vec<${baseType}>`),
-            new DataContainingType(`Optional${baseName}`, `Option<${baseType}>`)
+            new DataContainingType(baseName, `&'exec ${baseType}`),
+            new DataContainingType(`Many${baseName}`,`&'exec Vec<${baseType}>`),
+            new DataContainingType(`Optional${baseName}`, `&'exec Option<${baseType}>`)
         ]
     }
     
@@ -286,7 +286,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                         const fieldType = field.part.FieldType.differentiate()
                                         
                                         
-                                        return `${struct.name}Field::${struct.name}${field.name}FieldRef => ${toAnyType(fieldType, manifest.inScope)}(inside.${field.name})`
+                                        return `${struct.name}Field::${struct.name}${field.name}FieldRef => ${toAnyType(fieldType, manifest.inScope)}(&inside.${field.name})`
                                     }).join(",\n")}
 
                                 },

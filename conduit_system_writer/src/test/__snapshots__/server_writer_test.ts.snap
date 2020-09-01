@@ -168,55 +168,55 @@ simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType {
+    enum AnyType<'exec> {
         None,
 Err(String),
-double(f64),
-Manydouble(Vec<f64>),
-Optionaldouble(Option<f64>),
-float(f32),
-Manyfloat(Vec<f32>),
-Optionalfloat(Option<f32>),
-int32(i32),
-Manyint32(Vec<i32>),
-Optionalint32(Option<i32>),
-int64(i64),
-Manyint64(Vec<i64>),
-Optionalint64(Option<i64>),
-uint32(i32),
-Manyuint32(Vec<i32>),
-Optionaluint32(Option<i32>),
-uint64(i64),
-Manyuint64(Vec<i64>),
-Optionaluint64(Option<i64>),
-bool(bool),
-Manybool(Vec<bool>),
-Optionalbool(Option<bool>),
-string(String),
-Manystring(Vec<String>),
-Optionalstring(Option<String>),
-bytes(Vec<u8>),
-Manybytes(Vec<Vec<u8>>),
-Optionalbytes(Option<Vec<u8>>),
-simple(simple),
-Manysimple(Vec<simple>),
-Optionalsimple(Option<simple>),
-wrapper(wrapper),
-Manywrapper(Vec<wrapper>),
-Optionalwrapper(Option<wrapper>),
+double(&'exec f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+simple(&'exec simple),
+Manysimple(&'exec Vec<simple>),
+Optionalsimple(&'exec Option<simple>),
+wrapper(&'exec wrapper),
+Manywrapper(&'exec Vec<wrapper>),
+Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
-querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
-OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
-querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
-OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
+querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
+ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(&'exec Option<querySpec_wrapStore_innard>),
+querySpec_wrapStore(&'exec querySpec_wrapStore),
+ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -368,7 +368,7 @@ Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::string(inside.data)
+                                    simpleField::simpledataFieldRef => AnyType::string(&inside.data)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -380,7 +380,7 @@ Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(inside.innard)
+                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(&inside.innard)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -409,7 +409,8 @@ Op::wrapperFieldAccess(op_param) => {
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.push(AnyType::wrapper(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(AnyType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -663,55 +664,55 @@ simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType {
+    enum AnyType<'exec> {
         None,
 Err(String),
-double(f64),
-Manydouble(Vec<f64>),
-Optionaldouble(Option<f64>),
-float(f32),
-Manyfloat(Vec<f32>),
-Optionalfloat(Option<f32>),
-int32(i32),
-Manyint32(Vec<i32>),
-Optionalint32(Option<i32>),
-int64(i64),
-Manyint64(Vec<i64>),
-Optionalint64(Option<i64>),
-uint32(i32),
-Manyuint32(Vec<i32>),
-Optionaluint32(Option<i32>),
-uint64(i64),
-Manyuint64(Vec<i64>),
-Optionaluint64(Option<i64>),
-bool(bool),
-Manybool(Vec<bool>),
-Optionalbool(Option<bool>),
-string(String),
-Manystring(Vec<String>),
-Optionalstring(Option<String>),
-bytes(Vec<u8>),
-Manybytes(Vec<Vec<u8>>),
-Optionalbytes(Option<Vec<u8>>),
-simple(simple),
-Manysimple(Vec<simple>),
-Optionalsimple(Option<simple>),
-wrapper(wrapper),
-Manywrapper(Vec<wrapper>),
-Optionalwrapper(Option<wrapper>),
+double(&'exec f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+simple(&'exec simple),
+Manysimple(&'exec Vec<simple>),
+Optionalsimple(&'exec Option<simple>),
+wrapper(&'exec wrapper),
+Manywrapper(&'exec Vec<wrapper>),
+Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
-querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
-OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
-querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
-OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
+querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
+ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(&'exec Option<querySpec_wrapStore_innard>),
+querySpec_wrapStore(&'exec querySpec_wrapStore),
+ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -863,7 +864,7 @@ Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::string(inside.data)
+                                    simpleField::simpledataFieldRef => AnyType::string(&inside.data)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -875,7 +876,7 @@ Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(inside.innard)
+                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(&inside.innard)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -904,7 +905,8 @@ Op::wrapperFieldAccess(op_param) => {
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.push(AnyType::wrapper(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(AnyType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -1169,49 +1171,49 @@ echoVariable(usize),
 simpleFieldAccess(simpleField)
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType {
+    enum AnyType<'exec> {
         None,
 Err(String),
-double(f64),
-Manydouble(Vec<f64>),
-Optionaldouble(Option<f64>),
-float(f32),
-Manyfloat(Vec<f32>),
-Optionalfloat(Option<f32>),
-int32(i32),
-Manyint32(Vec<i32>),
-Optionalint32(Option<i32>),
-int64(i64),
-Manyint64(Vec<i64>),
-Optionalint64(Option<i64>),
-uint32(i32),
-Manyuint32(Vec<i32>),
-Optionaluint32(Option<i32>),
-uint64(i64),
-Manyuint64(Vec<i64>),
-Optionaluint64(Option<i64>),
-bool(bool),
-Manybool(Vec<bool>),
-Optionalbool(Option<bool>),
-string(String),
-Manystring(Vec<String>),
-Optionalstring(Option<String>),
-bytes(Vec<u8>),
-Manybytes(Vec<Vec<u8>>),
-Optionalbytes(Option<Vec<u8>>),
-simple(simple),
-Manysimple(Vec<simple>),
-Optionalsimple(Option<simple>),
+double(&'exec f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+simple(&'exec simple),
+Manysimple(&'exec Vec<simple>),
+Optionalsimple(&'exec Option<simple>),
 simpleStoreResult(Vec<simple>),
-querySpec_simpleStore(querySpec_simpleStore),
-ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>),
-OptionalquerySpec_simpleStore(Option<querySpec_simpleStore>)
+querySpec_simpleStore(&'exec querySpec_simpleStore),
+ManyquerySpec_simpleStore(&'exec Vec<querySpec_simpleStore>),
+OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -1349,7 +1351,7 @@ Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::double(inside.data)
+                                    simpleField::simpledataFieldRef => AnyType::double(&inside.data)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -1378,7 +1380,8 @@ Op::simpleFieldAccess(op_param) => {
         async fn insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.push(AnyType::simple(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(AnyType::simple(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -1635,55 +1638,55 @@ simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType {
+    enum AnyType<'exec> {
         None,
 Err(String),
-double(f64),
-Manydouble(Vec<f64>),
-Optionaldouble(Option<f64>),
-float(f32),
-Manyfloat(Vec<f32>),
-Optionalfloat(Option<f32>),
-int32(i32),
-Manyint32(Vec<i32>),
-Optionalint32(Option<i32>),
-int64(i64),
-Manyint64(Vec<i64>),
-Optionalint64(Option<i64>),
-uint32(i32),
-Manyuint32(Vec<i32>),
-Optionaluint32(Option<i32>),
-uint64(i64),
-Manyuint64(Vec<i64>),
-Optionaluint64(Option<i64>),
-bool(bool),
-Manybool(Vec<bool>),
-Optionalbool(Option<bool>),
-string(String),
-Manystring(Vec<String>),
-Optionalstring(Option<String>),
-bytes(Vec<u8>),
-Manybytes(Vec<Vec<u8>>),
-Optionalbytes(Option<Vec<u8>>),
-simple(simple),
-Manysimple(Vec<simple>),
-Optionalsimple(Option<simple>),
-wrapper(wrapper),
-Manywrapper(Vec<wrapper>),
-Optionalwrapper(Option<wrapper>),
+double(&'exec f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+simple(&'exec simple),
+Manysimple(&'exec Vec<simple>),
+Optionalsimple(&'exec Option<simple>),
+wrapper(&'exec wrapper),
+Manywrapper(&'exec Vec<wrapper>),
+Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
-querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
-OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
-querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
-OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
+querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
+ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(&'exec Option<querySpec_wrapStore_innard>),
+querySpec_wrapStore(&'exec querySpec_wrapStore),
+ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -1835,7 +1838,7 @@ Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::Manystring(inside.data)
+                                    simpleField::simpledataFieldRef => AnyType::Manystring(&inside.data)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -1847,7 +1850,7 @@ Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(inside.innard)
+                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(&inside.innard)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -1876,7 +1879,8 @@ Op::wrapperFieldAccess(op_param) => {
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.push(AnyType::wrapper(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(AnyType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -2146,55 +2150,55 @@ simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType {
+    enum AnyType<'exec> {
         None,
 Err(String),
-double(f64),
-Manydouble(Vec<f64>),
-Optionaldouble(Option<f64>),
-float(f32),
-Manyfloat(Vec<f32>),
-Optionalfloat(Option<f32>),
-int32(i32),
-Manyint32(Vec<i32>),
-Optionalint32(Option<i32>),
-int64(i64),
-Manyint64(Vec<i64>),
-Optionalint64(Option<i64>),
-uint32(i32),
-Manyuint32(Vec<i32>),
-Optionaluint32(Option<i32>),
-uint64(i64),
-Manyuint64(Vec<i64>),
-Optionaluint64(Option<i64>),
-bool(bool),
-Manybool(Vec<bool>),
-Optionalbool(Option<bool>),
-string(String),
-Manystring(Vec<String>),
-Optionalstring(Option<String>),
-bytes(Vec<u8>),
-Manybytes(Vec<Vec<u8>>),
-Optionalbytes(Option<Vec<u8>>),
-simple(simple),
-Manysimple(Vec<simple>),
-Optionalsimple(Option<simple>),
-wrapper(wrapper),
-Manywrapper(Vec<wrapper>),
-Optionalwrapper(Option<wrapper>),
+double(&'exec f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+simple(&'exec simple),
+Manysimple(&'exec Vec<simple>),
+Optionalsimple(&'exec Option<simple>),
+wrapper(&'exec wrapper),
+Manywrapper(&'exec Vec<wrapper>),
+Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
-querySpec_wrapStore_innard(querySpec_wrapStore_innard),
-ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
-OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
-querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
-OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
+querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
+ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(&'exec Option<querySpec_wrapStore_innard>),
+querySpec_wrapStore(&'exec querySpec_wrapStore),
+ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
@@ -2346,7 +2350,7 @@ Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::bool(inside.data)
+                                    simpleField::simpledataFieldRef => AnyType::bool(&inside.data)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -2358,7 +2362,7 @@ Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
                                 AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(inside.innard)
+                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(&inside.innard)
 
                                 },
                                 _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
@@ -2387,7 +2391,8 @@ Op::wrapperFieldAccess(op_param) => {
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
             let mut state: Vec<AnyType> = Vec::with_capacity(0);
             
-        state.push(AnyType::wrapper(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(AnyType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }

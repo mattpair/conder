@@ -16,14 +16,14 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
         }).join(",\n")}
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Clone)]
     #[serde(tag = "kind", content= "data")]
-    enum AnyType {
+    enum AnyType<'exec> {
         ${allTypeUnion.map(t => t.type ? `${t.name}(${t.type})` : t.name).join(",\n")}
     }
 
 
-    async fn conduit_byte_code_interpreter(client: &Client, state: &mut Vec<AnyType>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {

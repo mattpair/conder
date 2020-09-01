@@ -43,7 +43,8 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
     {
         param: `, input: web::Json<${toRustType(param.type, scopeMap)}>`, 
         extract: `
-        state.push(${toAnyType(param.type, scopeMap)}(input.into_inner()));
+        let innerInput = input.into_inner();
+        state.push(${toAnyType(param.type, scopeMap)}(&innerInput));
         `
     }
 
