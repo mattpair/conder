@@ -163,7 +163,9 @@ storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
 savePrevious,
-echoVariable(usize)
+echoVariable(usize),
+simpleFieldAccess(simpleField),
+wrapperFieldAccess(wrapperField)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -171,15 +173,46 @@ echoVariable(usize)
     enum AnyType {
         None,
 Err(String),
+double(f64),
+Manydouble(Vec<f64>),
+Optionaldouble(Option<f64>),
+float(f32),
+Manyfloat(Vec<f32>),
+Optionalfloat(Option<f32>),
+int32(i32),
+Manyint32(Vec<i32>),
+Optionalint32(Option<i32>),
+int64(i64),
+Manyint64(Vec<i64>),
+Optionalint64(Option<i64>),
+uint32(i32),
+Manyuint32(Vec<i32>),
+Optionaluint32(Option<i32>),
+uint64(i64),
+Manyuint64(Vec<i64>),
+Optionaluint64(Option<i64>),
+bool(bool),
+Manybool(Vec<bool>),
+Optionalbool(Option<bool>),
+string(String),
+Manystring(Vec<String>),
+Optionalstring(Option<String>),
+bytes(Vec<u8>),
+Manybytes(Vec<Vec<u8>>),
+Optionalbytes(Option<Vec<u8>>),
 simple(simple),
 Manysimple(Vec<simple>),
+Optionalsimple(Option<simple>),
 wrapper(wrapper),
 Manywrapper(Vec<wrapper>),
+Optionalwrapper(Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
 querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
     }
 
 
@@ -226,15 +259,46 @@ Op::returnVariable(op_param) => {
                         Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
                         None => {
@@ -248,15 +312,46 @@ Op::returnPrevious => {
                     match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             
                     },
@@ -268,6 +363,30 @@ Op::echoVariable(op_param) => {
                         Some(d) => d.clone(),
                         None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
+                    },
+Op::simpleFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => AnyType::string(inside.data)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
+                    },
+Op::wrapperFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(inside.innard)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
                     }
             };
 
@@ -296,6 +415,19 @@ Op::echoVariable(op_param) => {
         }
         
                     
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum simpleField {
+                            simpledataFieldRef
+                        }
+                        
+
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum wrapperField {
+                            wrapperinnardFieldRef
+                        }
+                        
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {
@@ -526,7 +658,9 @@ storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
 savePrevious,
-echoVariable(usize)
+echoVariable(usize),
+simpleFieldAccess(simpleField),
+wrapperFieldAccess(wrapperField)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -534,15 +668,46 @@ echoVariable(usize)
     enum AnyType {
         None,
 Err(String),
+double(f64),
+Manydouble(Vec<f64>),
+Optionaldouble(Option<f64>),
+float(f32),
+Manyfloat(Vec<f32>),
+Optionalfloat(Option<f32>),
+int32(i32),
+Manyint32(Vec<i32>),
+Optionalint32(Option<i32>),
+int64(i64),
+Manyint64(Vec<i64>),
+Optionalint64(Option<i64>),
+uint32(i32),
+Manyuint32(Vec<i32>),
+Optionaluint32(Option<i32>),
+uint64(i64),
+Manyuint64(Vec<i64>),
+Optionaluint64(Option<i64>),
+bool(bool),
+Manybool(Vec<bool>),
+Optionalbool(Option<bool>),
+string(String),
+Manystring(Vec<String>),
+Optionalstring(Option<String>),
+bytes(Vec<u8>),
+Manybytes(Vec<Vec<u8>>),
+Optionalbytes(Option<Vec<u8>>),
 simple(simple),
 Manysimple(Vec<simple>),
+Optionalsimple(Option<simple>),
 wrapper(wrapper),
 Manywrapper(Vec<wrapper>),
+Optionalwrapper(Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
 querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
     }
 
 
@@ -589,15 +754,46 @@ Op::returnVariable(op_param) => {
                         Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
                         None => {
@@ -611,15 +807,46 @@ Op::returnPrevious => {
                     match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             
                     },
@@ -631,6 +858,30 @@ Op::echoVariable(op_param) => {
                         Some(d) => d.clone(),
                         None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
+                    },
+Op::simpleFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => AnyType::string(inside.data)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
+                    },
+Op::wrapperFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(inside.innard)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
                     }
             };
 
@@ -668,6 +919,19 @@ Op::echoVariable(op_param) => {
         }
         
                     
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum simpleField {
+                            simpledataFieldRef
+                        }
+                        
+
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum wrapperField {
+                            wrapperinnardFieldRef
+                        }
+                        
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {
@@ -901,7 +1165,8 @@ storeQuerysimpleStore,
 returnVariable(usize),
 returnPrevious,
 savePrevious,
-echoVariable(usize)
+echoVariable(usize),
+simpleFieldAccess(simpleField)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -909,11 +1174,40 @@ echoVariable(usize)
     enum AnyType {
         None,
 Err(String),
+double(f64),
+Manydouble(Vec<f64>),
+Optionaldouble(Option<f64>),
+float(f32),
+Manyfloat(Vec<f32>),
+Optionalfloat(Option<f32>),
+int32(i32),
+Manyint32(Vec<i32>),
+Optionalint32(Option<i32>),
+int64(i64),
+Manyint64(Vec<i64>),
+Optionalint64(Option<i64>),
+uint32(i32),
+Manyuint32(Vec<i32>),
+Optionaluint32(Option<i32>),
+uint64(i64),
+Manyuint64(Vec<i64>),
+Optionaluint64(Option<i64>),
+bool(bool),
+Manybool(Vec<bool>),
+Optionalbool(Option<bool>),
+string(String),
+Manystring(Vec<String>),
+Optionalstring(Option<String>),
+bytes(Vec<u8>),
+Manybytes(Vec<Vec<u8>>),
+Optionalbytes(Option<Vec<u8>>),
 simple(simple),
 Manysimple(Vec<simple>),
+Optionalsimple(Option<simple>),
 simpleStoreResult(Vec<simple>),
 querySpec_simpleStore(querySpec_simpleStore),
-ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>)
+ManyquerySpec_simpleStore(Vec<querySpec_simpleStore>),
+OptionalquerySpec_simpleStore(Option<querySpec_simpleStore>)
     }
 
 
@@ -958,11 +1252,40 @@ Op::returnVariable(op_param) => {
                         Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
                         None => {
@@ -976,11 +1299,40 @@ Op::returnPrevious => {
                     match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
             }
             
                     },
@@ -992,6 +1344,18 @@ Op::echoVariable(op_param) => {
                         Some(d) => d.clone(),
                         None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
+                    },
+Op::simpleFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => AnyType::double(inside.data)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
                     }
             };
 
@@ -1029,6 +1393,13 @@ Op::echoVariable(op_param) => {
         }
         
                     
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum simpleField {
+                            simpledataFieldRef
+                        }
+                        
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {
@@ -1259,7 +1630,9 @@ storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
 savePrevious,
-echoVariable(usize)
+echoVariable(usize),
+simpleFieldAccess(simpleField),
+wrapperFieldAccess(wrapperField)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1267,15 +1640,46 @@ echoVariable(usize)
     enum AnyType {
         None,
 Err(String),
+double(f64),
+Manydouble(Vec<f64>),
+Optionaldouble(Option<f64>),
+float(f32),
+Manyfloat(Vec<f32>),
+Optionalfloat(Option<f32>),
+int32(i32),
+Manyint32(Vec<i32>),
+Optionalint32(Option<i32>),
+int64(i64),
+Manyint64(Vec<i64>),
+Optionalint64(Option<i64>),
+uint32(i32),
+Manyuint32(Vec<i32>),
+Optionaluint32(Option<i32>),
+uint64(i64),
+Manyuint64(Vec<i64>),
+Optionaluint64(Option<i64>),
+bool(bool),
+Manybool(Vec<bool>),
+Optionalbool(Option<bool>),
+string(String),
+Manystring(Vec<String>),
+Optionalstring(Option<String>),
+bytes(Vec<u8>),
+Manybytes(Vec<Vec<u8>>),
+Optionalbytes(Option<Vec<u8>>),
 simple(simple),
 Manysimple(Vec<simple>),
+Optionalsimple(Option<simple>),
 wrapper(wrapper),
 Manywrapper(Vec<wrapper>),
+Optionalwrapper(Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
 querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
     }
 
 
@@ -1322,15 +1726,46 @@ Op::returnVariable(op_param) => {
                         Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
                         None => {
@@ -1344,15 +1779,46 @@ Op::returnPrevious => {
                     match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             
                     },
@@ -1364,6 +1830,30 @@ Op::echoVariable(op_param) => {
                         Some(d) => d.clone(),
                         None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
+                    },
+Op::simpleFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => AnyType::Manystring(inside.data)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
+                    },
+Op::wrapperFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(inside.innard)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
                     }
             };
 
@@ -1401,6 +1891,19 @@ Op::echoVariable(op_param) => {
         }
         
                     
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum simpleField {
+                            simpledataFieldRef
+                        }
+                        
+
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum wrapperField {
+                            wrapperinnardFieldRef
+                        }
+                        
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {
@@ -1638,7 +2141,9 @@ storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
 savePrevious,
-echoVariable(usize)
+echoVariable(usize),
+simpleFieldAccess(simpleField),
+wrapperFieldAccess(wrapperField)
     }
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -1646,15 +2151,46 @@ echoVariable(usize)
     enum AnyType {
         None,
 Err(String),
+double(f64),
+Manydouble(Vec<f64>),
+Optionaldouble(Option<f64>),
+float(f32),
+Manyfloat(Vec<f32>),
+Optionalfloat(Option<f32>),
+int32(i32),
+Manyint32(Vec<i32>),
+Optionalint32(Option<i32>),
+int64(i64),
+Manyint64(Vec<i64>),
+Optionalint64(Option<i64>),
+uint32(i32),
+Manyuint32(Vec<i32>),
+Optionaluint32(Option<i32>),
+uint64(i64),
+Manyuint64(Vec<i64>),
+Optionaluint64(Option<i64>),
+bool(bool),
+Manybool(Vec<bool>),
+Optionalbool(Option<bool>),
+string(String),
+Manystring(Vec<String>),
+Optionalstring(Option<String>),
+bytes(Vec<u8>),
+Manybytes(Vec<Vec<u8>>),
+Optionalbytes(Option<Vec<u8>>),
 simple(simple),
 Manysimple(Vec<simple>),
+Optionalsimple(Option<simple>),
 wrapper(wrapper),
 Manywrapper(Vec<wrapper>),
+Optionalwrapper(Option<wrapper>),
 wrapStoreResult(Vec<wrapper>),
 querySpec_wrapStore_innard(querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(Vec<querySpec_wrapStore_innard>),
+OptionalquerySpec_wrapStore_innard(Option<querySpec_wrapStore_innard>),
 querySpec_wrapStore(querySpec_wrapStore),
-ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>)
+ManyquerySpec_wrapStore(Vec<querySpec_wrapStore>),
+OptionalquerySpec_wrapStore(Option<querySpec_wrapStore>)
     }
 
 
@@ -1701,15 +2237,46 @@ Op::returnVariable(op_param) => {
                         Some(data) => match data {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             ,
                         None => {
@@ -1723,15 +2290,46 @@ Op::returnPrevious => {
                     match prev {
                 AnyType::None => return HttpResponse::Ok().finish(),
 AnyType::Err(output) => return HttpResponse::Ok().json(output),
+AnyType::double(output) => return HttpResponse::Ok().json(output),
+AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
+AnyType::float(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
+AnyType::int32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
+AnyType::int64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
+AnyType::uint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
+AnyType::uint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
+AnyType::bool(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
+AnyType::string(output) => return HttpResponse::Ok().json(output),
+AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
+AnyType::bytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
 AnyType::simple(output) => return HttpResponse::Ok().json(output),
 AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
+AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
 AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
 AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
+AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
+AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
             }
             
                     },
@@ -1743,6 +2341,30 @@ Op::echoVariable(op_param) => {
                         Some(d) => d.clone(),
                         None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
+                    },
+Op::simpleFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => AnyType::bool(inside.data)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
+                    },
+Op::wrapperFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(inside.innard)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
                     }
             };
 
@@ -1780,6 +2402,19 @@ Op::echoVariable(op_param) => {
         }
         
                     
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum simpleField {
+                            simpledataFieldRef
+                        }
+                        
+
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum wrapperField {
+                            wrapperinnardFieldRef
+                        }
+                        
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {

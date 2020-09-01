@@ -1,41 +1,14 @@
 import { AnyOpDef, AllTypesMember } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
-import { CompiledTypes, Lexicon, Utilities} from 'conduit_parser';
+import { CompiledTypes, Utilities} from 'conduit_parser';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
 import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
-
-function toRustType(p: CompiledTypes.ReturnType): string {
-    switch (p.kind) {
-        case "VoidReturnType":
-            return "()"
-        case "CustomType":
-            return p.modification === "array" ? `Vec<${p.type}>` : `${p.type}`
-        case "Primitive":
-            throw Error(`Currently don't support primitive in or out`)
-    }
-    
-}
-
-function toAnyType(p: CompiledTypes.ResolvedType): string {
-    let prefix = ''
-    switch (p.modification) {
-        case "array":
-            prefix = "Many"
-    }
-    let name =''
-    switch(p.kind) {
-        case "CustomType":
-            name = p.type
-            break
-        case "Primitive":
-            throw Error("Currently don't support primitive instances")
-    }
-    
-    return `AnyType::${prefix}${name}`
-}
+import { toAnyType } from './toAnyType';
+import { toRustType } from './toRustType';
+import { primitiveToRustType } from './primitiveToRustType';
 
 type ConstDataAddition = {
     name: string
@@ -57,37 +30,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
         let field_type_str = ''
         switch (field_type.kind) {
             case "Primitive":
-                switch (field_type.val) {
-                    case Lexicon.Symbol.double:
-                        field_type_str = "f64"
-                        break;
-                    case Lexicon.Symbol.float:
-                        field_type_str ="f32"
-                        break;
-                    case Lexicon.Symbol.int32:
-                        field_type_str ="i32"
-                        break;
-                    case Lexicon.Symbol.int64:
-                        field_type_str ="i64"
-                        break;
-                    case Lexicon.Symbol.string:
-                        field_type_str = "String"
-                        break;
-                    case Lexicon.Symbol.uint32:
-                        field_type_str = "i32"
-                        break;
-                    case Lexicon.Symbol.uint64:
-                        field_type_str = "i64"
-                        break;
-                    case Lexicon.Symbol.bool:
-                        field_type_str = "bool"
-                        break;
-
-                    case Lexicon.Symbol.bytes:
-                        throw new Error("bytes isn't a supporetd type yet")
-
-                    default: Utilities.assertNever(field_type.val)
-                }
+                field_type_str = primitiveToRustType(field_type.val)
                 break;
            
             case "CustomType":
@@ -129,7 +72,7 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
     return makeStruct('', fields)
 }
 
-function writeFunction(f: WritableFunction): FunctionDef {
+function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): FunctionDef {
     const exec_name = `${f.name}_executable`
     const param = f.parameter.differentiate()
     const input: {param: string, extract: string} = param.kind === "NoParameter" ? 
@@ -138,7 +81,7 @@ function writeFunction(f: WritableFunction): FunctionDef {
     {
         param: `, input: web::Json<${toRustType(param.type)}>`, 
         extract: `
-        state.push(${toAnyType(param.type)}(input.into_inner()));
+        state.push(${toAnyType(param.type, scopeMap)}(input.into_inner()));
         `
     }
 
@@ -170,13 +113,14 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
     manifest: CompiledTypes.Manifest,
     supportedOps: AnyOpDef[],
     functions: WritableFunction[],
-    allTypesUnion: AllTypesMember[]
+    allTypesUnion: AllTypesMember[],
+    additionalRustStructsAndEnums: string[]
 }, WrittenCode> = {
     stepName: "writing deployment files",
-    func: ({manifest, supportedOps, functions, allTypesUnion}) => {
+    func: ({manifest, supportedOps, functions, allTypesUnion, additionalRustStructsAndEnums}) => {
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
-        const f_defs: FunctionDef[] = functions.map(writeFunction)
+        const f_defs: FunctionDef[] = functions.map(i => writeFunction(i, manifest.inScope))
         const app_data_adds: ConstDataAddition[] = []
         f_defs.forEach(f => app_data_adds.push(...f.allDataAdditions))
 
@@ -275,6 +219,8 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             // FUNCTIONS
                             ${f_defs.map(f => f.def).join("\n\n")}
                     
+                            //ADDITIONAL
+                            ${additionalRustStructsAndEnums.join("\n")}
                             #[actix_rt::main]
                             async fn main() -> std::io::Result<()> {
                                 HttpServer::new(|| {

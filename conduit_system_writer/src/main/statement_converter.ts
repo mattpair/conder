@@ -95,15 +95,38 @@ type CompilationTools = Readonly<{
     inScope: CompiledTypes.ScopeMap
 }>
 
-function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, {varmap, factory, inScope}: CompilationTools): OpInstance {
+function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, {varmap, factory, inScope}: CompilationTools): OpInstance[] {
     const assign = a.differentiate()
     const ref = varmap.tryGet(assign.val)
     if (ref !== undefined) {
         
-        if (!typesAreEqual(targetType, ref.type)) {
+        
+
+        const ret: OpInstance[] = [factory.echoVariable(ref.id)]
+   
+        let currentType: CompiledTypes.ResolvedType = ref.type
+
+        if (assign.children.FieldAccess.length > 0) {
+            
+            assign.children.FieldAccess.forEach(access => {
+                if (currentType.kind === "Primitive") {
+                    throw Error(`Attempting to access field on a primitive type`)
+                }
+                const fullType = inScope.getEntityOfType(currentType.type, "Struct")
+                const childField = fullType.children.Field.find(c => c.name === access.name)
+                if (!childField) {
+                    throw Error(`Attempting to access ${access.name} but it doesn't exist on type`)
+                }
+                ret.push(factory.structFieldAccess(fullType, access.name))
+                currentType = childField.part.FieldType.differentiate()
+            })
+        }
+        
+
+        if (!typesAreEqual(targetType, currentType)) {
             throw Error(`Types are not equal`)
         }
-        return factory.echoVariable(ref.id)
+        return ret
     } else {
         const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
         if (targetType.kind === "Primitive") {
@@ -115,7 +138,7 @@ function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.ResolvedT
             throw Error(`The store contains a different type than the one desired`)
         }
         
-        return factory.storeQuery(store)
+        return [factory.storeQuery(store)]
     }
 }
 
@@ -149,7 +172,7 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                 }
                 
                 body.push(
-                    assignableToOp(
+                    ...assignableToOps(
                         stmt.part.Assignable, 
                         stmt.part.CustomType, 
                         {varmap, factory, inScope})
@@ -175,7 +198,7 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                             throw Error(`Returning something when you need to return nothing`)
                         }
                         body.push(
-                            assignableToOp(e, f.returnType, {varmap, factory, inScope}),
+                            ...assignableToOps(e, f.returnType, {varmap, factory, inScope}),
                             factory.returnPrevious
                         )
                         
