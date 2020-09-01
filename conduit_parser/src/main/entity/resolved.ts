@@ -4,7 +4,7 @@ import { FileLocation } from '../utils';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 export type PrimitiveEntity = basic.PrimitiveEntity
-export type ResolvedType = Readonly<{kind: "custom", name: string} | basic.PrimitiveEntity> & {readonly modification: basic.TypeModification}
+export type ResolvedType = Readonly<Parse.CustomTypeEntity | basic.PrimitiveEntity> & {readonly modification: basic.TypeModification}
 export type FieldType = basic.BaseFieldType<() => ResolvedType> 
 export type TypeModification = basic.TypeModification
     
@@ -48,16 +48,15 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     
 }
 
-export type UnaryParameter = basic.NamedIntrafile<"UnaryParameter", {type: RealType}>
+export type UnaryParameter = basic.NamedIntrafile<"UnaryParameter", {type: ResolvedType}>
 export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
 
 export type Variable = Readonly<{
     name: string,
-    type: WithArrayIndicator<Struct>
+    type: ResolvedType
 }>
 
-export type RealType = {kind: "real type" } & WithArrayIndicator<Struct>
-export type ReturnType = RealType | basic.VoidReturn
+export type ReturnType = ResolvedType | basic.VoidReturn
 export type Statement = Parse.Statement
 export type ReturnableStatement = Parse.Returnable
 export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Parse.Statement[]}>

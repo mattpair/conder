@@ -50,8 +50,8 @@ function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: Compi
                                 }
 
                                 return `${f.name}: ${prefix}${primstring}${suffix}`
-                            case "custom":
-                                const ent = inScope.getEntityOfType(type.name, "Struct", "Enum")
+                            case "CustomType":
+                                const ent = inScope.getEntityOfType(type.type, "Struct", "Enum")
                                 return `${f.name}: ${prefix}${ent.name}${suffix}`
 
                             default: Utilities.assertNever(type)

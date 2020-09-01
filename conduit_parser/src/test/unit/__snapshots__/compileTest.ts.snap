@@ -139,43 +139,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": false,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 9,
-                    "startColNumber": 22,
-                    "startLineNumber": 8,
-                  },
-                  "name": "f",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 22,
-              "endLineNumber": 8,
-              "startColNumber": 5,
-              "startLineNumber": 7,
-            },
-            "name": "Innermost",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 65,
+            "endLineNumber": 12,
+            "startColNumber": 54,
+            "startLineNumber": 12,
           },
+          "modification": "none",
+          "type": "Innermost",
         },
       },
     },
@@ -257,43 +229,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": true,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 2,
-                    "startColNumber": 19,
-                    "startLineNumber": 1,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 19,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "stored",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 52,
+            "endLineNumber": 7,
+            "startColNumber": 38,
+            "startLineNumber": 7,
           },
+          "modification": "array",
+          "type": "stored",
         },
       },
       "returnInputIntermediate" => Object {
@@ -330,43 +274,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": true,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 2,
-                    "startColNumber": 19,
-                    "startLineNumber": 1,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 19,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "stored",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 69,
+            "endLineNumber": 12,
+            "startColNumber": 55,
+            "startLineNumber": 12,
           },
+          "modification": "array",
+          "type": "stored",
         },
       },
       "secondStore" => Object {
@@ -555,43 +471,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": true,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 2,
-                    "startColNumber": 19,
-                    "startLineNumber": 1,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 19,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "stored",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 40,
+            "endLineNumber": 7,
+            "startColNumber": 26,
+            "startLineNumber": 7,
           },
+          "modification": "array",
+          "type": "stored",
         },
       },
       "secondStore" => Object {
@@ -702,43 +590,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": true,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 2,
-                    "startColNumber": 19,
-                    "startLineNumber": 1,
-                  },
-                  "name": "s",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "testFile.cdt",
-              "name": "testFile.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 19,
-              "endLineNumber": 1,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "stored",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 39,
+            "endLineNumber": 7,
+            "startColNumber": 26,
+            "startLineNumber": 7,
           },
+          "modification": "array",
+          "type": "stored",
         },
       },
       "secondStore" => Object {

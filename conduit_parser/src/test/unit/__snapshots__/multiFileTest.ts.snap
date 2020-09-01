@@ -155,43 +155,15 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "isArray": false,
-          "kind": "real type",
-          "val": Object {
-            "children": Object {
-              "Field": Array [
-                Object {
-                  "kind": "Field",
-                  "loc": Object {
-                    "endColNumber": 11,
-                    "endLineNumber": 3,
-                    "startColNumber": 18,
-                    "startLineNumber": 2,
-                  },
-                  "name": "m",
-                  "part": Object {
-                    "FieldType": Object {
-                      "differentiate": [Function],
-                      "kind": "FieldType",
-                    },
-                  },
-                },
-              ],
-            },
-            "file": FileLocation {
-              "dir": "",
-              "fullname": "conduit_a.cdt",
-              "name": "conduit_a.cdt",
-            },
-            "kind": "Struct",
-            "loc": Object {
-              "endColNumber": 18,
-              "endLineNumber": 2,
-              "startColNumber": 0,
-              "startLineNumber": 0,
-            },
-            "name": "Shout",
+          "kind": "CustomType",
+          "loc": Object {
+            "endColNumber": 34,
+            "endLineNumber": 6,
+            "startColNumber": 28,
+            "startLineNumber": 6,
           },
+          "modification": "none",
+          "type": "Shout",
         },
       },
     },

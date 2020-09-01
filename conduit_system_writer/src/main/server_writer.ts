@@ -8,17 +8,33 @@ import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 
 function toRustType(p: CompiledTypes.ReturnType): string {
-    if (p.kind === "VoidReturnType") {
-        return "()"
+    switch (p.kind) {
+        case "VoidReturnType":
+            return "()"
+        case "CustomType":
+            return p.modification === "array" ? `Vec<${p.type}>` : `${p.type}`
+        case "Primitive":
+            throw Error(`Currently don't support primitive in or out`)
     }
-    return p.isArray ? `Vec<${p.val.name}>` : `${p.val.name}`
+    
 }
 
-function toAnyType(p: CompiledTypes.RealType): string {
-    if (p.isArray) {
-        return `AnyType::Many${p.val.name}`
+function toAnyType(p: CompiledTypes.ResolvedType): string {
+    let prefix = ''
+    switch (p.modification) {
+        case "array":
+            prefix = "Many"
     }
-    return `AnyType::${p.val.name}`
+    let name =''
+    switch(p.kind) {
+        case "CustomType":
+            name = p.type
+            break
+        case "Primitive":
+            throw Error("Currently don't support primitive instances")
+    }
+    
+    return `AnyType::${prefix}${name}`
 }
 
 type ConstDataAddition = {
@@ -74,11 +90,11 @@ function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.S
                 }
                 break;
            
-            case "custom":
-                const ent = inScope.getEntityOfType(field_type.name, "Enum", "Struct")
+            case "CustomType":
+                const ent = inScope.getEntityOfType(field_type.type, "Enum", "Struct")
                 switch (ent.kind) {
                     case "Struct":
-                        field_type_str = field_type.name
+                        field_type_str = field_type.type
                         break;
         
                     case "Enum":

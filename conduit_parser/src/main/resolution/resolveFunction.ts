@@ -9,11 +9,8 @@ function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Names
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
-            return {
-                val: namespace.inScope.getEntityOfType(ent.type, "Struct"), 
-                isArray: ent.modification === "array",
-                kind: "real type"
-            }
+            namespace.inScope.getEntityOfType(ent.type, "Struct")
+            return ent
 
         case "VoidReturnType":
             return ent
@@ -48,9 +45,9 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
                     name: param.name,
                     loc: param.loc,
                     type: {
-                        kind: "real type",
-                        val: parameterType,
-                        isArray: type.modification === "array"
+                        kind: "CustomType",
+                        type: parameterType.name,
+                        modification: type.modification
                     }
                 })
             }
@@ -156,7 +153,7 @@ function generateSystemStructs(store: HierarchicalStore): Struct[] {
                     part: {
                         FieldType: {
                             kind: "FieldType",
-                            differentiate: () => ({kind: "custom", name: col.ref.specName, modification: "none"}),
+                            differentiate: () => ({kind: "CustomType", type: col.ref.specName, modification: "none"}),
                             
                         }
                     },

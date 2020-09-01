@@ -2,10 +2,12 @@
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
 import { Struct, Field, ResolvedType, EntityMap, HierarchicalStore,CommanderColumn } from '../entity/resolved';
-import { TypeResolved } from "../entity/TypeResolved";
+import { TypeResolved, isPrimitive } from "../entity/TypeResolved";
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
 import { Primitives } from '../lexicon';
+
+
 
 type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.Function | Parse.StoreDefinition) & {file: FileLocation}
 export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
@@ -42,8 +44,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                         throw new Error(`Enum fields may not be optional`)
                     }
                 case "Struct":
-                
-                    return {kind: "custom", name: alreadyResolved.name, modification}
+                    return {kind: "CustomType", type: alreadyResolved.name, modification}
 
                 default: assertNever(alreadyResolved)
             }
@@ -58,14 +59,9 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
         
             switch(type.kind) {
                 case "CustomType":
-                    const prim = Primitives.find(p => p === type.type)
+                    const prim = isPrimitive(type)
                     if (prim) {
-                        newType = {
-                            kind: "Primitive",
-                            loc: type.loc,
-                            val: prim,
-                            modification: type.modification
-                        }
+                        newType = prim
                         break
                     }
 
@@ -127,11 +123,11 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
             const type = f.part.FieldType.differentiate()
     
             switch(type.kind) {
-                case "custom": {
-                    let entity = secondPassScope.get(type.name)
+                case "CustomType": {
+                    let entity = secondPassScope.get(type.type)
                     if (entity === undefined) {
-                        resolveEntity(firstPassScope.get(type.name))
-                        entity = secondPassScope.get(type.name)
+                        resolveEntity(firstPassScope.get(type.type))
+                        entity = secondPassScope.get(type.type)
                     }
                     
                     switch (entity.kind) {
@@ -146,7 +142,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                             break
     
                         case "Struct":
-                            if (structSet.has(type.name)) {
+                            if (structSet.has(type.type)) {
                                 throw Error(`Cannot store type ${struct.name} because ${entity.name} is recursive`)
                             }
                             structSet.add(entity.name)
@@ -159,7 +155,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                                         type: entity,
                                         fieldName: f.name,
                                         ref: table,
-                                        refTableName: `rel_${nextTableName}_${struct.name}_and_${type.name}`
+                                        refTableName: `rel_${nextTableName}_${struct.name}_and_${type.type}`
                 
                                     })
                                     break
@@ -175,7 +171,7 @@ export function toNamespace(unresolved: Parse.File[]): TypeResolved.Namespace {
                                     })
     
                             }
-                            structSet.delete(type.name)
+                            structSet.delete(type.type)
                     }
                     break
                 }

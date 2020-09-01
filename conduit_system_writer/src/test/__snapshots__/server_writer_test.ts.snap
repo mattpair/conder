@@ -1231,7 +1231,7 @@ conduit_entity_id: Option<i32>
                     };
                     
         out.push(wrapper {
-            innard: extractedsimple9,
+            innard: extractedsimple9.clone(),
             conduit_entity_id: Some(wrapperEntityId2)
         })
     }
@@ -1243,7 +1243,8 @@ conduit_entity_id: Option<i32>
 
             async fn insert_wrapStore(client: &Client, body: &wrapper) -> Result<(), Error> {
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
+let entId1: i32 = ret0[0].get(0);
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).await?;
                 return Ok(());
             }
             
@@ -1609,7 +1610,7 @@ conduit_entity_id: Option<i32>
                     };
                     
         out.push(wrapper {
-            innard: extractedsimple9,
+            innard: extractedsimple9.clone(),
             conduit_entity_id: Some(wrapperEntityId2)
         })
     }
@@ -1621,7 +1622,8 @@ conduit_entity_id: Option<i32>
 
             async fn insert_wrapStore(client: &Client, body: &wrapper) -> Result<(), Error> {
                 let ret0 = client.query(\\"insert into wrapStore_innard(data) values ($1) RETURNING conduit_entity_id\\", &[&body.innard.data]).await?;
-client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[&(ret0.get(0))]).await?;
+let entId1: i32 = ret0[0].get(0);
+client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).await?;
                 return Ok(());
             }
             

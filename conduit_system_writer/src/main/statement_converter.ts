@@ -1,5 +1,5 @@
 import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse } from "conduit_parser";
+import { Utilities, CompiledTypes, Parse, isPrimitive } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
@@ -40,14 +40,14 @@ export const functionToByteCode: Utilities.StepDefinition<
 
 interface VarMapEntryI{
     readonly id: number,
-    readonly type: CompiledTypes.RealType
+    readonly type: CompiledTypes.ResolvedType
 }
 
 class VarMapEntry implements VarMapEntryI{
     readonly id: number
-    readonly type: CompiledTypes.RealType
+    readonly type: CompiledTypes.ResolvedType
 
-    constructor(id: number, type: CompiledTypes.RealType) {
+    constructor(id: number, type: CompiledTypes.ResolvedType) {
         this.id = id 
         this.type = type
     }
@@ -57,7 +57,7 @@ class VarMap extends Map<string, VarMapEntryI> {
     private count = 0
     maximumVars = 0
 
-    public add(s: string, t: CompiledTypes.RealType): number {
+    public add(s: string, t: CompiledTypes.ResolvedType): number {
         super.set(s, new VarMapEntry(this.count, t));
         const v = this.count++
         this.maximumVars = Math.max(this.maximumVars, v)
@@ -77,9 +77,16 @@ class VarMap extends Map<string, VarMapEntryI> {
     }
 }
 
-function typesAreEqual(l: CompiledTypes.RealType, r: CompiledTypes.RealType): boolean {
-    return l.isArray === r.isArray &&
-    l.val.name === r.val.name
+function typesAreEqual(l: CompiledTypes.ResolvedType, r: CompiledTypes.ResolvedType): boolean {
+    return l.kind === r.kind &&
+    l.modification === r.modification &&
+    (
+        (
+            l.kind === "CustomType"
+            //@ts-ignore
+            && l.type === r.type
+        ) 
+    || l.kind === "Primitive")
 }
 
 type CompilationTools = Readonly<{
@@ -88,19 +95,23 @@ type CompilationTools = Readonly<{
     inScope: CompiledTypes.ScopeMap
 }>
 
-// TODO: get rid of real type
-function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.RealType | Parse.CustomTypeEntity, {varmap, factory, inScope}: CompilationTools): OpInstance {
+function assignableToOp(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, {varmap, factory, inScope}: CompilationTools): OpInstance {
     const assign = a.differentiate()
     const ref = varmap.tryGet(assign.val)
     if (ref !== undefined) {
         
-        if (targetType.kind !== "CustomType" && !typesAreEqual(targetType, ref.type)) {
+        if (!typesAreEqual(targetType, ref.type)) {
             throw Error(`Types are not equal`)
         }
         return factory.echoVariable(ref.id)
     } else {
         const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
-        if (targetType.kind !== "CustomType" && (store.typeName !== targetType.val.name || !targetType.isArray)) {
+        if (targetType.kind === "Primitive") {
+            throw Error("Stores contain structured data, not primitives")
+        }
+        
+        
+        if (store.typeName !== targetType.type || targetType.modification  !== "array") {
             throw Error(`The store contains a different type than the one desired`)
         }
         
@@ -124,21 +135,27 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
             case "Append":
                 const v = varmap.get(stmt.variableName)
                 const sto = inScope.getEntityOfType(stmt.storeName, "HierarchicalStore")
-                if (v.type.isArray) {
-                    throw Error(`Cannot insert arrays`)
+                if (!typesAreEqual(v.type, {kind: "CustomType", type: sto.typeName, modification: 'none'})) {
+                    throw Error("attempting to insert unequal types into global array")
                 }
-                if (v.type.val.name !== sto.typeName) {
-                    throw Error(`Inserting unequal type`)
-                }
+                
                 body.push(factory.storeInsert(sto, v.id))
                 break
             
             case "VariableCreation":
+                const prim = isPrimitive(stmt.part.CustomType)
+                if (prim) {
+                    throw Error(`Currently don't allow primitive variable creation`)
+                }
+                
                 body.push(
-                    assignableToOp(stmt.part.Assignable, stmt.part.CustomType, {varmap, factory, inScope})
+                    assignableToOp(
+                        stmt.part.Assignable, 
+                        stmt.part.CustomType, 
+                        {varmap, factory, inScope})
                 )
                 
-                varmap.add(stmt.name, {kind: "real type", isArray: stmt.part.CustomType.modification === "array", val: inScope.getEntityOfType(stmt.part.CustomType.type, "Struct")})
+                varmap.add(stmt.name, stmt.part.CustomType)
                 body.push(
                     factory.savePrevious
                 )
@@ -147,13 +164,12 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                 const e = stmt.part.Returnable.differentiate()
                 switch (e.kind) {
                     case "Nothing":
-                        if (f.returnType.kind === "real type") {
+                        if (f.returnType.kind !== "VoidReturnType") {
                             throw Error(`Returning nothing when you need to return a real type`)
                         }
                         // TODO: add a symbol for creating none and returning previous
                         break
                     case "Assignable":
-                        const a = e.differentiate()
                         
                         if (f.returnType.kind === "VoidReturnType") {
                             throw Error(`Returning something when you need to return nothing`)
