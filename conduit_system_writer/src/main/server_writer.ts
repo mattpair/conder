@@ -7,6 +7,7 @@ import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 import { toAnyType } from './toAnyType';
 import { resolvedToRustType } from './resolvedToRustType';
+import { TypeWriter } from './type_writing/type_writer';
 
 function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap): string {
     switch (p.kind) {
@@ -33,23 +34,6 @@ type FunctionDef = Readonly<{
     allDataAdditions: ConstDataAddition[]
 }>
 
-function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
-    const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
-        const field_type = field.part.FieldType.differentiate()
-        return `${field.name}: ${resolvedToRustType(field_type, inScope)}`
-    })
-
-    const makeStruct = (prefix: string, strFields: string[]) =>  `
-    #[derive(Serialize, Deserialize, Clone)]
-    struct ${prefix}${val.name}${strFields.length > 0 ? ` {
-        ${strFields.join(",\n")}
-    }` : `;`}
-    `
-    if (!val.isConduitGenerated) {
-        fields.push(`conduit_entity_id: Option<i32>`)
-    }
-    return makeStruct('', fields)
-}
 
 function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): FunctionDef {
     const exec_name = `${f.name}_executable`
@@ -106,7 +90,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
-                    structs.push(generateRustStructs(val, manifest.inScope))
+                    structs.push(TypeWriter.rust(val, manifest.inScope))
                     break
                 case "HierarchicalStore":
                     stores.set(val.name, val)

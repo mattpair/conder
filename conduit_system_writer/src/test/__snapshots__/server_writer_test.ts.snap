@@ -34,29 +34,29 @@ insert_executable: Vec<Op>
                             
                             // STRUCTS
                             
-    #[derive(Serialize, Deserialize, Clone)]
-    struct simple {
-        data: String,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct simple {
+            data: String,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct wrapper {
-        innard: Vec<simple>,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct wrapper {
+            innard: Vec<simple>,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard;
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore {
-        innard: querySpec_wrapStore_innard
-    }
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }
+        
                             // INTERPRETERS
                             
     async fn query_interpreter_wrapStore(querySpec: &querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
@@ -529,29 +529,29 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
                             
                             // STRUCTS
                             
-    #[derive(Serialize, Deserialize, Clone)]
-    struct simple {
-        data: String,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct simple {
+            data: String,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct wrapper {
-        innard: Vec<simple>,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct wrapper {
+            innard: Vec<simple>,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard;
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore {
-        innard: querySpec_wrapStore_innard
-    }
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }
+        
                             // INTERPRETERS
                             
     async fn query_interpreter_wrapStore(querySpec: &querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
@@ -1114,16 +1114,16 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
                             
                             // STRUCTS
                             
-    #[derive(Serialize, Deserialize, Clone)]
-    struct simple {
-        data: f64,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct simple {
+            data: f64,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_simpleStore;
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_simpleStore;
+        
                             // INTERPRETERS
                             
     async fn query_interpreter_simpleStore(querySpec: &querySpec_simpleStore, client: &Client) -> Result<Vec<simple>, Error> {
@@ -1535,29 +1535,29 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
                             
                             // STRUCTS
                             
-    #[derive(Serialize, Deserialize, Clone)]
-    struct simple {
-        data: Vec<String>,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct simple {
+            data: Vec<String>,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct wrapper {
-        innard: simple,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct wrapper {
+            innard: simple,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard;
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore {
-        innard: querySpec_wrapStore_innard
-    }
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }
+        
                             // INTERPRETERS
                             
     async fn query_interpreter_wrapStore(querySpec: &querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {
@@ -2046,29 +2046,29 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
                             
                             // STRUCTS
                             
-    #[derive(Serialize, Deserialize, Clone)]
-    struct simple {
-        data: bool,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct simple {
+            data: bool,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct wrapper {
-        innard: simple,
+        #[derive(Serialize, Deserialize, Clone)]
+        struct wrapper {
+            innard: simple,
 conduit_entity_id: Option<i32>
-    }
-    
+        }
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore_innard;
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore_innard;
+        
 
-    #[derive(Serialize, Deserialize, Clone)]
-    struct querySpec_wrapStore {
-        innard: querySpec_wrapStore_innard
-    }
-    
+        #[derive(Serialize, Deserialize, Clone)]
+        struct querySpec_wrapStore {
+            innard: querySpec_wrapStore_innard
+        }
+        
                             // INTERPRETERS
                             
     async fn query_interpreter_wrapStore(querySpec: &querySpec_wrapStore, client: &Client) -> Result<Vec<wrapper>, Error> {

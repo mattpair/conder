@@ -1,27 +1,7 @@
 import { generateClients } from '../clients';
 import { CompiledTypes, Utilities } from 'conduit_parser';
-import { toTSType } from './toTSType';
+import { TypeWriter } from '../type_writing/type_writer';
 
-function modelFor(ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap): string {
-    switch(ent.kind) {
-        case "Enum":
-            return `
-                export enum ${ent.name} {
-                    ${ent.children.EnumMember.map((e, i) => `${e.name}=${i}`).join(",\n")}
-                }
-                `
-    
-        case "Struct":
-            return `
-                export type ${ent.name} = {
-                    ${ent.children.Field.map(f => {
-                        const type = f.part.FieldType.differentiate()
-                        return `${f.name}: ${toTSType(type, inScope)}`
-    
-                    }).join("\n")}
-                }`
-    }
-}
 
 export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
     const models: string[] = []
@@ -32,7 +12,7 @@ export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
         if (v.kind === "Function") {
             return
         }
-        models.push(modelFor(v, manifest.inScope))
+        models.push(TypeWriter.typescript(v, manifest.inScope))
     })
     return models
 }
