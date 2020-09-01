@@ -2,8 +2,6 @@ import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { CompiledTypes, Utilities } from 'conduit_parser';
 import { TypeWriter } from './type_writing/type_writer';
 
-export const a: string = `${12}`
-
 export function generateClients(url: string, manifest: CompiledTypes.Manifest, models: string[]) {
     const clients: string[] = []
     manifest.inScope.forEach(fn => {
