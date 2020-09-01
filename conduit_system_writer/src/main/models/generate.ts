@@ -12,7 +12,7 @@ export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
         if (v.kind === "Function") {
             return
         }
-        models.push(TypeWriter.typescript(v, manifest.inScope))
+        models.push(TypeWriter.typescript.definition(v, manifest.inScope))
     })
     return models
 }

@@ -90,7 +90,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
         manifest.inScope.forEach(val => {
             switch (val.kind) {
                 case "Struct":
-                    structs.push(TypeWriter.rust(val, manifest.inScope))
+                    structs.push(TypeWriter.rust.definition(val, manifest.inScope))
                     break
                 case "HierarchicalStore":
                     stores.set(val.name, val)
