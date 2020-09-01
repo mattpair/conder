@@ -1,16 +1,27 @@
+import { ResolvedType } from './../entity/resolved';
 import { Parse } from '../parse';
 import { Function, FunctionBody, ScopeMap, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Parameter, Variable, Field } from "../entity/resolved";
-import { TypeResolved } from "../entity/TypeResolved";
+import { TypeResolved, isPrimitive } from "../entity/TypeResolved";
 import { assertNever } from "../utils";
 
 
+function resolveType(c: Parse.CustomTypeEntity, namespace: TypeResolved.Namespace): ResolvedType {
+    
+    let parameterType: ResolvedType = isPrimitive(c) 
+        
+    if (parameterType === undefined) {
+        const struct = namespace.inScope.getEntityOfType(c.type, "Struct")
+        parameterType = {kind: "CustomType", type: struct.name, modification: c.modification}
+    }
+
+    return parameterType
+}
 
 function getReturnType(type: Parse.ReturnTypeSpec, namespace: TypeResolved.Namespace): ReturnType {
     const ent = type.differentiate()
     switch (ent.kind) {
         case "CustomType":
-            namespace.inScope.getEntityOfType(ent.type, "Struct")
-            return ent
+            return resolveType(ent, namespace)
 
         case "VoidReturnType":
             return ent
@@ -35,7 +46,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
             
             const type: Parse.CustomTypeEntity = param.part.UnaryParameterType.differentiate()
             
-            const parameterType = namespace.inScope.getEntityOfType(type.type, "Struct")
+            const parameterType: ResolvedType = resolveType(type, namespace)
             
             return {
                 kind: "Parameter",
@@ -44,11 +55,7 @@ function resolveParameter(namespace: TypeResolved.Namespace, parameter: Parse.Pa
                     kind: "UnaryParameter",
                     name: param.name,
                     loc: param.loc,
-                    type: {
-                        kind: "CustomType",
-                        type: parameterType.name,
-                        modification: type.modification
-                    }
+                    type: parameterType
                 })
             }
 

@@ -140,12 +140,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 65,
-            "endLineNumber": 12,
-            "startColNumber": 54,
-            "startLineNumber": 12,
-          },
           "modification": "none",
           "type": "Innermost",
         },
@@ -230,12 +224,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 52,
-            "endLineNumber": 7,
-            "startColNumber": 38,
-            "startLineNumber": 7,
-          },
           "modification": "array",
           "type": "stored",
         },
@@ -275,12 +263,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 69,
-            "endLineNumber": 12,
-            "startColNumber": 55,
-            "startLineNumber": 12,
-          },
           "modification": "array",
           "type": "stored",
         },
@@ -472,12 +454,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 40,
-            "endLineNumber": 7,
-            "startColNumber": 26,
-            "startLineNumber": 7,
-          },
           "modification": "array",
           "type": "stored",
         },
@@ -591,12 +567,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 39,
-            "endLineNumber": 7,
-            "startColNumber": 26,
-            "startLineNumber": 7,
-          },
           "modification": "array",
           "type": "stored",
         },

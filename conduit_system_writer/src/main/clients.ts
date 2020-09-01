@@ -1,19 +1,8 @@
+import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { CompiledTypes, Utilities } from 'conduit_parser';
+import { toTSType } from './models/toTSType';
 
 export const a: string = `${12}`
-
-function typeToTS(t: CompiledTypes.ResolvedType):string {
-    switch (t.kind) {
-        case "Primitive":
-            throw Error(`Currently don't support primitive inputs and outputs`)
-
-        case "CustomType":
-            return `${t.type}${t.modification === "array" ? "[]" : ""}`
-
-        default: Utilities.assertNever(t)
-    }
-    
-}
 
 export function generateClients(url: string, manifest: CompiledTypes.Manifest, models: string[]) {
     const clients: string[] = []
@@ -29,19 +18,22 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
         let beforeReq = ''
         let method: "GET" | "POST" = "GET"
         switch (fn.returnType.kind) {
+            case "Primitive":
             case "CustomType":
-                returnType = `: Promise<${typeToTS(fn.returnType)}>`
+                returnType = `: Promise<${toTSType(fn.returnType, manifest.inScope)}>`
                 followOn = '.then( data=> data.json())'
                 break
             case "VoidReturnType":
                 break
+
+            default: assertNever(fn.returnType)
         }
         const param = fn.parameter.differentiate()
         switch (param.kind) {
             case "NoParameter":
                 break
             case "UnaryParameter":
-                paramString = `a: ${typeToTS(param.type)}`
+                paramString = `a: ${toTSType(param.type, manifest.inScope)}`
                 beforeReq = 'const body = JSON.stringify(a)'
                 body = `
                 body,

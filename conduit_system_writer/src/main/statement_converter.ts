@@ -1,5 +1,5 @@
 import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse, isPrimitive } from "conduit_parser";
+import { Utilities, CompiledTypes, Parse } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
@@ -97,49 +97,51 @@ type CompilationTools = Readonly<{
 
 function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, {varmap, factory, inScope}: CompilationTools): OpInstance[] {
     const assign = a.differentiate()
-    const ref = varmap.tryGet(assign.val)
-    if (ref !== undefined) {
+    switch (assign.kind) {
+        case "VariableReference":
+            const ref = varmap.tryGet(assign.val)
+            if (ref !== undefined) {
+                const ret: OpInstance[] = [factory.echoVariable(ref.id)]
         
-        
+                let currentType: CompiledTypes.ResolvedType = ref.type
 
-        const ret: OpInstance[] = [factory.echoVariable(ref.id)]
-   
-        let currentType: CompiledTypes.ResolvedType = ref.type
-
-        if (assign.children.FieldAccess.length > 0) {
-            
-            assign.children.FieldAccess.forEach(access => {
-                if (currentType.kind === "Primitive") {
-                    throw Error(`Attempting to access field on a primitive type`)
+                if (assign.children.FieldAccess.length > 0) {
+                    
+                    assign.children.FieldAccess.forEach(access => {
+                        if (currentType.kind === "Primitive") {
+                            throw Error(`Attempting to access field on a primitive type`)
+                        }
+                        const fullType = inScope.getEntityOfType(currentType.type, "Struct")
+                        const childField = fullType.children.Field.find(c => c.name === access.name)
+                        if (!childField) {
+                            throw Error(`Attempting to access ${access.name} but it doesn't exist on type`)
+                        }
+                        ret.push(factory.structFieldAccess(fullType, access.name))
+                        currentType = childField.part.FieldType.differentiate()
+                    })
                 }
-                const fullType = inScope.getEntityOfType(currentType.type, "Struct")
-                const childField = fullType.children.Field.find(c => c.name === access.name)
-                if (!childField) {
-                    throw Error(`Attempting to access ${access.name} but it doesn't exist on type`)
-                }
-                ret.push(factory.structFieldAccess(fullType, access.name))
-                currentType = childField.part.FieldType.differentiate()
-            })
-        }
-        
+                
 
-        if (!typesAreEqual(targetType, currentType)) {
-            throw Error(`Types are not equal`)
-        }
-        return ret
-    } else {
-        const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
-        if (targetType.kind === "Primitive") {
-            throw Error("Stores contain structured data, not primitives")
-        }
-        
-        
-        if (store.typeName !== targetType.type || targetType.modification  !== "array") {
-            throw Error(`The store contains a different type than the one desired`)
-        }
-        
-        return [factory.storeQuery(store)]
+                if (!typesAreEqual(targetType, currentType)) {
+                    throw Error(`Types are not equal`)
+                }
+                return ret
+            } else {
+                const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
+                if (targetType.kind === "Primitive") {
+                    throw Error("Stores contain structured data, not primitives")
+                }
+                
+                
+                if (store.typeName !== targetType.type || targetType.modification  !== "array") {
+                    throw Error(`The store contains a different type than the one desired`)
+                }
+                
+                return [factory.storeQuery(store)]
+            }
+        default: Utilities.assertNever(assign.kind)
     }
+    
 }
 
 
@@ -166,10 +168,6 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                 break
             
             case "VariableCreation":
-                const prim = isPrimitive(stmt.part.CustomType)
-                if (prim) {
-                    throw Error(`Currently don't allow primitive variable creation`)
-                }
                 
                 body.push(
                     ...assignableToOps(

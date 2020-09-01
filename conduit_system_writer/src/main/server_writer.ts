@@ -3,12 +3,21 @@ import { WrittenCode } from './types';
 import { CompiledTypes, Utilities} from 'conduit_parser';
 import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
-import { assertNever } from 'conduit_parser/dist/src/main/utils';
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 import { toAnyType } from './toAnyType';
-import { toRustType } from './toRustType';
-import { primitiveToRustType } from './primitiveToRustType';
+import { resolvedToRustType } from './resolvedToRustType';
+
+function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap): string {
+    switch (p.kind) {
+        case "VoidReturnType":
+            return "()";
+        case "CustomType":
+        case "Primitive":
+            return resolvedToRustType(p, inScope)
+    }
+
+}
 
 type ConstDataAddition = {
     name: string
@@ -27,37 +36,7 @@ type FunctionDef = Readonly<{
 function generateRustStructs(val: CompiledTypes.Struct, inScope: CompiledTypes.ScopeMap): string {
     const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
         const field_type = field.part.FieldType.differentiate()
-        let field_type_str = ''
-        switch (field_type.kind) {
-            case "Primitive":
-                field_type_str = primitiveToRustType(field_type.val)
-                break;
-           
-            case "CustomType":
-                const ent = inScope.getEntityOfType(field_type.type, "Enum", "Struct")
-                switch (ent.kind) {
-                    case "Struct":
-                        field_type_str = field_type.type
-                        break;
-        
-                    case "Enum":
-                        field_type_str = 'i64'
-                        break;
-                }
-                
-        }
-        const modification = field.part.FieldType.differentiate().modification
-        switch(modification) {
-            case "array":
-                return `${field.name}: Vec<${field_type_str}>`
-            case "none":
-                return `${field.name}: ${field_type_str}`   
-
-            case "optional":
-                return `${field.name}: Option<${field_type_str}>`
-
-            default: assertNever(modification)
-        }  
+        return `${field.name}: ${resolvedToRustType(field_type, inScope)}`
     })
 
     const makeStruct = (prefix: string, strFields: string[]) =>  `
@@ -79,7 +58,7 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
     {param: "", extract: ""}
         :
     {
-        param: `, input: web::Json<${toRustType(param.type)}>`, 
+        param: `, input: web::Json<${toRustType(param.type, scopeMap)}>`, 
         extract: `
         state.push(${toAnyType(param.type, scopeMap)}(input.into_inner()));
         `

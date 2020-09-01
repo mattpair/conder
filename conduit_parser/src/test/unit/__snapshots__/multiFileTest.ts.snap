@@ -156,12 +156,6 @@ Object {
         },
         "returnType": Object {
           "kind": "CustomType",
-          "loc": Object {
-            "endColNumber": 34,
-            "endLineNumber": 6,
-            "startColNumber": 28,
-            "startLineNumber": 6,
-          },
           "modification": "none",
           "type": "Shout",
         },
