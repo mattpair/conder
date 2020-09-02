@@ -29,7 +29,10 @@ export type EntityKinds =
 "Assignable" |
 "FieldAccess" |
 "MethodInvocation" |
-"DotStatement"
+"DotStatement" |
+"ForIn" |
+"WithinForIn" |
+"ForInBody"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
@@ -50,7 +53,6 @@ export type BaseFieldType<DATA extends () => Entity<any>> = PolymorphicEntity<"F
 export type BaseField<TYPE extends Entity<"FieldType">> = NamedIntrafile<"Field",RequiresOne<TYPE>>  
 
 export type BaseStruct<FIELD_TYPE extends {kind: "Field"}> = NamedIntrafile<"Struct", ParentOfMany<FIELD_TYPE>> 
-
 
 export type BaseStatement<DATA extends PRODUCER> = PolymorphicEntity<"Statement", DATA>
 export type BaseFunctionBody<T extends EntOf<"Statement">> = IntrafileEntity<"FunctionBody", ParentOfMany<T>>

@@ -26,7 +26,7 @@ export namespace Parse {
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
     export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
-    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation>
+    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn>
     export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -36,6 +36,9 @@ export namespace Parse {
     export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity >
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
     export type Struct = common.BaseStruct<Field>
+    export type WithinForIn = common.PolymorphicEntity<"WithinForIn", () => VariableReference>
+    export type ForInBody = common.IntrafileEntity<"ForInBody", common.ParentOfMany<WithinForIn>>
+    export type ForIn = common.IntrafileEntity<"ForIn", {rowVarName: string} & common.RequiresOne<ForInBody> & common.RequiresOne<Assignable>>
     
     export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
 
@@ -163,7 +166,7 @@ export namespace Parse {
             return parser.assemble(m.match, end.match, m.loc, children)
         }
 
-        throw new Error(`Unable to parse end for entity: ${parser.endRegex.source}\n${cursor.getPositionHint()}`)
+        throw new Error(`Unable to parse end for entity of type: ${parser.endRegex.source}\n${cursor.getPositionHint()}`)
     }
 
     type AnyEntity = 
@@ -192,7 +195,10 @@ export namespace Parse {
         VariableCreation |
         FieldAccess |
         MethodInvocation |
-        DotStatement
+        DotStatement |
+        WithinForIn |
+        ForIn |
+        ForInBody
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -200,9 +206,6 @@ export namespace Parse {
 
     function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
         const parser = parserSet[kind] as AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any>
-        if (parser === undefined) {
-            console.log(`HEEEERREEE`, kind, parser)
-        }
         
         switch(parser.kind) {
             case "aggregate":
@@ -532,7 +535,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, VariableReference: 4, VariableCreation: 2}
+            priority: {ReturnStatement: 1, ForIn: 2,  VariableReference: 4, VariableCreation: 3}
         },
         ReturnStatement: {
             kind: "conglomerate",
@@ -665,6 +668,47 @@ export namespace Parse {
                 FieldAccess: 2
             },
             groupKind: "DotStatement"
+        },
+        ForIn: {
+            kind: "conglomerate",
+            startRegex: /^\s+for +(?<name>[a-zA-Z_]\w*) +in +/,
+            endRegex: /^/,
+            requiresOne: {
+                Assignable: {order: 1},
+                ForInBody: {order: 2}
+            },
+
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "ForIn",
+                    rowVarName: start.groups.name,
+                    loc,
+                    part
+                }
+            }
+        },
+        ForInBody: {
+            kind: "aggregate",
+            startRegex: /^\s*{\s*/,
+            endRegex: /^\s*}/,
+            options: {},
+            hasMany: {
+                WithinForIn: true
+            },
+            assemble(start, end, loc, children) {
+                return {
+                    kind: "ForInBody",
+                    loc,
+                    children
+                }
+            }
+        },
+        WithinForIn: {
+            kind: "polymorph",
+            groupKind: "WithinForIn",
+            priority: {
+                VariableReference: 1
+            }
         }
     }
 }

@@ -247,7 +247,8 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                                 
                 
                 break
-
+            case "ForIn":
+                break
             default: Utilities.assertNever(stmt)
         }
     }

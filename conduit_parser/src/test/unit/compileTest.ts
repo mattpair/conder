@@ -173,3 +173,23 @@ compileTest("Field referencing", `
         return input.middle.inner
     }
 `)
+
+compileTest("for in loop", `
+    struct Outermost {
+        middle: Middle
+    }
+
+    struct Middle {
+        inner: Innermost
+    }
+    struct Innermost {
+        f: string
+    }
+
+    function getAllDataIntermediate(input: Array<Outermost>) {
+        for row in input {
+            row.middle.inner
+        }
+        
+    }
+`)
