@@ -71,18 +71,24 @@ interface AllTypeInternal extends AllTypesMember  {
     readonly returner: string
 }
 
+type AnyTypeDefOption = {
+    exemptFromUsingReferences?: boolean
+}
+
 class DataContainingType implements AllTypeInternal {
     readonly name: string
     readonly type: string
-    constructor(name: string, type: string) {
+    constructor(name: string, type: string, options: AnyTypeDefOption = {}) {
         this.name = name
-        this.type = type
+        // All types are references unless otherwise specified.
+        // This reduces the number of clones that must be performed.
+        this.type = `${options.exemptFromUsingReferences ? "" : "&'exec"} ${type}`
     }
     public static allPossibleDataContainingTypes(baseName: string, baseType: string): DataContainingType[] {
         return [
-            new DataContainingType(baseName, `&'exec ${baseType}`),
-            new DataContainingType(`Many${baseName}`,`&'exec Vec<${baseType}>`),
-            new DataContainingType(`Optional${baseName}`, `&'exec Option<${baseType}>`)
+            new DataContainingType(baseName, baseType),
+            new DataContainingType(`Many${baseName}`,`Vec<${baseType}>`),
+            new DataContainingType(`Optional${baseName}`, `Option<${baseType}>`)
         ]
     }
     
@@ -100,7 +106,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
     func: ({manifest}) => {
         const allTypesUnion: AllTypeInternal[] = [
             {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
-            new DataContainingType("Err", "String")
+            new DataContainingType("Err", "String", {exemptFromUsingReferences: true})
         ]
 
         Lexicon.Primitives.forEach(p => {
@@ -108,6 +114,12 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             allTypesUnion.push(...DataContainingType.allPossibleDataContainingTypes(p, r))
             
         })
+        function returnErrorWithMessage(s: string): string {
+            return `AnyType::Err("${s}".to_string())`
+        }
+        function returnWithVariableErrorMessage(v: string): string {
+            return `AnyType::Err(${v}.to_string())`
+        }
         const additionalRustStructsAndEnums: string[] = []
         manifest.inScope.forEach(v => {
             
@@ -128,7 +140,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 case "HierarchicalStore":
 
                     allTypesUnion.push(
-                        new DataContainingType(`${v.name}Result`, `Vec<${v.typeName}>`)
+                        new DataContainingType(`${v.name}Result`, `Vec<${v.typeName}>`, {exemptFromUsingReferences: true})
                     )
             }        
         })
@@ -174,7 +186,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
 
                             match insert_${t.name}(&client, &to_insert).await {
                                 Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                                Err(err) => ${returnWithVariableErrorMessage("err")}
                             }`,
                     rustEnumMember: `storeInsert${t.name}`
                     })
@@ -197,7 +209,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             let spec = ${generateRustGetAllQuerySpec(t)};
                             match query_interpreter_${t.name}(&spec, &client).await {
                                 Ok(out) => AnyType::${t.name}Result(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Err(err) => ${returnWithVariableErrorMessage("err")}
                             }
                         `
                     })
@@ -264,7 +276,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     rustEnumMember: `echoVariable`,
                     rustOpHandler: `match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err("Echoing variable that does not exist".to_string())
+                        None => ${returnErrorWithMessage("Echoing variable that does not exist")}
                     }`
                 }
             },
@@ -290,7 +302,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     }).join(",\n")}
 
                                 },
-                                _ => AnyType::Err("Attempting to reference a field that doesn't exist on current type".to_string())
+                                _ => ${returnErrorWithMessage("Attempting to reference a field that doesn't exist on current type")}
                             }
                                 
                             `
