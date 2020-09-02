@@ -336,8 +336,8 @@ function generateQueryInterpreterInternal(specVarName: string, store: CompiledTy
                 let mut ${childInstances}: Vec<${col.type.name}> = Vec::with_capacity(${entries}.len());
 
                 for ${childPtr} in ${entries} {
-                    match ${childMapVar}.get(&${childPtr}) {
-                        Some(real) => ${childInstances}.push(real.clone()),
+                    match ${childMapVar}.remove(&${childPtr}) {
+                        Some(real) => ${childInstances}.push(real),
                         None => panic!("could not find expected ${col.type.name}")
                     };
                 }
