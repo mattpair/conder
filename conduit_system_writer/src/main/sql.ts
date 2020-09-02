@@ -259,23 +259,23 @@ function generateQueryInterpreterInternal(specVarName: string, store: CompiledTy
                     extractions.push(`
                     // Extracting ${col.type.name}
                     let ${extractedVarName} = match ${rowVarName}.get("${col.columnName}") {
-                        Some(ptr) => ${childMapVar}.get(&ptr),
+                        Some(ptr) => ${childMapVar}.remove(&ptr),
                         None => None
                     };
                     
                     `)
 
-                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}.map(|i| i.clone())` )
+                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
 
                 } else {
                     extractions.push(`
                     // Extracting ${col.type.name}
-                    let ${extractedVarName} = match ${childMapVar}.get(&${rowVarName}.get("${col.columnName}")) {
+                    let ${extractedVarName} = match ${childMapVar}.remove(&${rowVarName}.get("${col.columnName}")) {
                         Some(t) => t,
                         None => panic!("did not get an expected ${col.columnName}")
                     };
                     `)
-                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}.clone()` )
+                    structFieldAssignment.push(`${col.fieldName}: ${extractedVarName}` )
                 }
                 
 
@@ -328,9 +328,9 @@ function generateQueryInterpreterInternal(specVarName: string, store: CompiledTy
                 extractions.push(`
                 // Extracting ${col.type.name}s
                 let ${empty} = Vec::with_capacity(0);
-                let ${entries} = match ${lrmap}.get(&${thisEntityIdVar}) {
+                let ${entries} = match ${lrmap}.remove(&${thisEntityIdVar}) {
                     Some(ptrs) => ptrs,
-                    None => &${empty}
+                    None => ${empty}
                 };
 
                 let mut ${childInstances}: Vec<${col.type.name}> = Vec::with_capacity(${entries}.len());
