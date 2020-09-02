@@ -152,3 +152,13 @@ testFailsWhen("function with void returns type",
     }
     `
 )
+testFailsWhen("not returning anything", `
+
+struct Singleton {
+    value: string
+}
+
+function echosSingleton(s: Singleton) Singleton {
+    s
+}
+`)

@@ -251,7 +251,7 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
             default: Utilities.assertNever(stmt)
         }
     }
-    if (f.returnType.kind !== "VoidReturnType" && body.length === 0) {
+    if (f.returnType.kind !== "VoidReturnType" && (body.length === 0 || body.find(b =>[factory.returnPrevious.kind, factory.returnVariable(0).kind].includes(b.kind as any)) === undefined)) {
         throw Error(`Function does nothing when it should return a type`)
     }
 

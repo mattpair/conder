@@ -39,17 +39,6 @@ singletonStore: Singleton = []
 `)
 
 
-testFailsWhen("not returning anything", `
-
-struct Singleton {
-    value: string
-}
-
-function echosSingleton(s: Singleton) Singleton {
-    s
-}
-`)
-
 testFailsWhen("creating an optional enum", `
 
 enum MyEnum {

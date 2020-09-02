@@ -1076,6 +1076,8 @@ PRIMARY KEY(conduit_entity_id)
 ]
 `;
 
+exports[`not returning anything 1`] = `[Error: Within function echosSingleton: Error: Function does nothing when it should return a type]`;
+
 exports[`simple struct: main files 1`] = `
 Array [
   Object {
