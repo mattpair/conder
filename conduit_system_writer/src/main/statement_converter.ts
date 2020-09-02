@@ -105,19 +105,26 @@ function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.Resolved
         
                 let currentType: CompiledTypes.ResolvedType = ref.type
 
-                if (assign.children.FieldAccess.length > 0) {
+                if (assign.children.DotStatement.length > 0) {
                     
-                    assign.children.FieldAccess.forEach(access => {
-                        if (currentType.kind === "Primitive") {
-                            throw Error(`Attempting to access field on a primitive type`)
+                    assign.children.DotStatement.forEach(dot => {
+                        const method = dot.differentiate()
+                        switch(method.kind) {
+                            case "FieldAccess":
+                                if (currentType.kind === "Primitive") {
+                                    throw Error(`Attempting to access field on a primitive type`)
+                                }
+                                const fullType = inScope.getEntityOfType(currentType.type, "Struct")
+                                const childField = fullType.children.Field.find(c => c.name === method.name)
+                                if (!childField) {
+                                    throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
+                                }
+                                ret.push(factory.structFieldAccess(fullType, method.name))
+                                currentType = childField.part.FieldType.differentiate()
+                                break
+                            default: Utilities.assertNever(method.kind)
                         }
-                        const fullType = inScope.getEntityOfType(currentType.type, "Struct")
-                        const childField = fullType.children.Field.find(c => c.name === access.name)
-                        if (!childField) {
-                            throw Error(`Attempting to access ${access.name} but it doesn't exist on type`)
-                        }
-                        ret.push(factory.structFieldAccess(fullType, access.name))
-                        currentType = childField.part.FieldType.differentiate()
+                        
                     })
                 }
                 

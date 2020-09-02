@@ -18,13 +18,14 @@ export namespace Parse {
     export type FieldType = common.BaseFieldType<() => CustomTypeEntity>
     export type Field = common.BaseField<FieldType>
 
-    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<FieldAccess>>
+    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<DotStatement>>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
     export type MethodInvocation = common.NamedIntrafile<"MethodInvocation", common.ParentOfMany<Assignable>>
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
+    export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
     export type Statement = common.BaseStatement<() => ReturnStatement | Append | VariableCreation>
     export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
@@ -192,7 +193,8 @@ export namespace Parse {
         Assignable |
         VariableCreation |
         FieldAccess |
-        MethodInvocation
+        MethodInvocation |
+        DotStatement
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -582,7 +584,7 @@ export namespace Parse {
                 }
             },
             hasMany: {
-                FieldAccess: true
+                DotStatement: true
             }
         },
         Returnable: {
@@ -658,6 +660,13 @@ export namespace Parse {
                     children
                 }
             }
+        },
+        DotStatement: {
+            kind: "polymorph",
+            priority: {
+                FieldAccess: 2
+            },
+            groupKind: "DotStatement"
         }
     }
 }

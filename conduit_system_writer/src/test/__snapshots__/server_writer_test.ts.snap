@@ -107,16 +107,16 @@ conduit_entity_id: Option<i32>
         
                 // Extracting simples
                 let empty17 = Vec::with_capacity(0);
-                let entriessimple14 = match lrmap10.get(&wrapperEntityId2) {
+                let entriessimple14 = match lrmap10.remove(&wrapperEntityId2) {
                     Some(ptrs) => ptrs,
-                    None => &empty17
+                    None => empty17
                 };
 
                 let mut instancessimple15: Vec<simple> = Vec::with_capacity(entriessimple14.len());
 
                 for child16 in entriessimple14 {
-                    match entityIdTosimple4.get(&child16) {
-                        Some(real) => instancessimple15.push(real.clone()),
+                    match entityIdTosimple4.remove(&child16) {
+                        Some(real) => instancessimple15.push(real),
                         None => panic!(\\"could not find expected simple\\")
                     };
                 }
@@ -603,16 +603,16 @@ conduit_entity_id: Option<i32>
         
                 // Extracting simples
                 let empty17 = Vec::with_capacity(0);
-                let entriessimple14 = match lrmap10.get(&wrapperEntityId2) {
+                let entriessimple14 = match lrmap10.remove(&wrapperEntityId2) {
                     Some(ptrs) => ptrs,
-                    None => &empty17
+                    None => empty17
                 };
 
                 let mut instancessimple15: Vec<simple> = Vec::with_capacity(entriessimple14.len());
 
                 for child16 in entriessimple14 {
-                    match entityIdTosimple4.get(&child16) {
-                        Some(real) => instancessimple15.push(real.clone()),
+                    match entityIdTosimple4.remove(&child16) {
+                        Some(real) => instancessimple15.push(real),
                         None => panic!(\\"could not find expected simple\\")
                     };
                 }
@@ -1599,13 +1599,13 @@ conduit_entity_id: Option<i32>
         let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
         
                     // Extracting simple
-                    let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                    let extractedsimple9 = match entityIdTosimple7.remove(&row0.get(\\"innard_ptr\\")) {
                         Some(t) => t,
                         None => panic!(\\"did not get an expected innard_ptr\\")
                     };
                     
         out.push(wrapper {
-            innard: extractedsimple9.clone(),
+            innard: extractedsimple9,
             conduit_entity_id: Some(wrapperEntityId2)
         })
     }
@@ -2111,13 +2111,13 @@ conduit_entity_id: Option<i32>
         let wrapperEntityId2 = row0.get(\\"conduit_entity_id\\");
         
                     // Extracting simple
-                    let extractedsimple9 = match entityIdTosimple7.get(&row0.get(\\"innard_ptr\\")) {
+                    let extractedsimple9 = match entityIdTosimple7.remove(&row0.get(\\"innard_ptr\\")) {
                         Some(t) => t,
                         None => panic!(\\"did not get an expected innard_ptr\\")
                     };
                     
         out.push(wrapper {
-            innard: extractedsimple9.clone(),
+            innard: extractedsimple9,
             conduit_entity_id: Some(wrapperEntityId2)
         })
     }

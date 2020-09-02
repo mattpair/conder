@@ -29,7 +29,8 @@ export type EntityKinds =
 "VariableCreation" | 
 "Assignable" |
 "FieldAccess" |
-"MethodInvocation"
+"MethodInvocation" |
+"DotStatement"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
