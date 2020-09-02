@@ -28,7 +28,8 @@ export type EntityKinds =
 "Returnable" |
 "VariableCreation" | 
 "Assignable" |
-"FieldAccess"
+"FieldAccess" |
+"MethodInvocation"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

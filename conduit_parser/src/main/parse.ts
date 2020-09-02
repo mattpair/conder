@@ -20,6 +20,7 @@ export namespace Parse {
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<FieldAccess>>
     export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
+    export type MethodInvocation = common.NamedIntrafile<"MethodInvocation", common.ParentOfMany<Assignable>>
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
@@ -118,7 +119,8 @@ export namespace Parse {
     type EntityOf<K extends WithChildren["kind"]> = Extract<WithChildren, {kind: K}>
     
     function extractChildren<K extends WithChildren["kind"]>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<EntityOf<K>>): EntityOf<K>["children"] {
-        let tryExtractChild = true 
+        let tryExtractChild = true
+        let foundAny = false
         const children: any = {}
         for (const k in accepts) {
             children[k] = []
@@ -126,6 +128,12 @@ export namespace Parse {
     
         while (tryExtractChild) {
             tryExtractChild = false
+            if (foundAny && accepts.inBetweenAll) {
+                const sep = cursor.tryMatch(accepts.inBetweenAll)                
+                if (!sep.hit) {
+                    throw Error(`Did not find appropriate seperator`)
+                }
+            }
             for (const key in accepts) {
                 
                 const child = tryExtractEntity(cursor, 
@@ -133,7 +141,7 @@ export namespace Parse {
                     parserSet)
                 if (child !== undefined) {
                     tryExtractChild = true
-                    
+                    foundAny = true
                     children[key].push(child)
                     break
                 }
@@ -183,7 +191,8 @@ export namespace Parse {
         Nothing |
         Assignable |
         VariableCreation |
-        FieldAccess
+        FieldAccess |
+        MethodInvocation
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -260,7 +269,9 @@ export namespace Parse {
         
     }
 
-    type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
+    type SeparatorDescriptor = {inBetweenAll?: RegExp}
+
+    type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true> & SeparatorDescriptor
 
     class Ordering<K extends keyof CompleteParserV2> {
         readonly order: K[]
@@ -628,6 +639,23 @@ export namespace Parse {
                     name: c.groups.name,
                     kind: "FieldAccess",
                     loc
+                }
+            }
+        },
+        MethodInvocation: {
+            kind: "aggregate",
+            startRegex: /^\.(?<name>[a-zA-Z_]\w*)\(/,
+            endRegex: /^\s\)/,
+            hasMany: {
+                inBetweenAll: /^((\s*,\s*)|(?=\s*\)))/,
+                Assignable: true
+            },
+            assemble(start, end, loc, children) {
+                return {
+                    kind: "MethodInvocation",
+                    loc,
+                    name: start.groups.name,
+                    children
                 }
             }
         }
