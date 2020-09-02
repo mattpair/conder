@@ -20,7 +20,6 @@ export type EntityKinds =
 "Statement" |
 "ReturnStatement" | 
 "StoreDefinition" |
-"Append" |
 "VariableReference" |
 "StoreReference" |
 "HierarchicalStore" |

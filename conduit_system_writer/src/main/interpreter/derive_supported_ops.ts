@@ -23,7 +23,7 @@ ParamOp<"returnVariable", number> |
 StaticOp<"returnPrevious"> |
 StaticOp<"savePrevious"> |
 ParamOp<"echoVariable", number> |
-Op<"storeInsert", "store", number> |
+Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
 Op<"structFieldAccess", "struct", string>
 
@@ -154,43 +154,27 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         }
 
         const OpSpec: CompleteOpSpec = {
-
-            storeInsert: {
-                factoryMethod(store: CompiledTypes.HierarchicalStore, varname: number) {
-                    return {
-                        kind: `storeInsert${store.name}`,
-                        data: varname
-                    }
-                },
+            storeInsertPrevious: {
                 opDefinition: {
                     kind: "HierarchicalStore",
-                    create: (t) => ({
-                        kind: "param",
-                        paramType: "usize",
-
-                        rustOpHandler: `
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::${t.typeName}(r) => r,
-                                    _ => {
-                                        println!("invalid insertion type");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!("Could not find variable for insertion");
-                                    return HttpResponse::BadRequest().finish();
+                    create: (store) => ({
+                        kind: "static",
+                        rustOpHandler: `match prev {
+                            AnyType::${store.typeName}(r) => {
+                                match insert_${store.name}(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => ${returnWithVariableErrorMessage("err")}
                                 }
-                            };
-
-                            match insert_${t.name}(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => ${returnWithVariableErrorMessage("err")}
-                            }`,
-                    rustEnumMember: `storeInsert${t.name}`
+                            },
+                            _ => {
+                                println!("invalid insertion type");
+                                return HttpResponse::BadRequest().finish();
+                            }
+                        }`,
+                        rustEnumMember: `storeInsertPrevious${store.name}`
                     })
-                }
+                },
+                factoryMethod: (store) => ({kind: `storeInsertPrevious${store.name}`, data: undefined})
             },
         
             storeQuery: {

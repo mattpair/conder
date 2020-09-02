@@ -19,15 +19,14 @@ export namespace Parse {
     export type Field = common.BaseField<FieldType>
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<DotStatement>>
-    export type Append = common.IntrafileEntity<"Append", {storeName: string, variableName: string}>
     export type MethodInvocation = common.NamedIntrafile<"MethodInvocation", common.ParentOfMany<Assignable>>
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
-    export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess>
+    export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
-    export type Statement = common.BaseStatement<() => ReturnStatement | Append | VariableCreation>
+    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation>
     export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -106,7 +105,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true, StoreDefinition: true})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true, StoreDefinition: true}, {})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone()) {
             return {
                 kind: "File",
@@ -119,7 +118,7 @@ export namespace Parse {
 
     type EntityOf<K extends WithChildren["kind"]> = Extract<WithChildren, {kind: K}>
     
-    function extractChildren<K extends WithChildren["kind"]>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<EntityOf<K>>): EntityOf<K>["children"] {
+    function extractChildren<K extends WithChildren["kind"]>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<EntityOf<K>>, options: AggregationOptions): EntityOf<K>["children"] {
         let tryExtractChild = true
         let foundAny = false
         const children: any = {}
@@ -129,8 +128,8 @@ export namespace Parse {
     
         while (tryExtractChild) {
             tryExtractChild = false
-            if (foundAny && accepts.inBetweenAll) {
-                const sep = cursor.tryMatch(accepts.inBetweenAll)                
+            if (foundAny && options && options.inBetweenAll) {
+                const sep = cursor.tryMatch(options.inBetweenAll)                
                 if (!sep.hit) {
                     throw Error(`Did not find appropriate seperator`)
                 }
@@ -158,7 +157,7 @@ export namespace Parse {
             return undefined
         }
         
-        const children = extractChildren(cursor, parserSet, parser.hasMany)
+        const children = extractChildren(cursor, parserSet, parser.hasMany, parser.options)
         const end = cursor.tryMatch(parser.endRegex)
         if (end.hit) {
             return parser.assemble(m.match, end.match, m.loc, children)
@@ -186,7 +185,6 @@ export namespace Parse {
         NoParameter |
         UnaryParameter | 
         StoreDefinition |
-        Append |
         VariableReference |
         Returnable |
         Nothing |
@@ -202,6 +200,10 @@ export namespace Parse {
 
     function tryExtractEntity<K extends keyof ParserMap>(cursor: FileCursor, kind: K, parserSet: ParserMap): Exclude<AnyEntity, File> | undefined {
         const parser = parserSet[kind] as AggregationParserV2<any> | LeafParserV2<any> | ConglomerateParserV2<any> | PolymorphParser<any>
+        if (parser === undefined) {
+            console.log(`HEEEERREEE`, kind, parser)
+        }
+        
         switch(parser.kind) {
             case "aggregate":
                 
@@ -271,9 +273,8 @@ export namespace Parse {
         
     }
 
-    type SeparatorDescriptor = {inBetweenAll?: RegExp}
 
-    type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true> & SeparatorDescriptor
+    type ChildrenDescription<K extends WithChildren> = Record<keyof K["children"], true>
 
     class Ordering<K extends keyof CompleteParserV2> {
         readonly order: K[]
@@ -284,12 +285,14 @@ export namespace Parse {
         }
     }
 
+    type AggregationOptions = {inBetweenAll?: RegExp}
     type AggregationParserV2<K extends WithChildren> = Readonly<{
         kind: "aggregate"
         startRegex: RegExp
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, children: K["children"]): K | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
+        options: AggregationOptions
     }>
 
     type LeafParserV2<K extends AnyEntity> = Readonly<{
@@ -359,7 +362,8 @@ export namespace Parse {
                 }
             },
             endRegex:/^\s*}/,
-            hasMany: {EnumMember: true}
+            hasMany: {EnumMember: true},
+            options: {}
         },
         
         EnumMember: {
@@ -413,7 +417,8 @@ export namespace Parse {
                 }
             },
             endRegex:/^\s*}/,
-            hasMany: {Field: true}
+            hasMany: {Field: true},
+            options: {}
         },
         CustomType: {
             kind: "leaf",
@@ -507,7 +512,8 @@ export namespace Parse {
                     children
                 }
             },
-            hasMany: {Statement: true}
+            hasMany: {Statement: true},
+            options: {}
         },
         UnaryParameterType: {
             kind: "polymorph",
@@ -526,7 +532,7 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, Append: 2, VariableCreation: 3}
+            priority: {ReturnStatement: 1, VariableReference: 4, VariableCreation: 2}
         },
         ReturnStatement: {
             kind: "conglomerate",
@@ -559,18 +565,6 @@ export namespace Parse {
                 }
             }
         },
-        Append: {
-            kind: "leaf",
-            regex: /^\s*(?<storeName>[a-zA-Z]+)\.append\(\s*(?<variableName>[a-zA-Z_]\w*)\s*\)\s*/,
-            assemble(c, loc) {
-                return {
-                    kind: "Append",
-                    loc,
-                    variableName: c.groups.variableName,
-                    storeName: c.groups.storeName
-                }
-            }
-        },
         VariableReference: {
             kind: "aggregate",
             startRegex: /^\s*(?<name>[a-zA-Z_]\w*)/,
@@ -585,7 +579,8 @@ export namespace Parse {
             },
             hasMany: {
                 DotStatement: true
-            }
+            },
+            options: {}
         },
         Returnable: {
             kind: "polymorph",
@@ -647,10 +642,12 @@ export namespace Parse {
         MethodInvocation: {
             kind: "aggregate",
             startRegex: /^\.(?<name>[a-zA-Z_]\w*)\(/,
-            endRegex: /^\s\)/,
+            endRegex: /^\s*\)/,
             hasMany: {
-                inBetweenAll: /^((\s*,\s*)|(?=\s*\)))/,
                 Assignable: true
+            },
+            options: {
+                inBetweenAll: /^((\s*,\s*)|(?=\s*\)))/,
             },
             assemble(start, end, loc, children) {
                 return {
@@ -664,6 +661,7 @@ export namespace Parse {
         DotStatement: {
             kind: "polymorph",
             priority: {
+                MethodInvocation: 1,
                 FieldAccess: 2
             },
             groupKind: "DotStatement"

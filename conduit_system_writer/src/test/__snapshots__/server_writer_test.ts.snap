@@ -158,7 +158,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        storeInsertwrapStore(usize),
+        storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
@@ -220,27 +220,19 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                Op::storeInsertwrapStore(op_param) => {
-                        
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::wrapper(r) => r,
-                                    _ => {
-                                        println!(\\"invalid insertion type\\");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!(\\"Could not find variable for insertion\\");
-                                    return HttpResponse::BadRequest().finish();
+                Op::storeInsertPreviouswrapStore => {
+                        match prev {
+                            AnyType::wrapper(r) => {
+                                match insert_wrapStore(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => AnyType::Err(err.to_string())
                                 }
-                            };
-
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                            },
+                            _ => {
+                                println!(\\"invalid insertion type\\");
+                                return HttpResponse::BadRequest().finish();
                             }
+                        }
                     },
 Op::storeQuerywrapStore => {
                         
@@ -487,8 +479,11 @@ Op::wrapperFieldAccess(op_param) => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"storeInsertwrapStore\\",
+    \\"kind\\": \\"echoVariable\\",
     \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -654,7 +649,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        storeInsertwrapStore(usize),
+        storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
@@ -716,27 +711,19 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                Op::storeInsertwrapStore(op_param) => {
-                        
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::wrapper(r) => r,
-                                    _ => {
-                                        println!(\\"invalid insertion type\\");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!(\\"Could not find variable for insertion\\");
-                                    return HttpResponse::BadRequest().finish();
+                Op::storeInsertPreviouswrapStore => {
+                        match prev {
+                            AnyType::wrapper(r) => {
+                                match insert_wrapStore(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => AnyType::Err(err.to_string())
                                 }
-                            };
-
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                            },
+                            _ => {
+                                println!(\\"invalid insertion type\\");
+                                return HttpResponse::BadRequest().finish();
                             }
+                        }
                     },
 Op::storeQuerywrapStore => {
                         
@@ -993,8 +980,11 @@ Op::wrapperFieldAccess(op_param) => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"storeInsertwrapStore\\",
+    \\"kind\\": \\"echoVariable\\",
     \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -1162,7 +1152,7 @@ conduit_entity_id: Option<i32>
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        storeInsertsimpleStore(usize),
+        storeInsertPrevioussimpleStore,
 storeQuerysimpleStore,
 returnVariable(usize),
 returnPrevious,
@@ -1217,27 +1207,19 @@ OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                Op::storeInsertsimpleStore(op_param) => {
-                        
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::simple(r) => r,
-                                    _ => {
-                                        println!(\\"invalid insertion type\\");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!(\\"Could not find variable for insertion\\");
-                                    return HttpResponse::BadRequest().finish();
+                Op::storeInsertPrevioussimpleStore => {
+                        match prev {
+                            AnyType::simple(r) => {
+                                match insert_simpleStore(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => AnyType::Err(err.to_string())
                                 }
-                            };
-
-                            match insert_simpleStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                            },
+                            _ => {
+                                println!(\\"invalid insertion type\\");
+                                return HttpResponse::BadRequest().finish();
                             }
+                        }
                     },
 Op::storeQuerysimpleStore => {
                         
@@ -1462,8 +1444,11 @@ Op::simpleFieldAccess(op_param) => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"storeInsertsimpleStore\\",
+    \\"kind\\": \\"echoVariable\\",
     \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"storeInsertPrevioussimpleStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -1628,7 +1613,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        storeInsertwrapStore(usize),
+        storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
@@ -1690,27 +1675,19 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                Op::storeInsertwrapStore(op_param) => {
-                        
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::wrapper(r) => r,
-                                    _ => {
-                                        println!(\\"invalid insertion type\\");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!(\\"Could not find variable for insertion\\");
-                                    return HttpResponse::BadRequest().finish();
+                Op::storeInsertPreviouswrapStore => {
+                        match prev {
+                            AnyType::wrapper(r) => {
+                                match insert_wrapStore(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => AnyType::Err(err.to_string())
                                 }
-                            };
-
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                            },
+                            _ => {
+                                println!(\\"invalid insertion type\\");
+                                return HttpResponse::BadRequest().finish();
                             }
+                        }
                     },
 Op::storeQuerywrapStore => {
                         
@@ -1967,8 +1944,11 @@ Op::wrapperFieldAccess(op_param) => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"storeInsertwrapStore\\",
+    \\"kind\\": \\"echoVariable\\",
     \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
@@ -2140,7 +2120,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum Op {
-        storeInsertwrapStore(usize),
+        storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 returnVariable(usize),
 returnPrevious,
@@ -2202,27 +2182,19 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType= AnyType::None;
         for o in ops {
             prev = match o {
-                Op::storeInsertwrapStore(op_param) => {
-                        
-                            let to_insert = match state.get(*op_param) {
-                    
-                                Some(v) => match v {
-                                    AnyType::wrapper(r) => r,
-                                    _ => {
-                                        println!(\\"invalid insertion type\\");
-                                        return HttpResponse::BadRequest().finish();
-                                    }
-                                },
-                                None => {
-                                    println!(\\"Could not find variable for insertion\\");
-                                    return HttpResponse::BadRequest().finish();
+                Op::storeInsertPreviouswrapStore => {
+                        match prev {
+                            AnyType::wrapper(r) => {
+                                match insert_wrapStore(&client, &r).await {
+                                    Ok(()) => AnyType::None,
+                                    Err(err) => AnyType::Err(err.to_string())
                                 }
-                            };
-
-                            match insert_wrapStore(&client, &to_insert).await {
-                                Ok(()) => AnyType::None,
-                                Err(err) => AnyType::Err(err.to_string())
+                            },
+                            _ => {
+                                println!(\\"invalid insertion type\\");
+                                return HttpResponse::BadRequest().finish();
                             }
+                        }
                     },
 Op::storeQuerywrapStore => {
                         
@@ -2479,8 +2451,11 @@ Op::wrapperFieldAccess(op_param) => {
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"kind\\": \\"storeInsertwrapStore\\",
+    \\"kind\\": \\"echoVariable\\",
     \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[

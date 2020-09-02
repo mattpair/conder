@@ -95,57 +95,97 @@ type CompilationTools = Readonly<{
     inScope: CompiledTypes.ScopeMap
 }>
 
-function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, {varmap, factory, inScope}: CompilationTools): OpInstance[] {
+type TargetType = CompiledTypes.ResolvedType | {kind: "any"}
+
+function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope}: CompilationTools): OpInstance[] {
+    const ref = varmap.tryGet(assign.val)
+    if (ref !== undefined) {
+        const ret: OpInstance[] = [factory.echoVariable(ref.id)]
+
+        let currentType: CompiledTypes.ResolvedType = ref.type
+
+        if (assign.children.DotStatement.length > 0) {
+            
+            assign.children.DotStatement.forEach((dot, index) => {
+                const method = dot.differentiate()
+                switch(method.kind) {
+                    case "FieldAccess":
+                        if (currentType.kind === "Primitive") {
+                            throw Error(`Attempting to access field on a primitive type`)
+                        }
+                        const fullType = inScope.getEntityOfType(currentType.type, "Struct")
+                        const childField = fullType.children.Field.find(c => c.name === method.name)
+                        if (!childField) {
+                            throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
+                        }
+                        ret.push(factory.structFieldAccess(fullType, method.name))
+                        currentType = childField.part.FieldType.differentiate()
+                        break
+
+                    case "MethodInvocation":
+                        throw Error(`No methods are currently supported on local variables`)
+                        
+                        
+                    default: Utilities.assertNever(method)
+                }
+                
+            })
+        }
+        
+
+        if (targetType.kind !== "any" && !typesAreEqual(targetType, currentType)) {
+            throw Error(`Types are not equal`)
+        }
+        return ret
+    } else {
+        
+        const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
+        if (targetType.kind === "Primitive") {
+            throw Error("Stores contain structured data, not primitives")
+        }
+        if(assign.children.DotStatement.length > 1) {
+            throw Error(`Invoking methods which don't exist on store method results`)
+        } else if (assign.children.DotStatement.length === 1) {
+            const m = assign.children.DotStatement[0].differentiate()
+            const out_ops: OpInstance[] = []
+            switch(m.kind) {
+                case "FieldAccess":
+                    throw Error(`Attempting to access a field on a global array of data does not make sense`)
+                case "MethodInvocation":
+                    if(m.name !== "append") {
+                        throw Error(`Method ${m.name} doesn't exist on global arrays`)
+                    }
+                    // TODO: Eventually optimize this to do a single insertion of all arguments.
+                    m.children.Assignable.forEach(asn => {
+                        out_ops.push(
+                            ...assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope}),
+                            factory.storeInsertPrevious(store)
+                        )
+                    })
+                    return out_ops    
+                default: Utilities.assertNever(m)
+            }
+        } else {
+            // We are just querying the whole store here.
+            // We should only bother doing so if there is something that wants the return value.
+            if (targetType.kind === "any") {
+                return []
+            }
+            if (store.typeName !== targetType.type || targetType.modification  !== "array") {
+                throw Error(`The store contains a different type than the one desired`)
+            }
+            
+            return [factory.storeQuery(store)]
+        }   
+    }
+}
+
+function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, tools: CompilationTools): OpInstance[] {
     const assign = a.differentiate()
     switch (assign.kind) {
         case "VariableReference":
-            const ref = varmap.tryGet(assign.val)
-            if (ref !== undefined) {
-                const ret: OpInstance[] = [factory.echoVariable(ref.id)]
-        
-                let currentType: CompiledTypes.ResolvedType = ref.type
-
-                if (assign.children.DotStatement.length > 0) {
-                    
-                    assign.children.DotStatement.forEach(dot => {
-                        const method = dot.differentiate()
-                        switch(method.kind) {
-                            case "FieldAccess":
-                                if (currentType.kind === "Primitive") {
-                                    throw Error(`Attempting to access field on a primitive type`)
-                                }
-                                const fullType = inScope.getEntityOfType(currentType.type, "Struct")
-                                const childField = fullType.children.Field.find(c => c.name === method.name)
-                                if (!childField) {
-                                    throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
-                                }
-                                ret.push(factory.structFieldAccess(fullType, method.name))
-                                currentType = childField.part.FieldType.differentiate()
-                                break
-                            default: Utilities.assertNever(method.kind)
-                        }
-                        
-                    })
-                }
-                
-
-                if (!typesAreEqual(targetType, currentType)) {
-                    throw Error(`Types are not equal`)
-                }
-                return ret
-            } else {
-                const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
-                if (targetType.kind === "Primitive") {
-                    throw Error("Stores contain structured data, not primitives")
-                }
-                
-                
-                if (store.typeName !== targetType.type || targetType.modification  !== "array") {
-                    throw Error(`The store contains a different type than the one desired`)
-                }
-                
-                return [factory.storeQuery(store)]
-            }
+            return variableReferenceToOps(assign, targetType, tools)
+            
         default: Utilities.assertNever(assign.kind)
     }
     
@@ -163,16 +203,10 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
     for (let j = 0; j < f.body.statements.length; j++) {
         const stmt = f.body.statements[j].differentiate()
         switch(stmt.kind) {
-            
-            case "Append":
-                const v = varmap.get(stmt.variableName)
-                const sto = inScope.getEntityOfType(stmt.storeName, "HierarchicalStore")
-                if (!typesAreEqual(v.type, {kind: "CustomType", type: sto.typeName, modification: 'none'})) {
-                    throw Error("attempting to insert unequal types into global array")
-                }
-                
-                body.push(factory.storeInsert(sto, v.id))
+            case "VariableReference":
+                body.push(...variableReferenceToOps(stmt, {kind: "any"}, {factory, inScope, varmap}))
                 break
+
             
             case "VariableCreation":
                 
