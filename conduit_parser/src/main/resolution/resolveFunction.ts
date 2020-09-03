@@ -108,11 +108,11 @@ function resolveFunction(namespace: TypeResolved.Namespace, func: TypeResolved.F
     }
 }
 
-type InternalMap = Map<string, Struct | Enum | Function | HierarchicalStore>
+export type PartialEntityMap<T=undefined> = Map<string, Struct | Enum | Function | HierarchicalStore | T>
 
-export function resolveFunctions(namespace: TypeResolved.Namespace): ScopeMap {
+export function resolveFunctions(namespace: TypeResolved.Namespace): PartialEntityMap {
 
-    const entityMapInternal: InternalMap = new Map()
+    const entityMapInternal: PartialEntityMap = new Map()
     
     
     namespace.inScope.forEach(val => {
@@ -139,7 +139,7 @@ export function resolveFunctions(namespace: TypeResolved.Namespace): ScopeMap {
         }
     })
 
-    return new EntityMap(entityMapInternal)
+    return entityMapInternal
 }
 
 function generateSystemStructs(store: HierarchicalStore): Struct[] {

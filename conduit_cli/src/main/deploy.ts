@@ -1,5 +1,4 @@
-import { ConduitBuildConfig } from './config/load';
-import { Utilities } from 'conduit_parser';
+import { Utilities, ConduitBuildConfig } from 'conduit_parser';
 import * as child_process from 'child_process';
 import { BackendTypes } from 'conduit_system_writer';
 import * as fs from 'fs'

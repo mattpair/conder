@@ -2,7 +2,7 @@ import {compileFiles} from '../../main/compile'
 
 function compileTest(description: string, file: string) {
     test(description, () => {
-        expect(compileFiles({"testFile.cdt": () => file})).toMatchSnapshot()
+        expect(compileFiles({"testFile.cdt": () => file}, {dependents: {}, project: "test", install: []})).toMatchSnapshot()
     })
 } 
 

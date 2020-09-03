@@ -1,18 +1,18 @@
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
-import { loadBuildConfig, ConduitBuildConfig } from './config/load';
+import { loadBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
 import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_system_writer'
-import {compileFiles, CompiledTypes, Utilities} from 'conduit_parser'
+import {compileFiles, CompiledTypes, Utilities, ConduitBuildConfig} from 'conduit_parser'
 
-export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[]}, {manifest: CompiledTypes.Manifest}> = {
+export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[], buildConf: ConduitBuildConfig}, {manifest: CompiledTypes.Manifest}> = {
     stepName: "compiling",
-    func: ({conduits}) => {
+    func: ({conduits, buildConf}) => {
         const toCompile: Record<string, () => string> = {}
         conduits.forEach(c => toCompile[c] = () => fs.readFileSync(`./conduit/${c}`, {encoding: "utf-8"}))
-        return Promise.resolve({manifest: compileFiles(toCompile)})
+        return Promise.resolve({manifest: compileFiles(toCompile, buildConf)})
     }
 
 }

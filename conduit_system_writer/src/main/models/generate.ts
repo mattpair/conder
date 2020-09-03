@@ -6,13 +6,11 @@ import { TypeWriter } from '../type_writing/type_writer';
 export function generateAllModels(manifest: CompiledTypes.Manifest): string[] {
     const models: string[] = []
     manifest.inScope.forEach(v => {
-        if (v.kind === "HierarchicalStore") {
-            return
+        switch(v.kind) {
+            case "Enum":
+            case "Struct":
+                models.push(TypeWriter.typescript.definition(v, manifest.inScope))
         }
-        if (v.kind === "Function") {
-            return
-        }
-        models.push(TypeWriter.typescript.definition(v, manifest.inScope))
     })
     return models
 }

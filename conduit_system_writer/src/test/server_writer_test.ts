@@ -4,13 +4,11 @@ import { writeRustAndContainerCode } from "../main/server_writer"
 import { CompiledTypes, Lexicon, compileFiles, Utilities } from "conduit_parser"
 
 function testBody(conduit: string) {
-    const manifest = compileFiles({test: () => conduit})
+    const manifest = compileFiles({test: () => conduit}, {dependents: {}, project: "test", install: []})
     return new Utilities.Sequence(deriveSupportedOperations)
     .then(functionToByteCode)
     .then(writeRustAndContainerCode)
     .run({manifest})
-    
-   
 }
 
 

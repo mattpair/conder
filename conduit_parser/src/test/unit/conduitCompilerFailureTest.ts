@@ -2,7 +2,7 @@ import {compileFiles} from '../../main/compile'
 
 function testFailsWhen(description: string, file: string) {
     test(description, () => {
-        expect(() => compileFiles({"badFile.cdt": () => file})).toThrowErrorMatchingSnapshot()
+        expect(() => compileFiles({"badFile.cdt": () => file}, {dependents: {}, project: "test", install: []})).toThrowErrorMatchingSnapshot()
     })
 }
 

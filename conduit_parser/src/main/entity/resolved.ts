@@ -12,7 +12,7 @@ export type Field = basic.BaseField<FieldType>
 
 export type Struct = basic.BaseStruct<Field> & {readonly file?: FileLocation, readonly isConduitGenerated?: boolean}
 export type Enum = basic.Enum & {readonly file: FileLocation}
-
+export type Python3Install = Readonly<{kind: "python3", reldir: string, file: string, name: string}>
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
     readonly size: number;
@@ -68,7 +68,7 @@ export type Function =  basic.NamedIntrafile<"Function", {
 }>
 
 
-export type Entity = Struct | Enum  | HierarchicalStore | Function
+export type Entity = Struct | Enum  | HierarchicalStore | Function | Python3Install
 export type ScopeMap = EntityMap<Entity>
 
     

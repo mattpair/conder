@@ -11,13 +11,13 @@ function makeLazy(files: Record<string, string>): Record<string, () => string> {
 function protoCompileTest(description: string, files: Record<string, string>) {
     test(description, () => {
 
-        expect(compileFiles(makeLazy(files))).toMatchSnapshot()
+        expect(compileFiles(makeLazy(files), {dependents: {}, project: "test", install: []})).toMatchSnapshot()
     })
 } 
 
 function testFailsWhen(description: string, files: Record<string, string>) {
     test(description, () => {
-        expect(() => compileFiles(makeLazy(files))).toThrowErrorMatchingSnapshot()
+        expect(() => compileFiles(makeLazy(files),{dependents: {}, project: "test", install: []})).toThrowErrorMatchingSnapshot()
     })
 }
 
