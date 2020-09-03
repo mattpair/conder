@@ -17,6 +17,6 @@
     },
     "references": [
         {"path": "../conduit_parser/"},
-        {"path": "../conduit_system_writer"}
+        {"path": "../conduit_kernel_writer"}
     ]
 }

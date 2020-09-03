@@ -1,6 +1,6 @@
 import { Utilities, ConduitBuildConfig } from 'conduit_parser';
 import * as child_process from 'child_process';
-import { BackendTypes } from 'conduit_system_writer';
+import { BackendTypes } from 'conduit_kernel_writer';
 import * as fs from 'fs'
 export const containerize: Utilities.StepDefinition<BackendTypes.WrittenCode & { buildConf: ConduitBuildConfig}, {localContainers: {main: string, postgres: string}}> = {
     stepName: "containerize",

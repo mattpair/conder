@@ -23,7 +23,7 @@
     "@kubernetes/client-node": "^0.12.0",
     "axios": "^0.19.2",
     "conduit_parser": "file:../conduit_parser",
-    "conduit_system_writer": "file:../conduit_system_writer",
+    "conduit_kernel_writer": "file:../conduit_kernel_writer",
     "isomorphic-ws": "^4.0.1",
     "ws": "^7.3.1"
   },

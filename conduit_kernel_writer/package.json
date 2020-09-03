@@ -1,5 +1,5 @@
 {
-  "name": "conduit_system_writer",
+  "name": "conduit_kernel_writer",
   "version": "0.0.1",
   "scripts": {
     "compile": "tsc -b",

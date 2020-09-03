@@ -4,7 +4,7 @@ import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
 import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
-import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_system_writer'
+import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_kernel_writer'
 import {compileFiles, CompiledTypes, Utilities, ConduitBuildConfig} from 'conduit_parser'
 
 export const conduitsToTypeResolved: Utilities.StepDefinition<{conduits: string[], buildConf: ConduitBuildConfig}, {manifest: CompiledTypes.Manifest}> = {
