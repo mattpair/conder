@@ -21,8 +21,8 @@ export const loadBuildConfig: Utilities.StepDefinition<{}, {buildConf: ConduitBu
                 if(!fs.existsSync(i.reldir)) {
                     throw Error(`Cannot find relative dir for install ${i.reldir}`)
                 }
-                if (/.*\.py$/.test(i.file)) {
-                    throw Error(`selected file is not python ${i.file}`)
+                if (!/.*\.py$/.test(i.file)) {
+                    throw Error(`selected file is not python: ${i.file}`)
                 }
                 if(!fs.existsSync(`${i.reldir}/${i.file}`)) {
                     throw Error(`Cannot find file in relative dir`)
