@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "scripts": {
     "pretest:integration": "npm run pkg:mac",
-    "test:integration": "cd ../integration_test && ./test_all.sh",
+    "test:integration": "cd ../../integration_test && ./test_all.sh",
     "compile": "tsc -b",
     "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/"

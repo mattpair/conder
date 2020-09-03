@@ -96,6 +96,62 @@ type CompilationTools = Readonly<{
 }>
 
 type TargetType = CompiledTypes.ResolvedType | {kind: "any"}
+type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function"}>
+
+type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
+    global: Extract<AllowGlobalReference, {kind: K}>, 
+    dots: Parse.DotStatement[],
+    targetType: TargetType, 
+    tools: CompilationTools) => OpInstance[]
+type GlobalReferenceToOpsConverter = {
+    [K in AllowGlobalReference["kind"]]: GlobalReferenceToOps<K>
+}
+
+const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
+    python3: (assign, dots, targetType, tools) => {
+        throw Error("python3 install references aren't actually supported yet")
+    },
+
+    HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope}) => {
+        if (targetType.kind === "Primitive") {
+            throw Error("Stores contain structured data, not primitives")
+        }
+        if(dots.length > 1) {
+            throw Error(`Invoking methods which don't exist on store method results`)
+        } else if (dots.length === 1) {
+            const m = dots[0].differentiate()
+            const out_ops: OpInstance[] = []
+            switch(m.kind) {
+                case "FieldAccess":
+                    throw Error(`Attempting to access a field on a global array of data does not make sense`)
+                case "MethodInvocation":
+                    if(m.name !== "append") {
+                        throw Error(`Method ${m.name} doesn't exist on global arrays`)
+                    }
+                    // TODO: Eventually optimize this to do a single insertion of all arguments.
+                    m.children.Assignable.forEach(asn => {
+                        out_ops.push(
+                            ...assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope}),
+                            factory.storeInsertPrevious(store)
+                        )
+                    })
+                    return out_ops    
+                default: Utilities.assertNever(m)
+            }
+        } else {
+            // We are just querying the whole store here.
+            // We should only bother doing so if there is something that wants the return value.
+            if (targetType.kind === "any") {
+                return []
+            }
+            if (store.typeName !== targetType.type || targetType.modification  !== "array") {
+                throw Error(`The store contains a different type than the one desired`)
+            }
+            
+            return [factory.storeQuery(store)]
+        }
+    }
+}
 
 function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope}: CompilationTools): OpInstance[] {
     const ref = varmap.tryGet(assign.val)
@@ -138,45 +194,10 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         }
         return ret
     } else {
-        
-        const store  = inScope.getEntityOfType(assign.val, "HierarchicalStore")
-        if (targetType.kind === "Primitive") {
-            throw Error("Stores contain structured data, not primitives")
-        }
-        if(assign.children.DotStatement.length > 1) {
-            throw Error(`Invoking methods which don't exist on store method results`)
-        } else if (assign.children.DotStatement.length === 1) {
-            const m = assign.children.DotStatement[0].differentiate()
-            const out_ops: OpInstance[] = []
-            switch(m.kind) {
-                case "FieldAccess":
-                    throw Error(`Attempting to access a field on a global array of data does not make sense`)
-                case "MethodInvocation":
-                    if(m.name !== "append") {
-                        throw Error(`Method ${m.name} doesn't exist on global arrays`)
-                    }
-                    // TODO: Eventually optimize this to do a single insertion of all arguments.
-                    m.children.Assignable.forEach(asn => {
-                        out_ops.push(
-                            ...assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope}),
-                            factory.storeInsertPrevious(store)
-                        )
-                    })
-                    return out_ops    
-                default: Utilities.assertNever(m)
-            }
-        } else {
-            // We are just querying the whole store here.
-            // We should only bother doing so if there is something that wants the return value.
-            if (targetType.kind === "any") {
-                return []
-            }
-            if (store.typeName !== targetType.type || targetType.modification  !== "array") {
-                throw Error(`The store contains a different type than the one desired`)
-            }
-            
-            return [factory.storeQuery(store)]
-        }   
+        // Must be global then
+        const ent  = inScope.getEntityOfType(assign.val, "HierarchicalStore", "python3")
+        //@ts-ignore - typescript doesn't recognize that ent.kind ensures we grab the right handler.
+        return globalReferenceToOpsConverter[ent.kind](ent, assign.children.DotStatement, targetType, {varmap, factory, inScope})
     }
 }
 
