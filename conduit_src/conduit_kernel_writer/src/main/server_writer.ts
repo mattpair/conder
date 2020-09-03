@@ -155,8 +155,10 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             #![allow(redundant_semicolon)]
                             #![allow(unused_variables)]
                             #![allow(dead_code)]
+                            #![allow(unused_imports)]
                             use tokio_postgres::{NoTls, Client};
                             use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+                            use actix_rt::System;
                             use std::env;
                             use serde::{Deserialize, Serialize};
                             use tokio_postgres::error::{Error};

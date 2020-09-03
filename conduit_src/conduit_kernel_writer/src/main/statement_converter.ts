@@ -1,5 +1,5 @@
 import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse } from "conduit_parser";
+import { Utilities, CompiledTypes, Parse, Lexicon } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
@@ -108,8 +108,22 @@ type GlobalReferenceToOpsConverter = {
 }
 
 const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
-    python3: (assign, dots, targetType, tools) => {
-        throw Error("python3 install references aren't actually supported yet")
+    python3: (module, dots, targetType, tools) => {
+        if (dots.length !== 1) {
+            throw Error(`Invalid reference to the installed python module ${module.name}`)
+        }
+        if (targetType.kind === "any" || !typesAreEqual(targetType, {kind: "Primitive", val: Lexicon.Symbol.bytes, modification: "none"})) {
+            throw Error(`Currently only support foreign functions returning bytes`)
+        }
+        const dot = dots[0]
+        const m = dot.differentiate()
+        if (m.kind === "FieldAccess") {
+            throw Error(`Accessing a field on a foreign function doesn't make sense`)
+        }
+        if (m.children.Assignable.length > 0) {
+            throw Error(`Currently don't support arguments for foreign functions`)
+        }
+        return [tools.factory.invokeInstalled(module, m.name)]
     },
 
     HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope}) => {

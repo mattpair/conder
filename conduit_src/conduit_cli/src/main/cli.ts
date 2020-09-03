@@ -111,6 +111,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
         .then(loadMediumForRun)
+        .inject({foreignLookup: new Map()}) // TODO: actually lookup foreing
         .then(deriveSupportedOperations)
         .then(functionToByteCode)
         .then(writeRustAndContainerCode)

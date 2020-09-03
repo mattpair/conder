@@ -12,41 +12,50 @@ type OpDefWithParameter = OpDef<"param"> & {readonly paramType: string}
 export type AnyOpDef = OpDef | OpDefWithParameter
 
 type StaticOp<KIND> = Op<KIND, "static">
-type ParamOp<KIND, P> = {kind: KIND, class: "param", paramType: P}
 
-type OpClass = "static" | "store" | "param" | "struct"
-type Op<KIND, C extends OpClass, P=undefined> = 
-{kind: KIND, class: C, paramType?: P}
+type ParamLifetime = "runtime" | "compile"
+type ParamOp<KIND, P, LT extends ParamLifetime> = {kind: KIND, class: "param", paramType: P, param_lifetime: LT}
+
+type OpClass = "static" | "store" | "param" | "struct" | "python3"
+type Op<KIND, C extends OpClass, P=undefined, P_LIFETIME extends ParamLifetime ="runtime"> = 
+{kind: KIND, class: C, paramType?: P, param_lifetime: P_LIFETIME}
 
 type Ops = 
-ParamOp<"returnVariable", number> |
+ParamOp<"returnVariable", number, "runtime"> |
 StaticOp<"returnPrevious"> |
 StaticOp<"savePrevious"> |
-ParamOp<"echoVariable", number> |
+ParamOp<"echoVariable", number, "runtime"> |
 Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
-Op<"structFieldAccess", "struct", string>
+Op<"structFieldAccess", "struct", string> |
+Op<"invokeInstalled", "python3", string, "compile">
 
 type StaticFactory<S> = OpInstance<S>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
+
 type EntityCentricOpFactory<P, E extends CompiledTypes.Entity> = P extends undefined ? (s: E) => OpInstance  : (s: E, p: P) => OpInstance
 
 type OpFactoryFinder<C extends Ops> = C["class"] extends "static" ? StaticFactory<C["kind"]> : 
 C["class"] extends "param" ? ParamFactory<C["paramType"], C["kind"]> :
-C["class"] extends "store" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.HierarchicalStore> : 
-C["class"] extends "struct" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.Struct> : never
+C["class"] extends "store"  ? EntityCentricOpFactory<C["paramType"], CompiledTypes.HierarchicalStore> : 
+C["class"] extends "struct" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.Struct> : 
+C["class"] extends "python3" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.Python3Install> : never
 
 export type CompleteOpFactory = {
     readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
 };
 
-type ChooseOpDef<O extends Ops> = O["paramType"] extends undefined ? OpDef : OpDefWithParameter
+type ChooseOpDef<O extends Ops> = O["paramType"] extends undefined ? 
+OpDef[] : 
+O["param_lifetime"] extends "compile" ? OpDef[]: OpDefWithParameter[]
+
 type EntityCentricOpDef<O extends Ops, E extends CompiledTypes.Entity> = Readonly<{kind: E["kind"], create: (t: E) => ChooseOpDef<O>}>
 type OpDefFinder<C extends Ops> = C["class"] extends "static" ? OpDef: 
 C["class"] extends "param" ? OpDefWithParameter :
 C["class"] extends "store" ? EntityCentricOpDef<C, CompiledTypes.HierarchicalStore> : 
-C["class"] extends "struct" ? EntityCentricOpDef<C, CompiledTypes.Struct> : never
+C["class"] extends "struct" ? EntityCentricOpDef<C, CompiledTypes.Struct> : 
+C["class"] extends "python3" ? EntityCentricOpDef<C, CompiledTypes.Python3Install> : never
 
 
 
@@ -97,13 +106,14 @@ class DataContainingType implements AllTypeInternal {
     }
     
 }
+type ForeignFunctionDef = Readonly<{url_path: string}>
+type InstalledModuleDef = Readonly<{functions: ReadonlyMap<string, ForeignFunctionDef>, service_name: string}>
+type InstallModuleLookup = ReadonlyMap<string, InstalledModuleDef>
 
-
-
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, 
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest, foreignLookup: InstallModuleLookup}, 
 {supportedOps: AnyOpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[], additionalRustStructsAndEnums: string[]}> = {
     stepName: "deriving supported operations",
-    func: ({manifest}) => {
+    func: ({manifest, foreignLookup}) => {
         const allTypesUnion: AllTypeInternal[] = [
             {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
             new DataContainingType("Err", "String", {exemptFromUsingReferences: true})
@@ -112,7 +122,6 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         Lexicon.Primitives.forEach(p => {
             const r = TypeWriter.rust.primitive[p]
             allTypesUnion.push(...DataContainingType.allPossibleDataContainingTypes(p, r))
-            
         })
         function returnErrorWithMessage(s: string): string {
             return `AnyType::Err("${s}".to_string())`
@@ -157,7 +166,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             storeInsertPrevious: {
                 opDefinition: {
                     kind: "HierarchicalStore",
-                    create: (store) => ({
+                    create: (store) => [{
                         kind: "static",
                         rustOpHandler: `match prev {
                             AnyType::${store.typeName}(r) => {
@@ -172,7 +181,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             }
                         }`,
                         rustEnumMember: `storeInsertPrevious${store.name}`
-                    })
+                    }]
                 },
                 factoryMethod: (store) => ({kind: `storeInsertPrevious${store.name}`, data: undefined})
             },
@@ -186,7 +195,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 },
                 opDefinition: {
                     kind: "HierarchicalStore",
-                    create: (t) => ({
+                    create: (t) => [{
                         kind: "static",
                         rustEnumMember: `storeQuery${t.name}`,
                         rustOpHandler: `
@@ -196,7 +205,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                 Err(err) => ${returnWithVariableErrorMessage("err")}
                             }
                         `
-                    })
+                    }]
                 }
             },
         
@@ -271,7 +280,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 opDefinition: {
                     kind: "Struct",
                     create(struct: CompiledTypes.Struct) {
-                        return {
+                        return [{
                             kind: "param", 
                             paramType: `${struct.name}Field`,
                             rustEnumMember: `${struct.name}FieldAccess`,
@@ -290,9 +299,60 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             }
                                 
                             `
-                        }
+                        }]
                     }
                 }
+            },
+            invokeInstalled: {
+                factoryMethod(ref, func_name) {
+                    const module = foreignLookup.get(ref.name)
+                    if (module === undefined) {
+                        throw Error(`Could not find a supported foreign function call for ${JSON.stringify(ref)}`)
+                    }
+                    const func = module.functions.get(func_name)
+                    if (func === undefined) {
+                        throw Error(`Could not find function ${func_name} on ${ref.name}`)
+                    }
+
+                    return {kind: `FInvoke${func_name}`, data: undefined}
+                },
+                opDefinition: {
+                    kind: "python3",
+                    create(python3) {
+                        const module = foreignLookup.get(python3.name)
+                        const ret: OpDef[] = []
+                        for (const key in module.functions) {
+                            ret.push({
+                                kind: "static",
+                                rustEnumMember: `FInvoke${key}`,
+                                rustOpHandler: `
+                                let response = awc::Client::new()
+                                    .get("${module.service_name}${module.functions.get(key).url_path}") // <- Create request builder
+                                    .header("User-Agent", "Actix-web")
+                                    .send()                          // <- Send http request
+                                    .await;
+                                match response {
+                                    Fut(out) => {
+                                        match out.await {
+                                            Ok(res) => {
+                                                match res.body().await {
+                                                    Ok(bytes) => AnyType::bytes(bytes.borrow().into_vec()),
+                                                    Err(err) => ${returnWithVariableErrorMessage("err")}
+                                                }
+                                            },
+                                            Err(err) => ${returnWithVariableErrorMessage("err")}
+                                        }
+                                    },
+                                    Err(e) => ${returnWithVariableErrorMessage("err")}
+                                }
+                                `,
+                            })
+                        }
+
+                        return ret
+                    }
+                }
+                
             }
             
         }
@@ -308,7 +368,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         if (e.kind !== "HierarchicalStore") {
                             return
                         }
-                        addedOperations.push(opdef.create(e))
+                        addedOperations.push(...opdef.create(e))
                     })
                     break
                 case "Struct":
@@ -316,7 +376,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         if (e.kind !== "Struct" || e.isConduitGenerated) {
                             return
                         }
-                        addedOperations.push(opdef.create(e))
+                        addedOperations.push(...opdef.create(e))
                     })
                     break
                 case "static":
@@ -324,6 +384,9 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     addedOperations.push(opdef)
                     break
                 
+                case "python3":
+                    //TODO enable once ready
+                    break
                 default: Utilities.assertNever(opdef)
             }       
             collectedFactory[opname] = OpSpec[opname].factoryMethod
