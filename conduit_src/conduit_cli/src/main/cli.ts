@@ -1,3 +1,4 @@
+import { InstallForeignPythonModules } from './../../../conduit_foreign_install/index';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
@@ -111,7 +112,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(getConduitFileNames)
         .then(conduitsToTypeResolved)
         .then(loadMediumForRun)
-        .inject({foreignLookup: new Map()}) // TODO: actually lookup foreing
+        .then(InstallForeignPythonModules)
         .then(deriveSupportedOperations)
         .then(functionToByteCode)
         .then(writeRustAndContainerCode)

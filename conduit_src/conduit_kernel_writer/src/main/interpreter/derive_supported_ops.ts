@@ -2,6 +2,7 @@ import { CompiledTypes, Utilities, Lexicon} from 'conduit_parser';
 import {generateRustGetAllQuerySpec} from '../sql'
 import { toAnyType } from '../toAnyType';
 import { TypeWriter } from '../type_writing/type_writer';
+import {InstallTypes} from 'conduit_foreign_install'
 
 type OpDef<K="static"> = {
     readonly kind: K
@@ -106,11 +107,8 @@ class DataContainingType implements AllTypeInternal {
     }
     
 }
-type ForeignFunctionDef = Readonly<{url_path: string}>
-type InstalledModuleDef = Readonly<{functions: ReadonlyMap<string, ForeignFunctionDef>, service_name: string}>
-type InstallModuleLookup = ReadonlyMap<string, InstalledModuleDef>
 
-export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest, foreignLookup: InstallModuleLookup}, 
+export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest, foreignLookup: InstallTypes.InstallModuleLookup}, 
 {supportedOps: AnyOpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[], additionalRustStructsAndEnums: string[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest, foreignLookup}) => {
