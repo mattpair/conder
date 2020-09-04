@@ -1,12 +1,12 @@
-import { installPython3Module } from 'src/main/python/installer'
+import { installPython3Module } from './src/main/python/installer'
 import { Utilities, CompiledTypes } from 'conduit_parser'
-import { InstallModuleLookup, ContainerInstruction } from 'src/main/types'
+import { InstallModuleLookup, ForeignContainerManifest, Python3InstallInstructions } from './src/main/types'
 
-export * as InstallTypes from './src/main/types'
+export type ForeignInstallResults = Readonly<{
+    foreignLookup: InstallModuleLookup, 
+    foreignContainerInstr: ForeignContainerManifest[]}>
 
-
-export const InstallForeignPythonModules: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, 
-{foreignLookup: InstallModuleLookup, foreignContainerInstr: ContainerInstruction[]}> = {
+export const InstallForeignPythonModules: Utilities.StepDefinition<{manifest: CompiledTypes.Manifest}, ForeignInstallResults> = {
     stepName: "CreatePythonModules",
     func: ({manifest}) => {
         const installs: CompiledTypes.Python3Install[] = []
@@ -16,7 +16,7 @@ export const InstallForeignPythonModules: Utilities.StepDefinition<{manifest: Co
             }
         })
 
-        const res = installPython3Module(installs)
+        const res: Python3InstallInstructions = installPython3Module(installs)
         return Promise.resolve({foreignLookup: res.lookup, foreignContainerInstr: res.instrs})
     }
 }

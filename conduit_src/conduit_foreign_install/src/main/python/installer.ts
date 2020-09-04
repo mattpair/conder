@@ -1,5 +1,5 @@
 import { CompiledTypes } from 'conduit_parser';
-import { InstallModuleLookup, ContainerInstruction } from '../types';
+import { ForeignContainerManifest, Python3InstallInstructions } from '../types';
 import * as fs from 'fs';
 import * as child_process from 'child_process'
 
@@ -8,10 +8,6 @@ type ForeignFunctionDef = Readonly<{url_path: string}>
 type PartialInstalledModuleDef = Readonly<{functions: Map<string, ForeignFunctionDef>, service_name: string}>
 
 type PartialInstallModuleLookup = Map<string, PartialInstalledModuleDef>
-type Python3InstallInstructions = Readonly<{
-    lookup: InstallModuleLookup
-    instrs: ContainerInstruction[]
-}>
 
 type FunctionHarnessDef = Readonly<{
     body: string,
@@ -20,7 +16,7 @@ type FunctionHarnessDef = Readonly<{
 
 export function installPython3Module(installs: CompiledTypes.Python3Install[]): Python3InstallInstructions {
     const lookup: PartialInstallModuleLookup = new Map()
-    const instrs: ContainerInstruction[] = []
+    const instrs: ForeignContainerManifest[] = []
     installs.forEach((install, install_count) => {
         const functions: Map<string, ForeignFunctionDef> = new Map()
         const file = fs.readFileSync(`${install.reldir}/${install.file}`, {encoding: "utf-8"})
@@ -74,5 +70,5 @@ ${path_definitions.map(p => p.body).join("\n\n")}
 `)
         instrs.push({dockerfile_dir: deploy_dir, name_service: `foreign${install_count}`})
     })
-    return {lookup, instrs}
+    return {lookup, instrs: instrs}
 }

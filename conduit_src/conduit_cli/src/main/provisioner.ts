@@ -3,6 +3,7 @@ import * as container from '@google-cloud/container'
 import * as k8s from '@kubernetes/client-node'
 import axios from 'axios'
 import { generateRandomPassword } from './security';
+import { RemoteContainers } from './deploy';
 
 
 class GoogleCloudProvisioner {
@@ -117,7 +118,7 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
 }
 
 export const deployKernelOnToCluster: Utilities.StepDefinition<
-    {mediumState: MediumState, manifest: CompiledTypes.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
+    {mediumState: MediumState, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig} & RemoteContainers,
     {endpoint: string}> = {
         stepName: "deploying kernel on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {

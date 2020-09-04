@@ -17,6 +17,7 @@
  
     },
     "references": [
-        {"path": "../conduit_parser/"}
+        {"path": "../conduit_parser/" },
+        {"path": "../conduit_foreign_install/"}
     ]
 }

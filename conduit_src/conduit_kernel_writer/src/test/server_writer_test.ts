@@ -8,7 +8,7 @@ function testBody(conduit: string) {
     return new Utilities.Sequence(deriveSupportedOperations)
     .then(functionToByteCode)
     .then(writeRustAndContainerCode)
-    .run({manifest, foreignLookup: new Map()})
+    .run({manifest, foreignLookup: new Map(), foreignContainerInstr: []})
 }
 
 

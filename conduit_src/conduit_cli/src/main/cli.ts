@@ -1,4 +1,4 @@
-import { InstallForeignPythonModules } from './../../../conduit_foreign_install/index';
+import { InstallForeignPythonModules } from 'conduit_foreign_install';
 import { MediumController, GCPMediumController } from './state_management/gcpMedium';
 import { loadBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
