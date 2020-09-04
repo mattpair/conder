@@ -116,10 +116,10 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
     await k8sApi.deleteNamespace(namespace)
 }
 
-export const deployOnToCluster: Utilities.StepDefinition<
+export const deployKernelOnToCluster: Utilities.StepDefinition<
     {mediumState: MediumState, manifest: CompiledTypes.Manifest, remoteContainers: {main: string, postgres: string}, buildConf: ConduitBuildConfig},
     {endpoint: string}> = {
-        stepName: "deploy on to cluster",
+        stepName: "deploying kernel on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
