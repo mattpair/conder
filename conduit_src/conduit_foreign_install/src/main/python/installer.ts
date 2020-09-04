@@ -19,30 +19,28 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
     const instrs: ForeignContainerManifest[] = []
     installs.forEach((install, install_count) => {
         const functions: Map<string, ForeignFunctionDef> = new Map()
+        
         const file = fs.readFileSync(`${install.reldir}/${install.file}`, {encoding: "utf-8"})
         const deploy_dir = fs.mkdtempSync(".deploy")
         child_process.execSync(`cp -r ${install.reldir} ${deploy_dir}`)
         fs.writeFileSync(`${deploy_dir}/Dockerfile`, 
         `FROM python:3.8-slim-buster
+        WORKDIR /flask_app/home
         EXPOSE 8080
+        RUN pip install --upgrade pip
         RUN pip install flask gunicorn
-        CMD ["gunicorn", "--bind", "0.0.0.0:8080", "wsgi.py"]
+        COPY . .
+        CMD ["gunicorn", "--bind", "0.0.0.0:8080", "generated_app_harness:app"]
 
         `)
-        fs.writeFileSync(`${deploy_dir}/wsgi.py`,
-`
-from generated_app_harness import app
 
-if __name__ == "__main__":
-        app.run()
-
-`)
-
-        const functions_regex = /^def +(?<name>\w+)\(\):/
+        const functions_regex = /[\n\r]*def +(?<name>\w+)\(\):/g
         const path_definitions: FunctionHarnessDef[] = []
         let r
         while (r = functions_regex.exec(file)) {
+            
             const func_name = r.groups.name
+            console.log(`Adding function ${func_name}`)
             const path_name = `/${func_name}`
             path_definitions.push({
                 body: `
@@ -68,7 +66,9 @@ def hello():
 
 ${path_definitions.map(p => p.body).join("\n\n")}
 `)
-        instrs.push({dockerfile_dir: deploy_dir, name_service: `foreign${install_count}`})
+        instrs.push({dockerfile_dir: deploy_dir, name_service: install.name})
+        lookup.set(install.name, {functions, service_name: install.name})
+        
     })
     return {lookup, instrs: instrs}
 }

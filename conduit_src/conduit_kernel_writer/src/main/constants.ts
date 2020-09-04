@@ -11,7 +11,7 @@ edition = "2018"
 tokio-postgres = "0.5.3"
 actix-web = "2.0"
 actix-rt = "1.0"
-
+awc = "1.0"
 
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

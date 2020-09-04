@@ -3,7 +3,7 @@ import { MediumController, GCPMediumController } from './state_management/gcpMed
 import { loadBuildConfig } from './config/load';
 import { containerize, pushContainer } from './deploy';
 import * as fs from 'fs';
-import { deployKernelOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
+import { deployOnToCluster, destroy, createMedium, MediumState, destroyNamespace } from './provisioner';
 
 import {writeRustAndContainerCode, generateModels, generateAllClients, deriveSupportedOperations, functionToByteCode} from 'conduit_kernel_writer'
 import {compileFiles, CompiledTypes, Utilities, ConduitBuildConfig} from 'conduit_parser'
@@ -118,7 +118,7 @@ const commands: Record<string, (dep: DependencyFactory) => void> = {
         .then(writeRustAndContainerCode)
         .then(containerize)
         .then(pushContainer)
-        .then(deployKernelOnToCluster)
+        .then(deployOnToCluster)
         .then(generateModels)
         .then(generateAllClients)
         .then(writeClientFile)

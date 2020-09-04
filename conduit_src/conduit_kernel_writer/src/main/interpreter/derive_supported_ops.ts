@@ -114,7 +114,8 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
     func: ({manifest, foreignLookup}) => {
         const allTypesUnion: AllTypeInternal[] = [
             {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
-            new DataContainingType("Err", "String", {exemptFromUsingReferences: true})
+            new DataContainingType("Err", "String", {exemptFromUsingReferences: true}),
+            new DataContainingType("Bytebuf", "Vec<u8>", {exemptFromUsingReferences: true})
         ]
 
         Lexicon.Primitives.forEach(p => {
@@ -305,11 +306,11 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 factoryMethod(ref, func_name) {
                     const module = foreignLookup.get(ref.name)
                     if (module === undefined) {
-                        throw Error(`Could not find a supported foreign function call for ${JSON.stringify(ref)}`)
+                        throw Error(`Could not find a supported foreign function call for ${JSON.stringify(ref)}\n${JSON.stringify(foreignLookup.keys())}`)
                     }
                     const func = module.functions.get(func_name)
                     if (func === undefined) {
-                        throw Error(`Could not find function ${func_name} on ${ref.name}`)
+                        throw Error(`Could not find function ${func_name} on ${ref.name}\nhave: ${JSON.stringify(module.functions.keys())}`)
                     }
 
                     return {kind: `FInvoke${func_name}`, data: undefined}
@@ -319,33 +320,44 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     create(python3) {
                         const module = foreignLookup.get(python3.name)
                         const ret: OpDef[] = []
-                        for (const key in module.functions) {
+                        
+                        module.functions.forEach((val, key) => {
                             ret.push({
                                 kind: "static",
                                 rustEnumMember: `FInvoke${key}`,
                                 rustOpHandler: `
+                                //TODO: eventually move this to the top of the webserver
+                                let host = match env::var("${module.service_name.toUpperCase()}_SERVICE_HOST") {
+                                    Ok(loc) => loc,
+                                    Err(e) => panic!("didn't receive ${module.service_name} location: {}", e)
+                                };
                                 let response = awc::Client::new()
-                                    .get("${module.service_name}${module.functions.get(key).url_path}") // <- Create request builder
+                                    .get(format!("http://{}${val.url_path}", host)) // <- Create request builder
                                     .header("User-Agent", "Actix-web")
+                                    .header("Accept", "*/*")
                                     .send()                          // <- Send http request
                                     .await;
+
+                                println!("Response: {:?}", response);
                                 match response {
-                                    Fut(out) => {
-                                        match out.await {
-                                            Ok(res) => {
-                                                match res.body().await {
-                                                    Ok(bytes) => AnyType::bytes(bytes.borrow().into_vec()),
-                                                    Err(err) => ${returnWithVariableErrorMessage("err")}
-                                                }
-                                            },
-                                            Err(err) => ${returnWithVariableErrorMessage("err")}
-                                        }
+                                    Ok(mut s) => match s.body().await {
+                                        Ok(bytes) => {
+                                            let mut byte_vec: Vec<u8> = Vec::with_capacity(bytes.len());
+                                            unsafe {
+                                                byte_vec.set_len(bytes.len());
+                                            };
+                                            
+                                            byte_vec.copy_from_slice(bytes.as_ref());
+                                            AnyType::Bytebuf(byte_vec)
+                                        },
+                                        Err(e) => ${returnWithVariableErrorMessage("e")}
                                     },
-                                    Err(e) => ${returnWithVariableErrorMessage("err")}
+                                    Err(e) => ${returnWithVariableErrorMessage("e")}
                                 }
                                 `,
                             })
-                        }
+                        }) 
+                
 
                         return ret
                     }
@@ -383,7 +395,11 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     break
                 
                 case "python3":
-                    //TODO enable once ready
+                    manifest.inScope.forEach(e => {
+                        if (e.kind === "python3") {
+                            addedOperations.push(...opdef.create(e))
+                        }
+                    })
                     break
                 default: Utilities.assertNever(opdef)
             }       

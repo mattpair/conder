@@ -117,10 +117,10 @@ export async function destroyNamespace(medium: MediumState, namespace: string): 
     await k8sApi.deleteNamespace(namespace)
 }
 
-export const deployKernelOnToCluster: Utilities.StepDefinition<
+export const deployOnToCluster: Utilities.StepDefinition<
     {mediumState: MediumState, manifest: CompiledTypes.Manifest, buildConf: ConduitBuildConfig} & RemoteContainers,
     {endpoint: string}> = {
-        stepName: "deploying kernel on to cluster",
+        stepName: "deploying on to cluster",
         func: async ({mediumState, manifest, remoteContainers, buildConf}) => {
             const namespace = buildConf.project
             const kc = new k8s.KubeConfig()
@@ -242,6 +242,52 @@ export const deployKernelOnToCluster: Utilities.StepDefinition<
                     }]
                 },
             })
+            const foreignServices = remoteContainers.foreignContainers.map(foreign => {
+                const podname= `${foreign.desired_service_name}-pod` 
+                return k8sApi.createNamespacedPod(namespace, {
+                    kind: "Pod",
+                    metadata: {
+                        name: podname,
+                        labels: {
+                            level: "foreign",
+                            discriminator: podname
+                        }
+                    },
+                    spec: {
+                        nodeSelector: {
+                            mode: "test"
+                        },
+                        containers: [{
+                            name: podname,
+                            image: foreign.container_name,
+                            ports: [{containerPort: 8080}],
+                            startupProbe: {
+                                httpGet: {
+                                    port: {port: 8080}
+                                }
+                            },
+                        }]
+                    }
+                }).then(res => k8sApi.createNamespacedService(namespace, {
+                        kind: "Service",
+                        metadata: {
+                            name: foreign.desired_service_name
+                        },
+                        spec: {
+                            ports: [{port: 80, protocol: "TCP", 
+                                //@ts-ignore
+                                targetPort: 8080}],
+                            selector: {
+                                discriminator: podname
+                            },
+                            sessionAffinity: "None",
+                            type: "ClusterIP"
+                        }
+                    })
+                )
+            })
+            
+            await Promise.all(foreignServices)
                     
             return k8sApi.createNamespacedService(namespace, {
                 kind: "Service",
