@@ -41,16 +41,23 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
             
             const func_name = r.groups.name
             const args = r.groups.args.trim()
-            const num_args = args.split(",").length
+            const num_args = args.length > 0 ? args.split(",").length : 0
 
             console.log(`Adding function ${func_name}`)
             const path_name = `/${func_name}`
-            //TODO: extract the arguments from the input
+            // We use "data" to select the content because this is where the kernel puts the content when serialized.
+            // The other field is "kind", but python won't care about that until we support union types.
             path_definitions.push({
                 body: `
 @app.route("${path_name}", methods=["PUT"])
 def path_${func_name}():
-    return ${func_name}()
+    args = request.json
+    if len(args) != ${num_args}:
+        raise ValueError("Unexpected number of arguments: " + str(len(args)))
+    print("Input: ", str(args))
+    data = [x["data"] for x in args]
+    
+    return ${func_name}(*data)
 `,
                 import: `from ${install.file.substr(0, install.file.length - 3)} import ${func_name}`
             })
@@ -60,7 +67,7 @@ def path_${func_name}():
         
         fs.writeFileSync(`${deploy_dir}/generated_app_harness.py`,
 `
-from flask import Flask
+from flask import Flask, request
 ${path_definitions.map(p => p.import).join("\n")}
 app = Flask(__name__)
 

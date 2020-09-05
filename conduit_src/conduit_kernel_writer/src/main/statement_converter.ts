@@ -1,5 +1,5 @@
 import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse, Lexicon } from "conduit_parser";
+import { Utilities, CompiledTypes, Parse, Lexicon, isPrimitive } from "conduit_parser";
 import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 
 export type WritableFunction = Readonly<{
@@ -112,8 +112,8 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (dots.length !== 1) {
             throw Error(`Invalid reference to the installed python module ${module.name}`)
         }
-        if (targetType.kind === "any" || !typesAreEqual(targetType, {kind: "Primitive", val: Lexicon.Symbol.bytes, modification: "none"})) {
-            throw Error(`Currently only support foreign functions returning bytes`)
+        if (targetType.kind !== "any" && !typesAreEqual(targetType, {kind: "Primitive", val: Lexicon.Symbol.bytes, modification: "none"})) {
+            throw Error(`Currently only support foreign functions returning bytes, yet tried to return ${JSON.stringify(targetType)}`)
         }
         const dot = dots[0]
         const m = dot.differentiate()
@@ -125,7 +125,7 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
             ret.push(...assignableToOps(a, {kind: "any"}, tools))
             ret.push(tools.factory.pushPreviousOnCallStack)
         })
-        
+
         ret.push(tools.factory.invokeInstalled(module, m.name))
         return ret
     },
@@ -245,11 +245,12 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
 
             
             case "VariableCreation":
-                
+                const t = stmt.part.CustomType
+                const prim = isPrimitive(t)
                 body.push(
                     ...assignableToOps(
                         stmt.part.Assignable, 
-                        stmt.part.CustomType, 
+                        prim !== undefined ? prim : t, 
                         {varmap, factory, inScope})
                 )
                 
