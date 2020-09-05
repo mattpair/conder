@@ -42,16 +42,13 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
             const func_name = r.groups.name
             const args = r.groups.args.trim()
             const num_args = args.split(",").length
-            if (num_args > 0) {
-                throw Error(`Currently don't support arguments in foreign functions`)
-            }
 
             console.log(`Adding function ${func_name}`)
             const path_name = `/${func_name}`
             //TODO: extract the arguments from the input
             path_definitions.push({
                 body: `
-@app.route("${path_name}")
+@app.route("${path_name}", methods=["PUT"])
 def path_${func_name}():
     return ${func_name}()
 `,

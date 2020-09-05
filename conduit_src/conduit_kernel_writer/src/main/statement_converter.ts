@@ -120,10 +120,14 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (m.kind === "FieldAccess") {
             throw Error(`Accessing a field on a foreign function doesn't make sense`)
         }
-        if (m.children.Assignable.length > 0) {
-            throw Error(`Currently don't support arguments for foreign functions`)
-        }
-        return [tools.factory.invokeInstalled(module, m.name)]
+        const ret = []
+        m.children.Assignable.forEach(a => {
+            ret.push(...assignableToOps(a, {kind: "any"}, tools))
+            ret.push(tools.factory.pushPreviousOnCallStack)
+        })
+        
+        ret.push(tools.factory.invokeInstalled(module, m.name))
+        return ret
     },
 
     HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope}) => {
@@ -153,13 +157,10 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 default: Utilities.assertNever(m)
             }
         } else {
-            // We are just querying the whole store here.
-            // We should only bother doing so if there is something that wants the return value.
-            if (targetType.kind === "any") {
-                return []
-            }
-            if (store.typeName !== targetType.type || targetType.modification  !== "array") {
-                throw Error(`The store contains a different type than the one desired`)
+            if (targetType.kind !== "any") {
+                if (store.typeName !== targetType.type || targetType.modification  !== "array") {
+                    throw Error(`The store contains a different type than the one desired`)
+                }
             }
             
             return [factory.storeQuery(store)]
@@ -215,7 +216,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
     }
 }
 
-function assignableToOps(a: Parse.Assignable, targetType: CompiledTypes.ResolvedType, tools: CompilationTools): OpInstance[] {
+function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: CompilationTools): OpInstance[] {
     const assign = a.differentiate()
     switch (assign.kind) {
         case "VariableReference":

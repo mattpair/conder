@@ -25,6 +25,7 @@ type Ops =
 ParamOp<"returnVariable", number, "runtime"> |
 StaticOp<"returnPrevious"> |
 StaticOp<"savePrevious"> |
+StaticOp<"pushPreviousOnCallStack"> |
 ParamOp<"echoVariable", number, "runtime"> |
 Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
@@ -162,6 +163,14 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         }
 
         const OpSpec: CompleteOpSpec = {
+            pushPreviousOnCallStack: {
+                opDefinition: {
+                    kind: "static",
+                    rustOpHandler: `callstack.push(prev); AnyType::None`,
+                    rustEnumMember: `pushPreviousOnCallStack`
+                },
+                factoryMethod: {kind: `pushPreviousOnCallStack`, data: undefined}
+            },
             storeInsertPrevious: {
                 opDefinition: {
                     kind: "HierarchicalStore",
@@ -332,13 +341,14 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     Err(e) => panic!("didn't receive ${module.service_name} location: {}", e)
                                 };
                                 let response = awc::Client::new()
-                                    .get(format!("http://{}${val.url_path}", host)) // <- Create request builder
+                                    .put(format!("http://{}${val.url_path}", host)) // <- Create request builder
                                     .header("User-Agent", "Actix-web")
                                     .header("Accept", "*/*")
-                                    .send()                          // <- Send http request
+                                    .send_json(&callstack)                          // <- Send http request
                                     .await;
 
-                                println!("Response: {:?}", response);
+                                callstack.clear();
+                                
                                 match response {
                                     Ok(mut s) => match s.body().await {
                                         Ok(bytes) => {

@@ -25,6 +25,7 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
 
     async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         let mut prev: AnyType= AnyType::None;
+        let mut callstack: Vec<AnyType> = Vec::new();
         for o in ops {
             prev = match o {
                 ${supportedOps.map(o => {
