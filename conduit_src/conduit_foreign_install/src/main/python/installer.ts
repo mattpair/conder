@@ -34,12 +34,17 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
 
         `)
 
-        const functions_regex = /[\n\r]*def +(?<name>\w+)\(\):/g
+        const functions_regex = /[\n\r]*def +(?<name>\w+)\((?<args>[\w, ]*)\):/g
         const path_definitions: FunctionHarnessDef[] = []
         let r
         while (r = functions_regex.exec(file)) {
             
             const func_name = r.groups.name
+            const args = r.groups.args.trim()
+            if (args.length > 0) {
+                throw Error(`Currently don't support arguments in foreign functions`)
+            }
+            
             console.log(`Adding function ${func_name}`)
             const path_name = `/${func_name}`
             path_definitions.push({
