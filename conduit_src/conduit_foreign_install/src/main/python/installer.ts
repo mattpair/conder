@@ -3,7 +3,7 @@ import { ForeignContainerManifest, Python3InstallInstructions } from '../types';
 import * as fs from 'fs';
 import * as child_process from 'child_process'
 
-type ForeignFunctionDef = Readonly<{url_path: string}>
+type ForeignFunctionDef = Readonly<{url_path: string, num_args: number}>
 
 type PartialInstalledModuleDef = Readonly<{functions: Map<string, ForeignFunctionDef>, service_name: string}>
 
@@ -41,12 +41,14 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
             
             const func_name = r.groups.name
             const args = r.groups.args.trim()
-            if (args.length > 0) {
+            const num_args = args.split(",").length
+            if (num_args > 0) {
                 throw Error(`Currently don't support arguments in foreign functions`)
             }
-            
+
             console.log(`Adding function ${func_name}`)
             const path_name = `/${func_name}`
+            //TODO: extract the arguments from the input
             path_definitions.push({
                 body: `
 @app.route("${path_name}")
@@ -56,7 +58,7 @@ def path_${func_name}():
                 import: `from ${install.file.substr(0, install.file.length - 3)} import ${func_name}`
             })
 
-            functions.set(func_name, {url_path: path_name})
+            functions.set(func_name, {url_path: path_name, num_args})
         }
         
         fs.writeFileSync(`${deploy_dir}/generated_app_harness.py`,
