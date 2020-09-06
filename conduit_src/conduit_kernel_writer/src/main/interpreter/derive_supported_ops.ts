@@ -3,6 +3,7 @@ import {generateRustGetAllQuerySpec} from '../sql'
 import { toAnyType } from '../toAnyType';
 import { TypeWriter } from '../type_writing/type_writer';
 import {ForeignInstallResults} from 'conduit_foreign_install'
+import { Primitives } from 'conduit_parser/dist/src/main/lexicon';
 
 type OpDef<K="static"> = {
     readonly kind: K
@@ -17,7 +18,7 @@ type StaticOp<KIND> = Op<KIND, "static">
 type ParamLifetime = "runtime" | "compile"
 type ParamOp<KIND, P, LT extends ParamLifetime> = {kind: KIND, class: "param", paramType: P, param_lifetime: LT}
 
-type OpClass = "static" | "store" | "param" | "struct" | "python3"
+type OpClass = "static" | "store" | "param" | "struct" | "python3" | "rpc"
 type Op<KIND, C extends OpClass, P=undefined, P_LIFETIME extends ParamLifetime ="runtime"> = 
 {kind: KIND, class: C, paramType?: P, param_lifetime: P_LIFETIME}
 
@@ -27,6 +28,7 @@ StaticOp<"returnPrevious"> |
 StaticOp<"savePrevious"> |
 StaticOp<"pushPreviousOnCallStack"> |
 ParamOp<"echoVariable", number, "runtime"> |
+Op<"deserializeRpcBufTo", "rpc"> |
 Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
 Op<"structFieldAccess", "struct", string> |
@@ -36,13 +38,14 @@ type StaticFactory<S> = OpInstance<S>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
-type EntityCentricOpFactory<P, E extends CompiledTypes.Entity> = P extends undefined ? (s: E) => OpInstance  : (s: E, p: P) => OpInstance
+type OpFactory<PARAM, REQUIRED_PARAM> = PARAM extends undefined ? (s: REQUIRED_PARAM) => OpInstance  : (s: REQUIRED_PARAM, p: PARAM) => OpInstance
 
 type OpFactoryFinder<C extends Ops> = C["class"] extends "static" ? StaticFactory<C["kind"]> : 
 C["class"] extends "param" ? ParamFactory<C["paramType"], C["kind"]> :
-C["class"] extends "store"  ? EntityCentricOpFactory<C["paramType"], CompiledTypes.HierarchicalStore> : 
-C["class"] extends "struct" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.Struct> : 
-C["class"] extends "python3" ? EntityCentricOpFactory<C["paramType"], CompiledTypes.Python3Install> : never
+C["class"] extends "store"  ? OpFactory<C["paramType"], CompiledTypes.HierarchicalStore> : 
+C["class"] extends "struct" ? OpFactory<C["paramType"], CompiledTypes.Struct> : 
+C["class"] extends "python3" ? OpFactory<C["paramType"], CompiledTypes.Python3Install> : 
+C["class"] extends "rpc" ? OpFactory<C["paramType"], CompiledTypes.ResolvedType> : never
 
 export type CompleteOpFactory = {
     readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
@@ -52,12 +55,13 @@ type ChooseOpDef<O extends Ops> = O["paramType"] extends undefined ?
 OpDef[] : 
 O["param_lifetime"] extends "compile" ? OpDef[]: OpDefWithParameter[]
 
-type EntityCentricOpDef<O extends Ops, E extends CompiledTypes.Entity> = Readonly<{kind: E["kind"], create: (t: E) => ChooseOpDef<O>}>
+type UniqueOpDef<O extends Ops, E extends {kind: string}, KIND_OVERRIDE=undefined> = Readonly<{kind: KIND_OVERRIDE extends undefined ? E["kind"] : KIND_OVERRIDE, create: (t: E) => ChooseOpDef<O>}>
 type OpDefFinder<C extends Ops> = C["class"] extends "static" ? OpDef: 
 C["class"] extends "param" ? OpDefWithParameter :
-C["class"] extends "store" ? EntityCentricOpDef<C, CompiledTypes.HierarchicalStore> : 
-C["class"] extends "struct" ? EntityCentricOpDef<C, CompiledTypes.Struct> : 
-C["class"] extends "python3" ? EntityCentricOpDef<C, CompiledTypes.Python3Install> : never
+C["class"] extends "store" ? UniqueOpDef<C, CompiledTypes.HierarchicalStore> : 
+C["class"] extends "struct" ? UniqueOpDef<C, CompiledTypes.Struct> : 
+C["class"] extends "python3" ? UniqueOpDef<C, CompiledTypes.Python3Install> : 
+C["class"] extends "rpc" ? UniqueOpDef<C, CompiledTypes.ResolvedType, "rpc"> : never
 
 
 
@@ -98,6 +102,7 @@ class DataContainingType implements AllTypeInternal {
     public static allPossibleDataContainingTypes(baseName: string, baseType: string): DataContainingType[] {
         return [
             new DataContainingType(baseName, baseType),
+            new DataContainingType(`${baseName}Instance`, baseType, {exemptFromUsingReferences: true}),
             new DataContainingType(`Many${baseName}`,`Vec<${baseType}>`),
             new DataContainingType(`Optional${baseName}`, `Option<${baseType}>`)
         ]
@@ -115,8 +120,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
     func: ({manifest, foreignLookup}) => {
         const allTypesUnion: AllTypeInternal[] = [
             {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
-            new DataContainingType("Err", "String", {exemptFromUsingReferences: true}),
-            new DataContainingType("Bytebuf", "Vec<u8>", {exemptFromUsingReferences: true})
+            new DataContainingType("Err", "String", {exemptFromUsingReferences: true})
         ]
 
         Lexicon.Primitives.forEach(p => {
@@ -343,24 +347,16 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                 let response = awc::Client::new()
                                     .put(format!("http://{}${val.url_path}", host)) // <- Create request builder
                                     .header("User-Agent", "Actix-web")
-                                    .header("Accept", "*/*")
+                                    .header("Accept", "application/json")
                                     .send_json(&callstack)                          // <- Send http request
                                     .await;
 
                                 callstack.clear();
-                                
+
                                 match response {
-                                    Ok(mut s) => match s.body().await {
-                                        Ok(bytes) => {
-                                            let mut byte_vec: Vec<u8> = Vec::with_capacity(bytes.len());
-                                            unsafe {
-                                                byte_vec.set_len(bytes.len());
-                                            };
-                                            
-                                            byte_vec.copy_from_slice(bytes.as_ref());
-                                            AnyType::Bytebuf(byte_vec)
-                                        },
-                                        Err(e) => ${returnWithVariableErrorMessage("e")}
+                                    Ok(s) => {
+                                        rpc_buffer = Some(s);
+                                        AnyType::None                    
                                     },
                                     Err(e) => ${returnWithVariableErrorMessage("e")}
                                 }
@@ -372,7 +368,72 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         return ret
                     }
                 }
-                
+            },
+            deserializeRpcBufTo: {
+                factoryMethod: (t) => {
+                    if (t.modification !== "none") {
+                        throw Error(`Do not support deserializing to modified types yet.`)
+                    }
+                    if (foreignLookup.size === 0) {
+                        throw Error(`It is impossible to deserialize rpc bufs if there are no rpc calls.`)
+                    }
+                    return {
+                        kind: `deserializeRpcBufTo${t.kind === "Primitive" ? t.val : t.type}`,
+                        data: undefined
+                    }
+                },
+                opDefinition: {
+                    kind: "rpc",
+                    create: (t) => {
+                        
+                        if (t.modification !== "none") {
+                            throw Error(`Do not support deserializing to modified types yet.`)
+                        }
+                        if (foreignLookup.size === 0) {
+                            return []
+                        }
+                        const ret: OpDef<"static">[] = []
+                        switch(t.kind) {
+                            case "CustomType":
+                                ret.push({
+                                    kind: "static",
+                                    rustOpHandler: `match &mut rpc_buffer {
+                                        Some(buf) => {
+                                            match buf.json().await {
+                                                Ok(out) => AnyType::${t.type}Instance(out),
+                                                Err(err) => ${returnWithVariableErrorMessage("err")}
+                                            }
+                                        },
+                                        _ => ${returnErrorWithMessage("Attempting to deserialize a non existent buffer")}
+                                    }`,
+                                    rustEnumMember: `deserializeRpcBufTo${t.type}`,
+                                })
+                                break
+                            case "Primitive":
+                                
+                                ret.push({
+                                    kind: "static",
+                                    rustEnumMember: `deserializeRpcBufTo${t.val}`,
+                                    rustOpHandler: `match &mut rpc_buffer {
+                                        Some(buf) => {
+                                            match buf.json().await {
+                                                Ok(out) => AnyType::${t.val}Instance(out),
+                                                Err(err) => ${returnWithVariableErrorMessage("err")}
+                                            }
+                                        },
+                                        _ => ${returnErrorWithMessage("Attempting to deserialize a non existent buffer")}
+                                    }`,
+                                })
+                                break
+
+                            default: Utilities.assertNever(t)
+                        }
+
+                        return ret
+                    }
+
+                }
+
             }
             
         }
@@ -410,6 +471,18 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             addedOperations.push(...opdef.create(e))
                         }
                     })
+                    break
+                case "rpc":
+                    Primitives.forEach(v => {
+                        // Bytes are actual data, not a type.
+                        addedOperations.push(...opdef.create({kind: "Primitive", modification: "none", val: v}))
+                    })
+                    manifest.inScope.forEach(m => {
+                        if (m.kind === "Struct" && !m.isConduitGenerated) {
+                            addedOperations.push(...opdef.create({kind: "CustomType", modification: "none", type: m.name}))
+                        }
+                    })
+                    
                     break
                 default: Utilities.assertNever(opdef)
             }       

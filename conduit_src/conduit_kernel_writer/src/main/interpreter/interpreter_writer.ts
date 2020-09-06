@@ -1,8 +1,9 @@
 import { AnyOpDef, AllTypesMember } from './derive_supported_ops';
+import { InstallModuleLookup } from 'conduit_foreign_install/dist/src/main/types';
 
 
-export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[]): string {
-    
+export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[], foreignLookup: InstallModuleLookup): string {
+
     return `
 
     #[derive(Serialize, Deserialize, Clone)]
@@ -22,10 +23,10 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
         ${allTypeUnion.map(t => t.type ? `${t.name}(${t.type})` : t.name).join(",\n")}
     }
 
-
     async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
-        let mut prev: AnyType= AnyType::None;
-        let mut callstack: Vec<AnyType> = Vec::new();
+        let mut prev: AnyType<'a>= AnyType::None;
+        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+        ${foreignLookup.size > 0 ? "let mut rpc_buffer: Option<awc::ClientResponse<_>> = Option::None;": ""}
         for o in ops {
             prev = match o {
                 ${supportedOps.map(o => {

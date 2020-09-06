@@ -112,8 +112,8 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (dots.length !== 1) {
             throw Error(`Invalid reference to the installed python module ${module.name}`)
         }
-        if (targetType.kind !== "any" && !typesAreEqual(targetType, {kind: "Primitive", val: Lexicon.Symbol.bytes, modification: "none"})) {
-            throw Error(`Currently only support foreign functions returning bytes, yet tried to return ${JSON.stringify(targetType)}`)
+        if (targetType.kind !== "any" && targetType.modification !== "none") {
+            throw Error(`Can only convert foreign function results into base types, not arrays or optionals.}`)
         }
         const dot = dots[0]
         const m = dot.differentiate()
@@ -127,6 +127,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         })
 
         ret.push(tools.factory.invokeInstalled(module, m.name))
+        if (targetType.kind !== "any") {
+            ret.push(tools.factory.deserializeRpcBufTo(targetType))
+        }
         return ret
     },
 

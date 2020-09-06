@@ -7,6 +7,7 @@ import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 import { toAnyType } from './toAnyType';
 import { TypeWriter } from './type_writing/type_writer';
+import { ForeignInstallResults } from 'conduit_foreign_install';
 
 function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap): string {
     switch (p.kind) {
@@ -78,9 +79,9 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
     functions: WritableFunction[],
     allTypesUnion: AllTypesMember[],
     additionalRustStructsAndEnums: string[]
-}, WrittenCode> = {
+} & ForeignInstallResults, WrittenCode> = {
     stepName: "writing deployment files",
-    func: ({manifest, supportedOps, functions, allTypesUnion, additionalRustStructsAndEnums}) => {
+    func: ({manifest, supportedOps, functions, allTypesUnion, additionalRustStructsAndEnums, foreignLookup}) => {
         const structs: string[] = []
         const stores: Map<string, CompiledTypes.HierarchicalStore> = new Map()
         const f_defs: FunctionDef[] = functions.map(i => writeFunction(i, manifest.inScope))
@@ -165,6 +166,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             use std::collections::HashMap;
                             use awc;
                             use std::borrow::Borrow;
+                            use bytes::Bytes;
                 
                 
                             struct AppData {
@@ -182,7 +184,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                             // INTERPRETERS
                             ${interpreters.join("\n")}
                             // OP INTERPRETER
-                            ${writeOperationInterpreter(supportedOps, allTypesUnion)}
+                            ${writeOperationInterpreter(supportedOps, allTypesUnion, foreignLookup)}
                             // FUNCTIONS
                             ${f_defs.map(f => f.def).join("\n\n")}
                     

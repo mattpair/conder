@@ -52,12 +52,15 @@ export function installPython3Module(installs: CompiledTypes.Python3Install[]): 
 @app.route("${path_name}", methods=["PUT"])
 def path_${func_name}():
     args = request.json
-    if len(args) != ${num_args}:
-        raise ValueError("Unexpected number of arguments: " + str(len(args)))
+    if ${num_args === 0 ?"args != []" : `args == None or len(args) != ${num_args}`}:
+        raise ValueError("Invalid arguments: " + str(args))
     print("Input: ", str(args))
-    data = [x["data"] for x in args]
     
-    return ${func_name}(*data)
+    
+    res = ${func_name}${num_args === 0 ? `()`: `(*[x["data"] for x in args])`} 
+    if res == None:
+        return jsonify({}), 200, {'Content-Type': 'application/json; charset=utf-8' }
+    return jsonify(res), 200, {'Content-Type': 'application/json; charset=utf-8' }
 `,
                 import: `from ${install.file.substr(0, install.file.length - 3)} import ${func_name}`
             })
@@ -67,7 +70,7 @@ def path_${func_name}():
         
         fs.writeFileSync(`${deploy_dir}/generated_app_harness.py`,
 `
-from flask import Flask, request
+from flask import Flask, request, jsonify
 ${path_definitions.map(p => p.import).join("\n")}
 app = Flask(__name__)
 
