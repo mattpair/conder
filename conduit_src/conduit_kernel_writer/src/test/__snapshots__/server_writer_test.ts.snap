@@ -42,6 +42,7 @@ insert_executable: Vec<Op>
             #[derive(Serialize, Deserialize, Clone)]
             struct simple {
                 data: String,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -49,6 +50,7 @@ conduit_entity_id: Option<i32>
             #[derive(Serialize, Deserialize, Clone)]
             struct wrapper {
                 innard: Vec<simple>,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -582,6 +584,7 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
             #[derive(Serialize, Deserialize, Clone)]
             struct simple {
                 data: String,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -589,6 +592,7 @@ conduit_entity_id: Option<i32>
             #[derive(Serialize, Deserialize, Clone)]
             struct wrapper {
                 innard: Vec<simple>,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -1214,6 +1218,7 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
             #[derive(Serialize, Deserialize, Clone)]
             struct simple {
                 data: f64,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -1674,6 +1679,7 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
             #[derive(Serialize, Deserialize, Clone)]
             struct simple {
                 data: Vec<String>,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -1681,6 +1687,7 @@ conduit_entity_id: Option<i32>
             #[derive(Serialize, Deserialize, Clone)]
             struct wrapper {
                 innard: simple,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -2230,6 +2237,7 @@ insert_executable: Vec<Op>,get_executable: Vec<Op>
             #[derive(Serialize, Deserialize, Clone)]
             struct simple {
                 data: bool,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             
@@ -2237,6 +2245,7 @@ conduit_entity_id: Option<i32>
             #[derive(Serialize, Deserialize, Clone)]
             struct wrapper {
                 innard: simple,
+#[serde(skip)]
 conduit_entity_id: Option<i32>
             }
             

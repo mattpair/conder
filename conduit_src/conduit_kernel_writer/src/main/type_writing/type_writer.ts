@@ -102,7 +102,7 @@ export const TypeWriter: CompleteTypeWriter = {
             }` : `;`}
             `
             if (!val.isConduitGenerated) {
-                fields.push(`conduit_entity_id: Option<i32>`)
+                fields.push(`#[serde(skip)]\nconduit_entity_id: Option<i32>`)
             }
             return makeStruct('', fields)
         },
