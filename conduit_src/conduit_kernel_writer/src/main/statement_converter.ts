@@ -112,7 +112,11 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (dots.length !== 1) {
             throw Error(`Invalid reference to the installed python module ${module.name}`)
         }
-        if (targetType.kind !== "any" && targetType.modification !== "none") {
+        if (targetType.kind === "any") {
+            throw Error(`Cannot determine what type python3 call should be.`)
+        }
+
+        if (targetType.modification !== "none") {
             throw Error(`Can only convert foreign function results into base types, not arrays or optionals.}`)
         }
         const dot = dots[0]
@@ -126,10 +130,11 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
             ret.push(tools.factory.pushPreviousOnCallStack)
         })
 
-        ret.push(tools.factory.invokeInstalled(module, m.name))
-        if (targetType.kind !== "any") {
-            ret.push(tools.factory.deserializeRpcBufTo(targetType))
-        }
+        ret.push(
+            tools.factory.invokeInstalled(module, m.name),
+            tools.factory.deserializeRpcBufTo(targetType)
+        )
+                
         return ret
     },
 
@@ -269,7 +274,6 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                         if (f.returnType.kind !== "VoidReturnType") {
                             throw Error(`Returning nothing when you need to return a real type`)
                         }
-                        // TODO: add a symbol for creating none and returning previous
                         break
                     case "Assignable":
                         
