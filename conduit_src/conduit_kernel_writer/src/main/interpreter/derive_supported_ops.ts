@@ -79,20 +79,18 @@ export type OpInstance<S=string> = Readonly<{
 }>
 
 export type AllTypesMember = Readonly<{
-    name: string, type?: string
+    name: string, type?: string, http_returner: string
 }>
 
-interface AllTypeInternal extends AllTypesMember  {
-    readonly returner: string
-}
 
 type AnyTypeDefOption = {
     exemptFromUsingReferences?: boolean
 }
 
-class DataContainingType implements AllTypeInternal {
+class DataContainingType implements AllTypesMember {
     readonly name: string
     readonly type: string
+    
     constructor(name: string, type: string, options: AnyTypeDefOption = {}) {
         this.name = name
         // All types are references unless otherwise specified.
@@ -108,8 +106,8 @@ class DataContainingType implements AllTypeInternal {
         ]
     }
     
-    public get returner() : string {
-        return `AnyType::${this.name}(output) => return HttpResponse::Ok().json(output)`
+    public get http_returner() : string {
+        return `AnyType::${this.name}(data) => HttpResponse::Ok().json(data)`
     }
     
 }
@@ -118,19 +116,22 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
 {supportedOps: AnyOpDef[], opFactory: CompleteOpFactory, allTypesUnion: AllTypesMember[], additionalRustStructsAndEnums: string[]}> = {
     stepName: "deriving supported operations",
     func: ({manifest, foreignLookup}) => {
-        const allTypesUnion: AllTypeInternal[] = [
-            {name: "None", returner: `AnyType::None => return HttpResponse::Ok().finish()`},
-            new DataContainingType("Err", "String", {exemptFromUsingReferences: true})
+        const allTypesUnion: AllTypesMember[] = [
+            {name: "None", http_returner: `AnyType::None => HttpResponse::Ok().finish()`},
+            {name: "Err", type: "String", http_returner: `AnyType::Err(e) => {
+                println!("Error: {}", e);
+                HttpResponse::BadRequest().finish()
+            }`}
         ]
 
         Lexicon.Primitives.forEach(p => {
             const r = TypeWriter.rust.primitive[p]
             allTypesUnion.push(...DataContainingType.allPossibleDataContainingTypes(p, r))
         })
-        function returnErrorWithMessage(s: string): string {
+        function raiseErrorWithMessage(s: string): string {
             return `AnyType::Err("${s}".to_string())`
         }
-        function returnWithVariableErrorMessage(v: string): string {
+        function raiseErrorWithVariableMessage(v: string): string {
             return `AnyType::Err(${v}.to_string())`
         }
         const additionalRustStructsAndEnums: string[] = []
@@ -159,13 +160,6 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         })
         
 
-        const returnAnyType = (varname: string) => {
-            return `match ${varname} {
-                ${allTypesUnion.map(t => t.returner).join(",\n")}
-            }
-            `
-        }
-
         const OpSpec: CompleteOpSpec = {
             pushPreviousOnCallStack: {
                 opDefinition: {
@@ -184,13 +178,10 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             AnyType::${store.typeName}(r) => {
                                 match insert_${store.name}(&client, &r).await {
                                     Ok(()) => AnyType::None,
-                                    Err(err) => ${returnWithVariableErrorMessage("err")}
+                                    Err(err) => ${raiseErrorWithVariableMessage("err")}
                                 }
                             },
-                            _ => {
-                                println!("invalid insertion type");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => ${raiseErrorWithMessage("Invalid insertion type")}
                         }`,
                         rustEnumMember: `storeInsertPrevious${store.name}`
                     }]
@@ -214,7 +205,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             let spec = ${generateRustGetAllQuerySpec(t)};
                             match query_interpreter_${t.name}(&spec, &client).await {
                                 Ok(out) => AnyType::${t.name}Result(out),
-                                Err(err) => ${returnWithVariableErrorMessage("err")}
+                                Err(err) => ${raiseErrorWithVariableMessage("err")}
                             }
                         `
                     }]
@@ -232,14 +223,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     kind: "param",
                     paramType: "usize",
                     rustEnumMember: `returnVariable`,
-                    rustOpHandler: `
-                    match state.get(*op_param) {
-                        Some(data) => ${returnAnyType("data")},
-                        None => {
-                            println!("attempting to return a value that doesn't exist");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }`
+                    rustOpHandler: ` return state.swap_remove(*op_param)`
                 }
             },
         
@@ -251,8 +235,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 opDefinition: {
                     kind: "static",
                     rustEnumMember: `returnPrevious`,
-                    rustOpHandler: `
-                    ${returnAnyType("prev")}`
+                    rustOpHandler: `return prev`
                 }
             },
         
@@ -281,7 +264,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     rustEnumMember: `echoVariable`,
                     rustOpHandler: `match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => ${returnErrorWithMessage("Echoing variable that does not exist")}
+                        None => ${raiseErrorWithMessage("Echoing variable that does not exist")}
                     }`
                 }
             },
@@ -307,7 +290,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     }).join(",\n")}
 
                                 },
-                                _ => ${returnErrorWithMessage("Attempting to reference a field that doesn't exist on current type")}
+                                _ => ${raiseErrorWithMessage("Attempting to reference a field that doesn't exist on current type")}
                             }
                                 
                             `
@@ -345,10 +328,10 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     Err(e) => panic!("didn't receive ${module.service_name} location: {}", e)
                                 };
                                 let response = awc::Client::new()
-                                    .put(format!("http://{}${val.url_path}", host)) // <- Create request builder
+                                    .put(format!("http://{}${val.url_path}", host)) 
                                     .header("User-Agent", "Actix-web")
                                     .header("Accept", "application/json")
-                                    .send_json(&callstack)                          // <- Send http request
+                                    .send_json(&callstack)                          
                                     .await;
 
                                 callstack.clear();
@@ -358,7 +341,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                         rpc_buffer = Some(s);
                                         AnyType::None                    
                                     },
-                                    Err(e) => ${returnWithVariableErrorMessage("e")}
+                                    Err(e) => ${raiseErrorWithVariableMessage("e")}
                                 }
                                 `,
                             })
@@ -397,14 +380,15 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             case "CustomType":
                                 ret.push({
                                     kind: "static",
-                                    rustOpHandler: `match &mut rpc_buffer {
+                                    rustOpHandler: `
+                                    match &mut rpc_buffer {
                                         Some(buf) => {
                                             match buf.json().await {
                                                 Ok(out) => AnyType::${t.type}Instance(out),
-                                                Err(err) => ${returnWithVariableErrorMessage("err")}
+                                                Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
-                                        _ => ${returnErrorWithMessage("Attempting to deserialize a non existent buffer")}
+                                        _ => ${raiseErrorWithMessage("Attempting to deserialize a non existent buffer")}
                                     }`,
                                     rustEnumMember: `deserializeRpcBufTo${t.type}`,
                                 })
@@ -418,10 +402,10 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                         Some(buf) => {
                                             match buf.json().await {
                                                 Ok(out) => AnyType::${t.val}Instance(out),
-                                                Err(err) => ${returnWithVariableErrorMessage("err")}
+                                                Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
-                                        _ => ${returnErrorWithMessage("Attempting to deserialize a non existent buffer")}
+                                        _ => ${raiseErrorWithMessage("Attempting to deserialize a non existent buffer")}
                                     }`,
                                 })
                                 break

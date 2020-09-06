@@ -180,7 +180,7 @@ wrapperFieldAccess(wrapperField)
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum AnyType<'exec> {
         None,
-Err( String),
+Err(String),
 double(&'exec f64),
 doubleInstance( f64),
 Manydouble(&'exec Vec<f64>),
@@ -236,7 +236,8 @@ ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
 OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
@@ -253,10 +254,7 @@ Op::storeInsertPreviouswrapStore => {
                                     Err(err) => AnyType::Err(err.to_string())
                                 }
                             },
-                            _ => {
-                                println!(\\"invalid insertion type\\");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -271,132 +269,10 @@ Op::storeQuerywrapStore => {
                         
                     },
 Op::returnVariable(op_param) => {
-                        
-                    match state.get(*op_param) {
-                        Some(data) => match data {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            ,
-                        None => {
-                            println!(\\"attempting to return a value that doesn't exist\\");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }
+                         return state.swap_remove(*op_param)
                     },
 Op::returnPrevious => {
-                        
-                    match prev {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            
+                        return prev
                     },
 Op::savePrevious => {
                         state.push(prev); AnyType::None
@@ -434,17 +310,75 @@ Op::wrapperFieldAccess(op_param) => {
             };
 
             match prev {
-                AnyType::Err(e) => {
-                    println!(\\"Error: {}\\", e);
-                    return HttpResponse::BadRequest().finish();
-                },
+                AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
-        return HttpResponse::Ok().json(AnyType::None);
-
+        return AnyType::None;
     }
 
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::simple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+AnyType::wrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+        };
+    }
     
                             // FUNCTIONS
                             
@@ -722,7 +656,7 @@ wrapperFieldAccess(wrapperField)
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum AnyType<'exec> {
         None,
-Err( String),
+Err(String),
 double(&'exec f64),
 doubleInstance( f64),
 Manydouble(&'exec Vec<f64>),
@@ -778,7 +712,8 @@ ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
 OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
@@ -795,10 +730,7 @@ Op::storeInsertPreviouswrapStore => {
                                     Err(err) => AnyType::Err(err.to_string())
                                 }
                             },
-                            _ => {
-                                println!(\\"invalid insertion type\\");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -813,132 +745,10 @@ Op::storeQuerywrapStore => {
                         
                     },
 Op::returnVariable(op_param) => {
-                        
-                    match state.get(*op_param) {
-                        Some(data) => match data {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            ,
-                        None => {
-                            println!(\\"attempting to return a value that doesn't exist\\");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }
+                         return state.swap_remove(*op_param)
                     },
 Op::returnPrevious => {
-                        
-                    match prev {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            
+                        return prev
                     },
 Op::savePrevious => {
                         state.push(prev); AnyType::None
@@ -976,17 +786,75 @@ Op::wrapperFieldAccess(op_param) => {
             };
 
             match prev {
-                AnyType::Err(e) => {
-                    println!(\\"Error: {}\\", e);
-                    return HttpResponse::BadRequest().finish();
-                },
+                AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
-        return HttpResponse::Ok().json(AnyType::None);
-
+        return AnyType::None;
     }
 
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::simple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+AnyType::wrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+        };
+    }
     
                             // FUNCTIONS
                             
@@ -1276,7 +1144,7 @@ simpleFieldAccess(simpleField)
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum AnyType<'exec> {
         None,
-Err( String),
+Err(String),
 double(&'exec f64),
 doubleInstance( f64),
 Manydouble(&'exec Vec<f64>),
@@ -1324,7 +1192,8 @@ ManyquerySpec_simpleStore(&'exec Vec<querySpec_simpleStore>),
 OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
@@ -1341,10 +1210,7 @@ Op::storeInsertPrevioussimpleStore => {
                                     Err(err) => AnyType::Err(err.to_string())
                                 }
                             },
-                            _ => {
-                                println!(\\"invalid insertion type\\");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerysimpleStore => {
@@ -1357,116 +1223,10 @@ Op::storeQuerysimpleStore => {
                         
                     },
 Op::returnVariable(op_param) => {
-                        
-                    match state.get(*op_param) {
-                        Some(data) => match data {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_simpleStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
-            }
-            ,
-                        None => {
-                            println!(\\"attempting to return a value that doesn't exist\\");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }
+                         return state.swap_remove(*op_param)
                     },
 Op::returnPrevious => {
-                        
-                    match prev {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_simpleStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_simpleStore(output) => return HttpResponse::Ok().json(output)
-            }
-            
+                        return prev
                     },
 Op::savePrevious => {
                         state.push(prev); AnyType::None
@@ -1492,17 +1252,67 @@ Op::simpleFieldAccess(op_param) => {
             };
 
             match prev {
-                AnyType::Err(e) => {
-                    println!(\\"Error: {}\\", e);
-                    return HttpResponse::BadRequest().finish();
-                },
+                AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
-        return HttpResponse::Ok().json(AnyType::None);
-
+        return AnyType::None;
     }
 
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::simple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_simpleStore(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_simpleStoreInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_simpleStore(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
+        };
+    }
     
                             // FUNCTIONS
                             
@@ -1783,7 +1593,7 @@ wrapperFieldAccess(wrapperField)
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum AnyType<'exec> {
         None,
-Err( String),
+Err(String),
 double(&'exec f64),
 doubleInstance( f64),
 Manydouble(&'exec Vec<f64>),
@@ -1839,7 +1649,8 @@ ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
 OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
@@ -1856,10 +1667,7 @@ Op::storeInsertPreviouswrapStore => {
                                     Err(err) => AnyType::Err(err.to_string())
                                 }
                             },
-                            _ => {
-                                println!(\\"invalid insertion type\\");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -1874,132 +1682,10 @@ Op::storeQuerywrapStore => {
                         
                     },
 Op::returnVariable(op_param) => {
-                        
-                    match state.get(*op_param) {
-                        Some(data) => match data {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            ,
-                        None => {
-                            println!(\\"attempting to return a value that doesn't exist\\");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }
+                         return state.swap_remove(*op_param)
                     },
 Op::returnPrevious => {
-                        
-                    match prev {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            
+                        return prev
                     },
 Op::savePrevious => {
                         state.push(prev); AnyType::None
@@ -2037,17 +1723,75 @@ Op::wrapperFieldAccess(op_param) => {
             };
 
             match prev {
-                AnyType::Err(e) => {
-                    println!(\\"Error: {}\\", e);
-                    return HttpResponse::BadRequest().finish();
-                },
+                AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
-        return HttpResponse::Ok().json(AnyType::None);
-
+        return AnyType::None;
     }
 
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::simple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+AnyType::wrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+        };
+    }
     
                             // FUNCTIONS
                             
@@ -2341,7 +2085,7 @@ wrapperFieldAccess(wrapperField)
     #[serde(tag = \\"kind\\", content= \\"data\\")]
     enum AnyType<'exec> {
         None,
-Err( String),
+Err(String),
 double(&'exec f64),
 doubleInstance( f64),
 Manydouble(&'exec Vec<f64>),
@@ -2397,7 +2141,8 @@ ManyquerySpec_wrapStore(&'exec Vec<querySpec_wrapStore>),
 OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
@@ -2414,10 +2159,7 @@ Op::storeInsertPreviouswrapStore => {
                                     Err(err) => AnyType::Err(err.to_string())
                                 }
                             },
-                            _ => {
-                                println!(\\"invalid insertion type\\");
-                                return HttpResponse::BadRequest().finish();
-                            }
+                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -2432,132 +2174,10 @@ Op::storeQuerywrapStore => {
                         
                     },
 Op::returnVariable(op_param) => {
-                        
-                    match state.get(*op_param) {
-                        Some(data) => match data {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            ,
-                        None => {
-                            println!(\\"attempting to return a value that doesn't exist\\");
-                            return HttpResponse::BadRequest().finish();
-                        }
-                    }
+                         return state.swap_remove(*op_param)
                     },
 Op::returnPrevious => {
-                        
-                    match prev {
-                AnyType::None => return HttpResponse::Ok().finish(),
-AnyType::Err(output) => return HttpResponse::Ok().json(output),
-AnyType::double(output) => return HttpResponse::Ok().json(output),
-AnyType::doubleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manydouble(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaldouble(output) => return HttpResponse::Ok().json(output),
-AnyType::float(output) => return HttpResponse::Ok().json(output),
-AnyType::floatInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalfloat(output) => return HttpResponse::Ok().json(output),
-AnyType::int32(output) => return HttpResponse::Ok().json(output),
-AnyType::int32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint32(output) => return HttpResponse::Ok().json(output),
-AnyType::int64(output) => return HttpResponse::Ok().json(output),
-AnyType::int64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint32Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint32(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint32(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64(output) => return HttpResponse::Ok().json(output),
-AnyType::uint64Instance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manyuint64(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionaluint64(output) => return HttpResponse::Ok().json(output),
-AnyType::bool(output) => return HttpResponse::Ok().json(output),
-AnyType::boolInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybool(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbool(output) => return HttpResponse::Ok().json(output),
-AnyType::string(output) => return HttpResponse::Ok().json(output),
-AnyType::stringInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manystring(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalstring(output) => return HttpResponse::Ok().json(output),
-AnyType::bytes(output) => return HttpResponse::Ok().json(output),
-AnyType::bytesInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manybytes(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalbytes(output) => return HttpResponse::Ok().json(output),
-AnyType::simple(output) => return HttpResponse::Ok().json(output),
-AnyType::simpleInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manysimple(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalsimple(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapperInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::Manywrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::Optionalwrapper(output) => return HttpResponse::Ok().json(output),
-AnyType::wrapStoreResult(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore_innardInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore_innard(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::querySpec_wrapStoreInstance(output) => return HttpResponse::Ok().json(output),
-AnyType::ManyquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output),
-AnyType::OptionalquerySpec_wrapStore(output) => return HttpResponse::Ok().json(output)
-            }
-            
+                        return prev
                     },
 Op::savePrevious => {
                         state.push(prev); AnyType::None
@@ -2595,17 +2215,75 @@ Op::wrapperFieldAccess(op_param) => {
             };
 
             match prev {
-                AnyType::Err(e) => {
-                    println!(\\"Error: {}\\", e);
-                    return HttpResponse::BadRequest().finish();
-                },
+                AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
-        return HttpResponse::Ok().json(AnyType::None);
-
+        return AnyType::None;
     }
 
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::simple(data) => HttpResponse::Ok().json(data),
+AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+AnyType::wrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+        };
+    }
     
                             // FUNCTIONS
                             
