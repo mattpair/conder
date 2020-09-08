@@ -96,7 +96,7 @@ type CompilationTools = Readonly<{
     ops: OpInstance[]
 }>
 
-type TargetType = CompiledTypes.ResolvedType | {kind: "any"}
+type TargetType = CompiledTypes.ResolvedType | {kind: "any"} | {kind: "none"}
 type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function"}>
 
 type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
@@ -116,10 +116,10 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (targetType.kind === "any") {
             throw Error(`Cannot determine what type python3 call should be.`)
         }
-
-        if (targetType.modification !== "none") {
-            throw Error(`Can only convert foreign function results into base types, not arrays or optionals.}`)
+        if (targetType.kind !== "none" && targetType.modification !== "none") {
+            throw Error(`Can only convert foreign function results into base types, not arrays or optionals.`)
         }
+
         const dot = dots[0]
         const m = dot.differentiate()
         if (m.kind === "FieldAccess") {
@@ -132,13 +132,19 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
 
         tools.ops.push(
             tools.factory.invokeInstalled(module, m.name),
-            tools.factory.deserializeRpcBufTo(targetType)
         )
+        // TODO: we should still check that the rpc returns successfully
+        if (targetType.kind !== "none") {
+            tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
+        }
     },
 
     HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope, ops}) => {
         if (targetType.kind === "Primitive") {
             throw Error("Stores contain structured data, not primitives")
+        }
+        if (targetType.kind === "none") {
+            throw Error(`Stores return real data, not none`)
         }
         if(dots.length > 1) {
             throw Error(`Invoking methods which don't exist on store method results`)
@@ -174,6 +180,11 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
 function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope, ops}: CompilationTools): void {
     const ref = varmap.tryGet(assign.val)
     if (ref !== undefined) {
+        // It is actually possible for a variable reference to return none, if the method returns none,
+        // but for now we will assume it's impossible.
+        if (targetType.kind === "none") {
+            throw Error(`Returning a variable doesn't make sense when the expected result is none`)
+        }
         ops.push(factory.echoVariable(ref.id))
 
         let currentType: CompiledTypes.ResolvedType = ref.type
@@ -235,20 +246,18 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
     
 }
 
+type StatementSummary = {
+    alwaysReturns: boolean
+}
 
-function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
-    const ops: OpInstance[] = []
-    const varmap = new VarMap()
-    const parameter = f.parameter.differentiate()
-    if (parameter.kind === "UnaryParameter") {
-        varmap.add(parameter.name, parameter.type)
-    }
-
-    for (let j = 0; j < f.body.statements.length; j++) {
-        const stmt = f.body.statements[j].differentiate()
+function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: CompilationTools): StatementSummary {
+    const originalLength = tools.ops.length
+    let alwaysReturns = false
+    for (let j = 0; j < a.length; j++) {
+        const stmt = a[j].differentiate()
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "any"}, {factory, inScope, varmap, ops})
+                variableReferenceToOps(stmt, {kind: "any"}, tools)
                 break
 
             
@@ -259,46 +268,56 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                 assignableToOps(
                     stmt.part.Assignable, 
                     prim !== undefined ? prim : t, 
-                    {varmap, factory, inScope, ops: ops})
+                    tools)
                 
                 
-                varmap.add(stmt.name, stmt.part.CustomType)
-                ops.push(
-                    factory.savePrevious
-                )
+                tools.varmap.add(stmt.name, stmt.part.CustomType)
+                tools.ops.push(tools.factory.savePrevious)
                 break
             case "ReturnStatement":
                 const e = stmt.part.Returnable.differentiate()
+                alwaysReturns = true
                 switch (e.kind) {
                     case "Nothing":
-                        if (f.returnType.kind !== "VoidReturnType") {
-                            throw Error(`Returning nothing when you need to return a real type`)
+                        if (targetType.kind !== "none") {
+                            throw Error(`Returning something when you need to return a real type`)
                         }
                         break
                     case "Assignable":
-                        
-                        if (f.returnType.kind === "VoidReturnType") {
-                            throw Error(`Returning something when you need to return nothing`)
-                        }
-                        assignableToOps(e, f.returnType, {varmap, factory, inScope, ops: ops}),
-                        
-                        ops.push(factory.returnPrevious)
-                                                
+                        assignableToOps(e, targetType, tools),
+                        tools.ops.push(tools.factory.returnPrevious)          
                         break
+
                     default: Utilities.assertNever(e)
                 }
-                                
-                
                 break
-            case "ForIn":
+            
             case "If":
+                // assignableToOps(stmt.part.Assignable, {kind: "Primitive", val: Lexicon.Symbol.bool, modification: "none"}, {varmap, factory, inScope, ops})
+
+                // break
+            case "ForIn":
                 throw Error(`Currently don't support ${stmt.kind}`)
             
             default: Utilities.assertNever(stmt)
         }
     }
-    if (f.returnType.kind !== "VoidReturnType" && (ops.length === 0 || ops.find(b =>[factory.returnPrevious.kind, factory.returnVariable(0).kind].includes(b.kind as any)) === undefined)) {
-        throw Error(`Function does nothing when it should return a type`)
+
+    return {alwaysReturns}
+}
+
+function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
+    const ops: OpInstance[] = []
+    const varmap = new VarMap()
+    const parameter = f.parameter.differentiate()
+    if (parameter.kind === "UnaryParameter") {
+        varmap.add(parameter.name, parameter.type)
+    }
+    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
+    
+    const summary = statementsToOps(f.body.statements, targetType, {ops, varmap, inScope, factory})
+    if (!summary.alwaysReturns && targetType.kind !== "none") {
+        throw Error(`Function fails to return a value for all paths`)
     }
 
     return {
