@@ -110,7 +110,7 @@ type CompilationTools = Readonly<{
     ops: OpInstance[]
 }>
 
-type TargetType = CompiledTypes.ResolvedType | {kind: "any"} | {kind: "none"}
+type TargetType = CompiledTypes.ResolvedType | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
 type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function"}>
 
 type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
@@ -124,6 +124,10 @@ type GlobalReferenceToOpsConverter = {
 
 const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
     python3: (module, dots, targetType, tools) => {
+        if (targetType.kind === "anonFunc") {
+            throw Error(`Cannot retrieve an anonymous function from python3`)
+        }
+        
         if (dots.length !== 1) {
             throw Error(`Invalid reference to the installed python module ${module.name}`)
         }
@@ -156,6 +160,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
     HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope, ops}) => {
         if (targetType.kind === "Primitive") {
             throw Error("Stores contain structured data, not primitives")
+        }
+        if (targetType.kind === "anonFunc") {
+            throw Error(`Cannot convert a store into an anonymous function`)
         }
         if (targetType.kind === "none") {
             throw Error(`Stores return real data, not none`)
@@ -192,6 +199,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
 }
 
 function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope, ops}: CompilationTools): void {
+    if (targetType.kind === "anonFunc") {
+        throw Error(`Variable references cannot produce anon functions`)
+    }
     const ref = varmap.tryGet(assign.val)
     if (ref !== undefined) {
         // It is actually possible for a variable reference to return none, if the method returns none,
@@ -254,8 +264,11 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
     switch (assign.kind) {
         case "VariableReference":
             return variableReferenceToOps(assign, targetType, tools)
+
+        case "AnonFunction":
+            throw Error(`Anonmous functions cannot be compiled yet`)
             
-        default: Utilities.assertNever(assign.kind)
+        default: Utilities.assertNever(assign)
     }
     
 }

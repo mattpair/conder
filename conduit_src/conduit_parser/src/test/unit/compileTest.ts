@@ -209,3 +209,19 @@ compileTest("if statement", `
         return input.right
     }
 `)
+
+
+compileTest("select method", `
+    struct stored {
+        val: string,
+    }
+    secondStore: Array<stored> = []
+
+
+    function getAllData(): Array<stored> {
+        
+        return secondStore.select(row => {
+            return row
+        })
+    }
+`)

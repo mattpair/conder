@@ -35,7 +35,8 @@ export type EntityKinds =
 "ForInBody" |
 "python3" |
 "If" |
-"Statements"
+"Statements" |
+"AnonFunction"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

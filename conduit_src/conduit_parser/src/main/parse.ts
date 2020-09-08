@@ -23,7 +23,7 @@ export namespace Parse {
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
-    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
+    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction>
     export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
     export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
@@ -41,6 +41,7 @@ export namespace Parse {
     export type ForInBody = common.IntrafileEntity<"ForInBody", common.ParentOfMany<WithinForIn>>
     export type ForIn = common.IntrafileEntity<"ForIn", {rowVarName: string} & common.RequiresOne<ForInBody> & common.RequiresOne<Assignable>>
     export type If = common.IntrafileEntity<"If", common.RequiresOne<Assignable> & common.RequiresOne<Statements>>
+    export type AnonFunction = common.IntrafileEntity<"AnonFunction", common.RequiresOne<Statements> & {rowVarName: string}>
     
     export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
 
@@ -202,7 +203,8 @@ export namespace Parse {
         ForIn |
         ForInBody |
         If |
-        Statements
+        Statements |
+        AnonFunction
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -668,7 +670,8 @@ export namespace Parse {
         Assignable: {
             kind: "polymorph",
             priority: {
-                VariableReference: 1
+                VariableReference: 2,
+                AnonFunction: 1
             },
             groupKind: "Assignable"
         },
@@ -750,6 +753,23 @@ export namespace Parse {
             priority: {
                 VariableReference: 1
             }
+        },
+        AnonFunction: {
+            kind: "conglomerate",
+            startRegex: /^\s*(?<name>[a-zA-Z_]\w*) +=> +{/,
+            endRegex: /^\s*}/,
+            requiresOne: {
+                Statements: {order: 1}
+            },
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "AnonFunction",
+                    part,
+                    loc,
+                    rowVarName: start.groups.name
+                }
+            }
         }
+    
     }
 }
