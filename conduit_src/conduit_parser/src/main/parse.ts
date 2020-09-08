@@ -26,7 +26,8 @@ export namespace Parse {
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference>
     export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
-    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn>
+    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
+    export type Statements = common.IntrafileEntity<"Statements", common.ParentOfMany<Statement>>
     export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
     export type FunctionBody = common.BaseFunctionBody<Statement>
     export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
@@ -39,6 +40,7 @@ export namespace Parse {
     export type WithinForIn = common.PolymorphicEntity<"WithinForIn", () => VariableReference>
     export type ForInBody = common.IntrafileEntity<"ForInBody", common.ParentOfMany<WithinForIn>>
     export type ForIn = common.IntrafileEntity<"ForIn", {rowVarName: string} & common.RequiresOne<ForInBody> & common.RequiresOne<Assignable>>
+    export type If = common.IntrafileEntity<"If", common.RequiresOne<Assignable> & common.RequiresOne<Statements>>
     
     export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
 
@@ -198,7 +200,9 @@ export namespace Parse {
         DotStatement |
         WithinForIn |
         ForIn |
-        ForInBody
+        ForInBody |
+        If |
+        Statements
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -535,7 +539,44 @@ export namespace Parse {
         Statement: {
             kind: "polymorph",
             groupKind: "Statement",
-            priority: {ReturnStatement: 1, ForIn: 2,  VariableReference: 4, VariableCreation: 3}
+            priority: {ReturnStatement: 1, ForIn: 2,  VariableReference: 20, VariableCreation: 19, If: 3}
+        },
+        Statements: {
+            kind: "aggregate",
+            startRegex: /^/,
+            endRegex: /^/,
+            assemble(start, end, loc, children) {
+                return {
+                    kind: "Statements",
+                    children
+                }
+            },
+            hasMany: {
+                Statement: true
+            },
+            options: {}
+        },
+        If: {
+            kind: "conglomerate",
+            startRegex: /^\s*if +/,
+            endRegex: /^/,
+            requiresOne: {
+                Assignable: {
+                    order: 1,
+                    afterRegex: /^\s*{/
+                },
+                Statements: {
+                    order: 2,
+                    afterRegex: /^\s*}/
+                }
+            },
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "If",
+                    loc,
+                    part
+                }
+            }
         },
         ReturnStatement: {
             kind: "conglomerate",

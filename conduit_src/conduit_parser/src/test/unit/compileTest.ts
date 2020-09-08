@@ -193,3 +193,19 @@ compileTest("for in loop", `
         
     }
 `)
+
+
+compileTest("if statement", `
+    struct withbool {
+        returnLeft: bool,
+        left: string,
+        right: string
+    }
+
+    function getAllDataIntermediate(input: withbool): string {
+        if input.returnLeft {
+            return input.left
+        }
+        return input.right
+    }
+`)

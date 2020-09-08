@@ -291,7 +291,9 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                 
                 break
             case "ForIn":
-                break
+            case "If":
+                throw Error(`Currently don't support ${stmt.kind}`)
+            
             default: Utilities.assertNever(stmt)
         }
     }

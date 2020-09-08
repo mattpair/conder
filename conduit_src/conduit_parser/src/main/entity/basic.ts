@@ -33,7 +33,9 @@ export type EntityKinds =
 "ForIn" |
 "WithinForIn" |
 "ForInBody" |
-"python3"
+"python3" |
+"If" |
+"Statements"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 
