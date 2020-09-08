@@ -66,7 +66,7 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
         allDataAdditions: [
             {
                 name: exec_name,
-                type: "Vec<OpContainer>",
+                type: "Vec<Op>",
                 initializer: `serde_json::from_str(r#####"${JSON.stringify(f.body, null, 2)}"#####).unwrap()`
             }
         ]

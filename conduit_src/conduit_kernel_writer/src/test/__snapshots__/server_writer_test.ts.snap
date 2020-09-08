@@ -28,7 +28,7 @@ Array [
                 
                             struct AppData {
                                 client: Client,
-insert_executable: Vec<OpContainer>
+insert_executable: Vec<Op>
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -175,11 +175,6 @@ echoVariable(usize),
 simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
-    #[derive(Serialize, Deserialize, Clone)]
-    struct OpContainer {
-        op: Op,
-        label: Option<u32>
-    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
@@ -242,12 +237,12 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
         for o in ops {
-            prev = match &o.op {
+            prev = match o {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -322,7 +317,7 @@ Op::wrapperFieldAccess(op_param) => {
         return AnyType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             AnyType::None => HttpResponse::Ok().finish(),
 AnyType::Err(e) => {
@@ -469,15 +464,11 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"echoVariable\\",
-      \\"data\\": 0
-    }
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeInsertPreviouswrapStore\\"
-    }
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -513,7 +504,7 @@ Array [
                 
                             struct AppData {
                                 client: Client,
-insert_executable: Vec<OpContainer>,get_executable: Vec<OpContainer>
+insert_executable: Vec<Op>,get_executable: Vec<Op>
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -660,11 +651,6 @@ echoVariable(usize),
 simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
-    #[derive(Serialize, Deserialize, Clone)]
-    struct OpContainer {
-        op: Op,
-        label: Option<u32>
-    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
@@ -727,12 +713,12 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
         for o in ops {
-            prev = match &o.op {
+            prev = match o {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -807,7 +793,7 @@ Op::wrapperFieldAccess(op_param) => {
         return AnyType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             AnyType::None => HttpResponse::Ok().finish(),
 AnyType::Err(e) => {
@@ -964,27 +950,19 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"echoVariable\\",
-      \\"data\\": 0
-    }
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeInsertPreviouswrapStore\\"
-    }
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeQuerywrapStore\\"
-    }
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"returnPrevious\\"
-    }
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -1094,7 +1072,7 @@ Array [
                 
                             struct AppData {
                                 client: Client,
-insert_executable: Vec<OpContainer>,get_executable: Vec<OpContainer>
+insert_executable: Vec<Op>,get_executable: Vec<Op>
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -1161,11 +1139,6 @@ savePrevious,
 echoVariable(usize),
 simpleFieldAccess(simpleField)
     }
-    #[derive(Serialize, Deserialize, Clone)]
-    struct OpContainer {
-        op: Op,
-        label: Option<u32>
-    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
@@ -1220,12 +1193,12 @@ OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
         for o in ops {
-            prev = match &o.op {
+            prev = match o {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -1286,7 +1259,7 @@ Op::simpleFieldAccess(op_param) => {
         return AnyType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             AnyType::None => HttpResponse::Ok().finish(),
 AnyType::Err(e) => {
@@ -1429,27 +1402,19 @@ AnyType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"echoVariable\\",
-      \\"data\\": 0
-    }
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeInsertPrevioussimpleStore\\"
-    }
+    \\"kind\\": \\"storeInsertPrevioussimpleStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeQuerysimpleStore\\"
-    }
+    \\"kind\\": \\"storeQuerysimpleStore\\"
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"returnPrevious\\"
-    }
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -1510,7 +1475,7 @@ Array [
                 
                             struct AppData {
                                 client: Client,
-insert_executable: Vec<OpContainer>,get_executable: Vec<OpContainer>
+insert_executable: Vec<Op>,get_executable: Vec<Op>
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -1623,11 +1588,6 @@ echoVariable(usize),
 simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
-    #[derive(Serialize, Deserialize, Clone)]
-    struct OpContainer {
-        op: Op,
-        label: Option<u32>
-    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
@@ -1690,12 +1650,12 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
         for o in ops {
-            prev = match &o.op {
+            prev = match o {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -1770,7 +1730,7 @@ Op::wrapperFieldAccess(op_param) => {
         return AnyType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             AnyType::None => HttpResponse::Ok().finish(),
 AnyType::Err(e) => {
@@ -1927,27 +1887,19 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"echoVariable\\",
-      \\"data\\": 0
-    }
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeInsertPreviouswrapStore\\"
-    }
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeQuerywrapStore\\"
-    }
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"returnPrevious\\"
-    }
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });
@@ -2015,7 +1967,7 @@ Array [
                 
                             struct AppData {
                                 client: Client,
-insert_executable: Vec<OpContainer>,get_executable: Vec<OpContainer>
+insert_executable: Vec<Op>,get_executable: Vec<Op>
                             }
                             
                             #[derive(Serialize, Deserialize)]
@@ -2128,11 +2080,6 @@ echoVariable(usize),
 simpleFieldAccess(simpleField),
 wrapperFieldAccess(wrapperField)
     }
-    #[derive(Serialize, Deserialize, Clone)]
-    struct OpContainer {
-        op: Op,
-        label: Option<u32>
-    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
@@ -2195,12 +2142,12 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
         for o in ops {
-            prev = match &o.op {
+            prev = match o {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -2275,7 +2222,7 @@ Op::wrapperFieldAccess(op_param) => {
         return AnyType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             AnyType::None => HttpResponse::Ok().finish(),
 AnyType::Err(e) => {
@@ -2432,27 +2379,19 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                                     client: client,
                                     insert_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"echoVariable\\",
-      \\"data\\": 0
-    }
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeInsertPreviouswrapStore\\"
-    }
+    \\"kind\\": \\"storeInsertPreviouswrapStore\\"
   }
 ]\\"#####).unwrap(),
 get_executable: serde_json::from_str(r#####\\"[
   {
-    \\"op\\": {
-      \\"kind\\": \\"storeQuerywrapStore\\"
-    }
+    \\"kind\\": \\"storeQuerywrapStore\\"
   },
   {
-    \\"op\\": {
-      \\"kind\\": \\"returnPrevious\\"
-    }
+    \\"kind\\": \\"returnPrevious\\"
   }
 ]\\"#####).unwrap()
                                 });

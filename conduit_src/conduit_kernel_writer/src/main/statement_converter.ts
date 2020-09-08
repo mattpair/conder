@@ -5,14 +5,9 @@ import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
 export type WritableFunction = Readonly<{
     name: string
     method: "POST" | "GET"
-    body: OpContainer[],
+    body: OpInstance[],
     parameter: Parameter
     maximumNumberOfVariables: number
-}>
-
-export type OpContainer<S=string> = Readonly<{
-    label?: number
-    op: OpInstance<S>
 }>
 
 export const functionToByteCode: Utilities.StepDefinition<
@@ -97,7 +92,8 @@ function typesAreEqual(l: CompiledTypes.ResolvedType, r: CompiledTypes.ResolvedT
 type CompilationTools = Readonly<{
     varmap: VarMap,
     factory: CompleteOpFactory,
-    inScope: CompiledTypes.ScopeMap
+    inScope: CompiledTypes.ScopeMap,
+    ops: OpInstance[]
 }>
 
 type TargetType = CompiledTypes.ResolvedType | {kind: "any"}
@@ -107,7 +103,7 @@ type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
     global: Extract<AllowGlobalReference, {kind: K}>, 
     dots: Parse.DotStatement[],
     targetType: TargetType, 
-    tools: CompilationTools) => OpContainer[]
+    tools: CompilationTools) => void
 type GlobalReferenceToOpsConverter = {
     [K in AllowGlobalReference["kind"]]: GlobalReferenceToOps<K>
 }
@@ -129,21 +125,18 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (m.kind === "FieldAccess") {
             throw Error(`Accessing a field on a foreign function doesn't make sense`)
         }
-        const ret: OpContainer[] = []
         m.children.Assignable.forEach(a => {
-            ret.push(...assignableToOps(a, {kind: "any"}, tools))
-            ret.push({op: tools.factory.pushPreviousOnCallStack})
+            assignableToOps(a, {kind: "any"}, tools)
+            tools.ops.push(tools.factory.pushPreviousOnCallStack)
         })
 
-        ret.push(
-            {op: tools.factory.invokeInstalled(module, m.name)},
-            {op: tools.factory.deserializeRpcBufTo(targetType)}
+        tools.ops.push(
+            tools.factory.invokeInstalled(module, m.name),
+            tools.factory.deserializeRpcBufTo(targetType)
         )
-                
-        return ret
     },
 
-    HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope}) => {
+    HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope, ops}) => {
         if (targetType.kind === "Primitive") {
             throw Error("Stores contain structured data, not primitives")
         }
@@ -151,7 +144,6 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
             throw Error(`Invoking methods which don't exist on store method results`)
         } else if (dots.length === 1) {
             const m = dots[0].differentiate()
-            const out_ops: OpContainer[] = []
             switch(m.kind) {
                 case "FieldAccess":
                     throw Error(`Attempting to access a field on a global array of data does not make sense`)
@@ -161,12 +153,10 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                     }
                     // TODO: Eventually optimize this to do a single insertion of all arguments.
                     m.children.Assignable.forEach(asn => {
-                        out_ops.push(
-                            ...assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope}),
-                            {op: factory.storeInsertPrevious(store)}
-                        )
+                        assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope, ops})
+                        ops.push(factory.storeInsertPrevious(store))
                     })
-                    return out_ops    
+                    return   
                 default: Utilities.assertNever(m)
             }
         } else {
@@ -176,15 +166,15 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 }
             }
             
-            return [{op: factory.storeQuery(store)}]
+            return ops.push(factory.storeQuery(store))
         }
     }
 }
 
-function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope}: CompilationTools): OpContainer[] {
+function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope, ops}: CompilationTools): void {
     const ref = varmap.tryGet(assign.val)
     if (ref !== undefined) {
-        const ret: OpContainer[] = [{op: factory.echoVariable(ref.id)}]
+        ops.push(factory.echoVariable(ref.id))
 
         let currentType: CompiledTypes.ResolvedType = ref.type
 
@@ -202,7 +192,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
                         if (!childField) {
                             throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
                         }
-                        ret.push({op: factory.structFieldAccess(fullType, method.name)})
+                        ops.push(factory.structFieldAccess(fullType, method.name))
                         currentType = childField.part.FieldType.differentiate()
                         break
 
@@ -220,16 +210,21 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         if (targetType.kind !== "any" && !typesAreEqual(targetType, currentType)) {
             throw Error(`Types are not equal`)
         }
-        return ret
+        return
     } else {
         // Must be global then
         const ent  = inScope.getEntityOfType(assign.val, "HierarchicalStore", "python3")
-        //@ts-ignore - typescript doesn't recognize that ent.kind ensures we grab the right handler.
-        return globalReferenceToOpsConverter[ent.kind](ent, assign.children.DotStatement, targetType, {varmap, factory, inScope})
+        
+        return globalReferenceToOpsConverter[ent.kind](
+            //@ts-ignore - typescript doesn't recognize that ent.kind ensures we grab the right handler.
+            ent, 
+            assign.children.DotStatement, 
+            targetType, 
+            {varmap, factory, inScope, ops})
     }
 }
 
-function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: CompilationTools): OpContainer[] {
+function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: CompilationTools): void {
     const assign = a.differentiate()
     switch (assign.kind) {
         case "VariableReference":
@@ -242,7 +237,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
 
 
 function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
-    const body: OpContainer[] = []
+    const ops: OpInstance[] = []
     const varmap = new VarMap()
     const parameter = f.parameter.differentiate()
     if (parameter.kind === "UnaryParameter") {
@@ -253,23 +248,23 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
         const stmt = f.body.statements[j].differentiate()
         switch(stmt.kind) {
             case "VariableReference":
-                body.push(...variableReferenceToOps(stmt, {kind: "any"}, {factory, inScope, varmap}))
+                variableReferenceToOps(stmt, {kind: "any"}, {factory, inScope, varmap, ops})
                 break
 
             
             case "VariableCreation":
                 const t = stmt.part.CustomType
                 const prim = isPrimitive(t)
-                body.push(
-                    ...assignableToOps(
-                        stmt.part.Assignable, 
-                        prim !== undefined ? prim : t, 
-                        {varmap, factory, inScope})
-                )
+                
+                assignableToOps(
+                    stmt.part.Assignable, 
+                    prim !== undefined ? prim : t, 
+                    {varmap, factory, inScope, ops: ops})
+                
                 
                 varmap.add(stmt.name, stmt.part.CustomType)
-                body.push(
-                    {op: factory.savePrevious}
+                ops.push(
+                    factory.savePrevious
                 )
                 break
             case "ReturnStatement":
@@ -285,11 +280,10 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
                         if (f.returnType.kind === "VoidReturnType") {
                             throw Error(`Returning something when you need to return nothing`)
                         }
-                        body.push(
-                            ...assignableToOps(e, f.returnType, {varmap, factory, inScope}),
-                            {op: factory.returnPrevious}
-                        )
+                        assignableToOps(e, f.returnType, {varmap, factory, inScope, ops: ops}),
                         
+                        ops.push(factory.returnPrevious)
+                                                
                         break
                     default: Utilities.assertNever(e)
                 }
@@ -301,14 +295,14 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
             default: Utilities.assertNever(stmt)
         }
     }
-    if (f.returnType.kind !== "VoidReturnType" && (body.length === 0 || body.find(b =>[factory.returnPrevious.kind, factory.returnVariable(0).kind].includes(b.op.kind as any)) === undefined)) {
+    if (f.returnType.kind !== "VoidReturnType" && (ops.length === 0 || ops.find(b =>[factory.returnPrevious.kind, factory.returnVariable(0).kind].includes(b.kind as any)) === undefined)) {
         throw Error(`Function does nothing when it should return a type`)
     }
 
     return {
         name: f.name,
         method: f.method,
-        body,
+        body: ops,
         parameter: f.parameter,
         maximumNumberOfVariables: varmap.maximumVars
     }
