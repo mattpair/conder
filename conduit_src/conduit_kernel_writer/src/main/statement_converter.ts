@@ -319,11 +319,12 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                 // Negate the previous value to jump ahead
                 ops.push(tools.factory.negatePrev)
                 tools.varmap.startLevel()
-                const totalNumberOfPreceding = info.numberOfPrecedingOps + ops.length
-                const ifSum = statementsToOps(stmt.part.Statements.children.Statement, targetType, tools, {numberOfPrecedingOps:  totalNumberOfPreceding + 1}) 
-                const numNewVars = tools.varmap.endLevel()
                 // +1 because ths conditional go to takes a spot.
-                ops.push(tools.factory.conditionalGoto(totalNumberOfPreceding + ifSum.ops.length + 1))
+                const totalNumberOfPreceding = info.numberOfPrecedingOps + ops.length + 1
+                const ifSum = statementsToOps(stmt.part.Statements.children.Statement, targetType, tools, {numberOfPrecedingOps:  totalNumberOfPreceding}) 
+                const numNewVars = tools.varmap.endLevel()
+                
+                ops.push(tools.factory.conditionalGoto(totalNumberOfPreceding + ifSum.ops.length))
                 ops.push(...ifSum.ops)
                 if (numNewVars > 0) {
                     ops.push(tools.factory.dropVariables(numNewVars))
