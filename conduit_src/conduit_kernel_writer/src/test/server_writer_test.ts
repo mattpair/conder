@@ -125,6 +125,24 @@ function get() Array<wrapper> {
 `)
 
 
+TestCodeGen("getting all data - alternate syntax", `
+struct simple {
+    data: string 
+}
+
+
+simples: Array<simple> = []
+
+
+function get() Array<simple> {
+    return simples.select(row => {
+        return row
+    })
+}
+`)
+
+
+
 testFailsWhen("function with type return returns none", 
     `
 

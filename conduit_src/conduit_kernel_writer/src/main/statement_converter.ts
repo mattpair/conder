@@ -111,15 +111,75 @@ type CompilationTools = Readonly<{
 }>
 
 type TargetType = CompiledTypes.ResolvedType | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
+type HierStoreMethodCompiler = (
+    store: CompiledTypes.HierarchicalStore, 
+    invocation: Parse.MethodInvocation,
+    targetType: Exclude<TargetType, {kind: "anonFunc" }>, 
+    
+    tools: CompilationTools) => void
+type HierStoreMethods = Record<"append" | "select", HierStoreMethodCompiler>
+
 type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function"}>
 
 type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
     global: Extract<AllowGlobalReference, {kind: K}>, 
-    dots: Parse.DotStatement[],
+    stmt: Parse.DotStatement[],
     targetType: TargetType, 
     tools: CompilationTools) => void
 type GlobalReferenceToOpsConverter = {
     [K in AllowGlobalReference["kind"]]: GlobalReferenceToOps<K>
+}
+
+const hierStoreMethodToOps: HierStoreMethods = {
+    append: (store, invoc, target, tools) => {
+        if (target.kind === "any" || target.kind === "none") {
+            // TODO: Eventually optimize this to do a single insertion of all arguments.
+            invoc.children.Assignable.forEach(asn => {
+                assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, tools)
+                tools.ops.push(tools.factory.storeInsertPrevious(store))
+            })    
+        } else {
+            throw Error(`Appending to a store does not return any data`)
+        }
+    },
+    select: (store, invoc, target, tools) => {
+        if (invoc.children.Assignable.length > 1) {
+            throw Error(`Select may only be called with one argument`)
+        }
+        if (target.kind === "none") {
+            throw Error(`Select must yield some result`)
+        }
+        const a = invoc.children.Assignable[0].differentiate()
+        if (a.kind !== "AnonFunction") {
+            throw Error(`Select must be invoked with an anonymous function`)
+        }
+        const ss = a.part.Statements.children.Statement
+        if (ss.length > 1) {
+            throw Error(`Select functions currently only support one statement`)
+        }
+
+        const s = ss[0].differentiate()
+        if (s.kind !== "ReturnStatement") {
+            throw Error(`It only makes sense to select from a store if you are going to return results`)
+        }
+        const r = s.part.Returnable.differentiate()
+        if (r.kind !== "Assignable") {
+            throw Error(`It only makes sense to select from a store if you are going to return results`)
+        }
+        const assignable = r.differentiate()
+        if (assignable.kind === "AnonFunction") {
+            throw Error(`It does not make sense to return an anonymous function from a select statement`)
+        }
+
+        if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
+            throw Error(`Currently only support returning the entire row variable in select statements`)
+        }
+        if (target.kind === "any" || typesAreEqual(target, {kind: "CustomType", type: store.typeName,  modification: "array"})) {
+            tools.ops.push(tools.factory.storeQuery(store))
+        } else {
+            throw Error(`Type returned from select statement doesn't match expectations`)
+        }
+    }
 }
 
 const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
@@ -164,9 +224,7 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (targetType.kind === "anonFunc") {
             throw Error(`Cannot convert a store into an anonymous function`)
         }
-        if (targetType.kind === "none") {
-            throw Error(`Stores return real data, not none`)
-        }
+        
         if(dots.length > 1) {
             throw Error(`Invoking methods which don't exist on store method results`)
         } else if (dots.length === 1) {
@@ -175,18 +233,23 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 case "FieldAccess":
                     throw Error(`Attempting to access a field on a global array of data does not make sense`)
                 case "MethodInvocation":
-                    if(m.name !== "append") {
+                    
+                    const method: HierStoreMethodCompiler | undefined = 
+                        //@ts-ignore 
+                        hierStoreMethodToOps[m.name]
+
+                    if (method === undefined) {
                         throw Error(`Method ${m.name} doesn't exist on global arrays`)
                     }
-                    // TODO: Eventually optimize this to do a single insertion of all arguments.
-                    m.children.Assignable.forEach(asn => {
-                        assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, {varmap, factory, inScope, ops})
-                        ops.push(factory.storeInsertPrevious(store))
-                    })
+                    
+                    method(store, m, targetType, {varmap, factory, inScope, ops})
                     return   
                 default: Utilities.assertNever(m)
             }
         } else {
+            if (targetType.kind === "none") {
+                throw Error(`Global reference return real data, not none`)
+            }
             if (targetType.kind !== "any") {
                 if (store.typeName !== targetType.type || targetType.modification  !== "array") {
                     throw Error(`The store contains a different type than the one desired`)
