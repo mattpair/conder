@@ -33,7 +33,8 @@ Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
 Op<"structFieldAccess", "struct", string> |
 Op<"invokeInstalled", "python3", string, "compile"> |
-ParamOp<"gotoOp", number, "runtime">
+ParamOp<"gotoOp", number, "runtime"> |
+ParamOp<"conditionalGoto", number, "runtime">
 
 type StaticFactory<S> = OpInstance<S>
 
@@ -135,6 +136,16 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
         function raiseErrorWithVariableMessage(v: string): string {
             return `AnyType::Err(${v}.to_string())`
         }
+        function safeGoto(varname: string): string {
+            return `
+            if ${varname} >= ops.len() {
+                panic!("Setting op index out of bounds");
+            }
+            next_op_index = ${varname} - 1;
+            AnyType::None
+            `
+        }
+
         const additionalRustStructsAndEnums: string[] = []
         manifest.inScope.forEach(v => {
             
@@ -218,13 +229,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     kind: "param",
                     rustEnumMember: `gotoOp`,
                     // Set op_param to -1 because the op is always incremented at the end of each op execution.
-                    rustOpHandler: `
-                    if *op_param >= ops.len() {
-                        panic!("Setting op index out of bounds");
-                    }
-                    next_op_index = op_param - 1;
-                    AnyType::None
-                    `,
+                    rustOpHandler: safeGoto("*op_param"),
                     paramType: "usize"
                 },
                 //TODO: All param factory methods are the same. We should deduplicate.
@@ -234,6 +239,34 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         data: p
                     }
                 }
+            },
+
+            conditionalGoto: {
+                opDefinition: {
+                    kind: "param",
+                    rustEnumMember: "conditionalGoto",
+                    rustOpHandler: `
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                ${safeGoto("*op_param")}
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                ${safeGoto("*op_param")}
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => ${raiseErrorWithMessage("Cannot evaluate variable as boolean")}
+                    }
+                    `,
+                    paramType: "usize"
+                },
+                factoryMethod: (p) => ({kind: "conditionalGoto", data: p})
             },
 
         

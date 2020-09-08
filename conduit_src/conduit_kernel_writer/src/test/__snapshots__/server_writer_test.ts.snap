@@ -169,6 +169,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 gotoOp(usize),
+conditionalGoto(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -273,11 +274,44 @@ Op::storeQuerywrapStore => {
                     },
 Op::gotoOp(op_param) => {
                         
-                    if *op_param >= ops.len() {
-                        panic!(\\"Setting op index out of bounds\\");
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
-                    next_op_index = op_param - 1;
-                    AnyType::None
                     
                     },
 Op::returnVariable(op_param) => {
@@ -661,6 +695,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 gotoOp(usize),
+conditionalGoto(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -765,11 +800,44 @@ Op::storeQuerywrapStore => {
                     },
 Op::gotoOp(op_param) => {
                         
-                    if *op_param >= ops.len() {
-                        panic!(\\"Setting op index out of bounds\\");
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
-                    next_op_index = op_param - 1;
-                    AnyType::None
                     
                     },
 Op::returnVariable(op_param) => {
@@ -1166,6 +1234,7 @@ conduit_entity_id: Option<i32>
 storeInsertPrevioussimpleStore,
 storeQuerysimpleStore,
 gotoOp(usize),
+conditionalGoto(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -1259,11 +1328,44 @@ Op::storeQuerysimpleStore => {
                     },
 Op::gotoOp(op_param) => {
                         
-                    if *op_param >= ops.len() {
-                        panic!(\\"Setting op index out of bounds\\");
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
-                    next_op_index = op_param - 1;
-                    AnyType::None
                     
                     },
 Op::returnVariable(op_param) => {
@@ -1630,6 +1732,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 gotoOp(usize),
+conditionalGoto(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -1734,11 +1837,44 @@ Op::storeQuerywrapStore => {
                     },
 Op::gotoOp(op_param) => {
                         
-                    if *op_param >= ops.len() {
-                        panic!(\\"Setting op index out of bounds\\");
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
-                    next_op_index = op_param - 1;
-                    AnyType::None
                     
                     },
 Op::returnVariable(op_param) => {
@@ -2138,6 +2274,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
 gotoOp(usize),
+conditionalGoto(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -2242,11 +2379,44 @@ Op::storeQuerywrapStore => {
                     },
 Op::gotoOp(op_param) => {
                         
-                    if *op_param >= ops.len() {
-                        panic!(\\"Setting op index out of bounds\\");
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
-                    next_op_index = op_param - 1;
-                    AnyType::None
                     
                     },
 Op::returnVariable(op_param) => {
