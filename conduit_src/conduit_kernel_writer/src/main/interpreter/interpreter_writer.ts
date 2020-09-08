@@ -4,12 +4,12 @@ import { InstallModuleLookup } from 'conduit_foreign_install/dist/src/main/types
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[], foreignLookup: InstallModuleLookup): string {
     return `
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> AnyType<'a> {
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         ${foreignLookup.size > 0 ? "let mut rpc_buffer: Option<awc::ClientResponse<_>> = Option::None;": ""}
         for o in ops {
-            prev = match o {
+            prev = match &o.op {
                 ${supportedOps.map(o => {
                     let header = o.rustEnumMember
                     if (o.kind === "param") {
@@ -44,6 +44,11 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
             return o.rustEnumMember
         }).join(",\n")}
     }
+    #[derive(Serialize, Deserialize, Clone)]
+    struct OpContainer {
+        op: Op,
+        label: Option<u32>
+    }
 
     #[derive(Serialize, Clone)]
     #[serde(tag = "kind", content= "data")]
@@ -53,7 +58,7 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
 
     ${writeInternalOpInterpreter(supportedOps, allTypeUnion, foreignLookup)}
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<OpContainer>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             ${allTypeUnion.map(a => a.http_returner).join(",\n")}
         };
