@@ -168,6 +168,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
         pushPreviousOnCallStack,
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
+gotoOp(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -241,8 +242,10 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -267,6 +270,15 @@ Op::storeQuerywrapStore => {
                                 Err(err) => AnyType::Err(err.to_string())
                             }
                         
+                    },
+Op::gotoOp(op_param) => {
+                        
+                    if *op_param >= ops.len() {
+                        panic!(\\"Setting op index out of bounds\\");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    
                     },
 Op::returnVariable(op_param) => {
                          return state.swap_remove(*op_param)
@@ -308,12 +320,16 @@ Op::wrapperFieldAccess(op_param) => {
                             
                     }
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }
 
@@ -644,6 +660,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
         pushPreviousOnCallStack,
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
+gotoOp(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -717,8 +734,10 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -743,6 +762,15 @@ Op::storeQuerywrapStore => {
                                 Err(err) => AnyType::Err(err.to_string())
                             }
                         
+                    },
+Op::gotoOp(op_param) => {
+                        
+                    if *op_param >= ops.len() {
+                        panic!(\\"Setting op index out of bounds\\");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    
                     },
 Op::returnVariable(op_param) => {
                          return state.swap_remove(*op_param)
@@ -784,12 +812,16 @@ Op::wrapperFieldAccess(op_param) => {
                             
                     }
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }
 
@@ -1133,6 +1165,7 @@ conduit_entity_id: Option<i32>
         pushPreviousOnCallStack,
 storeInsertPrevioussimpleStore,
 storeQuerysimpleStore,
+gotoOp(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -1197,8 +1230,10 @@ OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -1221,6 +1256,15 @@ Op::storeQuerysimpleStore => {
                                 Err(err) => AnyType::Err(err.to_string())
                             }
                         
+                    },
+Op::gotoOp(op_param) => {
+                        
+                    if *op_param >= ops.len() {
+                        panic!(\\"Setting op index out of bounds\\");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    
                     },
 Op::returnVariable(op_param) => {
                          return state.swap_remove(*op_param)
@@ -1250,12 +1294,16 @@ Op::simpleFieldAccess(op_param) => {
                             
                     }
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }
 
@@ -1581,6 +1629,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
         pushPreviousOnCallStack,
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
+gotoOp(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -1654,8 +1703,10 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -1680,6 +1731,15 @@ Op::storeQuerywrapStore => {
                                 Err(err) => AnyType::Err(err.to_string())
                             }
                         
+                    },
+Op::gotoOp(op_param) => {
+                        
+                    if *op_param >= ops.len() {
+                        panic!(\\"Setting op index out of bounds\\");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    
                     },
 Op::returnVariable(op_param) => {
                          return state.swap_remove(*op_param)
@@ -1721,12 +1781,16 @@ Op::wrapperFieldAccess(op_param) => {
                             
                     }
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }
 
@@ -2073,6 +2137,7 @@ client.query(\\"insert into wrapStore(innard_ptr) values ($1)\\", &[ &entId1]).a
         pushPreviousOnCallStack,
 storeInsertPreviouswrapStore,
 storeQuerywrapStore,
+gotoOp(usize),
 returnVariable(usize),
 returnPrevious,
 savePrevious,
@@ -2146,8 +2211,10 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
                         callstack.push(prev); AnyType::None
                     },
@@ -2172,6 +2239,15 @@ Op::storeQuerywrapStore => {
                                 Err(err) => AnyType::Err(err.to_string())
                             }
                         
+                    },
+Op::gotoOp(op_param) => {
+                        
+                    if *op_param >= ops.len() {
+                        panic!(\\"Setting op index out of bounds\\");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    
                     },
 Op::returnVariable(op_param) => {
                          return state.swap_remove(*op_param)
@@ -2213,12 +2289,16 @@ Op::wrapperFieldAccess(op_param) => {
                             
                     }
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }
 

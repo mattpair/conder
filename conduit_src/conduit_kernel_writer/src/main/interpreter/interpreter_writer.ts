@@ -8,8 +8,10 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllT
         let mut prev: AnyType<'a>= AnyType::None;
         let mut callstack: Vec<AnyType<'a>> = Vec::new();
         ${foreignLookup.size > 0 ? "let mut rpc_buffer: Option<awc::ClientResponse<_>> = Option::None;": ""}
-        for o in ops {
-            prev = match o {
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
                 ${supportedOps.map(o => {
                     let header = o.rustEnumMember
                     if (o.kind === "param") {
@@ -20,12 +22,16 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllT
                     }`
                 }).join(",\n")}
             };
-
+            next_op_index += 1;
+        
             match prev {
                 AnyType::Err(_) => return prev,
                 _ => {}  
             };
         }
+        
+            
+        
         return AnyType::None;
     }`
 }

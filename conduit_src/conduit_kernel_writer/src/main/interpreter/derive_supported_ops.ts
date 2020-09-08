@@ -32,7 +32,8 @@ Op<"deserializeRpcBufTo", "rpc"> |
 Op<"storeInsertPrevious", "store"> |
 Op<"storeQuery", "store"> |
 Op<"structFieldAccess", "struct", string> |
-Op<"invokeInstalled", "python3", string, "compile">
+Op<"invokeInstalled", "python3", string, "compile"> |
+ParamOp<"gotoOp", number, "runtime">
 
 type StaticFactory<S> = OpInstance<S>
 
@@ -211,6 +212,30 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     }]
                 }
             },
+
+            gotoOp: {
+                opDefinition: {
+                    kind: "param",
+                    rustEnumMember: `gotoOp`,
+                    // Set op_param to -1 because the op is always incremented at the end of each op execution.
+                    rustOpHandler: `
+                    if *op_param >= ops.len() {
+                        panic!("Setting op index out of bounds");
+                    }
+                    next_op_index = op_param - 1;
+                    AnyType::None
+                    `,
+                    paramType: "usize"
+                },
+                //TODO: All param factory methods are the same. We should deduplicate.
+                factoryMethod(p) {
+                    return {
+                        kind: "gotoOp",
+                        data: p
+                    }
+                }
+            },
+
         
             returnVariable: {
                 factoryMethod(varname: number) {
