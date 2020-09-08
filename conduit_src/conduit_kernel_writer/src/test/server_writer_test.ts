@@ -200,3 +200,19 @@ function echoWithIfs(s: Boolholder): Boolholder {
 }
 
 `)
+
+TestCodeGen("nested if statements", `
+struct Boolholder {
+    value: bool
+}
+
+function echoWithIfs(s: Boolholder): Boolholder {
+    if s.value {
+        if s.value {
+            return s
+        }
+    }
+    return s
+}
+
+`)

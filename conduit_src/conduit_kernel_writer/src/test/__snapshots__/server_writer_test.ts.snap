@@ -1585,6 +1585,431 @@ PRIMARY KEY(conduit_entity_id)
 ]
 `;
 
+exports[`nested if statements: main files 1`] = `
+Array [
+  Object {
+    "content": "
+                            #![allow(non_snake_case)]
+                            #![allow(non_camel_case_types)]
+                            #![allow(redundant_semicolon)]
+                            #![allow(unused_variables)]
+                            #![allow(dead_code)]
+                            #![allow(unused_imports)]
+                            use tokio_postgres::{NoTls, Client};
+                            use actix_web::{web, App, HttpResponse, HttpServer, Responder};
+                            use actix_rt::System;
+                            use std::env;
+                            use serde::{Deserialize, Serialize};
+                            use tokio_postgres::error::{Error};
+                            use std::collections::HashMap;
+                            use awc;
+                            use std::borrow::Borrow;
+                            use bytes::Bytes;
+                
+                
+                            struct AppData {
+                                client: Client,
+echoWithIfs_executable: Vec<Op>
+                            }
+                            
+                            #[derive(Serialize, Deserialize)]
+                            struct City {
+                                name: String,
+                                location: i32
+                            }
+                            
+                            // STRUCTS
+                            
+            #[derive(Serialize, Deserialize, Clone)]
+            struct Boolholder {
+                value: bool,
+#[serde(skip)]
+conduit_entity_id: Option<i32>
+            }
+            
+                            // INTERPRETERS
+                            
+                            // OP INTERPRETER
+                            
+
+    #[derive(Serialize, Deserialize, Clone)]
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum Op {
+        pushPreviousOnCallStack,
+negatePrev,
+noop,
+dropVariables(usize),
+gotoOp(usize),
+conditionalGoto(usize),
+returnVariable(usize),
+returnPrevious,
+savePrevious,
+echoVariable(usize),
+BoolholderFieldAccess(BoolholderField)
+    }
+
+    #[derive(Serialize, Clone)]
+    #[serde(tag = \\"kind\\", content= \\"data\\")]
+    enum AnyType<'exec> {
+        None,
+Err(String),
+double(&'exec f64),
+doubleInstance( f64),
+Manydouble(&'exec Vec<f64>),
+Optionaldouble(&'exec Option<f64>),
+float(&'exec f32),
+floatInstance( f32),
+Manyfloat(&'exec Vec<f32>),
+Optionalfloat(&'exec Option<f32>),
+int32(&'exec i32),
+int32Instance( i32),
+Manyint32(&'exec Vec<i32>),
+Optionalint32(&'exec Option<i32>),
+int64(&'exec i64),
+int64Instance( i64),
+Manyint64(&'exec Vec<i64>),
+Optionalint64(&'exec Option<i64>),
+uint32(&'exec i32),
+uint32Instance( i32),
+Manyuint32(&'exec Vec<i32>),
+Optionaluint32(&'exec Option<i32>),
+uint64(&'exec i64),
+uint64Instance( i64),
+Manyuint64(&'exec Vec<i64>),
+Optionaluint64(&'exec Option<i64>),
+bool(&'exec bool),
+boolInstance( bool),
+Manybool(&'exec Vec<bool>),
+Optionalbool(&'exec Option<bool>),
+string(&'exec String),
+stringInstance( String),
+Manystring(&'exec Vec<String>),
+Optionalstring(&'exec Option<String>),
+bytes(&'exec Vec<u8>),
+bytesInstance( Vec<u8>),
+Manybytes(&'exec Vec<Vec<u8>>),
+Optionalbytes(&'exec Option<Vec<u8>>),
+Boolholder(&'exec Boolholder),
+BoolholderInstance( Boolholder),
+ManyBoolholder(&'exec Vec<Boolholder>),
+OptionalBoolholder(&'exec Option<Boolholder>)
+    }
+
+    
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
+        let mut prev: AnyType<'a>= AnyType::None;
+        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+        
+        let mut next_op_index = 0;
+        while next_op_index < ops.len() {
+
+            prev = match &ops[next_op_index] {
+                Op::pushPreviousOnCallStack => {
+                        callstack.push(prev); AnyType::None
+                    },
+Op::negatePrev => {
+                        match prev {
+                        AnyType::bool(b) => AnyType::boolInstance(!b),
+                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
+                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                    }
+                    },
+Op::noop => {
+                        AnyType::None
+                    },
+Op::dropVariables(op_param) => {
+                        state.truncate(state.len() - *op_param); AnyType::None
+                    },
+Op::gotoOp(op_param) => {
+                        
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                    },
+Op::conditionalGoto(op_param) => {
+                        
+                    match prev {
+                        AnyType::bool(b) => {
+                            if *b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        AnyType::boolInstance(b) => {
+                            if b {
+                                
+            if *op_param >= ops.len() {
+                panic!(\\"Setting op index out of bounds\\");
+            }
+            next_op_index = *op_param - 1;
+            AnyType::None
+            
+                            } else {
+                                AnyType::None
+                            }
+                        },
+                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                    }
+                    
+                    },
+Op::returnVariable(op_param) => {
+                         return state.swap_remove(*op_param)
+                    },
+Op::returnPrevious => {
+                        return prev
+                    },
+Op::savePrevious => {
+                        state.push(prev); AnyType::None
+                    },
+Op::echoVariable(op_param) => {
+                        match state.get(*op_param) {
+                        Some(d) => d.clone(),
+                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                    }
+                    },
+Op::BoolholderFieldAccess(op_param) => {
+                        
+                            match prev {
+                                AnyType::Boolholder(inside) => match *op_param {
+                                    BoolholderField::BoolholdervalueFieldRef => AnyType::bool(&inside.value)
+
+                                },
+                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                            }
+                                
+                            
+                    }
+            };
+            next_op_index += 1;
+        
+            match prev {
+                AnyType::Err(_) => return prev,
+                _ => {}  
+            };
+        }
+        
+            
+        
+        return AnyType::None;
+    }
+
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+        return match conduit_byte_code_interpreter_internal(client, state, ops).await {
+            AnyType::None => HttpResponse::Ok().finish(),
+AnyType::Err(e) => {
+                println!(\\"Error: {}\\", e);
+                HttpResponse::BadRequest().finish()
+            },
+AnyType::double(data) => HttpResponse::Ok().json(data),
+AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+AnyType::float(data) => HttpResponse::Ok().json(data),
+AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+AnyType::int32(data) => HttpResponse::Ok().json(data),
+AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
+AnyType::int64(data) => HttpResponse::Ok().json(data),
+AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+AnyType::uint64(data) => HttpResponse::Ok().json(data),
+AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
+AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
+AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+AnyType::bool(data) => HttpResponse::Ok().json(data),
+AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybool(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
+AnyType::string(data) => HttpResponse::Ok().json(data),
+AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manystring(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
+AnyType::bytes(data) => HttpResponse::Ok().json(data),
+AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
+AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
+AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+AnyType::Boolholder(data) => HttpResponse::Ok().json(data),
+AnyType::BoolholderInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManyBoolholder(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
+        };
+    }
+    
+                            // FUNCTIONS
+                            
+        
+        async fn echoWithIfs(data: web::Data<AppData>, input: web::Json<Boolholder>) -> impl Responder {
+            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            
+        let innerInput = input.into_inner();
+        state.push(AnyType::Boolholder(&innerInput));
+        
+            return conduit_byte_code_interpreter(&data.client, &mut state, &data.echoWithIfs_executable).await;
+        }
+        
+                    
+                            //ADDITIONAL
+                            
+                        #[derive(Serialize, Deserialize, Clone)]
+                        enum BoolholderField {
+                            BoolholdervalueFieldRef
+                        }
+                        
+                            #[actix_rt::main]
+                            async fn main() -> std::io::Result<()> {
+                                HttpServer::new(|| {
+                                    App::new()
+                                        .data_factory(|| make_app_data())
+                                        .route(\\"/\\", web::get().to(index))
+                                        .route(\\"/echoWithIfs\\", web::post().to(echoWithIfs))
+                                })
+                                .bind(\\"0.0.0.0:8080\\")?
+                                .run()
+                                .await
+                            }
+                    
+                            async fn index(data: web::Data<AppData>) -> impl Responder {
+                                let mut rows = match data.client.query(\\"select name, location from cities\\", &[]).await {
+                                    Ok(rows) => rows,
+                                    Err(err) => panic!(\\"didn't succeed: {}\\", err)
+                                };
+                            
+                                let mut out = Vec::with_capacity(rows.len());
+                            
+                                while let Some(row) = rows.pop() {
+                                    out.push(City {
+                                        name: row.get(0),
+                                        location: row.get(1)
+                                    })
+                                }
+                                return HttpResponse::Ok().json(out);
+                            }
+                
+                            async fn make_app_data() -> Result<AppData, ()> {
+                                let host = match env::var(\\"POSTGRES_SERVICE_HOST\\") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!(\\"didn't receive postgres location: {}\\", e)
+                                };
+                                let pwd = match env::var(\\"POSTGRES_PASSWORD\\") {
+                                    Ok(pgloc) => pgloc,
+                                    Err(e) => panic!(\\"didn't receive postgres password: {}\\", e)
+                                };
+                            
+                                let (client, connection) = match tokio_postgres::connect(&format!(\\"host={} user=postgres password={}\\", host, pwd), NoTls).await {
+                                    Ok(out) => out,
+                                    Err(e) => panic!(\\"couldn't create connection: {}\\", e)
+                                };
+                                
+                                // The connection object performs the actual communication with the database,
+                                // so spawn it off to run on its own.
+                                actix_rt::spawn(async move {
+                                    if let Err(e) = connection.await {
+                                        eprintln!(\\"connection error: {}\\", e);
+                                    }
+                                });
+                                
+                                
+                                return Ok(AppData {
+                                    client: client,
+                                    echoWithIfs_executable: serde_json::from_str(r#####\\"[
+  {
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"BoolholderFieldAccess\\",
+    \\"data\\": \\"BoolholdervalueFieldRef\\"
+  },
+  {
+    \\"kind\\": \\"negatePrev\\"
+  },
+  {
+    \\"kind\\": \\"conditionalGoto\\",
+    \\"data\\": 11
+  },
+  {
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"BoolholderFieldAccess\\",
+    \\"data\\": \\"BoolholdervalueFieldRef\\"
+  },
+  {
+    \\"kind\\": \\"negatePrev\\"
+  },
+  {
+    \\"kind\\": \\"conditionalGoto\\",
+    \\"data\\": 10
+  },
+  {
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"returnPrevious\\"
+  },
+  {
+    \\"kind\\": \\"noop\\"
+  },
+  {
+    \\"kind\\": \\"noop\\"
+  },
+  {
+    \\"kind\\": \\"echoVariable\\",
+    \\"data\\": 0
+  },
+  {
+    \\"kind\\": \\"returnPrevious\\"
+  }
+]\\"#####).unwrap()
+                                });
+                            }
+                            
+                        ",
+    "name": ".deploy/main/src/main.rs",
+  },
+]
+`;
+
+exports[`nested if statements: postgres files 1`] = `
+Array [
+  Object {
+    "content": "
+
+                        CREATE TABLE cities (
+                            name            varchar(80),
+                            location        int
+                        );
+                
+                        
+                        
+                        
+                        insert into cities(name, location)
+                        values ('detroit', 12)",
+    "name": ".deploy/postgres/startup/init.sql",
+  },
+]
+`;
+
 exports[`not returning anything - if  1`] = `[Error: Within function echosBool: Error: Function fails to return a value for all paths]`;
 
 exports[`not returning anything 1`] = `[Error: Within function echosSingleton: Error: Function fails to return a value for all paths]`;
