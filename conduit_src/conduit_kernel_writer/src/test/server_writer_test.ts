@@ -160,3 +160,43 @@ function echosSingleton(s: Singleton) Singleton {
     s
 }
 `)
+
+testFailsWhen("not returning anything - if ", `
+
+struct Boolholder {
+    value: string
+}
+
+function echosBool(s: Boolholder) Boolholder {
+    if s.value {
+        return s
+    }
+}
+`)
+
+testFailsWhen("returning wrong thing ", `
+
+struct Boolholder {
+    value: string
+}
+
+function echosBool(s: Boolholder)  {
+    if s.value {
+        return s
+    }
+}
+`)
+
+TestCodeGen("if statements", `
+struct Boolholder {
+    value: bool
+}
+
+function echoWithIfs(s: Boolholder): Boolholder {
+    if s.value {
+        return s
+    }
+    return s
+}
+
+`)

@@ -55,11 +55,13 @@ class VarMapEntry implements VarMapEntryI{
 
 class VarMap extends Map<string, VarMapEntryI> {
     private count = 0
+    private keysInLevel: string[]= []
     maximumVars = 0
 
     public add(s: string, t: CompiledTypes.ResolvedType): number {
         super.set(s, new VarMapEntry(this.count, t));
         const v = this.count++
+        this.keysInLevel.push(s)
         this.maximumVars = Math.max(this.maximumVars, v)
         return v
     }
@@ -75,6 +77,18 @@ class VarMap extends Map<string, VarMapEntryI> {
     public tryGet(s: string): VarMapEntryI | undefined {
         return super.get(s)
     }
+
+    public startLevel(): void {
+        this.keysInLevel = []
+    }
+
+    public endLevel(): number {
+        this.keysInLevel.forEach(k => this.delete(k))
+        const ret = this.keysInLevel.length
+        this.keysInLevel = []
+        return ret
+    }
+
 }
 
 function typesAreEqual(l: CompiledTypes.ResolvedType, r: CompiledTypes.ResolvedType): boolean {
@@ -246,18 +260,26 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
     
 }
 
-type StatementSummary = {
+type StatementSummary = Readonly<{
     alwaysReturns: boolean
-}
+    ops: OpInstance[],
+}>
+type ManyStatementConversionInfo = Readonly<{
+    numberOfPrecedingOps: number
+}>
 
-function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: CompilationTools): StatementSummary {
-    const originalLength = tools.ops.length
+function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: Omit<CompilationTools, "ops">, info: ManyStatementConversionInfo): StatementSummary {
     let alwaysReturns = false
+    const ops: OpInstance[] = []
     for (let j = 0; j < a.length; j++) {
+        
         const stmt = a[j].differentiate()
+        if (alwaysReturns) {
+            throw Error(`Unreachable code after: ${stmt.loc}`)
+        }
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "any"}, tools)
+                variableReferenceToOps(stmt, {kind: "any"}, {...tools, ops})
                 break
 
             
@@ -268,11 +290,11 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                 assignableToOps(
                     stmt.part.Assignable, 
                     prim !== undefined ? prim : t, 
-                    tools)
+                    {...tools, ops})
                 
                 
                 tools.varmap.add(stmt.name, stmt.part.CustomType)
-                tools.ops.push(tools.factory.savePrevious)
+                ops.push(tools.factory.savePrevious)
                 break
             case "ReturnStatement":
                 const e = stmt.part.Returnable.differentiate()
@@ -284,8 +306,8 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                         }
                         break
                     case "Assignable":
-                        assignableToOps(e, targetType, tools),
-                        tools.ops.push(tools.factory.returnPrevious)          
+                        assignableToOps(e, targetType, {...tools, ops})
+                        ops.push(tools.factory.returnPrevious)
                         break
 
                     default: Utilities.assertNever(e)
@@ -293,9 +315,24 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                 break
             
             case "If":
-                // assignableToOps(stmt.part.Assignable, {kind: "Primitive", val: Lexicon.Symbol.bool, modification: "none"}, {varmap, factory, inScope, ops})
+                assignableToOps(stmt.part.Assignable, {kind: "Primitive", val: Lexicon.Symbol.bool, modification: "none"}, {...tools, ops})
+                // Negate the previous value to jump ahead
+                ops.push(tools.factory.negatePrev)
+                tools.varmap.startLevel()
+                const ifSum = statementsToOps(stmt.part.Statements.children.Statement, targetType, tools, {numberOfPrecedingOps: ops.length + 1}) 
+                const numNewVars = tools.varmap.endLevel()
+                // +1 because ths conditional go to takes a spot.
+                ops.push(tools.factory.conditionalGoto(ops.length + ifSum.ops.length + 1))
+                ops.push(...ifSum.ops)
+                if (numNewVars > 0) {
+                    ops.push(tools.factory.dropVariables(numNewVars))
+                } else {
+                    // Push a noop so we don't go beyond the end of operation list.
+                    ops.push(tools.factory.noop)
+                }
+            
+                break
 
-                // break
             case "ForIn":
                 throw Error(`Currently don't support ${stmt.kind}`)
             
@@ -303,11 +340,10 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
         }
     }
 
-    return {alwaysReturns}
+    return {alwaysReturns, ops}
 }
 
 function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
-    const ops: OpInstance[] = []
     const varmap = new VarMap()
     const parameter = f.parameter.differentiate()
     if (parameter.kind === "UnaryParameter") {
@@ -315,7 +351,7 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
     }
     const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
     
-    const summary = statementsToOps(f.body.statements, targetType, {ops, varmap, inScope, factory})
+    const summary = statementsToOps(f.body.statements, targetType, {varmap, inScope, factory}, {numberOfPrecedingOps: 0})
     if (!summary.alwaysReturns && targetType.kind !== "none") {
         throw Error(`Function fails to return a value for all paths`)
     }
@@ -323,7 +359,7 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
     return {
         name: f.name,
         method: f.method,
-        body: ops,
+        body: summary.ops,
         parameter: f.parameter,
         maximumNumberOfVariables: varmap.maximumVars
     }

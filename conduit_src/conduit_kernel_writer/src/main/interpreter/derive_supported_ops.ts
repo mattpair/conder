@@ -34,7 +34,10 @@ Op<"storeQuery", "store"> |
 Op<"structFieldAccess", "struct", string> |
 Op<"invokeInstalled", "python3", string, "compile"> |
 ParamOp<"gotoOp", number, "runtime"> |
-ParamOp<"conditionalGoto", number, "runtime">
+ParamOp<"conditionalGoto", number, "runtime">  |
+StaticOp<"negatePrev"> |
+StaticOp<"noop"> |
+ParamOp<"dropVariables", number , "runtime">
 
 type StaticFactory<S> = OpInstance<S>
 
@@ -181,6 +184,36 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 },
                 factoryMethod: {kind: `pushPreviousOnCallStack`, data: undefined}
             },
+            negatePrev: {
+                opDefinition: {
+                    kind: "static",
+                    rustEnumMember: `negatePrev`,
+                    rustOpHandler: `match prev {
+                        AnyType::bool(b) => AnyType::boolInstance(!b),
+                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
+                        _ => ${raiseErrorWithMessage("Negating a non boolean value")}
+                    }`
+                },
+                factoryMethod: {kind: "negatePrev", data: undefined}
+            },
+            noop: {
+                opDefinition: {
+                    kind: "static",
+                    rustEnumMember: `noop`,
+                    rustOpHandler: `AnyType::None`
+                },
+                factoryMethod: {kind: "noop", data: undefined}
+            },
+            dropVariables: {
+                opDefinition: {
+                    kind: "param",
+                    rustOpHandler: `state.truncate(state.len() - *op_param); AnyType::None`,
+                    rustEnumMember: `dropVariables`,
+                    paramType: "usize"
+                },
+                factoryMethod: (p) => ({kind: "dropVariables", data: p})
+            },
+
             storeInsertPrevious: {
                 opDefinition: {
                     kind: "HierarchicalStore",
