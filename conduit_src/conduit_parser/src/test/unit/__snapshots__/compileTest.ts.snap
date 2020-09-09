@@ -17,9 +17,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -52,9 +52,9 @@ Object {
               },
               "name": "inner",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -87,9 +87,9 @@ Object {
               },
               "name": "middle",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -110,28 +110,13 @@ Object {
         "name": "Outermost",
       },
       "getAllDataIntermediate" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 66,
-            "endLineNumber": 12,
-            "startColNumber": 65,
-            "startLineNumber": 12,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 35,
-          "endLineNumber": 12,
-          "startColNumber": 5,
-          "startLineNumber": 10,
-        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
@@ -139,9 +124,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "none",
-          "type": "Innermost",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
     },
@@ -167,9 +151,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -190,32 +174,17 @@ Object {
         "name": "stored",
       },
       "getAllDataIntermediate" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 54,
-            "endLineNumber": 7,
-            "startColNumber": 52,
-            "startLineNumber": 7,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 35,
-          "endLineNumber": 7,
-          "startColNumber": 35,
-          "startLineNumber": 5,
-        },
         "method": "GET",
         "name": "getAllDataIntermediate",
         "parameter": Object {
@@ -223,38 +192,22 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "array",
-          "type": "stored",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
       "returnInputIntermediate" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 71,
-            "endLineNumber": 12,
-            "startColNumber": 69,
-            "startLineNumber": 12,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 36,
-          "endLineNumber": 12,
-          "startColNumber": 5,
-          "startLineNumber": 10,
-        },
         "method": "POST",
         "name": "returnInputIntermediate",
         "parameter": Object {
@@ -262,9 +215,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "array",
-          "type": "stored",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
       "secondStore" => Object {
@@ -276,14 +228,7 @@ Object {
             "modification": "none",
             "type": Object {
               "kind": "Primitive",
-              "loc": Object {
-                "endColNumber": 17,
-                "endLineNumber": 2,
-                "startColNumber": 11,
-                "startLineNumber": 2,
-              },
-              "modification": "none",
-              "val": "string",
+              "type": "string",
             },
           },
         ],
@@ -323,9 +268,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -354,14 +299,7 @@ Object {
             "modification": "none",
             "type": Object {
               "kind": "Primitive",
-              "loc": Object {
-                "endColNumber": 17,
-                "endLineNumber": 2,
-                "startColNumber": 11,
-                "startLineNumber": 2,
-              },
-              "modification": "none",
-              "val": "string",
+              "type": "string",
             },
           },
         ],
@@ -401,9 +339,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -436,9 +374,9 @@ Object {
               },
               "name": "inner",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -471,9 +409,9 @@ Object {
               },
               "name": "middle",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -494,28 +432,13 @@ Object {
         "name": "Outermost",
       },
       "getAllDataIntermediate" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 62,
-            "endLineNumber": 12,
-            "startColNumber": 61,
-            "startLineNumber": 12,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 35,
-          "endLineNumber": 12,
-          "startColNumber": 5,
-          "startLineNumber": 10,
-        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
@@ -549,9 +472,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -572,28 +495,13 @@ Object {
         "name": "stored",
       },
       "getAllData" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 42,
-            "endLineNumber": 7,
-            "startColNumber": 40,
-            "startLineNumber": 7,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 23,
-          "endLineNumber": 7,
-          "startColNumber": 35,
-          "startLineNumber": 5,
-        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
@@ -601,9 +509,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "array",
-          "type": "stored",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
       "secondStore" => Object {
@@ -615,14 +522,7 @@ Object {
             "modification": "none",
             "type": Object {
               "kind": "Primitive",
-              "loc": Object {
-                "endColNumber": 17,
-                "endLineNumber": 2,
-                "startColNumber": 11,
-                "startLineNumber": 2,
-              },
-              "modification": "none",
-              "val": "string",
+              "type": "string",
             },
           },
         ],
@@ -662,9 +562,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -685,28 +585,13 @@ Object {
         "name": "stored",
       },
       "getAllData" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 41,
-            "endLineNumber": 7,
-            "startColNumber": 39,
-            "startLineNumber": 7,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 23,
-          "endLineNumber": 7,
-          "startColNumber": 35,
-          "startLineNumber": 5,
-        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
@@ -714,9 +599,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "array",
-          "type": "stored",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
       "secondStore" => Object {
@@ -728,14 +612,7 @@ Object {
             "modification": "none",
             "type": Object {
               "kind": "Primitive",
-              "loc": Object {
-                "endColNumber": 17,
-                "endLineNumber": 2,
-                "startColNumber": 11,
-                "startLineNumber": 2,
-              },
-              "modification": "none",
-              "val": "string",
+              "type": "string",
             },
           },
         ],
@@ -775,9 +652,9 @@ Object {
               },
               "name": "returnLeft",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -791,9 +668,9 @@ Object {
               },
               "name": "left",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -807,9 +684,9 @@ Object {
               },
               "name": "right",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -830,32 +707,17 @@ Object {
         "name": "withbool",
       },
       "getAllDataIntermediate" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 62,
-            "endLineNumber": 7,
-            "startColNumber": 61,
-            "startLineNumber": 7,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 35,
-          "endLineNumber": 7,
-          "startColNumber": 5,
-          "startLineNumber": 5,
-        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
@@ -863,15 +725,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "Primitive",
-          "loc": Object {
-            "endColNumber": 61,
-            "endLineNumber": 7,
-            "startColNumber": 53,
-            "startLineNumber": 7,
-          },
-          "modification": "none",
-          "val": "string",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
     },
@@ -897,9 +752,9 @@ Object {
               },
               "name": "val",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -920,28 +775,13 @@ Object {
         "name": "stored",
       },
       "getAllData" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 42,
-            "endLineNumber": 7,
-            "startColNumber": 40,
-            "startLineNumber": 7,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 23,
-          "endLineNumber": 7,
-          "startColNumber": 35,
-          "startLineNumber": 4,
-        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
@@ -949,9 +789,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "array",
-          "type": "stored",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
       "secondStore" => Object {
@@ -963,14 +802,7 @@ Object {
             "modification": "none",
             "type": Object {
               "kind": "Primitive",
-              "loc": Object {
-                "endColNumber": 19,
-                "endLineNumber": 2,
-                "startColNumber": 13,
-                "startLineNumber": 2,
-              },
-              "modification": "none",
-              "val": "string",
+              "type": "string",
             },
           },
         ],
@@ -1326,9 +1158,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1342,9 +1174,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1358,9 +1190,9 @@ Object {
               },
               "name": "i32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1374,9 +1206,9 @@ Object {
               },
               "name": "I",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1390,9 +1222,9 @@ Object {
               },
               "name": "u32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1406,9 +1238,9 @@ Object {
               },
               "name": "u64",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1441,9 +1273,9 @@ Object {
               },
               "name": "myMessag",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1486,9 +1318,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1502,9 +1334,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1518,9 +1350,9 @@ Object {
               },
               "name": "i32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1534,9 +1366,9 @@ Object {
               },
               "name": "I",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1550,9 +1382,9 @@ Object {
               },
               "name": "u32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1566,9 +1398,9 @@ Object {
               },
               "name": "u64",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1582,9 +1414,9 @@ Object {
               },
               "name": "b",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1598,9 +1430,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1614,9 +1446,9 @@ Object {
               },
               "name": "bs",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1659,9 +1491,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1675,9 +1507,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1691,9 +1523,9 @@ Object {
               },
               "name": "i32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1707,9 +1539,9 @@ Object {
               },
               "name": "I",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1723,9 +1555,9 @@ Object {
               },
               "name": "u32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1739,9 +1571,9 @@ Object {
               },
               "name": "u64",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1774,9 +1606,9 @@ Object {
               },
               "name": "b",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1790,9 +1622,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1806,9 +1638,9 @@ Object {
               },
               "name": "bs",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1851,9 +1683,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1867,9 +1699,9 @@ Object {
               },
               "name": "f",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1883,9 +1715,9 @@ Object {
               },
               "name": "i32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1899,9 +1731,9 @@ Object {
               },
               "name": "I",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1915,9 +1747,9 @@ Object {
               },
               "name": "u32",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1931,9 +1763,9 @@ Object {
               },
               "name": "u64",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1947,9 +1779,9 @@ Object {
               },
               "name": "b",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1963,9 +1795,9 @@ Object {
               },
               "name": "s",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -1979,9 +1811,9 @@ Object {
               },
               "name": "bs",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },

@@ -1,30 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`attempting to store enums 1`] = `"Stores may not reference Enum"`;
+exports[`attempting to store enums 1`] = `"Can only store structs at global level"`;
 
-exports[`attempting to store non-array 1`] = `"Global instances must be arrays for now"`;
+exports[`attempting to store non-array 1`] = `"Only arrays may be global"`;
 
-exports[`creating an array optional 1`] = `
-"Unable to parse required FieldType entity at {\\"startColNumber\\":18,\\"startLineNumber\\":2,\\"endColNumber\\":7,\\"endLineNumber\\":3}
+exports[`creating an array optional 1`] = `"Don't create Arrays of optionals. Just don't add the undesired elements to the array."`;
 
- <int32>>
-}
+exports[`creating an optional array 1`] = `"Instead of having an optional array, just store an empty array."`;
 
-"
-`;
+exports[`creating an optional enum 1`] = `"Optional enum is unsupported."`;
 
-exports[`creating an optional array 1`] = `
-"Unable to parse required FieldType entity at {\\"startColNumber\\":18,\\"startLineNumber\\":2,\\"endColNumber\\":7,\\"endLineNumber\\":3}
-
- <int32>>
-}
-
-"
-`;
-
-exports[`creating an optional enum 1`] = `"Enum fields may not be optional"`;
-
-exports[`dependent struct is not in scope  1`] = `"Unable to resolve type of field M2 from struct: m1"`;
+exports[`dependent struct is not in scope  1`] = `"Type name M2 does not refer to any known type"`;
 
 exports[`naming an entity after a keyword  1`] = `
 "Entities may not be named after reserved symbols: Line: 0

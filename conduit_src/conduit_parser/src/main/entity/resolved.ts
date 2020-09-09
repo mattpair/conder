@@ -1,17 +1,12 @@
 import * as basic from './basic'
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
+import { Symbol, TypeModifierUnion } from '../lexicon';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
-export type PrimitiveEntity = basic.PrimitiveEntity
-export type ResolvedType = Readonly<Parse.CustomTypeEntity | basic.PrimitiveEntity> & {readonly modification: basic.TypeModification}
-export type FieldType = basic.BaseFieldType<() => ResolvedType> 
-export type TypeModification = basic.TypeModification
-    
-export type Field = basic.BaseField<FieldType>
 
-export type Struct = basic.BaseStruct<Field> & {readonly file?: FileLocation, readonly isConduitGenerated?: boolean}
-export type Enum = basic.Enum & {readonly file: FileLocation}
+export type Struct = Parse.Struct & {readonly file?: FileLocation, readonly isConduitGenerated?: boolean}
+export type Enum = basic.Enum
 export type Python3Install = Readonly<{kind: "python3", reldir: string, file: string, name: string}>
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
@@ -48,22 +43,19 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     
 }
 
-export type UnaryParameter = basic.NamedIntrafile<"UnaryParameter", {type: ResolvedType}>
-export type Parameter = basic.PolymorphicEntity<"Parameter", () => UnaryParameter | Parse.NoParameter>
 
 export type Variable = Readonly<{
     name: string,
-    type: ResolvedType
+    type: Parse.CompleteType
 }>
 
-export type ReturnType = ResolvedType | basic.VoidReturn
+export type ReturnType = Parse.CompleteType | basic.VoidReturn
 export type Statement = Parse.Statement
 export type ReturnableStatement = Parse.Returnable
-export type FunctionBody = basic.IntrafileEntity<"FunctionBody", {statements: Parse.Statement[]}>
 export type Function =  basic.NamedIntrafile<"Function", {
     returnType: ReturnType,
-    parameter: Parameter,
-    body: FunctionBody,
+    parameter: Parse.Parameter,
+    body: Parse.Statement[],
     method: "POST" | "GET"
 }>
 
@@ -79,10 +71,10 @@ export type Manifest = {
 
 export type PrimitiveColumn = Readonly<{
     dif: "prim"
-    type: PrimitiveEntity
+    type: basic.PrimitiveEntity
     columnName: string
     fieldName: string
-    modification: TypeModification
+    modification: TypeModifierUnion
 }>
 
 export type EnumColumn = Readonly<{
@@ -90,7 +82,7 @@ export type EnumColumn = Readonly<{
     type: Enum
     columnName: string
     fieldName: string
-    modification: Exclude<TypeModification, "optional">
+    modification: Exclude<TypeModifierUnion, Symbol.Optional>
 }>
 
 export type StructArrayCol = Readonly<{
@@ -107,7 +99,7 @@ export type StructRefCol = Readonly<{
     columnName: string
     fieldName: string
     ref: HierarchicalStore,
-    modification: "optional" | "none"
+    modification: Symbol.Optional | Symbol.none
 }>
 
 export type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn

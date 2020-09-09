@@ -1,4 +1,4 @@
-import { Symbol } from './lexicon';
+import { Symbol, Primitives, TypeModifiers, TypeModifierUnion } from './lexicon';
 import { assertNever } from './utils';
 import { FileLocation } from "./utils";
 import * as common from './entity/basic'
@@ -14,9 +14,11 @@ export namespace Parse {
     common.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
 
-    export type CustomTypeEntity = common.IntrafileEntity<"CustomType", {type: string, modification: common.TypeModification}>
-    export type FieldType = common.BaseFieldType<() => CustomTypeEntity>
-    export type Field = common.BaseField<FieldType>
+    export type TypeName = common.NamedIntrafile<"TypeName", {}>
+    export type DetailedType = common.IntrafileEntity<"DetailedType", common.RequiresOne<CompleteType> & {modification: TypeModifierUnion}>
+    export type CompleteType = common.PolymorphicEntity<"CompleteType", () => TypeName | DetailedType | common.PrimitiveEntity >
+    
+    export type Field = common.NamedIntrafile<"Field",  common.RequiresOne<CompleteType>>
 
     export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<DotStatement>>
     export type MethodInvocation = common.NamedIntrafile<"MethodInvocation", common.ParentOfMany<Assignable>>
@@ -25,16 +27,16 @@ export namespace Parse {
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
     export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction>
     export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
-    export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CustomTypeEntity> & common.RequiresOne<Assignable>>
+    export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CompleteType> & common.RequiresOne<Assignable>>
     export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
     export type Statements = common.IntrafileEntity<"Statements", common.ParentOfMany<Statement>>
     export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
     export type FunctionBody = common.BaseFunctionBody<Statement>
-    export type UnaryParameterType = common.PolymorphicEntity<"UnaryParameterType", () => CustomTypeEntity >
+    export type UnaryParameterType = common.IntrafileEntity<"UnaryParameterType", common.RequiresOne<CompleteType>>
     export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
     export type UnaryParameter = common.BaseUnaryParameter<UnaryParameterType>
     export type Parameter = common.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
-    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CustomTypeEntity >
+    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CompleteType >
     export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
     export type Struct = common.BaseStruct<Field>
     export type WithinForIn = common.PolymorphicEntity<"WithinForIn", () => VariableReference>
@@ -43,7 +45,7 @@ export namespace Parse {
     export type If = common.IntrafileEntity<"If", common.RequiresOne<Assignable> & common.RequiresOne<Statements>>
     export type AnonFunction = common.IntrafileEntity<"AnonFunction", common.RequiresOne<Statements> & {rowVarName: string}>
     
-    export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CustomTypeEntity>>
+    export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CompleteType>>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})$`)
 
@@ -178,8 +180,6 @@ export namespace Parse {
         Field | 
         common.Enum | 
         common.EnumMember | 
-        FieldType | 
-        CustomTypeEntity | 
         Function |
         FunctionBody |
         ReturnTypeSpec |
@@ -204,7 +204,11 @@ export namespace Parse {
         ForInBody |
         If |
         Statements |
-        AnonFunction
+        AnonFunction |
+        CompleteType |
+        DetailedType |
+        TypeName |
+        common.PrimitiveEntity
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -264,8 +268,8 @@ export namespace Parse {
 
             case "polymorph":
                 const order = new Ordering(parser.priority).order 
-                for (let i = 0; i < order.length; i++) {
-                    const elt = order[i];
+                for (let i = 0; i < order.length; i++) {                    
+                    const elt = order[i];                    
                     const ent = tryExtractEntity(cursor, 
                         elt, 
                         parserSet)
@@ -389,13 +393,6 @@ export namespace Parse {
         },
 
 
-        FieldType: {
-            kind: "polymorph",
-            priority: {
-                CustomType: 2
-            },
-            groupKind: "FieldType"
-        },
 
         Field: {
             kind: "conglomerate",
@@ -410,7 +407,7 @@ export namespace Parse {
                 }
             },
             requiresOne: {
-                FieldType: {order: 1}
+                CompleteType: {order: 1}
             },
         },
 
@@ -428,28 +425,6 @@ export namespace Parse {
             endRegex:/^\s*}/,
             hasMany: {Field: true},
             options: {}
-        },
-        CustomType: {
-            kind: "leaf",
-            regex: /^ *((?<modifier>Array|Optional)<)? *(?<type>[_A-Za-z]+[\w]*) *(?<closer>>)?/,
-            assemble(match, loc): CustomTypeEntity | undefined {
-                let modification: common.TypeModification = "none"
-                if (match.groups.modifier && !match.groups.closer) {
-                    return undefined
-                }
-
-                if (match.groups.modifier === "Array") {
-                    modification = "array"
-                } else if (match.groups.modifier === "Optional") {
-                    modification = "optional"
-                }
-                return {
-                    kind: "CustomType",
-                    loc,
-                    type: match.groups.type,
-                    modification
-                }
-            }
         },
         Function: {
             kind: "conglomerate",
@@ -475,7 +450,7 @@ export namespace Parse {
         ReturnTypeSpec: {
             kind: "polymorph",
             groupKind: "ReturnTypeSpec",
-            priority: {CustomType: 2, VoidReturnType: 3}
+            priority: {CompleteType: 2, VoidReturnType: 3}
         },
         Parameter: {
             kind: "polymorph",
@@ -525,9 +500,11 @@ export namespace Parse {
             options: {}
         },
         UnaryParameterType: {
-            kind: "polymorph",
-            priority: {CustomType: 2},
-            groupKind: "UnaryParameterType"
+            kind: "conglomerate",
+            requiresOne: {CompleteType: {order: 2}},
+            startRegex: /^/,
+            endRegex: /^/,
+            assemble: (s,e,loc,part) => ({kind: "UnaryParameterType", part, loc})
         },
         VoidReturnType: {
             kind: "leaf",
@@ -600,7 +577,7 @@ export namespace Parse {
             startRegex: /^\s*(?<name>[a-zA-Z]+):\s*/,
             endRegex: /^\s*=\s*\[\]/,
             requiresOne: {
-                CustomType: {order: 1}
+                CompleteType: {order: 1}
             },
             assemble(start, end, loc, part) {
                 return {
@@ -658,7 +635,7 @@ export namespace Parse {
                 }
             },
             requiresOne: {
-                CustomType: {
+                CompleteType: {
                     afterRegex: /^ *=/,
                     order: 1
                 },
@@ -769,7 +746,46 @@ export namespace Parse {
                     rowVarName: start.groups.name
                 }
             }
+        },
+        CompleteType: {
+            kind: "polymorph",
+            priority: {
+                Primitive: 1,
+                DetailedType: 0,
+                TypeName: 2
+            },
+            groupKind: "CompleteType"
+        },
+        Primitive: {
+            kind: "leaf",
+            regex: new RegExp(`^\\s*(?<val>(${Primitives.join("|")}))`),
+            assemble(c, loc) {
+                return {
+                    kind: "Primitive",
+                    type: c.groups.val as any
+                }
+            }
+        },
+        DetailedType: {
+            kind: "conglomerate",
+            startRegex: new RegExp(`^\\s*(?<val>(${TypeModifiers.join("|")}))\\s*<\\s*`),
+            endRegex: /^\s*>/,
+            requiresOne: {
+                CompleteType: {order: 1}
+            },
+            assemble: (start, end, loc, part) => ({
+                kind: "DetailedType",
+                loc,
+                part,
+                modification: start.groups.val as any
+            })
+        },
+        TypeName: {
+            kind: "leaf",
+            regex: /^\s*(?<name>[a-zA-Z_]\w*)/,
+            assemble: (r, loc) => ({kind: "TypeName", name: r.groups.name, loc})
         }
+        
     
     }
 }

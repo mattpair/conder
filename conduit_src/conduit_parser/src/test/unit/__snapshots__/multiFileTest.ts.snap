@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Self referencing type 1`] = `"Currently do not support self-referencing types: m1"`;
+exports[`Self referencing type 1`] = `"Type invalid because m1 is recursive"`;
 
 exports[`dependency multi file 1`] = `
 Object {
@@ -19,9 +19,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -54,9 +54,9 @@ Object {
               },
               "name": "m",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -82,7 +82,7 @@ Object {
 }
 `;
 
-exports[`function with invalid return type 1`] = `"Could not find a Struct named SomeType"`;
+exports[`function with invalid return type 1`] = `"Type name SomeType does not refer to any known type"`;
 
 exports[`function with unknown types 1`] = `"Unable to find end of entity for UnaryParameter at , b: Foreign.Type) {"`;
 
@@ -103,9 +103,9 @@ Object {
               },
               "name": "m",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -126,28 +126,13 @@ Object {
         "name": "Shout",
       },
       "echo" => Object {
-        "body": Object {
-          "kind": "FunctionBody",
-          "loc": Object {
-            "endColNumber": 35,
-            "endLineNumber": 6,
-            "startColNumber": 34,
-            "startLineNumber": 6,
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
           },
-          "statements": Array [
-            Object {
-              "differentiate": [Function],
-              "kind": "Statement",
-            },
-          ],
-        },
+        ],
         "kind": "Function",
-        "loc": Object {
-          "endColNumber": 17,
-          "endLineNumber": 6,
-          "startColNumber": 5,
-          "startLineNumber": 4,
-        },
         "method": "POST",
         "name": "echo",
         "parameter": Object {
@@ -155,9 +140,8 @@ Object {
           "kind": "Parameter",
         },
         "returnType": Object {
-          "kind": "CustomType",
-          "modification": "none",
-          "type": "Shout",
+          "differentiate": [Function],
+          "kind": "CompleteType",
         },
       },
     },
@@ -183,9 +167,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -218,9 +202,9 @@ Object {
               },
               "name": "d",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
@@ -253,9 +237,9 @@ Object {
               },
               "name": "m",
               "part": Object {
-                "FieldType": Object {
+                "CompleteType": Object {
                   "differentiate": [Function],
-                  "kind": "FieldType",
+                  "kind": "CompleteType",
                 },
               },
             },
