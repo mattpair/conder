@@ -225,3 +225,15 @@ compileTest("select method", `
         })
     }
 `)
+
+compileTest("references ", `
+    struct stored {
+        val: string,
+    }
+    
+    secondStore: Array<stored> = []
+
+    function refTest(r: Ref<secondStore>): Ref<secondStore> {
+        return r
+    }
+`)

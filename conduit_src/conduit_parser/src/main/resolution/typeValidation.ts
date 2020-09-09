@@ -30,12 +30,14 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
             })
         })
     })
-    
+
 
     const secondPassScope: PartialEntityMap = new Map()
 
+
     function ensureTypeIsValid(type: Parse.CompleteType, info: ParentTypeInfo[]): void {
         const t = type.differentiate()
+        const last: ParentTypeInfo | undefined = info.length >= 1 ? info[info.length - 1] : undefined
         switch (t.kind) {
             case "TypeName":
                 
@@ -44,52 +46,104 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                 }
 
                 const ref = firstPassScope.get(t.name)
-                if (ref === undefined || (ref.kind !== "Struct" && ref.kind !== "Enum")) {
-                    throw Error(`Type name ${t.name} does not refer to any known type`)
+                if (ref === undefined) {
+                    throw Error(`${t.name} does not refer to any known entity`)
                 }
+                if (last !== undefined && last.kind === "modification" && last.mod === Symbol.Ref) {
+                    if (ref.kind !== "StoreDefinition") {
+                        throw Error(`References should be to globals, not ${ref.kind}`)
+                    }
+                    break
+                }
+            
+                if (ref.kind !== "Struct" && ref.kind !== "Enum") {
+                    throw Error(`Name ${t.name} refers to a ${ref.kind} but expected a type`)
+                }
+        
                 
                 if (!secondPassScope.has(t.name)) {
-                    if (ref.kind === "Enum"){
-                        if (info.length > 0) {
-                            const lastmod = info[info.length -1]
-                            if (lastmod.kind === "modification" && lastmod.mod === Symbol.Optional) {
-                                throw Error(`Optional enum is unsupported.`)
+                    switch (ref.kind) {
+                        case "Enum":
+                            if (last !== undefined && last.kind === "modification") {
+                                switch (last.mod) {
+                                    case Symbol.Optional: 
+                                        throw Error(`Optional enum is unsupported.`)
+                                    case Symbol.Ref:
+                                        throw Error(`References can only be held for globals`)
+                                }
                             }
-                        }
-                    } else {
-                        info.push({kind: "type", name: ref.name})
-                        ref.children.Field.forEach(f => {
-                            ensureTypeIsValid(f.part.CompleteType, info)
-                        })
-                        info.pop()
+                            break
+                        case "Struct":
+                            info.push({kind: "type", name: ref.name})
+                            ref.children.Field.forEach(f => {
+                                ensureTypeIsValid(f.part.CompleteType, info)
+                            })
+                            info.pop()
+                            break
+                        default: assertNever(ref)
                     }
+                    
                     secondPassScope.set(t.name, ref)
                 }
                 break
                 
             case "Primitive":
+                if (last !== undefined && last.kind === "modification") {
+                    if (last.mod === Symbol.Ref) {
+                        throw Error(`References may only be made to structs stored at the global level.`)
+                    }
+                }
+                
                 break
             case "DetailedType":
-                const last: ParentTypeInfo | undefined = info.length > 1 ? info[info.length - 1] : undefined
+                
                 switch (t.modification) {
                     case Symbol.Optional:
                         if (last !== undefined && last.kind === "modification") {
-                            if (last.mod === Symbol.Array ) {
-                                throw Error(`Don't create Arrays of optionals. Just don't add the undesired elements to the array.`)
-                            } else if (last.mod === Symbol.Optional) {
-                                throw Error(`Nesting optionals defeats the purpose of optionals`)
+                            switch (last.mod) {
+                                case Symbol.Array:
+                                    throw Error(`Don't create Arrays of optionals. Just don't add the undesired elements to the array.`)
+                                case Symbol.Optional:
+                                    throw Error(`Nesting optionals defeats the purpose of optionals`)
+                                case Symbol.Ref:
+                                    throw Error(`Holding a reference to an optional is not allowed`)
+                                case Symbol.none:
+                                    break
+                                default: assertNever(last.mod)
                             }
                         }
                         break
                     case Symbol.Array:
+                        
                         if (last !== undefined && last.kind === "modification") {
-                            if (last.mod === Symbol.Array) {
-                                throw Error(`Arrays in arrays aren't supported`)
-                            } else if (last.mod === Symbol.Optional) {
-                                throw Error(`Instead of having an optional array, just store an empty array.`)
-                            }                            
+                            switch (last.mod) {
+                                case Symbol.Array:
+                                    throw Error(`Arrays in arrays aren't supported`)
+                                case Symbol.Optional:
+                                    throw Error(`Instead of having an optional array, just store an empty array.`)
+                                case Symbol.Ref:
+                                    throw Error(`Holding a reference to an array is not allowed`)
+                                case Symbol.none:
+                                    break
+                                default: assertNever(last.mod)
+                            }
                         }
                         break
+                    case Symbol.Ref:
+                        if (last !== undefined && last.kind === "modification") {
+                            switch (last.mod) {
+                                case Symbol.Array:
+                                    break
+                                case Symbol.Optional:
+                                    throw Error(`Optional references aren't allowed`)
+                                case Symbol.Ref:
+                                    throw Error(`Holding a reference to a reference is not allowed`)
+                                case Symbol.none:
+                                    break
+                                default: assertNever(last.mod)
+                            }
+                        }
+
                     case Symbol.none:
                         break
                     default: assertNever(t.modification)
@@ -104,11 +158,26 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
         }
     }
 
+    function validateGlobal(store: Parse.StoreDefinition): Parse.TypeName {
+        const firstTypePart = store.part.CompleteType.differentiate()
+        if (firstTypePart.kind !== "DetailedType" || firstTypePart.modification !== Symbol.Array) {
+            throw Error(`Only arrays may be global`)
+        }
+        const secondTypePart = firstTypePart.part.CompleteType.differentiate()
+        if (secondTypePart.kind !== "TypeName") {
+            throw Error(`Global arrays must contain structs`)
+        }
+        return secondTypePart
+    }
+    
+
     firstPassScope.forEach(en => {
         switch(en.kind) {
             case "Enum":
             case "Struct":
                 ensureTypeIsValid({kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: en.name})}, [])
+                break
+            
         }
     })
 
@@ -138,6 +207,8 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                                 ref: structToHierarchicalStore(ref, `${tablename}_${fieldname}`),
                                 modification: modifier
                             }
+                        case Symbol.Ref:
+                            throw Error(`Currently don't support storing references within a store`)
                             
                         default: assertNever(modifier)
                     }
@@ -207,21 +278,40 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                 })
                 break
             case "StoreDefinition":
-                const firstTypePart = en.part.CompleteType.differentiate()
-                if (firstTypePart.kind !== "DetailedType" || firstTypePart.modification !== Symbol.Array) {
-                    throw Error(`Only arrays may be global`)
-                }
-                const secondTypePart = firstTypePart.part.CompleteType.differentiate()
-                if (secondTypePart.kind !== "TypeName") {
-                    throw Error(`Global arrays must contain structs`)
-                }
+                const innerType = validateGlobal(en)
                 ensureTypeIsValid(en.part.CompleteType, [])
-                const struct = secondPassScope.get(secondTypePart.name)
+                const struct = secondPassScope.get(innerType.name)
                 if (struct.kind !== "Struct") {
                     throw Error(`Can only store structs at global level`)
                 }
 
                 secondPassScope.set(en.name, structToHierarchicalStore(struct, en.name))
+                const refName = `${en.name}Ref`
+                if (secondPassScope.has(refName)) {
+                    throw Error(`${refName} collides with system generated struct. Please rename.`)
+                }
+                secondPassScope.set(`${en.name}Ref`, 
+                    {
+                        kind: "Struct", 
+                        isConduitGenerated: true, 
+                        name: refName,
+                        children: {
+                            Field: [
+                                {
+                                    kind: "Field",  name: "conduit_entity_id" , part: {
+                                        CompleteType: {
+                                            kind: "CompleteType",
+                                            differentiate: () => ({
+                                                kind: "Primitive",
+                                                type: Symbol.uint64
+                                            })
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                    )
                break
 
             case "Enum":

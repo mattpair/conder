@@ -82,7 +82,7 @@ Object {
 }
 `;
 
-exports[`function with invalid return type 1`] = `"Type name SomeType does not refer to any known type"`;
+exports[`function with invalid return type 1`] = `"SomeType does not refer to any known entity"`;
 
 exports[`function with unknown types 1`] = `"Unable to find end of entity for UnaryParameter at , b: Foreign.Type) {"`;
 

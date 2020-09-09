@@ -237,6 +237,25 @@ Object {
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
+      "secondStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "secondStoreRef",
+      },
       "querySpec_secondStore" => Object {
         "children": Object {
           "Field": Array [],
@@ -246,7 +265,7 @@ Object {
         "name": "querySpec_secondStore",
       },
     },
-    "size": 5,
+    "size": 6,
   },
 }
 `;
@@ -308,6 +327,25 @@ Object {
         "specName": "querySpec_myFirstStore",
         "typeName": "stored",
       },
+      "myFirstStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "myFirstStoreRef",
+      },
       "querySpec_myFirstStore" => Object {
         "children": Object {
           "Field": Array [],
@@ -317,7 +355,7 @@ Object {
         "name": "querySpec_myFirstStore",
       },
     },
-    "size": 3,
+    "size": 4,
   },
 }
 `;
@@ -531,6 +569,25 @@ Object {
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
+      "secondStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "secondStoreRef",
+      },
       "querySpec_secondStore" => Object {
         "children": Object {
           "Field": Array [],
@@ -540,7 +597,7 @@ Object {
         "name": "querySpec_secondStore",
       },
     },
-    "size": 4,
+    "size": 5,
   },
 }
 `;
@@ -621,6 +678,25 @@ Object {
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
+      "secondStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "secondStoreRef",
+      },
       "querySpec_secondStore" => Object {
         "children": Object {
           "Field": Array [],
@@ -630,7 +706,7 @@ Object {
         "name": "querySpec_secondStore",
       },
     },
-    "size": 4,
+    "size": 5,
   },
 }
 `;
@@ -735,6 +811,115 @@ Object {
 }
 `;
 
+exports[`references  1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "stored" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 13,
+                "endLineNumber": 2,
+                "startColNumber": 19,
+                "startLineNumber": 1,
+              },
+              "name": "val",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "file": FileLocation {
+          "dir": "",
+          "fullname": "testFile.cdt",
+          "name": "testFile.cdt",
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 19,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "stored",
+      },
+      "refTest" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "method": "POST",
+        "name": "refTest",
+        "parameter": Object {
+          "differentiate": [Function],
+          "kind": "Parameter",
+        },
+        "returnType": Object {
+          "differentiate": [Function],
+          "kind": "CompleteType",
+        },
+      },
+      "secondStore" => Object {
+        "columns": Array [
+          Object {
+            "columnName": "val",
+            "dif": "prim",
+            "fieldName": "val",
+            "modification": "none",
+            "type": Object {
+              "kind": "Primitive",
+              "type": "string",
+            },
+          },
+        ],
+        "kind": "HierarchicalStore",
+        "name": "secondStore",
+        "specName": "querySpec_secondStore",
+        "typeName": "stored",
+      },
+      "secondStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "secondStoreRef",
+      },
+      "querySpec_secondStore" => Object {
+        "children": Object {
+          "Field": Array [],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_secondStore",
+      },
+    },
+    "size": 5,
+  },
+}
+`;
+
 exports[`select method 1`] = `
 Object {
   "inScope": EntityMap {
@@ -811,6 +996,25 @@ Object {
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
+      "secondStoreRef" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "name": "conduit_entity_id",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "secondStoreRef",
+      },
       "querySpec_secondStore" => Object {
         "children": Object {
           "Field": Array [],
@@ -820,7 +1024,7 @@ Object {
         "name": "querySpec_secondStore",
       },
     },
-    "size": 4,
+    "size": 5,
   },
 }
 `;

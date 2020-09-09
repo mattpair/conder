@@ -25,7 +25,8 @@ export enum Symbol {
     Array="Array",
     Optional="Optional",
     type="type",
-    none="none"
+    none="none",
+    Ref="Ref"
 }
 
 export const Operators: [
@@ -43,8 +44,8 @@ export const Operators: [
     Symbol.COMMA,
     Symbol.NEW_LINE
 ]
-export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none
-export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none]
+export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none | Symbol.Ref
+export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none, Symbol.Ref]
 
 export type PrimitiveUnion = 
     Symbol.double |

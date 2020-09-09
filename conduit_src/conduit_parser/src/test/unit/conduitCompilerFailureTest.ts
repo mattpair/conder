@@ -66,3 +66,14 @@ struct Container {
 }
 
 `)
+
+testFailsWhen("Refing a struct ", `
+struct otherStruct {
+    f: string
+}
+
+struct Container {
+    e: Ref<otherStruct>
+}
+
+`)
