@@ -48,6 +48,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct simplesRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_simples;
             
                             // INTERPRETERS
@@ -147,6 +153,10 @@ simpleInstance( simple),
 Manysimple(&'exec Vec<simple>),
 Optionalsimple(&'exec Option<simple>),
 simplesResult( Vec<simple>),
+simplesRef(&'exec simplesRef),
+simplesRefInstance( simplesRef),
+ManysimplesRef(&'exec Vec<simplesRef>),
+OptionalsimplesRef(&'exec Option<simplesRef>),
 querySpec_simples(&'exec querySpec_simples),
 querySpec_simplesInstance( querySpec_simples),
 ManyquerySpec_simples(&'exec Vec<querySpec_simples>),
@@ -329,6 +339,10 @@ AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
 AnyType::simplesResult(data) => HttpResponse::Ok().json(data),
+AnyType::simplesRef(data) => HttpResponse::Ok().json(data),
+AnyType::simplesRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManysimplesRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalsimplesRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_simples(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_simplesInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_simples(data) => HttpResponse::Ok().json(data),
@@ -910,6 +924,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct wrapStoreRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_wrapStore_innard;
             
 
@@ -1085,6 +1105,10 @@ wrapperInstance( wrapper),
 Manywrapper(&'exec Vec<wrapper>),
 Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult( Vec<wrapper>),
+wrapStoreRef(&'exec wrapStoreRef),
+wrapStoreRefInstance( wrapStoreRef),
+ManywrapStoreRef(&'exec Vec<wrapStoreRef>),
+OptionalwrapStoreRef(&'exec Option<wrapStoreRef>),
 querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
 querySpec_wrapStore_innardInstance( querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
@@ -1289,6 +1313,10 @@ AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
 AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
@@ -1452,6 +1480,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct wrapStoreRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_wrapStore_innard;
             
 
@@ -1627,6 +1661,10 @@ wrapperInstance( wrapper),
 Manywrapper(&'exec Vec<wrapper>),
 Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult( Vec<wrapper>),
+wrapStoreRef(&'exec wrapStoreRef),
+wrapStoreRefInstance( wrapStoreRef),
+ManywrapStoreRef(&'exec Vec<wrapStoreRef>),
+OptionalwrapStoreRef(&'exec Option<wrapStoreRef>),
 querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
 querySpec_wrapStore_innardInstance( querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
@@ -1831,6 +1869,10 @@ AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
 AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
@@ -2507,6 +2549,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct simpleStoreRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_simpleStore;
             
                             // INTERPRETERS
@@ -2606,6 +2654,10 @@ simpleInstance( simple),
 Manysimple(&'exec Vec<simple>),
 Optionalsimple(&'exec Option<simple>),
 simpleStoreResult( Vec<simple>),
+simpleStoreRef(&'exec simpleStoreRef),
+simpleStoreRefInstance( simpleStoreRef),
+ManysimpleStoreRef(&'exec Vec<simpleStoreRef>),
+OptionalsimpleStoreRef(&'exec Option<simpleStoreRef>),
 querySpec_simpleStore(&'exec querySpec_simpleStore),
 querySpec_simpleStoreInstance( querySpec_simpleStore),
 ManyquerySpec_simpleStore(&'exec Vec<querySpec_simpleStore>),
@@ -2788,6 +2840,10 @@ AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
 AnyType::simpleStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::simpleStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::simpleStoreRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManysimpleStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalsimpleStoreRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_simpleStore(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_simpleStoreInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_simpleStore(data) => HttpResponse::Ok().json(data),
@@ -2984,6 +3040,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct wrapStoreRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_wrapStore_innard;
             
 
@@ -3125,6 +3187,10 @@ wrapperInstance( wrapper),
 Manywrapper(&'exec Vec<wrapper>),
 Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult( Vec<wrapper>),
+wrapStoreRef(&'exec wrapStoreRef),
+wrapStoreRefInstance( wrapStoreRef),
+ManywrapStoreRef(&'exec Vec<wrapStoreRef>),
+OptionalwrapStoreRef(&'exec Option<wrapStoreRef>),
 querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
 querySpec_wrapStore_innardInstance( querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
@@ -3329,6 +3395,10 @@ AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
 AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
@@ -3542,6 +3612,12 @@ conduit_entity_id: Option<i32>
             
 
             #[derive(Serialize, Deserialize, Clone)]
+            struct wrapStoreRef {
+                conduit_entity_id: i32
+            }
+            
+
+            #[derive(Serialize, Deserialize, Clone)]
             struct querySpec_wrapStore_innard;
             
 
@@ -3683,6 +3759,10 @@ wrapperInstance( wrapper),
 Manywrapper(&'exec Vec<wrapper>),
 Optionalwrapper(&'exec Option<wrapper>),
 wrapStoreResult( Vec<wrapper>),
+wrapStoreRef(&'exec wrapStoreRef),
+wrapStoreRefInstance( wrapStoreRef),
+ManywrapStoreRef(&'exec Vec<wrapStoreRef>),
+OptionalwrapStoreRef(&'exec Option<wrapStoreRef>),
 querySpec_wrapStore_innard(&'exec querySpec_wrapStore_innard),
 querySpec_wrapStore_innardInstance( querySpec_wrapStore_innard),
 ManyquerySpec_wrapStore_innard(&'exec Vec<querySpec_wrapStore_innard>),
@@ -3887,6 +3967,10 @@ AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
 AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
 AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
 AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
 AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
 AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),

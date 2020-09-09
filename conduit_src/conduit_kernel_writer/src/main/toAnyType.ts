@@ -1,4 +1,5 @@
 import { CompiledTypes, Utilities, Lexicon } from 'conduit_parser';
+import { extractRefStructName } from './type_writing/extractRefStructName';
 export function toAnyType(p: CompiledTypes.Type, inscope: CompiledTypes.ScopeMap): string {
     let prefix = '';
     const top = p
@@ -14,6 +15,9 @@ export function toAnyType(p: CompiledTypes.Type, inscope: CompiledTypes.ScopeMap
             case Lexicon.Symbol.Optional:
                 prefix ="Optional"
                 break
+            case Lexicon.Symbol.Ref:
+                return `AnyType::${extractRefStructName(top, inscope)}`
+                
             default: Utilities.assertNever(top.modification)
         }
         nested = top.part.CompleteType.differentiate()

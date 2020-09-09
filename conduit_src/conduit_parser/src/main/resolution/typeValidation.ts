@@ -303,7 +303,7 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                                             kind: "CompleteType",
                                             differentiate: () => ({
                                                 kind: "Primitive",
-                                                type: Symbol.uint64
+                                                type: Symbol.int32
                                             })
                                         }
                                     }

@@ -1,4 +1,5 @@
 import { CompiledTypes, Lexicon, Utilities, Parse } from "conduit_parser"
+import { extractRefStructName } from "./extractRefStructName"
 
 type SupportedTypeWritingLanguages = "typescript" | "rust"
 type TypeWriter = (ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap) => string
@@ -61,6 +62,9 @@ export const TypeWriter: CompleteTypeWriter = {
                         suffix = "| null";
                     case Lexicon.Symbol.none:
                         break;
+                    case Lexicon.Symbol.Ref: 
+                        return extractRefStructName(type, inScope)
+                    
                     default: Utilities.assertNever(type.modification);
                 }
                 focus_type = type.part.CompleteType.differentiate()
@@ -132,6 +136,9 @@ export const TypeWriter: CompleteTypeWriter = {
                         suffix = '>';
                     case Lexicon.Symbol.none:
                         break;
+                    case Lexicon.Symbol.Ref:
+                        return extractRefStructName(r, inScope)
+                        
                     default: Utilities.assertNever(r.modification);
                 }
                 focus_type = r.part.CompleteType.differentiate()
