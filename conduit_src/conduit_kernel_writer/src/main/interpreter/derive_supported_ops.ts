@@ -50,7 +50,7 @@ C["class"] extends "param" ? ParamFactory<C["paramType"], C["kind"]> :
 C["class"] extends "store"  ? OpFactory<C["paramType"], CompiledTypes.HierarchicalStore> : 
 C["class"] extends "struct" ? OpFactory<C["paramType"], CompiledTypes.Struct> : 
 C["class"] extends "python3" ? OpFactory<C["paramType"], CompiledTypes.Python3Install> : 
-C["class"] extends "rpc" ? OpFactory<C["paramType"], CompiledTypes.ResolvedType> : never
+C["class"] extends "rpc" ? OpFactory<C["paramType"], CompiledTypes.Type> : never
 
 export type CompleteOpFactory = {
     readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
@@ -66,7 +66,7 @@ C["class"] extends "param" ? OpDefWithParameter :
 C["class"] extends "store" ? UniqueOpDef<C, CompiledTypes.HierarchicalStore> : 
 C["class"] extends "struct" ? UniqueOpDef<C, CompiledTypes.Struct> : 
 C["class"] extends "python3" ? UniqueOpDef<C, CompiledTypes.Python3Install> : 
-C["class"] extends "rpc" ? UniqueOpDef<C, CompiledTypes.ResolvedType, "rpc"> : never
+C["class"] extends "rpc" ? UniqueOpDef<C, CompiledTypes.Type, "rpc"> : never
 
 
 
@@ -374,7 +374,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             match prev {
                                 AnyType::${struct.name}(inside) => match *op_param {
                                     ${struct.children.Field.map(field => {
-                                        const fieldType = field.part.FieldType.differentiate()
+                                        const fieldType = field.part.CompleteType.differentiate()
                                         
                                         
                                         return `${struct.name}Field::${struct.name}${field.name}FieldRef => ${toAnyType(fieldType, manifest.inScope)}(&inside.${field.name})`
@@ -445,14 +445,15 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             },
             deserializeRpcBufTo: {
                 factoryMethod: (t) => {
-                    if (t.modification !== "none") {
+                    if (t.kind === "DetailedType") {
                         throw Error(`Do not support deserializing to modified types yet.`)
                     }
+                    
                     if (foreignLookup.size === 0) {
                         throw Error(`It is impossible to deserialize rpc bufs if there are no rpc calls.`)
                     }
                     return {
-                        kind: `deserializeRpcBufTo${t.kind === "Primitive" ? t.val : t.type}`,
+                        kind: `deserializeRpcBufTo${t.kind === "Primitive" ? t.type : t.name}`,
                         data: undefined
                     }
                 },
@@ -460,7 +461,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     kind: "rpc",
                     create: (t) => {
                         
-                        if (t.modification !== "none") {
+                        if (t.kind === "DetailedType") {
                             throw Error(`Do not support deserializing to modified types yet.`)
                         }
                         if (foreignLookup.size === 0) {
@@ -468,31 +469,31 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         }
                         const ret: OpDef<"static">[] = []
                         switch(t.kind) {
-                            case "CustomType":
+                            case "TypeName":
                                 ret.push({
                                     kind: "static",
                                     rustOpHandler: `
                                     match &mut rpc_buffer {
                                         Some(buf) => {
                                             match buf.json().await {
-                                                Ok(out) => AnyType::${t.type}Instance(out),
+                                                Ok(out) => AnyType::${t.name}Instance(out),
                                                 Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
                                         _ => ${raiseErrorWithMessage("Attempting to deserialize a non existent buffer")}
                                     }`,
-                                    rustEnumMember: `deserializeRpcBufTo${t.type}`,
+                                    rustEnumMember: `deserializeRpcBufTo${t.name}`,
                                 })
                                 break
                             case "Primitive":
                                 
                                 ret.push({
                                     kind: "static",
-                                    rustEnumMember: `deserializeRpcBufTo${t.val}`,
+                                    rustEnumMember: `deserializeRpcBufTo${t.type}`,
                                     rustOpHandler: `match &mut rpc_buffer {
                                         Some(buf) => {
                                             match buf.json().await {
-                                                Ok(out) => AnyType::${t.val}Instance(out),
+                                                Ok(out) => AnyType::${t.type}Instance(out),
                                                 Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
@@ -549,12 +550,11 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     break
                 case "rpc":
                     Primitives.forEach(v => {
-                        // Bytes are actual data, not a type.
-                        addedOperations.push(...opdef.create({kind: "Primitive", modification: "none", val: v}))
+                        addedOperations.push(...opdef.create({kind: "Primitive", type: v}))
                     })
                     manifest.inScope.forEach(m => {
                         if (m.kind === "Struct" && !m.isConduitGenerated) {
-                            addedOperations.push(...opdef.create({kind: "CustomType", modification: "none", type: m.name}))
+                            addedOperations.push(...opdef.create({kind: "TypeName", name: m.name}))
                         }
                     })
                     

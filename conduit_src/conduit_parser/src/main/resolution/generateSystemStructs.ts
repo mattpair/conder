@@ -1,6 +1,6 @@
 import { PartialEntityMap } from './typeValidation';
 import { Parse } from '../parse';
-import { Function, ScopeMap, Struct, Enum, EntityMap, HierarchicalStore, ReturnType, Variable } from "../entity/resolved";
+import { Struct, HierarchicalStore, } from "../entity/resolved";
 import { assertNever } from "../utils";
 
 

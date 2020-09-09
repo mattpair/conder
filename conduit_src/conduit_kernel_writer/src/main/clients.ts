@@ -16,10 +16,9 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
         let beforeReq = ''
         let method: "GET" | "POST" = "GET"
         switch (fn.returnType.kind) {
-            case "Primitive":
-            case "CustomType":
+            case "CompleteType":
                 
-                returnType = `: Promise<${TypeWriter.typescript.reference(fn.returnType, manifest.inScope)}>`
+                returnType = `: Promise<${TypeWriter.typescript.reference(fn.returnType.differentiate(), manifest.inScope)}>`
                 followOn = '.then( data=> data.json())'
                 break
             case "VoidReturnType":
@@ -32,7 +31,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest, m
             case "NoParameter":
                 break
             case "UnaryParameter":
-                paramString = `a: ${TypeWriter.typescript.reference(param.type, manifest.inScope)}`
+                paramString = `a: ${TypeWriter.typescript.reference(param.part.UnaryParameterType.part.CompleteType.differentiate(), manifest.inScope)}`
                 beforeReq = 'const body = JSON.stringify(a)'
                 body = `
                 body,

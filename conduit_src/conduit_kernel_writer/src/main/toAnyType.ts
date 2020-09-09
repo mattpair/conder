@@ -1,30 +1,38 @@
-import { CompiledTypes, Utilities } from 'conduit_parser';
-export function toAnyType(p: CompiledTypes.ResolvedType, inscope: CompiledTypes.ScopeMap): string {
+import { CompiledTypes, Utilities, Lexicon } from 'conduit_parser';
+export function toAnyType(p: CompiledTypes.Type, inscope: CompiledTypes.ScopeMap): string {
     let prefix = '';
-    switch (p.modification) {
-        case "none":
-            break
-
-        case "array":
-            prefix = "Many";
-            break
-        case "optional":
-            prefix ="Optional"
-            break
-        default: Utilities.assertNever(p.modification)
+    const top = p
+    let nested = top
+    if (top.kind === "DetailedType") {
+        switch (top.modification) {
+            case Lexicon.Symbol.none:
+                break
+    
+            case Lexicon.Symbol.Array:
+                prefix = "Many";
+                break
+            case Lexicon.Symbol.Optional:
+                prefix ="Optional"
+                break
+            default: Utilities.assertNever(top.modification)
+        }
+        nested = top.part.CompleteType.differentiate()
     }
+    
     let name = '';
-    switch (p.kind) {
-        case "CustomType":
-            const trueType = inscope.getEntityOfType(p.type, "Struct", "Enum")
+    switch (nested.kind) {
+        case "DetailedType":
+            throw Error(`It is not possible to have a generic within a generic`)
+        case "TypeName":
+            const trueType = inscope.getEntityOfType(nested.name, "Struct", "Enum")
             if (trueType.kind === "Enum") {
                 name = "int64"
                 break
             }
-            name = p.type;
+            name = nested.name;
             break;
         case "Primitive":
-            name = p.val
+            name = nested.type
     }
 
     return `AnyType::${prefix}${name}`;

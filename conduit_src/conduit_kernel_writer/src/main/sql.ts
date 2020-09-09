@@ -7,9 +7,9 @@ export type ReturnInstruction = Readonly<{
     name: string
 } | {kind: "drop"}>
 
-function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
+function toPostgresType(prim: CompiledTypes.Primitive): string {
 
-    switch(prim.val) {
+    switch(prim.type) {
         case Lexicon.Symbol.bool:
             return "boolean"
         
@@ -39,7 +39,7 @@ function toPostgresType(prim: CompiledTypes.PrimitiveEntity): string {
         case Lexicon.Symbol.string:
             return "text"
 
-        default: Utilities.assertNever(prim.val)
+        default: Utilities.assertNever(prim.type)
     }
 }
 
@@ -47,10 +47,10 @@ function makePrimitiveColumn(c: CompiledTypes.PrimitiveColumn | CompiledTypes.En
     const typeStr = c.dif === "enum" ? "bigint" : toPostgresType(c.type)
     let appendStr = ''
     switch (c.modification) {
-        case "array":
+        case Lexicon.Symbol.Array:
             appendStr = "[]"
             break;
-        case "none":
+        case Lexicon.Symbol.none:
             appendStr = " NOT NULL"   
     }
     return `${c.columnName}\t${typeStr}${appendStr}`
@@ -142,7 +142,7 @@ export function generateInsertRustCode(store: CompiledTypes.HierarchicalStore, v
             case "1:1":
                 const returnedId = `ret${nextReturnId()}`
                 
-                if (c.modification === "optional") {
+                if (c.modification === Lexicon.Symbol.Optional) {
                     const unwrapped = `unwrapped${nextReturnId()}`
                     const optionalChildInsertions = generateInsertRustCode(c.ref, unwrapped, {kind: "save", name: returnedId}, nextReturnId)
                     const optionalReturnId = `optional${nextReturnId()}`
@@ -255,7 +255,7 @@ function generateQueryInterpreterInternal(specVarName: string, store: CompiledTy
                     const extractedVarName = `extracted${col.type.name}${nextReturnId()}`
                     
 
-                if (col.modification === "optional") {
+                if (col.modification === Lexicon.Symbol.Optional) {
                     extractions.push(`
                     // Extracting ${col.type.name}
                     let ${extractedVarName} = match ${rowVarName}.get("${col.columnName}") {

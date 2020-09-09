@@ -1,8 +1,8 @@
-import { CompiledTypes, Lexicon, Utilities } from "conduit_parser"
+import { CompiledTypes, Lexicon, Utilities, Parse } from "conduit_parser"
 
 type SupportedTypeWritingLanguages = "typescript" | "rust"
 type TypeWriter = (ent: CompiledTypes.Struct | CompiledTypes.Enum, inScope: CompiledTypes.ScopeMap) => string
-type RefWriter = (type: CompiledTypes.ResolvedType, inScope: CompiledTypes.ScopeMap) => string
+type RefWriter = (type: CompiledTypes.Type, inScope: CompiledTypes.ScopeMap) => string
 
 type PrimitiveWriter = Record<Lexicon.PrimitiveUnion, string>
 type CompleteTypeWriter = {
@@ -39,7 +39,7 @@ export const TypeWriter: CompleteTypeWriter = {
                     return `
                         export type ${ent.name} = {
                             ${ent.children.Field.map(f => {
-                                const type = f.part.FieldType.differentiate()
+                                const type = f.part.CompleteType.differentiate()
                                 return `${f.name}: ${TypeWriter.typescript.reference(type, inScope)}`
         
                             }).join("\n")}
@@ -49,28 +49,36 @@ export const TypeWriter: CompleteTypeWriter = {
         reference: (type, inScope) => {
             let prefix = '';
             let suffix = "";
-            switch (type.modification) {
-                case "array":
-                    prefix = "Array<";
-                    suffix = ">";
-                    break;
-        
-                case "optional":
-                    suffix = "| null";
-                case "none":
-                    break;
-                default: Utilities.assertNever(type.modification);
+            let focus_type = type
+            if (type.kind === "DetailedType") {
+                switch (type.modification) {
+                    case Lexicon.Symbol.Array:
+                        prefix = "Array<";
+                        suffix = ">";
+                        break;
+            
+                    case Lexicon.Symbol.Optional:
+                        suffix = "| null";
+                    case Lexicon.Symbol.none:
+                        break;
+                    default: Utilities.assertNever(type.modification);
+                }
+                focus_type = type.part.CompleteType.differentiate()
             }
-            switch (type.kind) {
+            
+            switch (focus_type.kind) {
+                case "DetailedType":
+                    throw Error(`Unexpected generic use`)
+
                 case "Primitive":
-                    const primstring = TypeWriter.typescript.primitive[type.val]
+                    const primstring = TypeWriter.typescript.primitive[focus_type.type]
         
                     return `${prefix}${primstring}${suffix}`;
-                case "CustomType":
-                    const ent = inScope.getEntityOfType(type.type, "Struct", "Enum");
+                case "TypeName":
+                    const ent = inScope.getEntityOfType(focus_type.name, "Struct", "Enum");
                     return `${prefix}${ent.name}${suffix}`;
         
-                default: Utilities.assertNever(type);
+                default: Utilities.assertNever(focus_type);
             }
         }
     },
@@ -90,8 +98,8 @@ export const TypeWriter: CompleteTypeWriter = {
             if (val.kind === "Enum") {
                 return ''
             }
-            const fields: string[] = val.children.Field.map((field: CompiledTypes.Field) => {
-                const field_type = field.part.FieldType.differentiate()
+            const fields: string[] = val.children.Field.map((field: Parse.Field) => {
+                const field_type = field.part.CompleteType.differentiate()
                 return `${field.name}: ${TypeWriter.rust.reference(field_type, inScope)}`
             })
         
@@ -109,16 +117,37 @@ export const TypeWriter: CompleteTypeWriter = {
 
         reference: (r, inScope) => {
             let base = '';
-            switch (r.kind) {
+            let prefix = '';
+            let suffix = '';
+            let focus_type = r
+            if (r.kind === "DetailedType") {
+                switch (r.modification) {
+                    case Lexicon.Symbol.Array:
+                        prefix = 'Vec<';
+                        suffix = '>';
+                        break;
+            
+                    case Lexicon.Symbol.Optional:
+                        prefix = 'Option<';
+                        suffix = '>';
+                    case Lexicon.Symbol.none:
+                        break;
+                    default: Utilities.assertNever(r.modification);
+                }
+                focus_type = r.part.CompleteType.differentiate()
+            }
+            switch (focus_type.kind) {
+                case "DetailedType":
+                    throw Error(`Unexpected Generic`)
                 case "Primitive":
-                    base = TypeWriter.rust.primitive[r.val];
+                    base = TypeWriter.rust.primitive[focus_type.type];
                     break;
         
-                case "CustomType":
-                    const ent = inScope.getEntityOfType(r.type, "Enum", "Struct");
+                case "TypeName":
+                    const ent = inScope.getEntityOfType(focus_type.name, "Enum", "Struct");
                     switch (ent.kind) {
                         case "Struct":
-                            base = r.type;
+                            base = focus_type.name;
                             break;
         
                         case "Enum":
@@ -127,24 +156,10 @@ export const TypeWriter: CompleteTypeWriter = {
                     }
                     break;
         
-                default: Utilities.assertNever(r);
+                default: Utilities.assertNever(focus_type);
             }
-            let prefix = '';
-            let suffix = '';
-            switch (r.modification) {
-                case "array":
-                    prefix = 'Vec<';
-                    suffix = '>';
-                case "none":
-                    break;
-        
-                case "optional":
-                    prefix = 'Option<';
-                    suffix = '>';
-                    break;
-        
-                default: Utilities.assertNever(r.modification);
-            }
+            
+
             return `${prefix}${base}${suffix}`;
         }
     }

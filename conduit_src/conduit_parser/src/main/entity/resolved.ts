@@ -42,18 +42,19 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     }
     
 }
-
+export type Type = ReturnType<Parse.CompleteType["differentiate"]>
 
 export type Variable = Readonly<{
     name: string,
     type: Parse.CompleteType
 }>
+export type Primitive = basic.PrimitiveEntity
 
-export type ReturnType = Parse.CompleteType | basic.VoidReturn
+export type RetType = Parse.CompleteType | basic.VoidReturn
 export type Statement = Parse.Statement
 export type ReturnableStatement = Parse.Returnable
 export type Function =  basic.NamedIntrafile<"Function", {
-    returnType: ReturnType,
+    returnType: RetType,
     parameter: Parse.Parameter,
     body: Parse.Statement[],
     method: "POST" | "GET"

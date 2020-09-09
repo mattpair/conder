@@ -927,7 +927,7 @@ conduit_entity_id: Option<i32>
 
     
     // Gettting all simple
-    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_wrapper_and_simple)\\", &[]).await?;
+    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_and_innard)\\", &[]).await?;
 
     
 
@@ -950,7 +950,7 @@ conduit_entity_id: Option<i32>
                 }
                 
 
-                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_wrapper_and_simple\\", &[]).await?;
+                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_and_innard\\", &[]).await?;
                 let mut lrmap10: HashMap<i32, Vec<i32>> = HashMap::new();
                 while let Some(lrrow11) = lr9.pop() {
                     let l12 = lrrow11.get(\\"left_ptr\\");
@@ -1006,7 +1006,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
                 let ent4: i32 = ret3[0].get(0);
                 while let Some(child_id) = vec_ret0.pop() {
-                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
+                    client.query(\\"insert into rel_wrapStore_and_innard(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
                 }
                     
                 
@@ -1469,7 +1469,7 @@ conduit_entity_id: Option<i32>
 
     
     // Gettting all simple
-    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_wrapper_and_simple)\\", &[]).await?;
+    let mut allsimple6 = client.query(\\"select * from wrapStore_innard WHERE conduit_entity_id in (select right_ptr from rel_wrapStore_and_innard)\\", &[]).await?;
 
     
 
@@ -1492,7 +1492,7 @@ conduit_entity_id: Option<i32>
                 }
                 
 
-                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_wrapper_and_simple\\", &[]).await?;
+                let mut lr9 = client.query(\\"select left_ptr, right_ptr from rel_wrapStore_and_innard\\", &[]).await?;
                 let mut lrmap10: HashMap<i32, Vec<i32>> = HashMap::new();
                 while let Some(lrrow11) = lr9.pop() {
                     let l12 = lrrow11.get(\\"left_ptr\\");
@@ -1548,7 +1548,7 @@ let ret3 = client.query(\\"insert into wrapStore default values RETURNING condui
 
                 let ent4: i32 = ret3[0].get(0);
                 while let Some(child_id) = vec_ret0.pop() {
-                    client.query(\\"insert into rel_wrapStore_wrapper_and_simple(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
+                    client.query(\\"insert into rel_wrapStore_and_innard(left_ptr, right_ptr) values ($1, $2)\\", &[&ent4, &child_id]).await?;
                 }
                     
                 
@@ -1981,7 +1981,7 @@ PRIMARY KEY(conduit_entity_id)
         conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
     );
-                CREATE TABLE rel_wrapStore_wrapper_and_simple (
+                CREATE TABLE rel_wrapStore_and_innard (
                     left_ptr INT,
                     right_ptr INT,
                     FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
@@ -2017,7 +2017,7 @@ PRIMARY KEY(conduit_entity_id)
         conduit_entity_id	INT	GENERATED ALWAYS AS IDENTITY,
 PRIMARY KEY(conduit_entity_id)
     );
-                CREATE TABLE rel_wrapStore_wrapper_and_simple (
+                CREATE TABLE rel_wrapStore_and_innard (
                     left_ptr INT,
                     right_ptr INT,
                     FOREIGN KEY(right_ptr) REFERENCES wrapStore_innard(conduit_entity_id),
@@ -2457,11 +2457,11 @@ Array [
 ]
 `;
 
-exports[`not returning anything - if  1`] = `[Error: Within function echosBool: Error: Function fails to return a value for all paths]`;
+exports[`not returning anything - if  1`] = `[Error: Within function echosBool: Error: Types are not equal]`;
 
 exports[`not returning anything 1`] = `[Error: Within function echosSingleton: Error: Function fails to return a value for all paths]`;
 
-exports[`returning wrong thing  1`] = `[Error: Within function echosBool: Error: Returning a variable doesn't make sense when the expected result is none]`;
+exports[`returning wrong thing  1`] = `[Error: Within function echosBool: Error: Types are not equal]`;
 
 exports[`simple struct: main files 1`] = `
 Array [

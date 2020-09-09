@@ -1,12 +1,11 @@
 import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse, Lexicon, isPrimitive } from "conduit_parser";
-import { Parameter } from 'conduit_parser/dist/src/main/entity/resolved';
+import { Utilities, CompiledTypes, Parse, Lexicon } from "conduit_parser";
 
 export type WritableFunction = Readonly<{
     name: string
     method: "POST" | "GET"
     body: OpInstance[],
-    parameter: Parameter
+    parameter: Parse.Parameter
     maximumNumberOfVariables: number
 }>
 
@@ -38,16 +37,17 @@ export const functionToByteCode: Utilities.StepDefinition<
     }
 }
 
+
 interface VarMapEntryI{
     readonly id: number,
-    readonly type: CompiledTypes.ResolvedType
+    readonly type: CompiledTypes.Type
 }
 
 class VarMapEntry implements VarMapEntryI{
     readonly id: number
-    readonly type: CompiledTypes.ResolvedType
+    readonly type: CompiledTypes.Type
 
-    constructor(id: number, type: CompiledTypes.ResolvedType) {
+    constructor(id: number, type: CompiledTypes.Type) {
         this.id = id 
         this.type = type
     }
@@ -58,7 +58,7 @@ class VarMap extends Map<string, VarMapEntryI> {
     private keysInLevel: string[]= []
     maximumVars = 0
 
-    public add(s: string, t: CompiledTypes.ResolvedType): number {
+    public add(s: string, t: CompiledTypes.Type): number {
         super.set(s, new VarMapEntry(this.count, t));
         const v = this.count++
         this.keysInLevel.push(s)
@@ -91,16 +91,22 @@ class VarMap extends Map<string, VarMapEntryI> {
 
 }
 
-function typesAreEqual(l: CompiledTypes.ResolvedType, r: CompiledTypes.ResolvedType): boolean {
-    return l.kind === r.kind &&
-    l.modification === r.modification &&
-    (
-        (
-            l.kind === "CustomType"
+function typesAreEqual(l: CompiledTypes.Type, r: CompiledTypes.Type): boolean {
+    if (l.kind !== r.kind) {
+        return false
+    }
+    switch(l.kind) {
+        case "TypeName":
             //@ts-ignore
-            && l.type === r.type
-        ) 
-    || l.kind === "Primitive")
+            return l.name === r.name
+        case "DetailedType":
+            //@ts-ignore
+            return l.modification === r.modification && typesAreEqual(l.part.CompleteType.differentiate(), r.part.CompleteType.differentiate())
+        case "Primitive":
+            //@ts-ignore
+            return l.type === r.type
+        default: Utilities.assertNever(l)
+    }
 }
 
 type CompilationTools = Readonly<{
@@ -110,7 +116,7 @@ type CompilationTools = Readonly<{
     ops: OpInstance[]
 }>
 
-type TargetType = CompiledTypes.ResolvedType | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
+type TargetType = CompiledTypes.Type | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
     invocation: Parse.MethodInvocation,
@@ -135,7 +141,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
         if (target.kind === "any" || target.kind === "none") {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
-                assignableToOps(asn, {kind: "CustomType", type: store.typeName, modification: "none"}, tools)
+                assignableToOps(asn, {kind: "TypeName", name: store.typeName}, tools)
                 tools.ops.push(tools.factory.storeInsertPrevious(store))
             })    
         } else {
@@ -174,7 +180,9 @@ const hierStoreMethodToOps: HierStoreMethods = {
         if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
             throw Error(`Currently only support returning the entire row variable in select statements`)
         }
-        if (target.kind === "any" || typesAreEqual(target, {kind: "CustomType", type: store.typeName,  modification: "array"})) {
+        if (target.kind === "any" || typesAreEqual(target, 
+            {kind: "DetailedType", modification: Lexicon.Symbol.Array, 
+                part: {CompleteType: {kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: store.typeName})}}})) {
             tools.ops.push(tools.factory.storeQuery(store))
         } else {
             throw Error(`Type returned from select statement doesn't match expectations`)
@@ -194,8 +202,11 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (targetType.kind === "any") {
             throw Error(`Cannot determine what type python3 call should be.`)
         }
-        if (targetType.kind !== "none" && targetType.modification !== "none") {
+        if (targetType.kind === "DetailedType" && targetType.modification !== Lexicon.Symbol.none) {
             throw Error(`Can only convert foreign function results into base types, not arrays or optionals.`)
+        }
+        if (targetType.kind === "none") {
+            throw Error(`Foreign function results must be returned or saved to a variable`)   
         }
 
         const dot = dots[0]
@@ -211,10 +222,8 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         tools.ops.push(
             tools.factory.invokeInstalled(module, m.name),
         )
-        // TODO: we should still check that the rpc returns successfully
-        if (targetType.kind !== "none") {
-            tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
-        }
+   
+        tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
     },
 
     HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope, ops}) => {
@@ -251,7 +260,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 throw Error(`Global reference return real data, not none`)
             }
             if (targetType.kind !== "any") {
-                if (store.typeName !== targetType.type || targetType.modification  !== "array") {
+
+                
+                if (!typesAreEqual(targetType, {kind: "DetailedType", modification: Lexicon.Symbol.Array, part: {CompleteType: {kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: store.typeName})}}})) {
                     throw Error(`The store contains a different type than the one desired`)
                 }
             }
@@ -274,7 +285,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         }
         ops.push(factory.echoVariable(ref.id))
 
-        let currentType: CompiledTypes.ResolvedType = ref.type
+        let currentType: CompiledTypes.Type = ref.type
 
         if (assign.children.DotStatement.length > 0) {
             
@@ -285,13 +296,16 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
                         if (currentType.kind === "Primitive") {
                             throw Error(`Attempting to access field on a primitive type`)
                         }
-                        const fullType = inScope.getEntityOfType(currentType.type, "Struct")
+                        if (currentType.kind === "DetailedType") {
+                            throw Error(`There does not currently exist any methods on generic types`)
+                        }
+                        const fullType = inScope.getEntityOfType(currentType.name, "Struct")
                         const childField = fullType.children.Field.find(c => c.name === method.name)
                         if (!childField) {
                             throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
                         }
                         ops.push(factory.structFieldAccess(fullType, method.name))
-                        currentType = childField.part.FieldType.differentiate()
+                        currentType = childField.part.CompleteType.differentiate()
                         break
 
                     case "MethodInvocation":
@@ -360,16 +374,15 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
 
             
             case "VariableCreation":
-                const t = stmt.part.CustomType
-                const prim = isPrimitive(t)
+                const t = stmt.part.CompleteType.differentiate()
                 
                 assignableToOps(
                     stmt.part.Assignable, 
-                    prim !== undefined ? prim : t, 
+                    t, 
                     {...tools, ops})
                 
                 
-                tools.varmap.add(stmt.name, stmt.part.CustomType)
+                tools.varmap.add(stmt.name, t)
                 ops.push(tools.factory.savePrevious)
                 break
             case "ReturnStatement":
@@ -391,7 +404,7 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                 break
             
             case "If":
-                assignableToOps(stmt.part.Assignable, {kind: "Primitive", val: Lexicon.Symbol.bool, modification: "none"}, {...tools, ops})
+                assignableToOps(stmt.part.Assignable, {kind: "Primitive", type: Lexicon.Symbol.bool}, {...tools, ops})
                 // Negate the previous value to jump ahead
                 ops.push(tools.factory.negatePrev)
                 tools.varmap.startLevel()
@@ -425,11 +438,11 @@ function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, 
     const varmap = new VarMap()
     const parameter = f.parameter.differentiate()
     if (parameter.kind === "UnaryParameter") {
-        varmap.add(parameter.name, parameter.type)
+        varmap.add(parameter.name, parameter.part.UnaryParameterType.part.CompleteType.differentiate())
     }
-    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
+    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType.differentiate()
     
-    const summary = statementsToOps(f.body.statements, targetType, {varmap, inScope, factory}, {numberOfPrecedingOps: 0})
+    const summary = statementsToOps(f.body, targetType, {varmap, inScope, factory}, {numberOfPrecedingOps: 0})
     if (!summary.alwaysReturns && targetType.kind !== "none") {
         throw Error(`Function fails to return a value for all paths`)
     }

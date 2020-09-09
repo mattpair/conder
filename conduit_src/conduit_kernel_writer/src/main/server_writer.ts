@@ -9,13 +9,12 @@ import { toAnyType } from './toAnyType';
 import { TypeWriter } from './type_writing/type_writer';
 import { ForeignInstallResults } from 'conduit_foreign_install';
 
-function toRustType(p: CompiledTypes.ReturnType, inScope: CompiledTypes.ScopeMap): string {
+function toRustType(p: CompiledTypes.RetType, inScope: CompiledTypes.ScopeMap): string {
     switch (p.kind) {
         case "VoidReturnType":
             return "()";
-        case "CustomType":
-        case "Primitive":
-            return TypeWriter.rust.reference(p, inScope)
+        case "CompleteType":
+            return TypeWriter.rust.reference(p.differentiate(), inScope)
     }
 
 }
@@ -42,10 +41,10 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
     {param: "", extract: ""}
         :
     {
-        param: `, input: web::Json<${toRustType(param.type, scopeMap)}>`, 
+        param: `, input: web::Json<${toRustType(param.part.UnaryParameterType.part.CompleteType, scopeMap)}>`, 
         extract: `
         let innerInput = input.into_inner();
-        state.push(${toAnyType(param.type, scopeMap)}(&innerInput));
+        state.push(${toAnyType(param.part.UnaryParameterType.part.CompleteType.differentiate(), scopeMap)}(&innerInput));
         `
     }
 
