@@ -2,7 +2,7 @@ import { AnyOpDef, AllTypesMember } from './interpreter/derive_supported_ops';
 import { WrittenCode } from './types';
 import { CompiledTypes, Utilities} from 'conduit_parser';
 import { cargolockstr, maindockerfile, cargo } from './constants';
-import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter} from './sql'
+import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter, generatQueryResultType} from './sql'
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
 import { toAnyType } from './toAnyType';
@@ -94,6 +94,7 @@ export const writeRustAndContainerCode: Utilities.StepDefinition<{
                     break
                 case "HierarchicalStore":
                     stores.set(val.name, val)
+                    structs.push(...generatQueryResultType(val))
                     break;
             }
         })

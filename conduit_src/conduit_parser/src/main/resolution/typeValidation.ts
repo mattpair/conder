@@ -214,9 +214,13 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                     }
                     
                 } else {
-                    if (modifier === Symbol.Optional) {
-                        throw Error(`Cannot have optional enum columns`)
+                    switch (modifier) {
+                        case Symbol.Optional:
+                            throw Error(`Cannot have optional enum columns`)
+                        case Symbol.Ref:
+                            throw Error(`Reffing an enum doesn't make any sense`)
                     }
+                    
                     return {
                         dif: "enum",
                         type: ref,
@@ -226,6 +230,11 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                     }
                 }
             case "Primitive":
+                switch (modifier) {
+                    
+                    case Symbol.Ref:
+                        throw Error(`Reffing a primitive doesn't make any sense`)
+                }
                 return {
                     dif: "prim",
                     modification: modifier,

@@ -171,6 +171,9 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     allTypesUnion.push(
                         new DataContainingType(`${v.name}Result`, `Vec<${v.typeName}>`, {exemptFromUsingReferences: true})
                     )
+                    allTypesUnion.push(
+                        new DataContainingType(`${v.name}QueryResult`, `Vec<${v.name}QueryResult>`, {exemptFromUsingReferences: true})
+                    )
             }        
         })
         

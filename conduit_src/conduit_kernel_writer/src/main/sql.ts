@@ -1,5 +1,7 @@
 import { CompiledTypes, Lexicon, Utilities} from 'conduit_parser';
 import { assertNever } from 'conduit_parser/dist/src/main/utils';
+import { AllTypesMember } from './interpreter/derive_supported_ops';
+import { TypeWriter } from './type_writing/type_writer';
 
 
 export type ReturnInstruction = Readonly<{
@@ -409,5 +411,62 @@ export function generateRustGetAllQuerySpec(store: CompiledTypes.HierarchicalSto
         }`
     }
     return `${store.specName}`
+    
+}
+
+export function generatQueryResultType(store: CompiledTypes.HierarchicalStore): string[] {
+    const name = `${store.name}QueryResult`
+    const fields: string[] = []
+    const res: string[] = []
+    store.columns.forEach(col => {
+        switch(col.dif) {
+            case "1:many": 
+            case "1:1": {
+                const prefix = col.dif === "1:1" ? "" : "Vec<"
+                const suffix = col.dif === "1:1" ? "" : ">"
+                
+                fields.push(`${col.fieldName}: Option<${prefix}${col.ref.name}QueryResult${suffix}>`)
+                res.push(...generatQueryResultType(col.ref))
+                break
+            }
+            
+
+            
+            
+                
+            case "enum":
+            case "prim": {
+                let prefix = ''
+                let suffix = ''
+                switch (col.modification){
+                    case Lexicon.Symbol.Array:
+                        prefix = "Vec<"
+                        suffix = ">"
+                        break
+                    case Lexicon.Symbol.Optional:
+                        prefix = "Option<"
+                        suffix = ">"
+                    case Lexicon.Symbol.none:
+                        break
+
+                    default: assertNever(col)
+                }
+                const typeString = col.dif === "enum" ? "i64" : TypeWriter.rust.primitive[col.type.type]
+                
+                fields.push(`${col.fieldName}: Option<${prefix}${typeString}${suffix}>`)
+                break
+            }
+
+            default: assertNever(col)
+        }
+    }) 
+
+    return [...res, `
+        #[derive(Serialize, Deserialize, Clone)]
+        struct ${name} {
+            ${fields.join(",\n")}
+        }
+        `
+    ]
     
 }

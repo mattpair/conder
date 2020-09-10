@@ -75,7 +75,7 @@ export type PrimitiveColumn = Readonly<{
     type: basic.PrimitiveEntity
     columnName: string
     fieldName: string
-    modification: TypeModifierUnion
+    modification: Exclude<TypeModifierUnion, Symbol.Ref>
 }>
 
 export type EnumColumn = Readonly<{
@@ -83,7 +83,7 @@ export type EnumColumn = Readonly<{
     type: Enum
     columnName: string
     fieldName: string
-    modification: Exclude<TypeModifierUnion, Symbol.Optional>
+    modification: Exclude<TypeModifierUnion, Symbol.Optional |  Symbol.Ref>
 }>
 
 export type StructArrayCol = Readonly<{
