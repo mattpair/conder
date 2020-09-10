@@ -5,7 +5,7 @@ import { cargolockstr, maindockerfile, cargo } from './constants';
 import {generateInsertRustCode, generateRustGetAllQuerySpec, createSQLFor, generateQueryInterpreter, generatQueryResultType} from './sql'
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { WritableFunction } from './statement_converter';
-import { toAnyType } from './toAnyType';
+import { toInterpreterType } from './toInterpreterType';
 import { TypeWriter } from './type_writing/type_writer';
 import { ForeignInstallResults } from 'conduit_foreign_install';
 
@@ -44,7 +44,7 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
         param: `, input: web::Json<${toRustType(param.part.UnaryParameterType.part.CompleteType, scopeMap)}>`, 
         extract: `
         let innerInput = input.into_inner();
-        state.push(${toAnyType(param.part.UnaryParameterType.part.CompleteType.differentiate(), scopeMap)}(&innerInput));
+        state.push(${toInterpreterType(param.part.UnaryParameterType.part.CompleteType.differentiate(), scopeMap)}(&innerInput));
         `
     }
 
@@ -53,7 +53,7 @@ function writeFunction(f: WritableFunction, scopeMap: CompiledTypes.ScopeMap): F
         def: `
         
         async fn ${f.name}(data: web::Data<AppData>${input.param}) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(${f.maximumNumberOfVariables});
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(${f.maximumNumberOfVariables});
             ${input.extract}
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.${exec_name}).await;
         }

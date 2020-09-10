@@ -116,7 +116,7 @@ simpleFieldAccess(simpleField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -172,47 +172,47 @@ OptionalquerySpec_simples(&'exec Option<querySpec_simples>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPrevioussimples => {
                         match prev {
-                            AnyType::simple(r) => {
+                            InterpreterType::simple(r) => {
                                 match insert_simples(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerysimples => {
                         
                             let spec = querySpec_simples;
                             match query_interpreter_simples(&spec, &client).await {
-                                Ok(out) => AnyType::simplesResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::simplesResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -222,39 +222,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -265,22 +265,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::string(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::string(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -289,73 +289,73 @@ Op::simpleFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::simplesResult(data) => HttpResponse::Ok().json(data),
-AnyType::simplesQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::simplesRef(data) => HttpResponse::Ok().json(data),
-AnyType::simplesRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManysimplesRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalsimplesRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_simples(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_simplesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_simples(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_simples(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simplesResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::simplesQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::simplesRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::simplesRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManysimplesRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalsimplesRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_simples(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_simplesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_simples(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_simples(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -363,7 +363,7 @@ AnyType::OptionalquerySpec_simples(data) => HttpResponse::Ok().json(data)
                             
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
@@ -539,7 +539,7 @@ BoolholderFieldAccess(BoolholderField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -585,29 +585,29 @@ OptionalBoolholder(&'exec Option<Boolholder>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::gotoOp(op_param) => {
                         
@@ -615,39 +615,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -658,22 +658,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::BoolholderFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::Boolholder(inside) => match *op_param {
-                                    BoolholderField::BoolholdervalueFieldRef => AnyType::bool(&inside.value)
+                                InterpreterType::Boolholder(inside) => match *op_param {
+                                    BoolholderField::BoolholdervalueFieldRef => InterpreterType::bool(&inside.value)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -682,63 +682,63 @@ Op::BoolholderFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::Boolholder(data) => HttpResponse::Ok().json(data),
-AnyType::BoolholderInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyBoolholder(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Boolholder(data) => HttpResponse::Ok().json(data),
+InterpreterType::BoolholderInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyBoolholder(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -746,10 +746,10 @@ AnyType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
                             
         
         async fn echoWithIfs(data: web::Data<AppData>, input: web::Json<Boolholder>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::Boolholder(&innerInput));
+        state.push(InterpreterType::Boolholder(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.echoWithIfs_executable).await;
         }
@@ -1080,7 +1080,7 @@ wrapperFieldAccess(wrapperField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -1144,39 +1144,39 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPreviouswrapStore => {
                         match prev {
-                            AnyType::wrapper(r) => {
+                            InterpreterType::wrapper(r) => {
                                 match insert_wrapStore(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -1185,8 +1185,8 @@ Op::storeQuerywrapStore => {
             innard: querySpec_wrapStore_innard
         };
                             match query_interpreter_wrapStore(&spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::wrapStoreResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -1196,39 +1196,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -1239,22 +1239,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::string(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::string(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -1262,11 +1262,11 @@ Op::simpleFieldAccess(op_param) => {
 Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(&inside.innard)
+                                InterpreterType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => InterpreterType::Manysimple(&inside.innard)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -1275,81 +1275,81 @@ Op::wrapperFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::wrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manywrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -1357,10 +1357,10 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::wrapper(&innerInput));
+        state.push(InterpreterType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -1652,7 +1652,7 @@ wrapperFieldAccess(wrapperField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -1716,39 +1716,39 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPreviouswrapStore => {
                         match prev {
-                            AnyType::wrapper(r) => {
+                            InterpreterType::wrapper(r) => {
                                 match insert_wrapStore(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -1757,8 +1757,8 @@ Op::storeQuerywrapStore => {
             innard: querySpec_wrapStore_innard
         };
                             match query_interpreter_wrapStore(&spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::wrapStoreResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -1768,39 +1768,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -1811,22 +1811,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::string(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::string(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -1834,11 +1834,11 @@ Op::simpleFieldAccess(op_param) => {
 Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::Manysimple(&inside.innard)
+                                InterpreterType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => InterpreterType::Manysimple(&inside.innard)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -1847,81 +1847,81 @@ Op::wrapperFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::wrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manywrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -1929,10 +1929,10 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::wrapper(&innerInput));
+        state.push(InterpreterType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -1941,7 +1941,7 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
@@ -2180,7 +2180,7 @@ BoolholderFieldAccess(BoolholderField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -2226,29 +2226,29 @@ OptionalBoolholder(&'exec Option<Boolholder>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::gotoOp(op_param) => {
                         
@@ -2256,39 +2256,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -2299,22 +2299,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::BoolholderFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::Boolholder(inside) => match *op_param {
-                                    BoolholderField::BoolholdervalueFieldRef => AnyType::bool(&inside.value)
+                                InterpreterType::Boolholder(inside) => match *op_param {
+                                    BoolholderField::BoolholdervalueFieldRef => InterpreterType::bool(&inside.value)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -2323,63 +2323,63 @@ Op::BoolholderFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::Boolholder(data) => HttpResponse::Ok().json(data),
-AnyType::BoolholderInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyBoolholder(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Boolholder(data) => HttpResponse::Ok().json(data),
+InterpreterType::BoolholderInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyBoolholder(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -2387,10 +2387,10 @@ AnyType::OptionalBoolholder(data) => HttpResponse::Ok().json(data)
                             
         
         async fn echoWithIfs(data: web::Data<AppData>, input: web::Json<Boolholder>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::Boolholder(&innerInput));
+        state.push(InterpreterType::Boolholder(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.echoWithIfs_executable).await;
         }
@@ -2658,7 +2658,7 @@ simpleFieldAccess(simpleField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -2714,47 +2714,47 @@ OptionalquerySpec_simpleStore(&'exec Option<querySpec_simpleStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPrevioussimpleStore => {
                         match prev {
-                            AnyType::simple(r) => {
+                            InterpreterType::simple(r) => {
                                 match insert_simpleStore(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerysimpleStore => {
                         
                             let spec = querySpec_simpleStore;
                             match query_interpreter_simpleStore(&spec, &client).await {
-                                Ok(out) => AnyType::simpleStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::simpleStoreResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -2764,39 +2764,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -2807,22 +2807,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::double(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::double(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -2831,73 +2831,73 @@ Op::simpleFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleStoreResult(data) => HttpResponse::Ok().json(data),
-AnyType::simpleStoreQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::simpleStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::simpleStoreRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManysimpleStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalsimpleStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_simpleStore(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_simpleStoreInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_simpleStore(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleStoreResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleStoreQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleStoreRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManysimpleStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalsimpleStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_simpleStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_simpleStoreInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_simpleStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -2905,10 +2905,10 @@ AnyType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<simple>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::simple(&innerInput));
+        state.push(InterpreterType::simple(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -2917,7 +2917,7 @@ AnyType::OptionalquerySpec_simpleStore(data) => HttpResponse::Ok().json(data)
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
@@ -3203,7 +3203,7 @@ wrapperFieldAccess(wrapperField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -3267,39 +3267,39 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPreviouswrapStore => {
                         match prev {
-                            AnyType::wrapper(r) => {
+                            InterpreterType::wrapper(r) => {
                                 match insert_wrapStore(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -3308,8 +3308,8 @@ Op::storeQuerywrapStore => {
             innard: querySpec_wrapStore_innard
         };
                             match query_interpreter_wrapStore(&spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::wrapStoreResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -3319,39 +3319,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -3362,22 +3362,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::Manystring(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::Manystring(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -3385,11 +3385,11 @@ Op::simpleFieldAccess(op_param) => {
 Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(&inside.innard)
+                                InterpreterType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => InterpreterType::simple(&inside.innard)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -3398,81 +3398,81 @@ Op::wrapperFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::wrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manywrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -3480,10 +3480,10 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::wrapper(&innerInput));
+        state.push(InterpreterType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -3492,7 +3492,7 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }
@@ -3791,7 +3791,7 @@ wrapperFieldAccess(wrapperField)
 
     #[derive(Serialize, Clone)]
     #[serde(tag = \\"kind\\", content= \\"data\\")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         None,
 Err(String),
 double(&'exec f64),
@@ -3855,39 +3855,39 @@ OptionalquerySpec_wrapStore(&'exec Option<querySpec_wrapStore>)
     }
 
     
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
             prev = match &ops[next_op_index] {
                 Op::pushPreviousOnCallStack => {
-                        callstack.push(prev); AnyType::None
+                        callstack.push(prev); InterpreterType::None
                     },
 Op::negatePrev => {
                         match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
-                        _ => AnyType::Err(\\"Negating a non boolean value\\".to_string())
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
+                        _ => InterpreterType::Err(\\"Negating a non boolean value\\".to_string())
                     }
                     },
 Op::noop => {
-                        AnyType::None
+                        InterpreterType::None
                     },
 Op::dropVariables(op_param) => {
-                        state.truncate(state.len() - *op_param); AnyType::None
+                        state.truncate(state.len() - *op_param); InterpreterType::None
                     },
 Op::storeInsertPreviouswrapStore => {
                         match prev {
-                            AnyType::wrapper(r) => {
+                            InterpreterType::wrapper(r) => {
                                 match insert_wrapStore(&client, &r).await {
-                                    Ok(()) => AnyType::None,
-                                    Err(err) => AnyType::Err(err.to_string())
+                                    Ok(()) => InterpreterType::None,
+                                    Err(err) => InterpreterType::Err(err.to_string())
                                 }
                             },
-                            _ => AnyType::Err(\\"Invalid insertion type\\".to_string())
+                            _ => InterpreterType::Err(\\"Invalid insertion type\\".to_string())
                         }
                     },
 Op::storeQuerywrapStore => {
@@ -3896,8 +3896,8 @@ Op::storeQuerywrapStore => {
             innard: querySpec_wrapStore_innard
         };
                             match query_interpreter_wrapStore(&spec, &client).await {
-                                Ok(out) => AnyType::wrapStoreResult(out),
-                                Err(err) => AnyType::Err(err.to_string())
+                                Ok(out) => InterpreterType::wrapStoreResult(out),
+                                Err(err) => InterpreterType::Err(err.to_string())
                             }
                         
                     },
@@ -3907,39 +3907,39 @@ Op::gotoOp(op_param) => {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                     },
 Op::conditionalGoto(op_param) => {
                         
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 
             if *op_param >= ops.len() {
                 panic!(\\"Setting op index out of bounds\\");
             }
             next_op_index = *op_param - 1;
-            AnyType::None
+            InterpreterType::None
             
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        _ => AnyType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
+                        _ => InterpreterType::Err(\\"Cannot evaluate variable as boolean\\".to_string())
                     }
                     
                     },
@@ -3950,22 +3950,22 @@ Op::returnPrevious => {
                         return prev
                     },
 Op::savePrevious => {
-                        state.push(prev); AnyType::None
+                        state.push(prev); InterpreterType::None
                     },
 Op::echoVariable(op_param) => {
                         match state.get(*op_param) {
                         Some(d) => d.clone(),
-                        None => AnyType::Err(\\"Echoing variable that does not exist\\".to_string())
+                        None => InterpreterType::Err(\\"Echoing variable that does not exist\\".to_string())
                     }
                     },
 Op::simpleFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::simple(inside) => match *op_param {
-                                    simpleField::simpledataFieldRef => AnyType::bool(&inside.data)
+                                InterpreterType::simple(inside) => match *op_param {
+                                    simpleField::simpledataFieldRef => InterpreterType::bool(&inside.data)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -3973,11 +3973,11 @@ Op::simpleFieldAccess(op_param) => {
 Op::wrapperFieldAccess(op_param) => {
                         
                             match prev {
-                                AnyType::wrapper(inside) => match *op_param {
-                                    wrapperField::wrapperinnardFieldRef => AnyType::simple(&inside.innard)
+                                InterpreterType::wrapper(inside) => match *op_param {
+                                    wrapperField::wrapperinnardFieldRef => InterpreterType::simple(&inside.innard)
 
                                 },
-                                _ => AnyType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
+                                _ => InterpreterType::Err(\\"Attempting to reference a field that doesn't exist on current type\\".to_string())
                             }
                                 
                             
@@ -3986,81 +3986,81 @@ Op::wrapperFieldAccess(op_param) => {
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
-            AnyType::None => HttpResponse::Ok().finish(),
-AnyType::Err(e) => {
+            InterpreterType::None => HttpResponse::Ok().finish(),
+InterpreterType::Err(e) => {
                 println!(\\"Error: {}\\", e);
                 HttpResponse::BadRequest().finish()
             },
-AnyType::double(data) => HttpResponse::Ok().json(data),
-AnyType::doubleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manydouble(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaldouble(data) => HttpResponse::Ok().json(data),
-AnyType::float(data) => HttpResponse::Ok().json(data),
-AnyType::floatInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyfloat(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalfloat(data) => HttpResponse::Ok().json(data),
-AnyType::int32(data) => HttpResponse::Ok().json(data),
-AnyType::int32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint32(data) => HttpResponse::Ok().json(data),
-AnyType::int64(data) => HttpResponse::Ok().json(data),
-AnyType::int64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint32Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint32(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint32(data) => HttpResponse::Ok().json(data),
-AnyType::uint64(data) => HttpResponse::Ok().json(data),
-AnyType::uint64Instance(data) => HttpResponse::Ok().json(data),
-AnyType::Manyuint64(data) => HttpResponse::Ok().json(data),
-AnyType::Optionaluint64(data) => HttpResponse::Ok().json(data),
-AnyType::bool(data) => HttpResponse::Ok().json(data),
-AnyType::boolInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybool(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbool(data) => HttpResponse::Ok().json(data),
-AnyType::string(data) => HttpResponse::Ok().json(data),
-AnyType::stringInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manystring(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalstring(data) => HttpResponse::Ok().json(data),
-AnyType::bytes(data) => HttpResponse::Ok().json(data),
-AnyType::bytesInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manybytes(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalbytes(data) => HttpResponse::Ok().json(data),
-AnyType::simple(data) => HttpResponse::Ok().json(data),
-AnyType::simpleInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manysimple(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalsimple(data) => HttpResponse::Ok().json(data),
-AnyType::wrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapperInstance(data) => HttpResponse::Ok().json(data),
-AnyType::Manywrapper(data) => HttpResponse::Ok().json(data),
-AnyType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
-AnyType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
-AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
+InterpreterType::double(data) => HttpResponse::Ok().json(data),
+InterpreterType::doubleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manydouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaldouble(data) => HttpResponse::Ok().json(data),
+InterpreterType::float(data) => HttpResponse::Ok().json(data),
+InterpreterType::floatInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalfloat(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64(data) => HttpResponse::Ok().json(data),
+InterpreterType::int64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint32Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint32(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::uint64Instance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manyuint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionaluint64(data) => HttpResponse::Ok().json(data),
+InterpreterType::bool(data) => HttpResponse::Ok().json(data),
+InterpreterType::boolInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybool(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbool(data) => HttpResponse::Ok().json(data),
+InterpreterType::string(data) => HttpResponse::Ok().json(data),
+InterpreterType::stringInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manystring(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalstring(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::bytesInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manybytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalbytes(data) => HttpResponse::Ok().json(data),
+InterpreterType::simple(data) => HttpResponse::Ok().json(data),
+InterpreterType::simpleInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manysimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalsimple(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapperInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::Manywrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::Optionalwrapper(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreQueryResult(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::wrapStoreRefInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManywrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalwrapStoreRef(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore_innardInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore_innard(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::querySpec_wrapStoreInstance(data) => HttpResponse::Ok().json(data),
+InterpreterType::ManyquerySpec_wrapStore(data) => HttpResponse::Ok().json(data),
+InterpreterType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
         };
     }
     
@@ -4068,10 +4068,10 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
                             
         
         async fn insert(data: web::Data<AppData>, input: web::Json<wrapper>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
         let innerInput = input.into_inner();
-        state.push(AnyType::wrapper(&innerInput));
+        state.push(InterpreterType::wrapper(&innerInput));
         
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.insert_executable).await;
         }
@@ -4080,7 +4080,7 @@ AnyType::OptionalquerySpec_wrapStore(data) => HttpResponse::Ok().json(data)
 
         
         async fn get(data: web::Data<AppData>) -> impl Responder {
-            let mut state: Vec<AnyType> = Vec::with_capacity(0);
+            let mut state: Vec<InterpreterType> = Vec::with_capacity(0);
             
             return conduit_byte_code_interpreter(&data.client, &mut state, &data.get_executable).await;
         }

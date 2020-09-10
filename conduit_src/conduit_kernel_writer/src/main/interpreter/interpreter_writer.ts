@@ -4,9 +4,9 @@ import { InstallModuleLookup } from 'conduit_foreign_install/dist/src/main/types
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllTypesMember[], foreignLookup: InstallModuleLookup): string {
     return `
-    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> AnyType<'a> {
-        let mut prev: AnyType<'a>= AnyType::None;
-        let mut callstack: Vec<AnyType<'a>> = Vec::new();
+    async fn conduit_byte_code_interpreter_internal<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> InterpreterType<'a> {
+        let mut prev: InterpreterType<'a>= InterpreterType::None;
+        let mut callstack: Vec<InterpreterType<'a>> = Vec::new();
         ${foreignLookup.size > 0 ? "let mut rpc_buffer: Option<awc::ClientResponse<_>> = Option::None;": ""}
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -25,14 +25,14 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[], allTypeUnion: AllT
             next_op_index += 1;
         
             match prev {
-                AnyType::Err(_) => return prev,
+                InterpreterType::Err(_) => return prev,
                 _ => {}  
             };
         }
         
             
         
-        return AnyType::None;
+        return InterpreterType::None;
     }`
 }
 
@@ -53,13 +53,13 @@ export function writeOperationInterpreter(supportedOps: AnyOpDef[], allTypeUnion
 
     #[derive(Serialize, Clone)]
     #[serde(tag = "kind", content= "data")]
-    enum AnyType<'exec> {
+    enum InterpreterType<'exec> {
         ${allTypeUnion.map(t => t.type ? `${t.name}(${t.type})` : t.name).join(",\n")}
     }
 
     ${writeInternalOpInterpreter(supportedOps, allTypeUnion, foreignLookup)}
 
-    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<AnyType<'a>>, ops: &Vec<Op>) -> impl Responder {
+    async fn conduit_byte_code_interpreter<'a>(client: &Client, state: &'a mut Vec<InterpreterType<'a>>, ops: &Vec<Op>) -> impl Responder {
         return match conduit_byte_code_interpreter_internal(client, state, ops).await {
             ${allTypeUnion.map(a => a.http_returner).join(",\n")}
         };

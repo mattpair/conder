@@ -1,6 +1,6 @@
 import { CompiledTypes, Utilities, Lexicon} from 'conduit_parser';
 import {generateRustGetAllQuerySpec} from '../sql'
-import { toAnyType } from '../toAnyType';
+import { toInterpreterType } from '../toInterpreterType';
 import { TypeWriter } from '../type_writing/type_writer';
 import {ForeignInstallResults} from 'conduit_foreign_install'
 import { Primitives } from 'conduit_parser/dist/src/main/lexicon';
@@ -88,7 +88,7 @@ export type AllTypesMember = Readonly<{
 }>
 
 
-type AnyTypeDefOption = {
+type InterpreterTypeDefOption = {
     exemptFromUsingReferences?: boolean
 }
 
@@ -96,7 +96,7 @@ class DataContainingType implements AllTypesMember {
     readonly name: string
     readonly type: string
     
-    constructor(name: string, type: string, options: AnyTypeDefOption = {}) {
+    constructor(name: string, type: string, options: InterpreterTypeDefOption = {}) {
         this.name = name
         // All types are references unless otherwise specified.
         // This reduces the number of clones that must be performed.
@@ -112,7 +112,7 @@ class DataContainingType implements AllTypesMember {
     }
     
     public get http_returner() : string {
-        return `AnyType::${this.name}(data) => HttpResponse::Ok().json(data)`
+        return `InterpreterType::${this.name}(data) => HttpResponse::Ok().json(data)`
     }
     
 }
@@ -122,8 +122,8 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
     stepName: "deriving supported operations",
     func: ({manifest, foreignLookup}) => {
         const allTypesUnion: AllTypesMember[] = [
-            {name: "None", http_returner: `AnyType::None => HttpResponse::Ok().finish()`},
-            {name: "Err", type: "String", http_returner: `AnyType::Err(e) => {
+            {name: "None", http_returner: `InterpreterType::None => HttpResponse::Ok().finish()`},
+            {name: "Err", type: "String", http_returner: `InterpreterType::Err(e) => {
                 println!("Error: {}", e);
                 HttpResponse::BadRequest().finish()
             }`}
@@ -134,10 +134,10 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             allTypesUnion.push(...DataContainingType.allPossibleDataContainingTypes(p, r))
         })
         function raiseErrorWithMessage(s: string): string {
-            return `AnyType::Err("${s}".to_string())`
+            return `InterpreterType::Err("${s}".to_string())`
         }
         function raiseErrorWithVariableMessage(v: string): string {
-            return `AnyType::Err(${v}.to_string())`
+            return `InterpreterType::Err(${v}.to_string())`
         }
         function safeGoto(varname: string): string {
             return `
@@ -145,7 +145,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 panic!("Setting op index out of bounds");
             }
             next_op_index = ${varname} - 1;
-            AnyType::None
+            InterpreterType::None
             `
         }
 
@@ -182,7 +182,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
             pushPreviousOnCallStack: {
                 opDefinition: {
                     kind: "static",
-                    rustOpHandler: `callstack.push(prev); AnyType::None`,
+                    rustOpHandler: `callstack.push(prev); InterpreterType::None`,
                     rustEnumMember: `pushPreviousOnCallStack`
                 },
                 factoryMethod: {kind: `pushPreviousOnCallStack`, data: undefined}
@@ -192,8 +192,8 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     kind: "static",
                     rustEnumMember: `negatePrev`,
                     rustOpHandler: `match prev {
-                        AnyType::bool(b) => AnyType::boolInstance(!b),
-                        AnyType::boolInstance(b) => AnyType::boolInstance(!b),
+                        InterpreterType::bool(b) => InterpreterType::boolInstance(!b),
+                        InterpreterType::boolInstance(b) => InterpreterType::boolInstance(!b),
                         _ => ${raiseErrorWithMessage("Negating a non boolean value")}
                     }`
                 },
@@ -203,14 +203,14 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 opDefinition: {
                     kind: "static",
                     rustEnumMember: `noop`,
-                    rustOpHandler: `AnyType::None`
+                    rustOpHandler: `InterpreterType::None`
                 },
                 factoryMethod: {kind: "noop", data: undefined}
             },
             dropVariables: {
                 opDefinition: {
                     kind: "param",
-                    rustOpHandler: `state.truncate(state.len() - *op_param); AnyType::None`,
+                    rustOpHandler: `state.truncate(state.len() - *op_param); InterpreterType::None`,
                     rustEnumMember: `dropVariables`,
                     paramType: "usize"
                 },
@@ -223,9 +223,9 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     create: (store) => [{
                         kind: "static",
                         rustOpHandler: `match prev {
-                            AnyType::${store.typeName}(r) => {
+                            InterpreterType::${store.typeName}(r) => {
                                 match insert_${store.name}(&client, &r).await {
-                                    Ok(()) => AnyType::None,
+                                    Ok(()) => InterpreterType::None,
                                     Err(err) => ${raiseErrorWithVariableMessage("err")}
                                 }
                             },
@@ -252,7 +252,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                         rustOpHandler: `
                             let spec = ${generateRustGetAllQuerySpec(t)};
                             match query_interpreter_${t.name}(&spec, &client).await {
-                                Ok(out) => AnyType::${t.name}Result(out),
+                                Ok(out) => InterpreterType::${t.name}Result(out),
                                 Err(err) => ${raiseErrorWithVariableMessage("err")}
                             }
                         `
@@ -283,18 +283,18 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                     rustEnumMember: "conditionalGoto",
                     rustOpHandler: `
                     match prev {
-                        AnyType::bool(b) => {
+                        InterpreterType::bool(b) => {
                             if *b {
                                 ${safeGoto("*op_param")}
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
-                        AnyType::boolInstance(b) => {
+                        InterpreterType::boolInstance(b) => {
                             if b {
                                 ${safeGoto("*op_param")}
                             } else {
-                                AnyType::None
+                                InterpreterType::None
                             }
                         },
                         _ => ${raiseErrorWithMessage("Cannot evaluate variable as boolean")}
@@ -341,7 +341,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                 opDefinition: {
                     kind: "static",
                     rustEnumMember: `savePrevious`,
-                    rustOpHandler:`state.push(prev); AnyType::None`
+                    rustOpHandler:`state.push(prev); InterpreterType::None`
                 }
             },
             
@@ -375,12 +375,12 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                             rustEnumMember: `${struct.name}FieldAccess`,
                             rustOpHandler: `
                             match prev {
-                                AnyType::${struct.name}(inside) => match *op_param {
+                                InterpreterType::${struct.name}(inside) => match *op_param {
                                     ${struct.children.Field.map(field => {
                                         const fieldType = field.part.CompleteType.differentiate()
                                         
                                         
-                                        return `${struct.name}Field::${struct.name}${field.name}FieldRef => ${toAnyType(fieldType, manifest.inScope)}(&inside.${field.name})`
+                                        return `${struct.name}Field::${struct.name}${field.name}FieldRef => ${toInterpreterType(fieldType, manifest.inScope)}(&inside.${field.name})`
                                     }).join(",\n")}
 
                                 },
@@ -433,7 +433,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                 match response {
                                     Ok(s) => {
                                         rpc_buffer = Some(s);
-                                        AnyType::None                    
+                                        InterpreterType::None                    
                                     },
                                     Err(e) => ${raiseErrorWithVariableMessage("e")}
                                 }
@@ -479,7 +479,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     match &mut rpc_buffer {
                                         Some(buf) => {
                                             match buf.json().await {
-                                                Ok(out) => AnyType::${t.name}Instance(out),
+                                                Ok(out) => InterpreterType::${t.name}Instance(out),
                                                 Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
@@ -496,7 +496,7 @@ export const deriveSupportedOperations: Utilities.StepDefinition<{manifest: Comp
                                     rustOpHandler: `match &mut rpc_buffer {
                                         Some(buf) => {
                                             match buf.json().await {
-                                                Ok(out) => AnyType::${t.type}Instance(out),
+                                                Ok(out) => InterpreterType::${t.type}Instance(out),
                                                 Err(err) => ${raiseErrorWithVariableMessage("err")}
                                             }
                                         },
