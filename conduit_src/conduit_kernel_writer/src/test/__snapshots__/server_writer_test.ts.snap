@@ -49,7 +49,8 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct simplesQueryResult {
-            data: Option<String>
+            conduit_entity_id: Option<i32>,
+data: Option<String>
         }
         
 
@@ -933,13 +934,15 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStore_innardQueryResult {
-            data: Option<String>
+            conduit_entity_id: Option<i32>,
+data: Option<String>
         }
         
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStoreQueryResult {
-            innard: Option<Vec<wrapStore_innardQueryResult>>
+            conduit_entity_id: Option<i32>,
+innard: Option<Vec<wrapStore_innardQueryResult>>
         }
         
 
@@ -1503,13 +1506,15 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStore_innardQueryResult {
-            data: Option<String>
+            conduit_entity_id: Option<i32>,
+data: Option<String>
         }
         
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStoreQueryResult {
-            innard: Option<Vec<wrapStore_innardQueryResult>>
+            conduit_entity_id: Option<i32>,
+innard: Option<Vec<wrapStore_innardQueryResult>>
         }
         
 
@@ -2586,7 +2591,8 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct simpleStoreQueryResult {
-            data: Option<f64>
+            conduit_entity_id: Option<i32>,
+data: Option<f64>
         }
         
 
@@ -3085,13 +3091,15 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStore_innardQueryResult {
-            data: Option<Vec<String>>
+            conduit_entity_id: Option<i32>,
+data: Option<Vec<String>>
         }
         
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStoreQueryResult {
-            innard: Option<wrapStore_innardQueryResult>
+            conduit_entity_id: Option<i32>,
+innard: Option<wrapStore_innardQueryResult>
         }
         
 
@@ -3671,13 +3679,15 @@ conduit_entity_id: Option<i32>
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStore_innardQueryResult {
-            data: Option<bool>
+            conduit_entity_id: Option<i32>,
+data: Option<bool>
         }
         
 
         #[derive(Serialize, Deserialize, Clone)]
         struct wrapStoreQueryResult {
-            innard: Option<wrapStore_innardQueryResult>
+            conduit_entity_id: Option<i32>,
+innard: Option<wrapStore_innardQueryResult>
         }
         
 

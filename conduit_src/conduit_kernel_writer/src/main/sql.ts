@@ -418,6 +418,7 @@ export function generatQueryResultType(store: CompiledTypes.HierarchicalStore): 
     const name = `${store.name}QueryResult`
     const fields: string[] = []
     const res: string[] = []
+    fields.push(`conduit_entity_id: Option<i32>`) 
     store.columns.forEach(col => {
         switch(col.dif) {
             case "1:many": 
