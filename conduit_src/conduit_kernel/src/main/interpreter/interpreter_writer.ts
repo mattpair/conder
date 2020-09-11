@@ -5,12 +5,11 @@ import { AnyOpDef, OpSpec } from './supported_op_definition';
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     return `
     async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>) ->InterpreterType {
-        let mut err: Option<String> = None;
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
 
-            err = match &ops[next_op_index] {
+            let err: Option<String> = match &ops[next_op_index] {
                 ${supportedOps.map(o => {
                     let header = o.rustEnumMember
                     if (o.kind === "param") {

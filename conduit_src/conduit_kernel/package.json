@@ -2,9 +2,10 @@
   "name": "conduit_kernel_writer",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -b && node -e 'require(\"./dist/index.js\").compile()'",
+    "compile": "tsc -b",
     "pretest": "npm run compile",
-    "test": "jest"
+    "test": "jest",
+    "pkg": "node -e 'require(\"./dist/index.js\").containerize()'"
   },
   "author": "Jeremy",
   "license": "ISC",
@@ -17,7 +18,8 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "conduit_parser": "file:../conduit_parser"
+    "conduit_parser": "file:../conduit_parser",
+    "isomorphic-fetch": "^2.2.1"
   },
   "jest": {
     "preset": "ts-jest",

@@ -46,18 +46,20 @@ export function generateServer(): string {
 
         #[actix_rt::main]
         async fn main() -> std::io::Result<()> {
+            let args: Vec<String> = env::args().collect();
+
             HttpServer::new(|| {
                 App::new()
                     .data_factory(|| make_app_data())
-                    .route("/", web::get().to(index))
+                    .route("/", web::put().to(index))
             })
-            .bind("0.0.0.0:8080")?
+            .bind(format!("0.0.0.0:{}", args[1]))?
             .run()
             .await
         }
 
         async fn index(data: web::Data<AppData>) -> impl Responder {
-            let mut state = vec![];
+            let state = vec![];
             return conduit_byte_code_interpreter(state, &data.executable).await;
         }
 
