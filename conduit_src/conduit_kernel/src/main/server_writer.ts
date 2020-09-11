@@ -21,7 +21,7 @@ export function generateServer(): string {
     return `
         #![allow(non_snake_case)]
         #![allow(non_camel_case_types)]
-        #![allow(redundant_semicolon)]
+        #![allow(redundant_semicolons)]
         #![allow(unused_variables)]
         #![allow(dead_code)]
         #![allow(unused_imports)]
