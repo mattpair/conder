@@ -1,14 +1,6 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
 
-// function testBody(conduit: string) {
-//     const manifest = compileFiles({test: () => conduit}, {dependents: {}, project: "test", install: []})
-//     return new Utilities.Sequence(deriveSupportedOperations)
-//     .then(functionToByteCode)
-//     .then(writeRustAndContainerCode)
-//     .run({manifest, foreignLookup: new Map(), foreignContainerInstr: []})
-// }
-
 describe("conduit kernel", () => {
 
     class TestServer {
@@ -16,22 +8,9 @@ describe("conduit kernel", () => {
             cwd: "./src/rust/target/debug",
           });
         
-        constructor(){
+        public static async start(): Promise<TestServer> {
             // portAssignments.set(8080, this.process);
-        }
-
-        dumpOutput() {
-            // console.log(this.process.stdout)
-            console.error(this.process.stdout.read())
-        }
-        kill() {
-            this.process.kill("SIGKILL")
-        }
-    }
-  
-    describe("noop server", () => {
-        it("should be able to do nothing", async () => {
-            const server = new TestServer()
+            const ret = new TestServer()
             let retry = true 
             while (retry) {
                 try {
@@ -50,9 +29,28 @@ describe("conduit kernel", () => {
                     retry = true
                 } 
             }
+            return ret
+        }
+
+        dumpOutput() {
+            // console.log(this.process.stdout)
+            console.error(this.process.stdout.read())
+        }
+        kill() {
+            this.process.kill("SIGKILL")
+        }
+    }
+
+    function kernelTest(descr: string, test: (server: TestServer) => Promise<void>) {
+        it(descr, async () => {
+            const server = await TestServer.start()
+            await test(server)
             server.kill()
-            
-        }, 10000);
+        }, 10000)
+    }
+  
+    describe("noop server", () => {
+        kernelTest("should be able to do nothing", async () => {});
     })
     
 
