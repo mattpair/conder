@@ -46,11 +46,6 @@ describe("conduit kernel", () => {
             expect(res).toEqual({kind: "None"});
         }
 
-
-        dumpOutput() {
-            // console.log(this.process.stdout)
-            console.error(this.process.stdout.read())
-        }
         kill() {
             this.process.kill("SIGTERM")
         }
