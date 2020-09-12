@@ -14,6 +14,17 @@ export function generateServer(): string {
             name: "noop",
             type: "Vec<Op>",
             initializer: `serde_json::from_str(r#####"[]"#####).unwrap()`
+        },
+        {
+            name: "procs",
+            type: "HashMap<String, Vec<Op>>",
+            initializer: `match env::var("PROCEDURES") {
+                Ok(str) => serde_json::from_str(&str).unwrap(),
+                Err(e) => {
+                    println!("Did not find any procedures {}", e);
+                    HashMap::with_capacity(0)
+                }
+            }`
         }
     ]
 
@@ -41,15 +52,14 @@ export function generateServer(): string {
             ${[app_data_adds.map(a => `${a.name}: ${a.type}`)].join(",\n")}
         }
         
-
-        ${writeOperationInterpreter()}
-
         #[derive(Deserialize)]
         #[serde(tag = "kind", content= "data")]
         enum KernelRequest {
-            Noop
+            Noop,
+            Exec {proc: String, arg: InterpreterType}
         }
-    
+
+        ${writeOperationInterpreter()}
 
         #[actix_rt::main]
         async fn main() -> std::io::Result<()> {
@@ -66,20 +76,27 @@ export function generateServer(): string {
         }
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
-            let state = vec![];
+            let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop)
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop),
+                KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
+                    Some(proc) => {
+                        state.push(arg);
+                        conduit_byte_code_interpreter(state, proc)
+                    },
+                    None => {
+                        panic!("Invoking non-existent function {}", &proc);
+                    }
+                }
             }.await;
         }
 
         async fn make_app_data() -> Result<AppData, ()> {
-                        
-
             return Ok(AppData {
                 ${app_data_adds.map(a => `${a.name}: ${a.initializer}`).join(",\n")}
             });
-        }        
+        }
         `
         
 }

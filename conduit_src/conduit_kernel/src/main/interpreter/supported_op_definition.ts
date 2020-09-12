@@ -51,6 +51,10 @@ export type CompleteOpSpec = {
     readonly [P in Ops["kind"]]: OpSpec<P>
 }
 
+export type CompleteOpWriter = {
+    readonly [P in Ops["kind"]]: OpSpec<P>["factoryMethod"]
+}
+
 export type OpInstance<S=string> = Readonly<{
     // These fields are based on the Interpreter writer's op field.
     kind: S
