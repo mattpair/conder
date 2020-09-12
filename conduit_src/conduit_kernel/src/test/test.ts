@@ -1,6 +1,6 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
-import { getOpWriter } from "../../index";
+import { getOpWriter, Procedures} from "../../index";
 import { OpInstance } from "src/main/interpreter/supported_op_definition";
 
 describe("conduit kernel", () => {
@@ -8,8 +8,8 @@ describe("conduit kernel", () => {
     class TestServer {
         private process: child_process.ChildProcess
 
-        private readonly procedures: Record<string, OpInstance[]>
-        constructor(procedures: Record<string, OpInstance[]>) {
+        private readonly procedures: Procedures
+        constructor(procedures: Procedures) {
             this.procedures = procedures
             child_process.execSync(`PROCEDURES="${JSON.stringify(this.procedures)}"`)
             this.process = child_process.exec(`./app 8080`, {
@@ -17,7 +17,7 @@ describe("conduit kernel", () => {
               });
         }
         
-        public static async start(procedures: Record<string, OpInstance[]>= {}): Promise<TestServer> {
+        public static async start(procedures: Procedures): Promise<TestServer> {
             // portAssignments.set(8080, this.process);
             const ret = new TestServer(procedures)
             let retry = true 
@@ -51,9 +51,9 @@ describe("conduit kernel", () => {
         }
     }
 
-    function kernelTest(descr: string, test: (server: TestServer) => Promise<void>) {
+    function kernelTest(descr: string, test: (server: TestServer) => Promise<void>, procs: Procedures ={}) {
         it(descr, async () => {
-            const server = await TestServer.start()
+            const server = await TestServer.start(procs)
             await test(server)
             server.kill()
         }, 10000)
@@ -63,5 +63,4 @@ describe("conduit kernel", () => {
         kernelTest("should be able to do nothing", async () => {});
     })
     
-
 });
