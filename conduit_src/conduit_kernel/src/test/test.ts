@@ -11,9 +11,11 @@ describe("conduit kernel", () => {
         private readonly procedures: Procedures
         constructor(procedures: Procedures) {
             this.procedures = procedures
-            child_process.execSync(`PROCEDURES="${JSON.stringify(this.procedures)}"`)
             this.process = child_process.exec(`./app 8080`, {
                 cwd: "./src/rust/target/debug",
+                env: {
+                    "PROCEDURES": JSON.stringify(this.procedures)
+                }
               });
         }
         
@@ -49,6 +51,18 @@ describe("conduit kernel", () => {
         kill() {
             this.process.kill("SIGTERM")
         }
+
+        async invoke(name: string) {
+            const body = JSON.stringify({kind: "Exec", data: {proc: name, arg: {kind: "None", data: undefined}}})
+            return await fetch("http://localhost:8080/", {
+                method: "PUT",
+                body,
+                headers: {
+                "content-type": "application/json",
+                "content-length": `${body.length}`,
+                },
+            }).then((data) => data.json());
+        }
     }
 
     function kernelTest(descr: string, test: (server: TestServer) => Promise<void>, procs: Procedures ={}) {
@@ -63,4 +77,10 @@ describe("conduit kernel", () => {
         kernelTest("should be able to do nothing", async () => {});
     })
     
+    describe("procedures", () => {
+        kernelTest("invoking a custom noop", async (server) => {
+            const res = await server.invoke("customNoop")
+            expect(res).toEqual({kind: "None"})
+        }, {"customNoop": [opWriter.noop]})
+    })
 });
