@@ -34,18 +34,26 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     }`
 }
 
+type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
+
+type RustInterpreteryTypeEnumDefinition = Record<InterpreterType, string | null>
+const interpreterTypeDef: RustInterpreteryTypeEnumDefinition = {
+    double: "f64",
+    int32: "i32",
+    int64: "i64",
+    float: "f32",
+    uint32: "i32",
+    uint64: "i64",
+    bool: "bool",
+    string: "String",
+    bytes: "Vec<u8>",
+    None: null,
+    Array: "Vec<InterpreterType>",
+    Object: "HashMap<String, InterpreterType>"
+}
+
 export function writeOperationInterpreter(): string {
-   const p = {
-        double: "f64",
-        int32: "i32",
-        int64: "i64",
-        float: "f32",
-        uint32: "i32",
-        uint64: "i64",
-        bool: "bool",
-        string: "String",
-        bytes: "Vec<u8>"
-    }
+
     const supportedOps: AnyOpDef[] = []
     for (const key in OpSpec) {
         //@ts-ignore
@@ -67,10 +75,8 @@ export function writeOperationInterpreter(): string {
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = "kind", content= "data")]
     enum InterpreterType {
-        None,
-        Object(HashMap<String, InterpreterType>),
-        Array(Vec<InterpreterType>),
-        ${Lexicon.Primitives.map(v => `${v}(${p[v]})`).join(",\n")}
+        ${//@ts-ignore
+        Object.keys(interpreterTypeDef).map(k => `${k}${interpreterTypeDef[k] === null ? "" : `(${interpreterTypeDef[k]})`}`).join(",\n")}
     }
 
     ${writeInternalOpInterpreter(supportedOps)}
