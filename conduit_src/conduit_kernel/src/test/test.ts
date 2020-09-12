@@ -14,16 +14,7 @@ describe("conduit kernel", () => {
             let retry = true 
             while (retry) {
                 try {
-                    const res = await fetch("http://localhost:8080/", {
-                        method: "PUT",
-                        body: "",
-                        headers: {
-                        "content-type": "application/json",
-                        "content-length": `0`,
-                        },
-                    }).then((data) => data.json());
-                
-                    expect(res).toEqual({kind: "None"});
+                    await ret.noopRequest()
                     retry = false
                 } catch (e) {
                     retry = true
@@ -31,6 +22,21 @@ describe("conduit kernel", () => {
             }
             return ret
         }
+
+        async noopRequest() {
+            const body = JSON.stringify({kind: "Noop"})
+            const res = await fetch("http://localhost:8080/", {
+                method: "PUT",
+                body,
+                headers: {
+                "content-type": "application/json",
+                "content-length": `${body.length}`,
+                },
+            }).then((data) => data.json());
+        
+            expect(res).toEqual({kind: "None"});
+        }
+
 
         dumpOutput() {
             // console.log(this.process.stdout)

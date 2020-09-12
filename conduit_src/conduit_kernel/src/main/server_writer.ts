@@ -11,7 +11,7 @@ type ConstDataAddition = {
 export function generateServer(): string {
     const app_data_adds: ConstDataAddition[] = [
         {
-            name: "executable",
+            name: "noop",
             type: "Vec<Op>",
             initializer: `serde_json::from_str(r#####"[]"#####).unwrap()`
         }
@@ -44,6 +44,13 @@ export function generateServer(): string {
 
         ${writeOperationInterpreter()}
 
+        #[derive(Deserialize)]
+        #[serde(tag = "kind", content= "data")]
+        enum KernelRequest {
+            Noop
+        }
+    
+
         #[actix_rt::main]
         async fn main() -> std::io::Result<()> {
             let args: Vec<String> = env::args().collect();
@@ -58,9 +65,12 @@ export function generateServer(): string {
             .await
         }
 
-        async fn index(data: web::Data<AppData>) -> impl Responder {
+        async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
             let state = vec![];
-            return conduit_byte_code_interpreter(state, &data.executable).await;
+            let req = input.into_inner();
+            return match req {
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop)
+            }.await;
         }
 
         async fn make_app_data() -> Result<AppData, ()> {
