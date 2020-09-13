@@ -1,7 +1,6 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
-import { getOpWriter, Procedures} from "../../index";
-import { OpInstance } from "src/main/interpreter/supported_op_definition";
+import { getOpWriter, Procedures, interpeterTypeFactory} from "../../index";
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()
@@ -45,7 +44,7 @@ describe("conduit kernel", () => {
                 },
             }).then((data) => data.json());
         
-            expect(res).toEqual({kind: "None"});
+            expect(res).toEqual(interpeterTypeFactory.None);
         }
 
         kill() {
@@ -53,7 +52,7 @@ describe("conduit kernel", () => {
         }
 
         async invoke(name: string) {
-            const body = JSON.stringify({kind: "Exec", data: {proc: name, arg: {kind: "None", data: undefined}}})
+            const body = JSON.stringify({kind: "Exec", data: {proc: name, arg: interpeterTypeFactory.None}})
             return await fetch("http://localhost:8080/", {
                 method: "PUT",
                 body,
@@ -80,7 +79,7 @@ describe("conduit kernel", () => {
     describe("procedures", () => {
         kernelTest("invoking a custom noop", async (server) => {
             const res = await server.invoke("customNoop")
-            expect(res).toEqual({kind: "None"})
+            expect(res).toEqual(interpeterTypeFactory.None)
         }, {"customNoop": [opWriter.noop]})
     })
 });

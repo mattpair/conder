@@ -3,6 +3,7 @@ import * as child_process from 'child_process'
 import { generateServer } from './src/main/server_writer'
 import { CompleteOpWriter, OpSpec, OpInstance } from './src/main/interpreter/supported_op_definition'
 
+
 function writeMain() {
     fs.mkdirSync("./src/rust/src/", {recursive: true})
     fs.writeFileSync("./src/rust/src/main.rs", generateServer())
@@ -24,3 +25,5 @@ export function getOpWriter(): CompleteOpWriter {
 }
 
 export type Procedures = Record<string, OpInstance[]>
+
+export { interpeterTypeFactory } from './src/main/interpreter/interpreter_writer'

@@ -36,7 +36,7 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
 
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
 
-type InputTypeFor<I extends InterpreterType> = I extends "None" ? undefined : 
+type InputTypeFor<I extends InterpreterType> = I extends "None" ? null : 
 I extends "Object" ? Record<string, InterpreterTypeInstance<InterpreterType>> : 
 I extends "int32" | "int64" | "float" | "double" | "uint32" | "uint64" ? number : 
 I extends "bool" ? boolean :
@@ -46,7 +46,7 @@ never
 
 type InterpreterTypeInstance<T extends InterpreterType> = Readonly<{kind: T, data: any}>
 type InterpreterTypeFactory = Readonly<{
-    [P in InterpreterType]: (a: InputTypeFor<P>) => InterpreterTypeInstance<P>
+    [P in InterpreterType]: (InputTypeFor<P> extends null ? InterpreterTypeInstance<P> : (a: InputTypeFor<P>) => InterpreterTypeInstance<P>)
 }>
 
 type RustInterpreterTypeEnumDefinition = Record<InterpreterType, string | null>
@@ -55,7 +55,7 @@ function numberFactory<P extends Lexicon.PrimitiveUnion>(p: P): (n: number) => I
     return (n) => ({kind: p, data: n})
 }
 export const interpeterTypeFactory: InterpreterTypeFactory = {
-    None: () => ({kind: "None", data: undefined}),
+    None: {kind: "None", data: undefined},
     Object: (o) => ({kind: "Object", data: o}),
     int32: numberFactory(Lexicon.Symbol.int32),
     int64: numberFactory(Lexicon.Symbol.int64),
