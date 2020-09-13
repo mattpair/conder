@@ -36,8 +36,40 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
 
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
 
-type RustInterpreteryTypeEnumDefinition = Record<InterpreterType, string | null>
-const interpreterTypeDef: RustInterpreteryTypeEnumDefinition = {
+type InputTypeFor<I extends InterpreterType> = I extends "None" ? undefined : 
+I extends "Object" ? Record<string, InterpreterTypeInstance<InterpreterType>> : 
+I extends "int32" | "int64" | "float" | "double" | "uint32" | "uint64" ? number : 
+I extends "bool" ? boolean :
+I extends "bytes" | "string" ? string :
+I extends "Array" ? InterpreterTypeInstance<InterpreterType>[] :
+never
+
+type InterpreterTypeInstance<T extends InterpreterType> = Readonly<{kind: T, data: any}>
+type InterpreterTypeFactory = Readonly<{
+    [P in InterpreterType]: (a: InputTypeFor<P>) => InterpreterTypeInstance<P>
+}>
+
+type RustInterpreterTypeEnumDefinition = Record<InterpreterType, string | null>
+
+function numberFactory<P extends Lexicon.PrimitiveUnion>(p: P): (n: number) => InterpreterTypeInstance<P> {
+    return (n) => ({kind: p, data: n})
+}
+export const interpeterTypeFactory: InterpreterTypeFactory = {
+    None: () => ({kind: "None", data: undefined}),
+    Object: (o) => ({kind: "Object", data: o}),
+    int32: numberFactory(Lexicon.Symbol.int32),
+    int64: numberFactory(Lexicon.Symbol.int64),
+    uint32: numberFactory(Lexicon.Symbol.uint32),
+    uint64: numberFactory(Lexicon.Symbol.uint64),
+    double: numberFactory(Lexicon.Symbol.double),
+    float: numberFactory(Lexicon.Symbol.float),
+    string: (s) => ({kind: Lexicon.Symbol.string, data: s}),
+    bytes: (b) => ({kind: Lexicon.Symbol.bytes, data: b}),
+    bool: (b) => ({kind: Lexicon.Symbol.bool, data: b}),
+    Array: (a) => ({kind: "Array", data: a})
+}
+
+const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
     double: "f64",
     int32: "i32",
     int64: "i64",
