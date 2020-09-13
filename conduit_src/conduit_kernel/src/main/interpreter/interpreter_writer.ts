@@ -34,6 +34,18 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     }`
 }
 
+type SchemaType = "Optional" | "Object" | "Array" | Lexicon.PrimitiveUnion
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion>, string> = {
+    //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
+    // Also, using vecs presents an opportunity to extend for union type support.
+    // All these vecs should be of length 1.
+    Optional: "Vec<Schema>",
+    Object: "HashMap<String, Schema>",
+    Array: "Vec<Schema>",    
+}
+
+
+
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
 
 type InputTypeFor<I extends InterpreterType> = I extends "None" ? null : 
@@ -91,7 +103,17 @@ export function writeOperationInterpreter(): string {
         //@ts-ignore
         supportedOps.push(OpSpec[key].opDefinition)            
     }
+
     return `
+    #[derive(Deserialize)]
+    #[serde(tag = "kind", content= "data")]
+    enum Schema {
+        ${[
+            //@ts-ignore
+            ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
+            ...Lexicon.Primitives
+        ].join(",\n")}
+    }
 
     #[derive(Serialize, Deserialize, Clone)]
     #[serde(tag = "kind", content= "data")]
