@@ -439,9 +439,9 @@ Object {
         "name": "querySpec_secondStore",
         "schema": Object {
           "data": Object {
-            "s": Object {
+            "getAll": Object {
               "data": null,
-              "kind": "string",
+              "kind": "bool",
             },
           },
           "kind": "Object",
@@ -517,9 +517,9 @@ Object {
         "name": "querySpec_myFirstStore",
         "schema": Object {
           "data": Object {
-            "s": Object {
+            "getAll": Object {
               "data": null,
-              "kind": "string",
+              "kind": "bool",
             },
           },
           "kind": "Object",
@@ -878,9 +878,9 @@ Object {
         "name": "querySpec_secondStore",
         "schema": Object {
           "data": Object {
-            "s": Object {
+            "getAll": Object {
               "data": null,
-              "kind": "string",
+              "kind": "bool",
             },
           },
           "kind": "Object",
@@ -1023,9 +1023,9 @@ Object {
         "name": "querySpec_secondStore",
         "schema": Object {
           "data": Object {
-            "s": Object {
+            "getAll": Object {
               "data": null,
-              "kind": "string",
+              "kind": "bool",
             },
           },
           "kind": "Object",
@@ -1333,9 +1333,9 @@ Object {
         "name": "querySpec_secondStore",
         "schema": Object {
           "data": Object {
-            "val": Object {
+            "getAll": Object {
               "data": null,
-              "kind": "string",
+              "kind": "bool",
             },
           },
           "kind": "Object",
