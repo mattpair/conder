@@ -112,5 +112,35 @@ describe("conduit kernel", () => {
         schemaTest("decimal", "must exist", interpeterTypeFactory.int(-1), interpeterTypeFactory.decimal([12, 12]), schemaFactory.decimal)
         schemaTest("decimal vs string", "must exist", interpeterTypeFactory.string("01"), interpeterTypeFactory.decimal([0, 1]), schemaFactory.decimal)
         schemaTest("Optional double but received none", "can be none", interpeterTypeFactory.int(12), interpeterTypeFactory.None, schemaFactory.Optional(schemaFactory.decimal))
+        schemaTest("array is empty", "must exist", interpeterTypeFactory.None, interpeterTypeFactory.Array([]), schemaFactory.Array(schemaFactory.int))
+        schemaTest("array tail is invalid", "must exist", interpeterTypeFactory.Array([12, "abc"]), interpeterTypeFactory.Array([12]), schemaFactory.Array(schemaFactory.int))
+        schemaTest("Object containing primitives", "must exist", 
+            interpeterTypeFactory.Object({}), 
+            interpeterTypeFactory.Object({i: 12, d: [12, 12], b: true, s: "hello"}),
+            schemaFactory.Object({
+                i: schemaFactory.int,
+                d: schemaFactory.decimal,
+                b: schemaFactory.bool,
+                s: schemaFactory.string
+            })
+        )
+        schemaTest("Object containing optional field doesn't exist", "must exist",
+            interpeterTypeFactory.Object({i: "abc"}), 
+            interpeterTypeFactory.Object({}),
+            schemaFactory.Object({i: schemaFactory.Optional(schemaFactory.int)})
+        )
+        // #DuckTyping
+        schemaTest("Object containing unspecified field is allowed", "must exist",
+            interpeterTypeFactory.Object({}), 
+            interpeterTypeFactory.Object({i: 12, d: [12, 12]}),
+            schemaFactory.Object({i: schemaFactory.int})
+        )
+
+        schemaTest("Object containing optional object", "must exist", 
+            interpeterTypeFactory.None,
+            interpeterTypeFactory.Object({o: interpeterTypeFactory.Object({f: 12})}),
+            schemaFactory.Object({o: schemaFactory.Object({f: schemaFactory.int})})
+        )
+        
     })
 });
