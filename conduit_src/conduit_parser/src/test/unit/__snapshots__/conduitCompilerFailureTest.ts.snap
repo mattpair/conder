@@ -1,8 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Refing a struct  1`] = `"References should be to globals, not Struct"`;
+exports[`Refing a struct  1`] = `"Refs currently aren't supported"`;
 
-exports[`attempting to store enums 1`] = `"Can only store structs at global level"`;
+exports[`attempting to store enums 1`] = `"Global stores must contain objects"`;
 
 exports[`attempting to store non-array 1`] = `"Only arrays may be global"`;
 
@@ -12,7 +12,7 @@ exports[`creating an optional array 1`] = `"Instead of having an optional array,
 
 exports[`creating an optional enum 1`] = `"Optional enum is unsupported."`;
 
-exports[`dependent struct is not in scope  1`] = `"M2 does not refer to any known entity"`;
+exports[`dependent struct is not in scope  1`] = `"M2 does not refer to any known type"`;
 
 exports[`naming an entity after a keyword  1`] = `
 "Entities may not be named after reserved symbols: Line: 0

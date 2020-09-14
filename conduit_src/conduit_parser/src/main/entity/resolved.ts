@@ -1,11 +1,18 @@
+
+import { SchemaInstance, AnySchemaInstance } from './../SchemaFactory';
 import * as basic from './basic'
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
-import { Symbol, TypeModifierUnion } from '../lexicon';
 
 export type WithArrayIndicator<T> = Readonly<{isArray: boolean, val: T}>
 
-export type Struct = Parse.Struct & {readonly file?: FileLocation, readonly isConduitGenerated?: boolean}
+export type Struct = Readonly<{
+    file?: FileLocation, 
+    isConduitGenerated?: boolean
+    name: string  
+    schema: SchemaInstance<"Object">,
+    kind: "Struct"
+}>
 export type Enum = basic.Enum
 export type Python3Install = Readonly<{kind: "python3", reldir: string, file: string, name: string}>
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
@@ -50,12 +57,12 @@ export type Variable = Readonly<{
 }>
 export type Primitive = basic.PrimitiveEntity
 
-export type RetType = Parse.CompleteType | basic.VoidReturn
+export type RetType = AnySchemaInstance | basic.VoidReturn
 export type Statement = Parse.Statement
 export type ReturnableStatement = Parse.Returnable
 export type Function =  basic.NamedIntrafile<"Function", {
     returnType: RetType,
-    parameter: Parse.Parameter,
+    parameter: Parse.NoParameter | {name: string, schema: AnySchemaInstance},
     body: Parse.Statement[],
     method: "POST" | "GET"
 }>
@@ -70,45 +77,11 @@ export type Manifest = {
     readonly inScope: ScopeMap
 }
 
-export type PrimitiveColumn = Readonly<{
-    dif: "prim"
-    type: basic.PrimitiveEntity
-    columnName: string
-    fieldName: string
-    modification: Exclude<TypeModifierUnion, Symbol.Ref>
-}>
-
-export type EnumColumn = Readonly<{
-    dif: "enum"
-    type: Enum
-    columnName: string
-    fieldName: string
-    modification: Exclude<TypeModifierUnion, Symbol.Optional |  Symbol.Ref>
-}>
-
-export type StructArrayCol = Readonly<{
-    dif: "1:many"
-    type: Struct
-    fieldName: string
-    refTableName: string
-    ref: HierarchicalStore
-}>
-
-export type StructRefCol = Readonly<{
-    dif: "1:1"
-    type: Struct
-    columnName: string
-    fieldName: string
-    ref: HierarchicalStore,
-    modification: Symbol.Optional | Symbol.none
-}>
-
-export type CommanderColumn = PrimitiveColumn | StructArrayCol | StructRefCol | EnumColumn
 
 export type HierarchicalStore = Readonly<{
     kind: "HierarchicalStore"
     name: string
-    columns: CommanderColumn[]
+    schema: SchemaInstance<"Object">
     typeName: string
     specName: string
 }>

@@ -27,11 +27,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_a.cdt",
-          "name": "conduit_a.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -40,6 +35,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m1",
+        "schema": Object {
+          "data": Object {
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "m2" => Object {
         "children": Object {
@@ -62,11 +66,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_b.cdt",
-          "name": "conduit_b.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -75,6 +74,20 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m2",
+        "schema": Object {
+          "data": Object {
+            "m": Object {
+              "data": Object {
+                "d": Object {
+                  "data": null,
+                  "kind": "double",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 2,
@@ -82,7 +95,7 @@ Object {
 }
 `;
 
-exports[`function with invalid return type 1`] = `"SomeType does not refer to any known entity"`;
+exports[`function with invalid return type 1`] = `"SomeType does not refer to any known type"`;
 
 exports[`function with unknown types 1`] = `"Unable to find end of entity for UnaryParameter at , b: Foreign.Type) {"`;
 
@@ -111,11 +124,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_a.cdt",
-          "name": "conduit_a.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 18,
@@ -124,6 +132,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "Shout",
+        "schema": Object {
+          "data": Object {
+            "m": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "echo" => Object {
         "body": Array [
@@ -133,15 +150,61 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 17,
+          "endLineNumber": 6,
+          "startColNumber": 5,
+          "startLineNumber": 4,
+        },
         "method": "POST",
         "name": "echo",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "name": "s",
+          "schema": Object {
+            "data": Object {
+              "m": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 35,
+              "endLineNumber": 6,
+              "startColNumber": 33,
+              "startLineNumber": 6,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Object {
+            "m": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
         },
       },
     },
@@ -175,11 +238,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_a.cdt",
-          "name": "conduit_a.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -188,6 +246,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m1",
+        "schema": Object {
+          "data": Object {
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "m2" => Object {
         "children": Object {
@@ -210,11 +277,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_b.cdt",
-          "name": "conduit_b.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -223,6 +285,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m2",
+        "schema": Object {
+          "data": Object {
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "m3" => Object {
         "children": Object {
@@ -245,11 +316,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "conduit_b.cdt",
-          "name": "conduit_b.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -258,6 +324,20 @@ Object {
           "startLineNumber": 4,
         },
         "name": "m3",
+        "schema": Object {
+          "data": Object {
+            "m": Object {
+              "data": Object {
+                "d": Object {
+                  "data": null,
+                  "kind": "double",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 3,

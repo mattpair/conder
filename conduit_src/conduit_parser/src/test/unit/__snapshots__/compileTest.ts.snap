@@ -4,18 +4,18 @@ exports[`Field referencing 1`] = `
 Object {
   "inScope": EntityMap {
     "map": Map {
-      "Innermost" => Object {
+      "Outermost" => Object {
         "children": Object {
           "Field": Array [
             Object {
               "kind": "Field",
               "loc": Object {
-                "endColNumber": 11,
-                "endLineNumber": 9,
+                "endColNumber": 16,
+                "endLineNumber": 2,
                 "startColNumber": 22,
-                "startLineNumber": 8,
+                "startLineNumber": 1,
               },
-              "name": "f",
+              "name": "middle",
               "part": Object {
                 "CompleteType": Object {
                   "differentiate": [Function],
@@ -25,19 +25,33 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 22,
-          "endLineNumber": 8,
-          "startColNumber": 5,
-          "startLineNumber": 7,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
         },
-        "name": "Innermost",
+        "name": "Outermost",
+        "schema": Object {
+          "data": Object {
+            "middle": Object {
+              "data": Object {
+                "inner": Object {
+                  "data": Object {
+                    "f": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "Middle" => Object {
         "children": Object {
@@ -60,11 +74,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -73,19 +82,33 @@ Object {
           "startLineNumber": 3,
         },
         "name": "Middle",
+        "schema": Object {
+          "data": Object {
+            "inner": Object {
+              "data": Object {
+                "f": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
-      "Outermost" => Object {
+      "Innermost" => Object {
         "children": Object {
           "Field": Array [
             Object {
               "kind": "Field",
               "loc": Object {
-                "endColNumber": 16,
-                "endLineNumber": 2,
+                "endColNumber": 11,
+                "endLineNumber": 9,
                 "startColNumber": 22,
-                "startLineNumber": 1,
+                "startLineNumber": 8,
               },
-              "name": "middle",
+              "name": "f",
               "part": Object {
                 "CompleteType": Object {
                   "differentiate": [Function],
@@ -95,19 +118,23 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 22,
-          "endLineNumber": 1,
-          "startColNumber": 0,
-          "startLineNumber": 0,
+          "endLineNumber": 8,
+          "startColNumber": 5,
+          "startLineNumber": 7,
         },
-        "name": "Outermost",
+        "name": "Innermost",
+        "schema": Object {
+          "data": Object {
+            "f": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllDataIntermediate" => Object {
         "body": Array [
@@ -117,15 +144,71 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 35,
+          "endLineNumber": 12,
+          "startColNumber": 5,
+          "startLineNumber": 10,
+        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "name": "input",
+          "schema": Object {
+            "data": Object {
+              "middle": Object {
+                "data": Object {
+                  "inner": Object {
+                    "data": Object {
+                      "f": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                },
+                "kind": "Object",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 66,
+              "endLineNumber": 12,
+              "startColNumber": 64,
+              "startLineNumber": 12,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Object {
+            "f": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
         },
       },
     },
@@ -159,11 +242,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -172,6 +250,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "stored",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllDataIntermediate" => Object {
         "body": Array [
@@ -185,15 +272,67 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 35,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
         "method": "GET",
         "name": "getAllDataIntermediate",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 37,
+            "endLineNumber": 7,
+            "startColNumber": 35,
+            "startLineNumber": 7,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 54,
+              "endLineNumber": 7,
+              "startColNumber": 52,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          ],
+          "kind": "Array",
         },
       },
       "returnInputIntermediate" => Object {
@@ -208,64 +347,108 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 36,
+          "endLineNumber": 12,
+          "startColNumber": 5,
+          "startLineNumber": 10,
+        },
         "method": "POST",
         "name": "returnInputIntermediate",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "name": "i",
+          "schema": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "s": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 71,
+              "endLineNumber": 12,
+              "startColNumber": 69,
+              "startLineNumber": 12,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          ],
+          "kind": "Array",
         },
       },
       "secondStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "s",
-            "dif": "prim",
-            "fieldName": "s",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
-            },
-          },
-        ],
         "kind": "HierarchicalStore",
         "name": "secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
-      "secondStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "secondStoreRef",
-      },
       "querySpec_secondStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
         "isConduitGenerated": true,
         "kind": "Struct",
         "name": "querySpec_secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
-    "size": 6,
+    "size": 5,
   },
 }
 `;
@@ -295,11 +478,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -308,54 +486,47 @@ Object {
           "startLineNumber": 0,
         },
         "name": "stored",
-      },
-      "myFirstStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "s",
-            "dif": "prim",
-            "fieldName": "s",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
             },
           },
-        ],
+          "kind": "Object",
+        },
+      },
+      "myFirstStore" => Object {
         "kind": "HierarchicalStore",
         "name": "myFirstStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
         "specName": "querySpec_myFirstStore",
         "typeName": "stored",
       },
-      "myFirstStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "myFirstStoreRef",
-      },
       "querySpec_myFirstStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
         "isConduitGenerated": true,
         "kind": "Struct",
         "name": "querySpec_myFirstStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
-    "size": 4,
+    "size": 3,
   },
 }
 `;
@@ -364,18 +535,18 @@ exports[`for in loop 1`] = `
 Object {
   "inScope": EntityMap {
     "map": Map {
-      "Innermost" => Object {
+      "Outermost" => Object {
         "children": Object {
           "Field": Array [
             Object {
               "kind": "Field",
               "loc": Object {
-                "endColNumber": 11,
-                "endLineNumber": 9,
+                "endColNumber": 16,
+                "endLineNumber": 2,
                 "startColNumber": 22,
-                "startLineNumber": 8,
+                "startLineNumber": 1,
               },
-              "name": "f",
+              "name": "middle",
               "part": Object {
                 "CompleteType": Object {
                   "differentiate": [Function],
@@ -385,19 +556,33 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 22,
-          "endLineNumber": 8,
-          "startColNumber": 5,
-          "startLineNumber": 7,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
         },
-        "name": "Innermost",
+        "name": "Outermost",
+        "schema": Object {
+          "data": Object {
+            "middle": Object {
+              "data": Object {
+                "inner": Object {
+                  "data": Object {
+                    "f": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "Middle" => Object {
         "children": Object {
@@ -420,11 +605,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -433,19 +613,33 @@ Object {
           "startLineNumber": 3,
         },
         "name": "Middle",
+        "schema": Object {
+          "data": Object {
+            "inner": Object {
+              "data": Object {
+                "f": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
-      "Outermost" => Object {
+      "Innermost" => Object {
         "children": Object {
           "Field": Array [
             Object {
               "kind": "Field",
               "loc": Object {
-                "endColNumber": 16,
-                "endLineNumber": 2,
+                "endColNumber": 11,
+                "endLineNumber": 9,
                 "startColNumber": 22,
-                "startLineNumber": 1,
+                "startLineNumber": 8,
               },
-              "name": "middle",
+              "name": "f",
               "part": Object {
                 "CompleteType": Object {
                   "differentiate": [Function],
@@ -455,19 +649,23 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 22,
-          "endLineNumber": 1,
-          "startColNumber": 0,
-          "startLineNumber": 0,
+          "endLineNumber": 8,
+          "startColNumber": 5,
+          "startLineNumber": 7,
         },
-        "name": "Outermost",
+        "name": "Innermost",
+        "schema": Object {
+          "data": Object {
+            "f": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllDataIntermediate" => Object {
         "body": Array [
@@ -477,11 +675,67 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 35,
+          "endLineNumber": 12,
+          "startColNumber": 5,
+          "startLineNumber": 10,
+        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "name": "input",
+          "schema": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "middle": Object {
+                    "data": Object {
+                      "inner": Object {
+                        "data": Object {
+                          "f": Object {
+                            "data": null,
+                            "kind": "string",
+                          },
+                        },
+                        "kind": "Object",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 62,
+              "endLineNumber": 12,
+              "startColNumber": 61,
+              "startLineNumber": 12,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
           "kind": "VoidReturnType",
@@ -518,11 +772,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -531,6 +780,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "stored",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllData" => Object {
         "body": Array [
@@ -540,64 +798,96 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 23,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 7,
+            "startColNumber": 23,
+            "startLineNumber": 7,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 42,
+              "endLineNumber": 7,
+              "startColNumber": 40,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          ],
+          "kind": "Array",
         },
       },
       "secondStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "s",
-            "dif": "prim",
-            "fieldName": "s",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
-            },
-          },
-        ],
         "kind": "HierarchicalStore",
         "name": "secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
-      "secondStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "secondStoreRef",
-      },
       "querySpec_secondStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
         "isConduitGenerated": true,
         "kind": "Struct",
         "name": "querySpec_secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
-    "size": 5,
+    "size": 4,
   },
 }
 `;
@@ -627,11 +917,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -640,6 +925,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "stored",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllData" => Object {
         "body": Array [
@@ -649,64 +943,96 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 23,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 7,
+            "startColNumber": 23,
+            "startLineNumber": 7,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 41,
+              "endLineNumber": 7,
+              "startColNumber": 39,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          ],
+          "kind": "Array",
         },
       },
       "secondStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "s",
-            "dif": "prim",
-            "fieldName": "s",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
-            },
-          },
-        ],
         "kind": "HierarchicalStore",
         "name": "secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
-      "secondStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "secondStoreRef",
-      },
       "querySpec_secondStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
         "isConduitGenerated": true,
         "kind": "Struct",
         "name": "querySpec_secondStore",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
-    "size": 5,
+    "size": 4,
   },
 }
 `;
@@ -768,11 +1094,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 21,
@@ -781,6 +1102,23 @@ Object {
           "startLineNumber": 0,
         },
         "name": "withbool",
+        "schema": Object {
+          "data": Object {
+            "left": Object {
+              "data": null,
+              "kind": "string",
+            },
+            "returnLeft": Object {
+              "data": null,
+              "kind": "bool",
+            },
+            "right": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllDataIntermediate" => Object {
         "body": Array [
@@ -794,128 +1132,72 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 35,
+          "endLineNumber": 7,
+          "startColNumber": 5,
+          "startLineNumber": 5,
+        },
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "name": "input",
+          "schema": Object {
+            "data": Object {
+              "left": Object {
+                "data": null,
+                "kind": "string",
+              },
+              "returnLeft": Object {
+                "data": null,
+                "kind": "bool",
+              },
+              "right": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 62,
+              "endLineNumber": 7,
+              "startColNumber": 60,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": null,
+          "kind": "string",
         },
       },
     },
     "size": 2,
-  },
-}
-`;
-
-exports[`references  1`] = `
-Object {
-  "inScope": EntityMap {
-    "map": Map {
-      "stored" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "loc": Object {
-                "endColNumber": 13,
-                "endLineNumber": 2,
-                "startColNumber": 19,
-                "startLineNumber": 1,
-              },
-              "name": "val",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
-        "kind": "Struct",
-        "loc": Object {
-          "endColNumber": 19,
-          "endLineNumber": 1,
-          "startColNumber": 0,
-          "startLineNumber": 0,
-        },
-        "name": "stored",
-      },
-      "refTest" => Object {
-        "body": Array [
-          Object {
-            "differentiate": [Function],
-            "kind": "Statement",
-          },
-        ],
-        "kind": "Function",
-        "method": "POST",
-        "name": "refTest",
-        "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
-        },
-        "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
-        },
-      },
-      "secondStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "val",
-            "dif": "prim",
-            "fieldName": "val",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
-            },
-          },
-        ],
-        "kind": "HierarchicalStore",
-        "name": "secondStore",
-        "specName": "querySpec_secondStore",
-        "typeName": "stored",
-      },
-      "secondStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "secondStoreRef",
-      },
-      "querySpec_secondStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "querySpec_secondStore",
-      },
-    },
-    "size": 5,
   },
 }
 `;
@@ -945,11 +1227,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 19,
@@ -958,6 +1235,15 @@ Object {
           "startLineNumber": 0,
         },
         "name": "stored",
+        "schema": Object {
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "getAllData" => Object {
         "body": Array [
@@ -967,64 +1253,96 @@ Object {
           },
         ],
         "kind": "Function",
+        "loc": Object {
+          "endColNumber": 23,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 4,
+        },
         "method": "GET",
         "name": "getAllData",
         "parameter": Object {
-          "differentiate": [Function],
-          "kind": "Parameter",
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 7,
+            "startColNumber": 23,
+            "startLineNumber": 7,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 42,
+              "endLineNumber": 7,
+              "startColNumber": 40,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
         },
         "returnType": Object {
-          "differentiate": [Function],
-          "kind": "CompleteType",
+          "data": Array [
+            Object {
+              "data": Object {
+                "val": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          ],
+          "kind": "Array",
         },
       },
       "secondStore" => Object {
-        "columns": Array [
-          Object {
-            "columnName": "val",
-            "dif": "prim",
-            "fieldName": "val",
-            "modification": "none",
-            "type": Object {
-              "kind": "Primitive",
-              "type": "string",
-            },
-          },
-        ],
         "kind": "HierarchicalStore",
         "name": "secondStore",
+        "schema": Object {
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
       },
-      "secondStoreRef" => Object {
-        "children": Object {
-          "Field": Array [
-            Object {
-              "kind": "Field",
-              "name": "conduit_entity_id",
-              "part": Object {
-                "CompleteType": Object {
-                  "differentiate": [Function],
-                  "kind": "CompleteType",
-                },
-              },
-            },
-          ],
-        },
-        "isConduitGenerated": true,
-        "kind": "Struct",
-        "name": "secondStoreRef",
-      },
       "querySpec_secondStore" => Object {
-        "children": Object {
-          "Field": Array [],
-        },
         "isConduitGenerated": true,
         "kind": "Struct",
         "name": "querySpec_secondStore",
+        "schema": Object {
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
-    "size": 5,
+    "size": 4,
   },
 }
 `;
@@ -1097,11 +1415,6 @@ Object {
               "name": "ENTERTAINMENT",
             },
           ],
-        },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
         },
         "kind": "Enum",
         "loc": Object {
@@ -1187,11 +1500,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Enum",
         "loc": Object {
           "endColNumber": 27,
@@ -1276,11 +1584,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Enum",
         "loc": Object {
           "endColNumber": 27,
@@ -1324,11 +1627,6 @@ Object {
               "name": "C",
             },
           ],
-        },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
         },
         "kind": "Enum",
         "loc": Object {
@@ -1386,11 +1684,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -1399,6 +1692,19 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m1",
+        "schema": Object {
+          "data": Object {
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+            "i": Object {
+              "data": null,
+              "kind": "int",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "m2" => Object {
         "children": Object {
@@ -1421,11 +1727,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 14,
@@ -1434,6 +1735,24 @@ Object {
           "startLineNumber": 4,
         },
         "name": "m2",
+        "schema": Object {
+          "data": Object {
+            "myMessag": Object {
+              "data": Object {
+                "d": Object {
+                  "data": null,
+                  "kind": "double",
+                },
+                "i": Object {
+                  "data": null,
+                  "kind": "int",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 2,
@@ -1514,11 +1833,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 21,
@@ -1527,6 +1841,47 @@ Object {
           "startLineNumber": 0,
         },
         "name": "Mystruct",
+        "schema": Object {
+          "data": Object {
+            "b": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "bool",
+                },
+              ],
+              "kind": "Optional",
+            },
+            "d": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "double",
+                },
+              ],
+              "kind": "Optional",
+            },
+            "i": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "int",
+                },
+              ],
+              "kind": "Optional",
+            },
+            "s": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              ],
+              "kind": "Optional",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 1,
@@ -1575,11 +1930,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 15,
@@ -1588,6 +1938,19 @@ Object {
           "startLineNumber": 0,
         },
         "name": "m1",
+        "schema": Object {
+          "data": Object {
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+            "i": Object {
+              "data": null,
+              "kind": "int",
+            },
+          },
+          "kind": "Object",
+        },
       },
       "m2" => Object {
         "children": Object {
@@ -1626,11 +1989,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 14,
@@ -1639,6 +1997,19 @@ Object {
           "startLineNumber": 4,
         },
         "name": "m2",
+        "schema": Object {
+          "data": Object {
+            "b": Object {
+              "data": null,
+              "kind": "bool",
+            },
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 2,
@@ -1719,11 +2090,6 @@ Object {
             },
           ],
         },
-        "file": FileLocation {
-          "dir": "",
-          "fullname": "testFile.cdt",
-          "name": "testFile.cdt",
-        },
         "kind": "Struct",
         "loc": Object {
           "endColNumber": 21,
@@ -1732,6 +2098,27 @@ Object {
           "startLineNumber": 0,
         },
         "name": "Mystruct",
+        "schema": Object {
+          "data": Object {
+            "b": Object {
+              "data": null,
+              "kind": "bool",
+            },
+            "d": Object {
+              "data": null,
+              "kind": "double",
+            },
+            "i": Object {
+              "data": null,
+              "kind": "int",
+            },
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
       },
     },
     "size": 1,

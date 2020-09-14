@@ -8,6 +8,5 @@ export * as Utilities from './src/main/utils'
 export {Parse} from './src/main/parse'
 export {ConduitBuildConfig} from './src/main/entity/ConduitBuildConfig'
 
-export type AnySchemaInstance = SchemaInstance<SchemaType>
-export type Schemas = AnySchemaInstance[]
-export  { SchemaInstance, SchemaType, schemaFactory } from './src/main/SchemaFactory';
+
+export  { SchemaInstance, SchemaType, schemaFactory, AnySchemaInstance, Schemas } from './src/main/SchemaFactory';

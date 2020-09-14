@@ -14,10 +14,16 @@ export const schemaFactory: SchemaFactory = {
     Object: (r) => ({ kind: "Object", data: r }),
     Array: (r) => ({ kind: "Array", data: [r] }),
     Optional: (r) => ({ kind: "Optional", data: [r] }),
-    string: { kind: Symbol.string },
-    bool: { kind: Symbol.bool },
-    double: { kind: Symbol.double },
-    int: { kind: Symbol.int },
+    string: { kind: Symbol.string, data: null },
+    bool: { kind: Symbol.bool, data: null},
+    double: { kind: Symbol.double, data: null },
+    int: { kind: Symbol.int, data: null },
 };
 
-export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion ? { kind: P; } : P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } : never;
+
+export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion ? { kind: P; data: undefined} : 
+P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : 
+P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : 
+P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } : never;
+export type AnySchemaInstance = SchemaInstance<SchemaType>
+export type Schemas = AnySchemaInstance[]
