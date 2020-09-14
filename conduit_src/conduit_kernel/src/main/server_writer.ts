@@ -21,7 +21,7 @@ export function generateServer(): string {
             initializer: `match env::var("PROCEDURES") {
                 Ok(str) => serde_json::from_str(&str).unwrap(),
                 Err(e) => {
-                    println!("Did not find any procedures {}", e);
+                    eprintln!("Did not find any procedures {}", e);
                     HashMap::with_capacity(0)
                 }
             }`
@@ -32,7 +32,7 @@ export function generateServer(): string {
             initializer: `match env::var("SCHEMAS") {
                 Ok(str) => serde_json::from_str(&str).unwrap(),
                 Err(e) => {
-                    println!("Did not find any schemas {}", e);
+                    eprintln!("Did not find any schemas {}", e);
                     Vec::with_capacity(0)
                 }
             }`
@@ -97,7 +97,8 @@ export function generateServer(): string {
                         conduit_byte_code_interpreter(state, proc, &data.schemas)
                     },
                     None => {
-                        panic!("Invoking non-existent function {}", &proc);
+                        eprintln!("Invoking non-existent function {}", &proc);
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas)
                     }
                 }
             }.await;

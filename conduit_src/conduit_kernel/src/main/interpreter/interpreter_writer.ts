@@ -4,7 +4,7 @@ import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     return `
-    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>) ->InterpreterType {
+    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -23,18 +23,18 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
             next_op_index += 1;
         
             match err {
-                Some(v) => panic!("error: {}", v),
+                Some(v) => return Err(format!("error: {}", v)),
                 _ => {}
             };
         }
         
             
         
-        return InterpreterType::None;
+        return Ok(InterpreterType::None);
     }`
 }
 
-type SchemaType = "Optional" | "Object" | "Array" | Lexicon.PrimitiveUnion
+export type SchemaType = "Optional" | "Object" | "Array" | Lexicon.PrimitiveUnion
 const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion>, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
@@ -51,14 +51,14 @@ type SchemaFactory = Readonly<{
 } & {primitive: (p: Lexicon.PrimitiveUnion) => SchemaInstance<Lexicon.PrimitiveUnion>}>
 
 
-const schemaFactory: SchemaFactory = {
+export const schemaFactory: SchemaFactory = {
     Object: (r) => ({kind: "Object", data: r}),
     Array: (r) => ({kind: "Array", data: [r]}),
     Optional: (r) => ({kind: "Optional", data: [r]}),
     primitive: (p) => ({kind: p})
 }
 
-type SchemaInstance<P extends SchemaType> = P extends Lexicon.PrimitiveUnion ? {kind: P} :
+export type SchemaInstance<P extends SchemaType> = P extends Lexicon.PrimitiveUnion ? {kind: P} :
 P extends "Object" ? {kind: "Object", data: Record<string, SchemaInstance<SchemaType>>} :
 P extends "Optional" ? {kind: "Optional", data: [SchemaInstance<SchemaType>]} :
 P extends "Array" ? {kind: "Array", data: [SchemaInstance<SchemaType>]} : never
@@ -75,7 +75,7 @@ I extends "bytes" | "string" ? string :
 I extends "Array" ? InterpreterTypeInstance<InterpreterType>[] :
 never
 
-type InterpreterTypeInstance<T extends InterpreterType> = Readonly<{kind: T, data: any}>
+export type InterpreterTypeInstance<T extends InterpreterType> = Readonly<{kind: T, data: any}>
 type InterpreterTypeFactory = Readonly<{
     [P in InterpreterType]: (InputTypeFor<P> extends null ? InterpreterTypeInstance<P> : (a: InputTypeFor<P>) => InterpreterTypeInstance<P>)
 }>
@@ -156,7 +156,13 @@ export function writeOperationInterpreter(): string {
 
     async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>) -> impl Responder {
         let output = conduit_byte_code_interpreter_internal(state, ops, schemas).await;
-        return HttpResponse::Ok().json(output)
+        return match output {
+            Ok(data) => HttpResponse::Ok().json(data),
+            Err(s) => {
+                eprintln!("{}", s);
+                HttpResponse::BadRequest().finish()
+            }
+        }
     }
 
     fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {

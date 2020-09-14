@@ -17,7 +17,7 @@ type Op<KIND, C extends OpClass, P=undefined> =
 
 type Ops = 
 ParamOp<"returnVariable", number> |
-StaticOp<"returnPrevious"> |
+StaticOp<"returnStackTop"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
 ParamOp<"gotoOp", number> |
@@ -25,7 +25,8 @@ ParamOp<"conditionalGoto", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
-ParamOp<"enforceSchemaOnStack", number>
+ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}>
+
 
 type StaticFactory<S> = OpInstance<S>
 
@@ -169,19 +170,19 @@ export const OpSpec: CompleteOpSpec = {
             kind: "param",
             paramType: "usize",
             rustEnumMember: `returnVariable`,
-            rustOpHandler: ` return heap.swap_remove(*op_param)`
+            rustOpHandler: ` return Ok(heap.swap_remove(*op_param))`
         }
     },
 
-    returnPrevious: {
+    returnStackTop: {
         factoryMethod: {    
-            kind: "returnPrevious",
+            kind: "returnStackTop",
             data: undefined    
         },
         opDefinition: {
             kind: "static",
-            rustEnumMember: `returnPrevious`,
-            rustOpHandler: `return ${popStack}`
+            rustEnumMember: `returnStackTop`,
+            rustOpHandler: `return Ok(${popStack})`
         }
     },
     
@@ -222,23 +223,24 @@ export const OpSpec: CompleteOpSpec = {
             `
         }
     },   
-    enforceSchemaOnStack: {
+    enforceSchemaOnHeap: {
         opDefinition: {
             kind: "param",
-            paramType: "usize",
+            paramType: "Vec<usize>",
             rustOpHandler: `
-            if stack.len() == 0 {
-                ${raiseErrorWithMessage("No stack variable to enforce schema on")}
-            } else {
-                if adheres_to_schema(&stack[stack.len() -1], &schemas[*op_param]) {
-                    None
-                } else {
-                    ${raiseErrorWithMessage("Variable does not match the schema")}
-                }
+            match heap.get(op_param[1]) {
+                Some(v) => {
+                    if adheres_to_schema(&v, &schemas[op_param[0]]) {
+                        None
+                    } else {
+                        ${raiseErrorWithMessage("Variable does not match the schema")}
+                    }
+                },
+                None => ${raiseErrorWithMessage("No such heap variable exists")}
             }
             `,
-            rustEnumMember: "enforceSchemaOnStack"
+            rustEnumMember: "enforceSchemaOnHeap"
         },
-        factoryMethod: (p) => ({kind: "enforceSchemaOnStack", data: p})
+        factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
     } 
 }
