@@ -422,13 +422,18 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Object {
-            "s": Object {
-              "data": null,
-              "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
             },
-          },
-          "kind": "Object",
+          ],
+          "kind": "Array",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -500,13 +505,18 @@ Object {
         "kind": "HierarchicalStore",
         "name": "myFirstStore",
         "schema": Object {
-          "data": Object {
-            "s": Object {
-              "data": null,
-              "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
             },
-          },
-          "kind": "Object",
+          ],
+          "kind": "Array",
         },
         "specName": "querySpec_myFirstStore",
         "typeName": "stored",
@@ -861,13 +871,18 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Object {
-            "s": Object {
-              "data": null,
-              "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
             },
-          },
-          "kind": "Object",
+          ],
+          "kind": "Array",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -1006,13 +1021,18 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Object {
-            "s": Object {
-              "data": null,
-              "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
             },
-          },
-          "kind": "Object",
+          ],
+          "kind": "Array",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -1316,13 +1336,18 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Object {
-            "val": Object {
-              "data": null,
-              "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "val": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
             },
-          },
-          "kind": "Object",
+          ],
+          "kind": "Array",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",

@@ -81,7 +81,7 @@ export type Manifest = {
 export type HierarchicalStore = Readonly<{
     kind: "HierarchicalStore"
     name: string
-    schema: SchemaInstance<"Object">
+    schema: SchemaInstance<"Array">
     typeName: string
     specName: string
 }>

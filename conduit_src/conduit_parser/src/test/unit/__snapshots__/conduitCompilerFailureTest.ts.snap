@@ -2,7 +2,7 @@
 
 exports[`Refing a struct  1`] = `"Refs currently aren't supported"`;
 
-exports[`attempting to store enums 1`] = `"Global stores must contain objects"`;
+exports[`attempting to store enums 1`] = `"Global arrays must contain structs"`;
 
 exports[`attempting to store non-array 1`] = `"Only arrays may be global"`;
 

@@ -6,7 +6,7 @@ import { FileLocation } from '../utils';
 import { Struct, EntityMap, HierarchicalStore, Function } from '../entity/resolved';
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
-import { Primitives, TypeModifiers, Symbol } from '../lexicon';
+import { Symbol } from '../lexicon';
 export type PartialEntityMap<T=undefined> = Map<string, Struct | basic.Enum | Function | HierarchicalStore | T>
 
 
@@ -198,9 +198,12 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
         })
         file.children.StoreDefinition.forEach(s => {
             const innerType = validateGlobal(s)
-            const schema = getSchema({kind: "CompleteType", differentiate: () => innerType}, [])
-            if (schema.kind !== "Object") {
-                throw Error(`Global stores must contain objects`)
+            const schema = getSchema(s.part.CompleteType, [])
+            if (schema.kind !== "Array") {
+                throw Error(`Globals must be arrays`)
+            }
+            if (schema.data[0].kind !== "Object") {
+                throw Error(`Global arrays must contain structs`)
             }
 
             partialEntityMap.set(s.name, {
