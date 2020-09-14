@@ -1,6 +1,6 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, Schemas, schemaFactory} from "../../index";
+import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, Schemas, schemaFactory, AnyInterpreterTypeInstance, AnySchemaInstance} from "../../index";
 import { Lexicon } from "conduit_parser";
 
 describe("conduit kernel", () => {
@@ -55,7 +55,7 @@ describe("conduit kernel", () => {
             this.process.kill("SIGTERM")
         }
 
-        async invoke(name: string, arg: InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap] = interpeterTypeFactory.None) {
+        async invoke(name: string, arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None) {
             const body = JSON.stringify({kind: "Exec", data: {proc: name, arg}})
             return fetch(`http://localhost:${this.port}/`, {
                 method: "PUT",
@@ -88,17 +88,29 @@ describe("conduit kernel", () => {
     })
 
     describe("schema", () => {
-        kernelTest("validate schema of input - primitive", async (server) => {
-            // No input
-            let failures = 0
-            await server.invoke("validateSchema").catch(() => failures++)
-            expect(failures).toBe(1)
-            // Invalid input
-            await server.invoke("validateSchema", interpeterTypeFactory.decimal([12, 0])).catch(() => failures++)
-            expect(failures).toBe(2)
-            const res = await server.invoke("validateSchema", interpeterTypeFactory.bool(true))
-            expect(res).toEqual(interpeterTypeFactory.bool(true))
 
-        }, {"validateSchema": [opWriter.enforceSchemaOnHeap({schema: 0, heap_pos: 0}), opWriter.returnVariable(0)]}, [schemaFactory.primitive(Lexicon.Symbol.bool)])
+        function schemaTest(descr: string, allowsNone: "can be none" | "must exist", invalidInput: AnyInterpreterTypeInstance, validInput: AnyInterpreterTypeInstance, schema: AnySchemaInstance) {
+            kernelTest(`schema test: ${descr}`, async (server) => {
+                let failure = false
+                // No input
+                if (allowsNone === "must exist") {
+                    await server.invoke("validateSchema").catch(() => failure =true)
+                    expect(failure).toBe(true)
+                    failure = false
+                }
+
+                await server.invoke("validateSchema", invalidInput).catch(() => failure = true)
+                expect(failure).toBe(true)
+
+                const res = await server.invoke("validateSchema", validInput)
+                expect(res).toEqual(validInput)
+    
+            }, {"validateSchema": [opWriter.enforceSchemaOnHeap({schema: 0, heap_pos: 0}), opWriter.returnVariable(0)]}, [schema])
+        }
+        
+        schemaTest("boolean", "must exist", interpeterTypeFactory.decimal([12, 0]), interpeterTypeFactory.bool(true), schemaFactory.bool)
+        schemaTest("decimal", "must exist", interpeterTypeFactory.int(-1), interpeterTypeFactory.decimal([12, 12]), schemaFactory.decimal)
+        schemaTest("decimal vs string", "must exist", interpeterTypeFactory.string("01"), interpeterTypeFactory.decimal([0, 1]), schemaFactory.decimal)
+        schemaTest("Optional double but received none", "can be none", interpeterTypeFactory.int(12), interpeterTypeFactory.None, schemaFactory.Optional(schemaFactory.decimal))
     })
 });

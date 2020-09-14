@@ -11,7 +11,6 @@ export enum Symbol {
     int="int",
     bool="bool",
     string="string",
-    bytes="bytes",
     NEW_LINE="\\n",
     import="import",
     as="as",
@@ -47,14 +46,12 @@ export type PrimitiveUnion =
     Symbol.decimal |
     Symbol.bool |
     Symbol.string |
-    Symbol.bytes |
     Symbol.int
 
 export const Primitives: PrimitiveUnion[] = [
     Symbol.decimal,
     Symbol.int,
     Symbol.string,
-    Symbol.bytes,
     Symbol.bool
 ]
 

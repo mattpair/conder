@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as child_process from 'child_process'
 import { generateServer } from './src/main/server_writer'
 import { CompleteOpWriter, OpSpec, OpInstance } from './src/main/interpreter/supported_op_definition'
-import {SchemaInstance, SchemaType} from './src/main/interpreter/interpreter_writer'
+import {SchemaInstance, SchemaType, InterpreterTypeInstanceMap} from './src/main/interpreter/interpreter_writer'
 
 
 function writeMain() {
@@ -26,6 +26,9 @@ export function getOpWriter(): CompleteOpWriter {
 }
 
 export type Procedures = Record<string, OpInstance[]>
-export type Schemas = SchemaInstance<SchemaType>[]
+export type AnySchemaInstance = SchemaInstance<SchemaType>
+export type Schemas = AnySchemaInstance[]
+
+export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap]
 
 export { interpeterTypeFactory, schemaFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'

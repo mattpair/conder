@@ -48,14 +48,18 @@ type SchemaFactory = Readonly<{
     [P in Exclude<SchemaType, Lexicon.PrimitiveUnion>]: 
         P extends "Object" ? (r: Record<string, SchemaInstance<SchemaType>>) =>  SchemaInstance<P> :
         (i: SchemaInstance<SchemaType>) => SchemaInstance<P>
-} & {primitive: (p: Lexicon.PrimitiveUnion) => SchemaInstance<Lexicon.PrimitiveUnion>}>
+} & {[P in Lexicon.PrimitiveUnion]: SchemaInstance<P>}>
 
 
 export const schemaFactory: SchemaFactory = {
     Object: (r) => ({kind: "Object", data: r}),
     Array: (r) => ({kind: "Array", data: [r]}),
     Optional: (r) => ({kind: "Optional", data: [r]}),
-    primitive: (p) => ({kind: p})
+    string: {kind: Lexicon.Symbol.string},
+    bool: {kind: Lexicon.Symbol.bool},
+    decimal: {kind: Lexicon.Symbol.decimal},
+    int: {kind: Lexicon.Symbol.int},
+
 }
 
 export type SchemaInstance<P extends SchemaType> = P extends Lexicon.PrimitiveUnion ? {kind: P} :
@@ -106,7 +110,6 @@ export const interpeterTypeFactory: InterpreterTypeFactory = {
         return d
     },
     string: (s) => s,
-    bytes: (b) => b,
     bool: (b) => b,
     Array: (a) => a
 }
@@ -116,7 +119,6 @@ const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
     int: ["i64"],
     bool: ["bool"],
     string: ["String"],
-    bytes: ["Vec<u8>"],
     None: null,
     Array: ["Vec<InterpreterType>"],
     Object: ["HashMap<String, InterpreterType>"]
@@ -185,9 +187,11 @@ export function writeOperationInterpreter(): string {
                 InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0])),
                 _ => false
             },
-            Schema::Optional(internal) => match value {
-                InterpreterType::None => true,
-                _ => adheres_to_schema(value, &internal[0])
+            Schema::Optional(internal) => {
+                match value {
+                    InterpreterType::None => true,
+                    _ => adheres_to_schema(value, &internal[0])
+                }
             },
             ${Lexicon.Primitives.map(p => `Schema::${p} => {
                 match value {
