@@ -2,7 +2,8 @@ import * as fs from 'fs'
 import * as child_process from 'child_process'
 import { generateServer } from './src/main/server_writer'
 import { CompleteOpWriter, OpSpec, OpInstance } from './src/main/interpreter/supported_op_definition'
-import {SchemaInstance, SchemaType, InterpreterTypeInstanceMap} from './src/main/interpreter/interpreter_writer'
+import {InterpreterTypeInstanceMap} from './src/main/interpreter/interpreter_writer'
+import { SchemaInstance, SchemaType } from "./src/main/interpreter/SchemaFactory"
 
 
 function writeMain() {
@@ -31,4 +32,5 @@ export type Schemas = AnySchemaInstance[]
 
 export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap]
 
-export { interpeterTypeFactory, schemaFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
+export { interpeterTypeFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
+export {schemaFactory} from './src/main/interpreter/SchemaFactory'
