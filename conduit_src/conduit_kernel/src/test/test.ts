@@ -108,18 +108,20 @@ describe("conduit kernel", () => {
             }, {"validateSchema": [opWriter.enforceSchemaOnHeap({schema: 0, heap_pos: 0}), opWriter.returnVariable(0)]}, [schema])
         }
         
-        schemaTest("boolean", "must exist", interpeterTypeFactory.decimal([12, 0]), interpeterTypeFactory.bool(true), schemaFactory.bool)
-        schemaTest("decimal", "must exist", interpeterTypeFactory.int(-1), interpeterTypeFactory.decimal([12, 12]), schemaFactory.decimal)
-        schemaTest("decimal vs string", "must exist", interpeterTypeFactory.string("01"), interpeterTypeFactory.decimal([0, 1]), schemaFactory.decimal)
-        schemaTest("Optional double but received none", "can be none", interpeterTypeFactory.int(12), interpeterTypeFactory.None, schemaFactory.Optional(schemaFactory.decimal))
+        schemaTest("boolean", "must exist", interpeterTypeFactory.double(12), interpeterTypeFactory.bool(true), schemaFactory.bool)
+        schemaTest("decimal", "must exist", interpeterTypeFactory.string("-1"), interpeterTypeFactory.double(12.12), schemaFactory.double)
+        schemaTest("decimal vs string", "must exist", interpeterTypeFactory.string("0.1"), interpeterTypeFactory.double(0.1), schemaFactory.double)
+        schemaTest("Optional double but received none", "can be none", interpeterTypeFactory.bool(true), interpeterTypeFactory.None, schemaFactory.Optional(schemaFactory.double))
         schemaTest("array is empty", "must exist", interpeterTypeFactory.None, interpeterTypeFactory.Array([]), schemaFactory.Array(schemaFactory.int))
         schemaTest("array tail is invalid", "must exist", interpeterTypeFactory.Array([12, "abc"]), interpeterTypeFactory.Array([12]), schemaFactory.Array(schemaFactory.int))
+        schemaTest("ints may be treated as doubles", "must exist", interpeterTypeFactory.string("1"), interpeterTypeFactory.int(132), schemaFactory.double)
+        schemaTest("doubles may not be treated as ints", "must exist", interpeterTypeFactory.double(0.1), interpeterTypeFactory.int(1.0), schemaFactory.int)
         schemaTest("Object containing primitives", "must exist", 
             interpeterTypeFactory.Object({}), 
-            interpeterTypeFactory.Object({i: 12, d: [12, 12], b: true, s: "hello"}),
+            interpeterTypeFactory.Object({i: 12, d: 12.12, b: true, s: "hello"}),
             schemaFactory.Object({
                 i: schemaFactory.int,
-                d: schemaFactory.decimal,
+                d: schemaFactory.double,
                 b: schemaFactory.bool,
                 s: schemaFactory.string
             })

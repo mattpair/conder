@@ -7,7 +7,7 @@ export enum Symbol {
     OPEN_BRACKET="{",
     CLOSE_BRACKET="}",
     COMMA=",",
-    decimal="decimal",
+    double="double",
     int="int",
     bool="bool",
     string="string",
@@ -43,13 +43,13 @@ export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none | S
 export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none, Symbol.Ref]
 
 export type PrimitiveUnion = 
-    Symbol.decimal |
+    Symbol.double |
     Symbol.bool |
     Symbol.string |
     Symbol.int
 
 export const Primitives: PrimitiveUnion[] = [
-    Symbol.decimal,
+    Symbol.double,
     Symbol.int,
     Symbol.string,
     Symbol.bool

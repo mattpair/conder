@@ -57,7 +57,7 @@ export const schemaFactory: SchemaFactory = {
     Optional: (r) => ({kind: "Optional", data: [r]}),
     string: {kind: Lexicon.Symbol.string},
     bool: {kind: Lexicon.Symbol.bool},
-    decimal: {kind: Lexicon.Symbol.decimal},
+    double: {kind: Lexicon.Symbol.double},
     int: {kind: Lexicon.Symbol.int},
 
 }
@@ -75,7 +75,7 @@ type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
 export type InterpreterTypeInstanceMap = {
     [T in InterpreterType]: T extends "None" ? null : 
     T extends "Object" ? Record<string, any> : 
-    T extends Lexicon.Symbol.decimal ? [number, number]:
+    T extends Lexicon.Symbol.double ? number:
     T extends Lexicon.Symbol.int ? number : 
     T extends "bool" ? boolean :
     T extends "bytes" | "string" ? string :
@@ -94,13 +94,7 @@ type RustInterpreterTypeEnumDefinition = Record<InterpreterType, string[] | null
 export const interpeterTypeFactory: InterpreterTypeFactory = {
     None: null,
     Object: (o) => o,
-    decimal: (d) => {
-        if (Math.round(d[0]) !== d[0] || Math.round(d[1]) !== d[1]) {
-            throw Error(`Decimal tuple members must be integers`)
-        }
-        if (d[1] < 0) {
-            throw Error(`Decimal value must not be negative`)
-        }
+    double: (d) => {
         return d
     },
     int: (d) => {
@@ -115,8 +109,9 @@ export const interpeterTypeFactory: InterpreterTypeFactory = {
 }
 
 const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
-    decimal: ["i64", "i64"],
+    // Int must precede double. This will cause the serializer to prefer serializing to ints over doubles.
     int: ["i64"],
+    double: ["f64"],
     bool: ["bool"],
     string: ["String"],
     None: null,
@@ -193,12 +188,21 @@ export function writeOperationInterpreter(): string {
                     _ => adheres_to_schema(value, &internal[0])
                 }
             },
-            ${Lexicon.Primitives.map(p => `Schema::${p} => {
-                match value {
-                    InterpreterType::${p}(${interpreterTypeDef[p].map(_ => `_`).join(", ")}) => true,
-                    _ => false
+            ${Lexicon.Primitives.map(p => {
+                if (p === Lexicon.Symbol.double) {
+                    return `Schema::double => match value {
+                        InterpreterType::double(_) => true,
+                        InterpreterType::int(_) => true,
+                        _ => false
+                    }`
                 }
-            }`).join(",\n")}
+                return `Schema::${p} => {
+                    match value {
+                        InterpreterType::${p}(${interpreterTypeDef[p].map(_ => `_`).join(", ")}) => true,
+                        _ => false
+                    }
+                }`
+        }).join(",\n")}
         }
     }
     `
