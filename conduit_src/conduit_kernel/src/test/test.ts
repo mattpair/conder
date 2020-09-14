@@ -1,7 +1,7 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, Schemas, schemaFactory, AnyInterpreterTypeInstance, AnySchemaInstance} from "../../index";
-import { Lexicon } from "conduit_parser";
+import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, AnyInterpreterTypeInstance} from "../../index";
+import { Lexicon, Schemas, schemaFactory, SchemaInstance, AnySchemaInstance } from "conduit_parser";
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()

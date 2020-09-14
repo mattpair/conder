@@ -1,4 +1,4 @@
-import { SchemaType } from './SchemaFactory';
+import { SchemaType } from '../../../../conduit_parser/src/main/SchemaFactory';
 import { Lexicon } from 'conduit_parser';
 import { AnyOpDef, OpSpec } from './supported_op_definition';
 

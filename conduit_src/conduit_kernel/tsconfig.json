@@ -1,5 +1,5 @@
 {
-    "include": ["src/**/*", "index.ts"],
+    "include": ["src/**/*", "index.ts", "../conduit_parser/src/main/SchemaFactory.ts"],
     "compilerOptions": {
         "module": "commonjs",
         "esModuleInterop": true,
