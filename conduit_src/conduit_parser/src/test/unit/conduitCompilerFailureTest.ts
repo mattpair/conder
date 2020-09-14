@@ -14,7 +14,7 @@ struct m1 {
 
 testFailsWhen("naming an entity after a keyword ", `
 struct function {
-    i: int32
+    i: int
 }
 `)
 
@@ -54,7 +54,7 @@ struct Container {
 testFailsWhen("creating an optional array", `
 
 struct Container {
-    e: Optional<Array<int32>>
+    e: Optional<Array<int>>
 }
 
 `)
@@ -62,7 +62,7 @@ struct Container {
 testFailsWhen("creating an array optional", `
 
 struct Container {
-    e: Array<Optional<int32>>
+    e: Array<Optional<int>>
 }
 
 `)
