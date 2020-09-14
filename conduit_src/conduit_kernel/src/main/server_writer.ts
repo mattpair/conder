@@ -25,6 +25,17 @@ export function generateServer(): string {
                     HashMap::with_capacity(0)
                 }
             }`
+        },
+        {
+            name: "schemas",
+            type: "Vec<Schema>",
+            initializer: `match env::var("SCHEMAS") {
+                Ok(str) => serde_json::from_str(&str).unwrap(),
+                Err(e) => {
+                    println!("Did not find any schemas {}", e);
+                    Vec::with_capacity(0)
+                }
+            }`
         }
     ]
 
@@ -79,11 +90,11 @@ export function generateServer(): string {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc)
+                        conduit_byte_code_interpreter(state, proc, &data.schemas)
                     },
                     None => {
                         panic!("Invoking non-existent function {}", &proc);

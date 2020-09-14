@@ -24,7 +24,8 @@ ParamOp<"gotoOp", number> |
 ParamOp<"conditionalGoto", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
-ParamOp<"truncateHeap", number>
+ParamOp<"truncateHeap", number> |
+ParamOp<"enforceSchemaOnStack", number>
 
 type StaticFactory<S> = OpInstance<S>
 
@@ -220,5 +221,24 @@ export const OpSpec: CompleteOpSpec = {
                         
             `
         }
-    },    
+    },   
+    enforceSchemaOnStack: {
+        opDefinition: {
+            kind: "param",
+            paramType: "usize",
+            rustOpHandler: `
+            if stack.len() == 0 {
+                ${raiseErrorWithMessage("No stack variable to enforce schema on")}
+            } else {
+                if adheres_to_schema(&stack[stack.len() -1], &schemas[*op_param]) {
+                    None
+                } else {
+                    ${raiseErrorWithMessage("Variable does not match the schema")}
+                }
+            }
+            `,
+            rustEnumMember: "enforceSchemaOnStack"
+        },
+        factoryMethod: (p) => ({kind: "enforceSchemaOnStack", data: p})
+    } 
 }

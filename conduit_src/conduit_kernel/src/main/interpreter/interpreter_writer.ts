@@ -4,7 +4,7 @@ import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     return `
-    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>) ->InterpreterType {
+    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>) ->InterpreterType {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -43,6 +43,25 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnio
     Object: "HashMap<String, Schema>",
     Array: "Vec<Schema>",    
 }
+
+type SchemaFactory = Readonly<{
+    [P in Exclude<SchemaType, Lexicon.PrimitiveUnion>]: 
+        P extends "Object" ? (r: Record<string, SchemaInstance<SchemaType>>) =>  SchemaInstance<P> :
+        (i: SchemaInstance<SchemaType>) => SchemaInstance<P>
+} & {primitive: (p: Lexicon.PrimitiveUnion) => SchemaInstance<Lexicon.PrimitiveUnion>}>
+
+
+const schemaFactory: SchemaFactory = {
+    Object: (r) => ({kind: "Object", data: r}),
+    Array: (r) => ({kind: "Array", data: [r]}),
+    Optional: (r) => ({kind: "Optional", data: [r]}),
+    primitive: (p) => ({kind: p})
+}
+
+type SchemaInstance<P extends SchemaType> = P extends Lexicon.PrimitiveUnion ? {kind: P} :
+P extends "Object" ? {kind: "Object", data: Record<string, SchemaInstance<SchemaType>>} :
+P extends "Optional" ? {kind: "Optional", data: [SchemaInstance<SchemaType>]} :
+P extends "Array" ? {kind: "Array", data: [SchemaInstance<SchemaType>]} : never
 
 
 
@@ -135,9 +154,35 @@ export function writeOperationInterpreter(): string {
 
     ${writeInternalOpInterpreter(supportedOps)}
 
-    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops).await;
+    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>) -> impl Responder {
+        let output = conduit_byte_code_interpreter_internal(state, ops, schemas).await;
         return HttpResponse::Ok().json(output)
+    }
+
+    fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {
+        return match schema {
+            Schema::Object(internal) => match value {
+                InterpreterType::Object(internal_value) => internal.iter().all(|(k, v)| match internal_value.get(k) {
+                    Some(matching_val) => adheres_to_schema(matching_val, &v),
+                    None => adheres_to_schema(&InterpreterType::None, &v)              
+                }),
+                _ => false
+            },
+            Schema::Array(internal) => match value {
+                InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0])),
+                _ => false
+            },
+            Schema::Optional(internal) => match value {
+                InterpreterType::None => true,
+                _ => adheres_to_schema(value, &internal[0])
+            },
+            ${Lexicon.Primitives.map(p => `Schema::${p} => {
+                match value {
+                    InterpreterType::${p}(_) => true,
+                    _ => false
+                }
+            }`).join(",\n")}
+        }
     }
     `
 }
