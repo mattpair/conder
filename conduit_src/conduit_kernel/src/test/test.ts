@@ -141,6 +141,5 @@ describe("conduit kernel", () => {
             interpeterTypeFactory.Object({o: interpeterTypeFactory.Object({f: 12})}),
             schemaFactory.Object({o: schemaFactory.Object({f: schemaFactory.int})})
         )
-        
     })
 });
