@@ -1,16 +1,17 @@
 import * as child_process from "child_process";
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstance, Schemas, schemaFactory} from "../../index";
+import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, Schemas, schemaFactory} from "../../index";
 import { Lexicon } from "conduit_parser";
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()
     class TestServer {
         private process: child_process.ChildProcess
-
+        private readonly port: number
+        private static next_port = 8080
         constructor(procedures: Procedures, schemas: Schemas) {
-             
-            this.process = child_process.exec(`./app 8080`, {
+            this.port = TestServer.next_port++
+            this.process = child_process.exec(`./app ${this.port}`, {
                 cwd: "./src/rust/target/debug",
                 env: {
                     "PROCEDURES": JSON.stringify(procedures),
@@ -38,7 +39,7 @@ describe("conduit kernel", () => {
 
         async noopRequest() {
             const body = JSON.stringify({kind: "Noop"})
-            const res = await fetch("http://localhost:8080/", {
+            const res = await fetch(`http://localhost:${this.port}`, {
                 method: "PUT",
                 body,
                 headers: {
@@ -54,9 +55,9 @@ describe("conduit kernel", () => {
             this.process.kill("SIGTERM")
         }
 
-        async invoke(name: string, arg: InterpreterTypeInstance<any> = interpeterTypeFactory.None) {
+        async invoke(name: string, arg: InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap] = interpeterTypeFactory.None) {
             const body = JSON.stringify({kind: "Exec", data: {proc: name, arg}})
-            return fetch("http://localhost:8080/", {
+            return fetch(`http://localhost:${this.port}/`, {
                 method: "PUT",
                 body,
                 headers: {
@@ -93,7 +94,7 @@ describe("conduit kernel", () => {
             await server.invoke("validateSchema").catch(() => failures++)
             expect(failures).toBe(1)
             // Invalid input
-            await server.invoke("validateSchema", interpeterTypeFactory.double(12)).catch(() => failures++)
+            await server.invoke("validateSchema", interpeterTypeFactory.decimal([12, 0])).catch(() => failures++)
             expect(failures).toBe(2)
             const res = await server.invoke("validateSchema", interpeterTypeFactory.bool(true))
             expect(res).toEqual(interpeterTypeFactory.bool(true))

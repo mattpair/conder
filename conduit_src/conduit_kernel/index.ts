@@ -28,4 +28,4 @@ export function getOpWriter(): CompleteOpWriter {
 export type Procedures = Record<string, OpInstance[]>
 export type Schemas = SchemaInstance<SchemaType>[]
 
-export { interpeterTypeFactory, schemaFactory, InterpreterTypeInstance } from './src/main/interpreter/interpreter_writer'
+export { interpeterTypeFactory, schemaFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'

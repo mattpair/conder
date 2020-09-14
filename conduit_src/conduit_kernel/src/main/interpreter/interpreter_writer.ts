@@ -67,52 +67,59 @@ P extends "Array" ? {kind: "Array", data: [SchemaInstance<SchemaType>]} : never
 
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
 
-type InputTypeFor<I extends InterpreterType> = I extends "None" ? null : 
-I extends "Object" ? Record<string, InterpreterTypeInstance<InterpreterType>> : 
-I extends "int32" | "int64" | "float" | "double" | "uint32" | "uint64" ? number : 
-I extends "bool" ? boolean :
-I extends "bytes" | "string" ? string :
-I extends "Array" ? InterpreterTypeInstance<InterpreterType>[] :
-never
 
-export type InterpreterTypeInstance<T extends InterpreterType> = Readonly<{kind: T, data: any}>
+export type InterpreterTypeInstanceMap = {
+    [T in InterpreterType]: T extends "None" ? null : 
+    T extends "Object" ? Record<string, any> : 
+    T extends Lexicon.Symbol.decimal ? [number, number]:
+    T extends Lexicon.Symbol.int ? number : 
+    T extends "bool" ? boolean :
+    T extends "bytes" | "string" ? string :
+    T extends "Array" ? any[] :
+    T extends "None" ? null :
+    never
+} 
+
 type InterpreterTypeFactory = Readonly<{
-    [P in InterpreterType]: (InputTypeFor<P> extends null ? InterpreterTypeInstance<P> : (a: InputTypeFor<P>) => InterpreterTypeInstance<P>)
+    [P in InterpreterType]: (InterpreterTypeInstanceMap[P] extends null ? null : (a: InterpreterTypeInstanceMap[P]) => InterpreterTypeInstanceMap[P])
 }>
 
-type RustInterpreterTypeEnumDefinition = Record<InterpreterType, string | null>
+type RustInterpreterTypeEnumDefinition = Record<InterpreterType, string[] | null>
 
-function numberFactory<P extends Lexicon.PrimitiveUnion>(p: P): (n: number) => InterpreterTypeInstance<P> {
-    return (n) => ({kind: p, data: n})
-}
+
 export const interpeterTypeFactory: InterpreterTypeFactory = {
-    None: {kind: "None", data: undefined},
-    Object: (o) => ({kind: "Object", data: o}),
-    int32: numberFactory(Lexicon.Symbol.int32),
-    int64: numberFactory(Lexicon.Symbol.int64),
-    uint32: numberFactory(Lexicon.Symbol.uint32),
-    uint64: numberFactory(Lexicon.Symbol.uint64),
-    double: numberFactory(Lexicon.Symbol.double),
-    float: numberFactory(Lexicon.Symbol.float),
-    string: (s) => ({kind: Lexicon.Symbol.string, data: s}),
-    bytes: (b) => ({kind: Lexicon.Symbol.bytes, data: b}),
-    bool: (b) => ({kind: Lexicon.Symbol.bool, data: b}),
-    Array: (a) => ({kind: "Array", data: a})
+    None: null,
+    Object: (o) => o,
+    decimal: (d) => {
+        if (Math.round(d[0]) !== d[0] || Math.round(d[1]) !== d[1]) {
+            throw Error(`Decimal tuple members must be integers`)
+        }
+        if (d[1] < 0) {
+            throw Error(`Decimal value must not be negative`)
+        }
+        return d
+    },
+    int: (d) => {
+        if (Math.round(d) !== d) {
+            throw Error(`Integers must not contain decimals`)
+        }
+        return d
+    },
+    string: (s) => s,
+    bytes: (b) => b,
+    bool: (b) => b,
+    Array: (a) => a
 }
 
 const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
-    double: "f64",
-    int32: "i32",
-    int64: "i64",
-    float: "f32",
-    uint32: "i32",
-    uint64: "i64",
-    bool: "bool",
-    string: "String",
-    bytes: "Vec<u8>",
+    decimal: ["i64", "i64"],
+    int: ["i64"],
+    bool: ["bool"],
+    string: ["String"],
+    bytes: ["Vec<u8>"],
     None: null,
-    Array: "Vec<InterpreterType>",
-    Object: "HashMap<String, InterpreterType>"
+    Array: ["Vec<InterpreterType>"],
+    Object: ["HashMap<String, InterpreterType>"]
 }
 
 export function writeOperationInterpreter(): string {
@@ -146,7 +153,7 @@ export function writeOperationInterpreter(): string {
     }
 
     #[derive(Serialize, Deserialize, Clone)]
-    #[serde(tag = "kind", content= "data")]
+    #[serde(untagged)]
     enum InterpreterType {
         ${//@ts-ignore
         Object.keys(interpreterTypeDef).map(k => `${k}${interpreterTypeDef[k] === null ? "" : `(${interpreterTypeDef[k]})`}`).join(",\n")}
@@ -184,7 +191,7 @@ export function writeOperationInterpreter(): string {
             },
             ${Lexicon.Primitives.map(p => `Schema::${p} => {
                 match value {
-                    InterpreterType::${p}(_) => true,
+                    InterpreterType::${p}(${interpreterTypeDef[p].map(_ => `_`).join(", ")}) => true,
                     _ => false
                 }
             }`).join(",\n")}

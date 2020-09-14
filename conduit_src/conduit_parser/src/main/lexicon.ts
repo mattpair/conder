@@ -7,12 +7,8 @@ export enum Symbol {
     OPEN_BRACKET="{",
     CLOSE_BRACKET="}",
     COMMA=",",
-    double="double",
-    float="float",
-    int32="int32",
-    int64="int64",
-    uint32="uint32",
-    uint64="uint64",
+    decimal="decimal",
+    int="int",
     bool="bool",
     string="string",
     bytes="bytes",
@@ -48,26 +44,18 @@ export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none | S
 export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none, Symbol.Ref]
 
 export type PrimitiveUnion = 
-    Symbol.double |
-    Symbol.float |
-    Symbol.int32 |
-    Symbol.int64 |
-    Symbol.uint32 |
-    Symbol.uint64 |
+    Symbol.decimal |
     Symbol.bool |
     Symbol.string |
-    Symbol.bytes
+    Symbol.bytes |
+    Symbol.int
 
 export const Primitives: PrimitiveUnion[] = [
-    Symbol.double,
-    Symbol.float,
-    Symbol.int32,
-    Symbol.int64,
-    Symbol.uint32,
-    Symbol.uint64,
-    Symbol.bool,
+    Symbol.decimal,
+    Symbol.int,
     Symbol.string,
     Symbol.bytes,
+    Symbol.bool
 ]
 
 export type AnyKeyword = 
