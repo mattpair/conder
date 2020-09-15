@@ -30,3 +30,5 @@ export type Procedures = Record<string, OpInstance[]>
 export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap]
 
 export { interpeterTypeFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
+
+export {createSQLFor} from './src/main/interpreter/store/sql'

@@ -1,7 +1,9 @@
 import * as child_process from "child_process";
+import * as fs from 'fs'
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, InterpreterTypeInstanceMap, AnyInterpreterTypeInstance} from "../../index";
-import { Lexicon, Schemas, schemaFactory, SchemaInstance, AnySchemaInstance } from "conduit_parser";
+import { getOpWriter, Procedures, interpeterTypeFactory, AnyInterpreterTypeInstance, createSQLFor} from "../../index";
+import { Schemas, schemaFactory, SchemaInstance, AnySchemaInstance } from "conduit_parser";
+
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()
@@ -143,5 +145,42 @@ describe("conduit kernel", () => {
             interpeterTypeFactory.Object({o: interpeterTypeFactory.Object({f: 12})}),
             schemaFactory.Object({o: schemaFactory.Object({f: schemaFactory.int})})
         )
+    })
+
+    describe("storage layer", () => {
+        // This test is temporary. 
+        // Just validating I can stand up before moving on to integration testing.
+        it("should be able to stand up", () => {
+            const dirname = fs.mkdtempSync("postgres")
+            fs.writeFileSync(`${dirname}/init.sql`, createSQLFor({
+                kind: "HierarchicalStore",
+                typeName: "SomeTypeName",
+                specName: "specName",
+                name: "storeName",
+                schema: schemaFactory.Array(
+                    schemaFactory.Object({
+                        int: schemaFactory.int,
+                        opt: schemaFactory.Optional(
+                            schemaFactory.Object({
+                                arr: schemaFactory.Array(schemaFactory.Object({b: schemaFactory.bool}))
+                            })
+                        )
+                    })
+                )
+            }))
+            fs.writeFileSync(`${dirname}/Dockerfile`, `
+            
+            FROM postgres:12.4
+                    
+            COPY init.sql /docker-entrypoint-initdb.d/
+            `)
+            child_process.execSync(`docker build -t ${dirname.toLowerCase()} .`, {cwd: dirname, stdio: "pipe"})
+            const child = child_process.exec(`docker run -e POSTGRES_PASSWORD=mysecretpassword ${dirname.toLowerCase()} `)
+            child.stdout.pipe(process.stdout)
+            child.stderr.pipe(process.stderr)
+            fs.rmdirSync(dirname, {recursive: true})
+            child.kill("SIGKILL")
+
+        }, 10000)
     })
 });
