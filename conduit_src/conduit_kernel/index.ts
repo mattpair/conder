@@ -31,4 +31,4 @@ export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof Interp
 
 export { interpeterTypeFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
 
-export {createSQLFor} from './src/main/interpreter/store/sql'
+export {createSQLFor} from './src/main/interpreter/store/postgres'
