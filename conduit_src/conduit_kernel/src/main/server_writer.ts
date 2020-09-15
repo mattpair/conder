@@ -36,6 +36,35 @@ export function generateServer(): string {
                     Vec::with_capacity(0)
                 }
             }`
+        },
+        {
+            name: "client",
+            type: "Option<Client>",
+            initializer: `match env::var("POSTGRES_SERVICE_HOST") {
+                Ok(pgloc) => {
+                    let pass = match env::var("POSTGRES_PASSWORD") {
+                        Ok(pwd) => pwd,
+                        Err(e) => panic!("Received a postgres location, but didn't receive postgres password: {}", e)
+                    };
+                    let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", pgloc, pass), NoTls).await {
+                        Ok(out) => out,
+                        Err(e) => panic!("couldn't create connection: {}", e)
+                    };
+                    
+                    // The connection object performs the actual communication with the database,
+                    // so spawn it off to run on its own.
+                    actix_rt::spawn(async move {
+                        if let Err(e) = connection.await {
+                            eprintln!("connection error: {}", e);
+                        }
+                    });
+                    Some(client)
+                },
+                Err(e) => {
+                    eprintln!("No postgres location specified. Running without storage.");
+                    None
+                }
+            }`
         }
     ]
 
@@ -90,15 +119,15 @@ export function generateServer(): string {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.client),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas)
+                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.client)
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas)
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.client)
                     }
                 }
             }.await;
