@@ -5,7 +5,7 @@ import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     return `
-    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, storage: &dyn StorageEngine) ->Result<InterpreterType, String> {
+    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, storage: &StorageEngine) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -133,7 +133,7 @@ export function writeOperationInterpreter(): string {
 
     ${writeInternalOpInterpreter(supportedOps)}
 
-    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>, storage: &dyn StorageEngine) -> impl Responder {
+    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>, storage: &StorageEngine) -> impl Responder {
         let output = conduit_byte_code_interpreter_internal(state, ops, schemas, storage).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),

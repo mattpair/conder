@@ -38,8 +38,8 @@ export function generateServer(): string {
             }`
         },
         {
-            name: "storage",
-            type: "Box<dyn StorageEngine>",
+            name: "storageEngine",
+            type: "StorageEngine",
             initializer: `match env::var("POSTGRES_SERVICE_HOST") {
                 Ok(pgloc) => {
                     let pass = match env::var("POSTGRES_PASSWORD") {
@@ -58,13 +58,13 @@ export function generateServer(): string {
                             eprintln!("connection error: {}", e);
                         }
                     });
-                    Box::new(PostgresStorage {
+                    StorageEngine::Postgres{
                         client: client
-                    })
+                    }
                 },
                 Err(e) => {
                     eprintln!("No postgres location specified. Running without storage.");
-                    Box::new(PanicStorage)
+                    StorageEngine::Panic
                 }
             }`
         }
@@ -86,6 +86,8 @@ export function generateServer(): string {
         use tokio_postgres::error::{Error};
         use std::collections::HashMap;
         use std::future::Future;
+        use std::task::{Poll, Context};
+        use std::pin::Pin;
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
@@ -124,41 +126,36 @@ export function generateServer(): string {
             schema: Schema
         }
 
-        trait StorageEngine {
-            fn insert<'a>(&self, def: &GlobalDef, instance: &InterpreterType) -> &'a mut InterpreterType;
-        }
 
-        struct PanicStorage;
-
-        impl StorageEngine for PanicStorage {
-            fn insert<'a>(&self, _: &GlobalDef, _: &InterpreterType) -> &'a mut InterpreterType {
-                panic!("Inserting when no storage is attached.");
+        async fn insert(eng: &StorageEngine, def: &GlobalDef, instance: &InterpreterType) -> InterpreterType {
+            match eng {
+                StorageEngine::Postgres{client} => {
+                    return InterpreterType::None
+                },
+                StorageEngine::Panic => {
+                    panic!("invoking panic storage.")
+                }
             }
         }
 
-        struct PostgresStorage {
-            client: Client
-        }
-        
-        impl StorageEngine for PostgresStorage {
-            fn insert<'a>(&self, def: &GlobalDef, instance: &InterpreterType) -> &'a mut InterpreterType {
-                Box::leak(Box::new(InterpreterType::None))
-            }
+        enum StorageEngine {
+            Panic,
+            Postgres{client: Client}
         }
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.storage.as_ref()),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas, data.storage.as_ref())
+                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.storageEngine)
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.storage.as_ref())
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine)
                     }
                 }
             }.await;
