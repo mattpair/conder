@@ -210,7 +210,7 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
                 kind: "HierarchicalStore",
                 name: s.name,
                 typeName: innerType.name,
-                schema,
+                schema: schema.data[0],
                 specName: `querySpec_${s.name}`
                 
             })

@@ -11,7 +11,8 @@
         "typeRoots": [ "node_modules/@types/", "src/" ],
         "types": [
             "jest",
-            "node"
+            "node",
+            "mongodb"
         ],
         "outDir": "dist",
         "composite": true

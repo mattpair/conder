@@ -1,9 +1,10 @@
 import * as child_process from "child_process";
 import * as fs from 'fs'
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, AnyInterpreterTypeInstance, createSQLFor} from "../../index";
-import { Schemas, schemaFactory, SchemaInstance, AnySchemaInstance } from "conduit_parser";
-
+import { getOpWriter, Procedures, interpeterTypeFactory, AnyInterpreterTypeInstance} from "../../index";
+import { Schemas, schemaFactory, SchemaInstance, AnySchemaInstance, CompiledTypes, Lexicon } from "conduit_parser";
+import * as mongodb from 'mongodb'
+import * as assert from 'assert'
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()
@@ -146,18 +147,83 @@ describe("conduit kernel", () => {
             schemaFactory.Object({o: schemaFactory.Object({f: schemaFactory.int})})
         )
     })
+    type bsonType = "object" | "string" | "long" | "array" | "bool" | "double"
+    type ObjectReqs ={required: string[], properties: Record<string, MongoSchema>}
+    type MongoSchema = ({bsonType: "object"} & ObjectReqs) |
+    {bsonType: "string"} | {bsonType: "long"} | {bsonType: "array", items: MongoSchema} | {
+        bsonType: [Exclude<bsonType, "object" | "array">]
+    } | ({
+        bsonType: ["object"]
+    } & ObjectReqs) | {bsonType: "bool"} | {bsonType: "double"}
 
-    describe("postgres storage layer", () => {
+    function toMongoSchema(s: AnySchemaInstance): MongoSchema {
+        switch(s.kind) {
+            case "Array":
+                return {
+                    bsonType: "array",
+                    items: toMongoSchema(s.data[0])
+                }
+            case "Object":
+                const properties: Record<string, MongoSchema> = {}
+                const required: string[] = []
+                for (const key in s.data) {
+                    if (s.data[key].kind === "Optional") {
+                        properties[key] = toMongoSchema(s.data[key].data[0])
+                    } else {
+                        required.push(key)
+                        properties[key] = toMongoSchema(s.data[key])
+                    }
+                    
+                }
+                return {
+                    bsonType: "object",
+                    properties,
+                    required
+                }
+            case "Optional":
+            case Lexicon.Symbol.double:
+                return {bsonType: "double"}
+            case Lexicon.Symbol.int:
+                return {bsonType: "long"}
+            case Lexicon.Symbol.string:
+                return {bsonType: "string"}
+            case Lexicon.Symbol.bool:
+                return {bsonType: "bool"}
+        }
+    }
+
+    async function setupMongo(s: CompiledTypes.HierarchicalStore): Promise<mongodb.Collection<any>> {
+        const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {numberOfRetries: 15, reconnectInterval: 1000})
+        const db = client.db("test")
+        
+        return await db.createCollection(s.name, {
+            validator: {
+                "$jsonSchema": toMongoSchema(s.schema)
+            }
+        })
+        
+
+    }
+    describe("mongo storage layer", () => {
         // This test is temporary. 
         // Just validating I can stand up before moving on to integration testing.
-        it("should be able to stand up", () => {
-            const dirname = fs.mkdtempSync("postgres")
-            fs.writeFileSync(`${dirname}/init.sql`, createSQLFor({
+        function sleep(ms: number) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+          }
+          
+        child_process.execSync(`docker pull mongo:4.4`)
+
+        it("should be able to stand up", async () => {
+            const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`)
+            // child.stdout.pipe(process.stdout)
+            child.stderr.pipe(process.stderr)
+            await sleep(3000)
+            const client = await setupMongo({
                 kind: "HierarchicalStore",
                 typeName: "SomeTypeName",
                 specName: "specName",
                 name: "storeName",
-                schema: schemaFactory.Array(
+                schema: 
                     schemaFactory.Object({
                         int: schemaFactory.int,
                         opt: schemaFactory.Optional(
@@ -165,21 +231,11 @@ describe("conduit kernel", () => {
                                 arr: schemaFactory.Array(schemaFactory.Object({b: schemaFactory.bool}))
                             })
                         )
-                    })
-                )
-            }))
-            fs.writeFileSync(`${dirname}/Dockerfile`, `
+                    })  
+            })
             
-            FROM postgres:12.4
-                    
-            COPY init.sql /docker-entrypoint-initdb.d/
-            `)
-            child_process.execSync(`docker build -t ${dirname.toLowerCase()} .`, {cwd: dirname, stdio: "pipe"})
-            const child = child_process.exec(`docker run -e POSTGRES_PASSWORD=mysecretpassword ${dirname.toLowerCase()} `)
-            child.stdout.pipe(process.stdout)
-            child.stderr.pipe(process.stderr)
-            fs.rmdirSync(dirname, {recursive: true})
-            child.kill("SIGKILL")
+            
+            child.kill("SIGTERM")
 
         }, 10000)
     })

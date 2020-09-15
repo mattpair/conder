@@ -11,6 +11,7 @@
   "license": "ISC",
   "devDependencies": {
     "@types/jest": "^26.0.8",
+    "@types/mongodb": "^3.5.27",
     "@types/node": "^14.10.1",
     "jest": "^26.2.2",
     "prettier": "^2.0.5",
@@ -19,7 +20,8 @@
   },
   "dependencies": {
     "conduit_parser": "file:../conduit_parser",
-    "isomorphic-fetch": "^2.2.1"
+    "isomorphic-fetch": "^2.2.1",
+    "mongodb": "^3.6.2"
   },
   "jest": {
     "preset": "ts-jest",
