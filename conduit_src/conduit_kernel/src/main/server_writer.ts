@@ -85,6 +85,7 @@ export function generateServer(): string {
         use serde::{Deserialize, Serialize};
         use tokio_postgres::error::{Error};
         use std::collections::HashMap;
+        use std::future::Future;
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
@@ -117,15 +118,21 @@ export function generateServer(): string {
             .await
         }
 
+        #[derive(Deserialize)]
+        struct GlobalDef {
+            name: String,
+            schema: Schema
+        }
+
         trait StorageEngine {
-            fn isPanicky(&self) -> bool;
+            fn insert<'a>(&self, def: &GlobalDef, instance: &InterpreterType) -> &'a mut InterpreterType;
         }
 
         struct PanicStorage;
 
         impl StorageEngine for PanicStorage {
-            fn isPanicky(&self) -> bool {
-                true
+            fn insert<'a>(&self, _: &GlobalDef, _: &InterpreterType) -> &'a mut InterpreterType {
+                panic!("Inserting when no storage is attached.");
             }
         }
 
@@ -134,8 +141,8 @@ export function generateServer(): string {
         }
         
         impl StorageEngine for PostgresStorage {
-            fn isPanicky(&self) -> bool {
-                false
+            fn insert<'a>(&self, def: &GlobalDef, instance: &InterpreterType) -> &'a mut InterpreterType {
+                Box::leak(Box::new(InterpreterType::None))
             }
         }
 
