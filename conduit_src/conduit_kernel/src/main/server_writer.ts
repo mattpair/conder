@@ -39,7 +39,7 @@ export function generateServer(): string {
         },
         {
             name: "storageEngine",
-            type: "StorageEngine",
+            type: "storage::Engine",
             initializer: `match env::var("POSTGRES_SERVICE_HOST") {
                 Ok(pgloc) => {
                     let pass = match env::var("POSTGRES_PASSWORD") {
@@ -58,13 +58,13 @@ export function generateServer(): string {
                             eprintln!("connection error: {}", e);
                         }
                     });
-                    StorageEngine::Postgres{
+                    storage::Engine::Postgres{
                         client: client
                     }
                 },
                 Err(e) => {
                     eprintln!("No postgres location specified. Running without storage.");
-                    StorageEngine::Panic
+                    storage::Engine::Panic
                 }
             }`
         }
@@ -91,6 +91,7 @@ export function generateServer(): string {
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
+        mod storage;
 
 
         struct AppData {
@@ -124,23 +125,6 @@ export function generateServer(): string {
         struct GlobalDef {
             name: String,
             schema: Schema
-        }
-
-
-        async fn insert(eng: &StorageEngine, def: &GlobalDef, instance: &InterpreterType) -> InterpreterType {
-            match eng {
-                StorageEngine::Postgres{client} => {
-                    return InterpreterType::None
-                },
-                StorageEngine::Panic => {
-                    panic!("invoking panic storage.")
-                }
-            }
-        }
-
-        enum StorageEngine {
-            Panic,
-            Postgres{client: Client}
         }
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
