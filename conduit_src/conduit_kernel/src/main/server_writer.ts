@@ -38,8 +38,8 @@ export function generateServer(): string {
             }`
         },
         {
-            name: "client",
-            type: "Option<Client>",
+            name: "storage",
+            type: "Box<dyn StorageEngine>",
             initializer: `match env::var("POSTGRES_SERVICE_HOST") {
                 Ok(pgloc) => {
                     let pass = match env::var("POSTGRES_PASSWORD") {
@@ -58,11 +58,13 @@ export function generateServer(): string {
                             eprintln!("connection error: {}", e);
                         }
                     });
-                    Some(client)
+                    Box::new(PostgresStorage {
+                        client: client
+                    })
                 },
                 Err(e) => {
                     eprintln!("No postgres location specified. Running without storage.");
-                    None
+                    Box::new(PanicStorage)
                 }
             }`
         }
@@ -115,19 +117,41 @@ export function generateServer(): string {
             .await
         }
 
+        trait StorageEngine {
+            fn isPanicky(&self) -> bool;
+        }
+
+        struct PanicStorage;
+
+        impl StorageEngine for PanicStorage {
+            fn isPanicky(&self) -> bool {
+                true
+            }
+        }
+
+        struct PostgresStorage {
+            client: Client
+        }
+        
+        impl StorageEngine for PostgresStorage {
+            fn isPanicky(&self) -> bool {
+                false
+            }
+        }
+
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.client),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.storage.as_ref()),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.client)
+                        conduit_byte_code_interpreter(state, proc, &data.schemas, data.storage.as_ref())
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.client)
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.storage.as_ref())
                     }
                 }
             }.await;
