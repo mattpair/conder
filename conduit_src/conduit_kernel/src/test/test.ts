@@ -147,7 +147,7 @@ describe("conduit kernel", () => {
         )
     })
 
-    describe("storage layer", () => {
+    describe("postgres storage layer", () => {
         // This test is temporary. 
         // Just validating I can stand up before moving on to integration testing.
         it("should be able to stand up", () => {
