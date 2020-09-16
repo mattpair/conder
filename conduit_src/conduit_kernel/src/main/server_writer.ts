@@ -1,5 +1,7 @@
+import { AnySchemaInstance } from 'conduit_parser';
 
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
+import { OpInstance } from './interpreter/supported_op_definition';
 
 
 type ConstDataAddition = {
@@ -7,6 +9,33 @@ type ConstDataAddition = {
     type: string
     initializer: string
 }
+
+export enum Var {
+    MONGO_SERVICE_HOST="MONGO_SERVICE_HOST",
+    MONGO_INITDB_ROOT_USERNAME="MONGO_INITDB_ROOT_USERNAME",
+    MONGO_INITDB_ROOT_PASSWORD="MONGO_INITDB_ROOT_PASSWORD",
+    MONGO_DB="MONGO_DB",
+    PROCEDURES="PROCEDURES",
+    SCHEMAS="SCHEMAS",
+    STORES="STORES"
+}
+
+export type EnvVarType<E extends Var> = 
+E extends Var.STORES ? Record<string, AnySchemaInstance> :
+E extends Var.SCHEMAS ? AnySchemaInstance[] :
+E extends Var.PROCEDURES ? Record<string, OpInstance[]> :
+E extends Var.MONGO_DB | Var.MONGO_SERVICE_HOST | Var.MONGO_INITDB_ROOT_USERNAME | Var.MONGO_INITDB_ROOT_PASSWORD 
+? string : never
+
+type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES 
+
+// Strong refers to the fact that the type bounds are more specific.
+export type StrongServerEnv= {[E in Exclude<Var, RequiredEnv>]?: EnvVarType<E>} & {
+    [E in RequiredEnv]: EnvVarType<E>
+} 
+export type ServerEnv = {[E in Exclude<Var, RequiredEnv>]?: string} & {
+    [E in RequiredEnv]: string
+} 
 
 export function generateServer(): string {
     const app_data_adds: ConstDataAddition[] = [
@@ -18,7 +47,7 @@ export function generateServer(): string {
         {
             name: "procs",
             type: "HashMap<String, Vec<Op>>",
-            initializer: `match env::var("PROCEDURES") {
+            initializer: `match env::var("${Var.PROCEDURES}") {
                 Ok(str) => serde_json::from_str(&str).unwrap(),
                 Err(e) => {
                     eprintln!("Did not find any procedures {}", e);
@@ -29,7 +58,7 @@ export function generateServer(): string {
         {
             name: "schemas",
             type: "Vec<Schema>",
-            initializer: `match env::var("SCHEMAS") {
+            initializer: `match env::var("${Var.SCHEMAS}") {
                 Ok(str) => serde_json::from_str(&str).unwrap(),
                 Err(e) => {
                     eprintln!("Did not find any schemas {}", e);
@@ -38,19 +67,27 @@ export function generateServer(): string {
             }`
         },
         {
+            name: "stores",
+            type: "HashMap<String, Schema>",
+            initializer: `match env::var("${Var.STORES}") {
+                Ok(r) => serde_json::from_str(&r).unwrap(),
+                Err(e) => panic!("Did not receive a definition for any stores")
+            }`
+        },
+        {
             name: "storageEngine",
             type: "storage::Engine",
-            initializer: `match env::var("MONGO_SERVICE_HOST") {
+            initializer: `match env::var("${Var.MONGO_SERVICE_HOST}") {
                 Ok(host) => {
-                    let user = match env::var("MONGO_INITDB_ROOT_USERNAME") {
+                    let user = match env::var("${Var.MONGO_INITDB_ROOT_USERNAME}") {
                         Ok(user_str) => user_str,
                         Err(e) => panic!("Received a mongo location, but didn't receive a mongo user: {}", e)
                     };
-                    let pass = match env::var("MONGO_INITDB_ROOT_PASSWORD") {
+                    let pass = match env::var("${Var.MONGO_INITDB_ROOT_PASSWORD}") {
                         Ok(p) => p,
                         Err(e) => panic!("Did not receive the mongo password.")
                     };
-                    let db = match env::var("MONGO_DB") {
+                    let db = match env::var("${Var.MONGO_DB}") {
                         Ok(d) => d,
                         Err(e) => panic!("Don't know which mongo database to use")
                     };
@@ -124,12 +161,6 @@ export function generateServer(): string {
             .bind(format!("0.0.0.0:{}", args[1]))?
             .run()
             .await
-        }
-
-        #[derive(Deserialize)]
-        struct GlobalDef {
-            name: String,
-            schema: Schema
         }
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {

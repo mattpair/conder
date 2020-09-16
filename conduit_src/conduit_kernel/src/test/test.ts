@@ -1,10 +1,9 @@
 import * as child_process from "child_process";
 import * as fs from 'fs'
 import "isomorphic-fetch";
-import { getOpWriter, Procedures, interpeterTypeFactory, AnyInterpreterTypeInstance} from "../../index";
-import { Schemas, schemaFactory, SchemaInstance, AnySchemaInstance, CompiledTypes, Lexicon } from "conduit_parser";
+import { getOpWriter, Procedures, interpeterTypeFactory, AnyInterpreterTypeInstance, ServerEnv, Var, StrongServerEnv} from "../../index";
+import { Schemas, schemaFactory, AnySchemaInstance, CompiledTypes, Lexicon } from "conduit_parser";
 import * as mongodb from 'mongodb'
-import * as assert from 'assert'
 
 describe("conduit kernel", () => {
     const opWriter = getOpWriter()
@@ -12,22 +11,25 @@ describe("conduit kernel", () => {
         private process: child_process.ChildProcess
         private readonly port: number
         private static next_port = 8080
-        constructor(procedures: Procedures, schemas: Schemas) {
+        constructor(env: StrongServerEnv) {
             this.port = TestServer.next_port++
+            const string_env: Partial<ServerEnv> = {}
+            for (const key in env) {
+                //@ts-ignore
+                string_env[key] = JSON.stringify(env[key])
+            }
+
             this.process = child_process.exec(`./app ${this.port}`, {
                 cwd: "./src/rust/target/debug",
-                env: {
-                    "PROCEDURES": JSON.stringify(procedures),
-                    "SCHEMAS": JSON.stringify(schemas)
-                },                
+                env: string_env,                
               });
             this.process.stdout.pipe(process.stdout)
             this.process.stderr.pipe(process.stderr)
         }
         
-        public static async start(procedures: Procedures, schemas: Schemas): Promise<TestServer> {
+        public static async start(env: StrongServerEnv): Promise<TestServer> {
             // portAssignments.set(8080, this.process);
-            const ret = new TestServer(procedures, schemas)
+            const ret = new TestServer(env)
             let retry = true 
             while (retry) {
                 try {
@@ -71,9 +73,14 @@ describe("conduit kernel", () => {
         }
     }
 
-    function kernelTest(descr: string, test: (server: TestServer) => Promise<void>, procs: Procedures ={}, schemas: Schemas=[]) {
+    function kernelTest(descr: string, test: (server: TestServer) => Promise<void>, envOverride: Partial<StrongServerEnv>={}) {
+        const env: StrongServerEnv = {PROCEDURES: {}, STORES: {}, SCHEMAS: []}
+        for (const key in envOverride) {
+            //@ts-ignore
+            env[key] = envOverride[key]
+        }
         it(descr, async () => {
-            const server = await TestServer.start(procs, schemas)
+            const server = await TestServer.start(env)
             await test(server)
             server.kill()
         }, 10000)
@@ -87,7 +94,7 @@ describe("conduit kernel", () => {
         kernelTest("invoking a custom noop", async (server) => {
             const res = await server.invoke("customNoop")
             expect(res).toEqual(interpeterTypeFactory.None)
-        }, {"customNoop": [opWriter.noop]})
+        }, {PROCEDURES: {"customNoop": [opWriter.noop]}})
     })
 
     describe("schema", () => {
@@ -108,7 +115,7 @@ describe("conduit kernel", () => {
                 const res = await server.invoke("validateSchema", validInput)
                 expect(res).toEqual(validInput)
     
-            }, {"validateSchema": [opWriter.enforceSchemaOnHeap({schema: 0, heap_pos: 0}), opWriter.returnVariable(0)]}, [schema])
+            }, {PROCEDURES: {"validateSchema": [opWriter.enforceSchemaOnHeap({schema: 0, heap_pos: 0}), opWriter.returnVariable(0)]}, SCHEMAS: [schema]}, )
         }
         
         schemaTest("boolean", "must exist", interpeterTypeFactory.double(12), interpeterTypeFactory.bool(true), schemaFactory.bool)
@@ -192,12 +199,6 @@ describe("conduit kernel", () => {
         }
     }
 
-    async function setupMongo(s: CompiledTypes.HierarchicalStore): Promise<mongodb.Collection<any>> {
-        const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {numberOfRetries: 15, reconnectInterval: 1000})
-        const db = client.db("test")
-        
-        return await db.createCollection(s.name)
-    }
     describe("mongo storage layer", () => {
         // This test is temporary. 
         // Just validating I can stand up before moving on to integration testing.
@@ -207,12 +208,14 @@ describe("conduit kernel", () => {
           
         child_process.execSync(`docker pull mongo:4.4`)
 
-        it("should be able to stand up", async () => {
+        it("should be able to store a document", async () => {
             const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`)
             // child.stdout.pipe(process.stdout)
             child.stderr.pipe(process.stderr)
             await sleep(3000)
-            const client = await setupMongo({
+            const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {numberOfRetries: 15, reconnectInterval: 1000})
+            const db = client.db("test")
+            const store = {
                 kind: "HierarchicalStore",
                 typeName: "SomeTypeName",
                 specName: "specName",
@@ -226,9 +229,8 @@ describe("conduit kernel", () => {
                             })
                         )
                     })  
-            })
-            
-            
+            }
+                        
             child.kill("SIGTERM")
 
         }, 10000)
