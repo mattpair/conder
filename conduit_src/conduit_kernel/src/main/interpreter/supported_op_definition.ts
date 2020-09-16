@@ -4,7 +4,7 @@ type OpDef<K="static"> = {
     readonly rustEnumMember: string
     readonly rustOpHandler: string
 }
-type OpDefWithParameter = OpDef<"param"> & {readonly paramType: string}
+type OpDefWithParameter = OpDef<"param"> & {readonly paramType: string[]}
 export type AnyOpDef = OpDef | OpDefWithParameter
 
 type StaticOp<KIND> = Op<KIND, "static">
@@ -25,7 +25,8 @@ ParamOp<"conditionalGoto", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
-ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}>
+ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
+ParamOp<"insertFromHeap", {heap_pos: number, store: string}>
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -115,7 +116,7 @@ export const OpSpec: CompleteOpSpec = {
             kind: "param",
             rustOpHandler: `heap.truncate(heap.len() - *op_param);  None`,
             rustEnumMember: `truncateHeap`,
-            paramType: "usize"
+            paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
     },
@@ -126,7 +127,7 @@ export const OpSpec: CompleteOpSpec = {
             rustEnumMember: `gotoOp`,
             // Set op_param to -1 because the op is always incremented at the end of each op execution.
             rustOpHandler: safeGoto("*op_param"),
-            paramType: "usize"
+            paramType: ["usize"]
         },
         //TODO: All param factory methods are the same. We should deduplicate.
         factoryMethod(p) {
@@ -153,7 +154,7 @@ export const OpSpec: CompleteOpSpec = {
                     _ => ${raiseErrorWithMessage("Cannot evaluate variable as boolean")}
                 }
             `,
-            paramType: "usize"
+            paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "conditionalGoto", data: p})
     },
@@ -168,7 +169,7 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {
             kind: "param",
-            paramType: "usize",
+            paramType: ["usize"],
             rustEnumMember: `returnVariable`,
             rustOpHandler: ` return Ok(heap.swap_remove(*op_param))`
         }
@@ -195,7 +196,7 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {                    
             kind: "param",
-            paramType: "usize",
+            paramType: ["usize"],
             rustEnumMember: `copyFromHeap`,
             rustOpHandler: `match heap.get(*op_param) {
                 Some(d) => {${pushStack("d.clone()")}; None},
@@ -209,7 +210,7 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {
             kind: "param",
-            paramType: `String`,
+            paramType: [`String`],
             rustEnumMember: `fieldAccess`,
             rustOpHandler: `
                     match ${popStack} {
@@ -226,21 +227,29 @@ export const OpSpec: CompleteOpSpec = {
     enforceSchemaOnHeap: {
         opDefinition: {
             kind: "param",
-            paramType: "Vec<usize>",
+            paramType: ["usize", "usize"],
             rustOpHandler: `
-            match heap.get(op_param[1]) {
-                Some(v) => {
-                    if adheres_to_schema(&v, &schemas[op_param[0]]) {
-                        None
-                    } else {
-                        ${raiseErrorWithMessage("Variable does not match the schema")}
-                    }
-                },
-                None => ${raiseErrorWithMessage("No such heap variable exists")}
-            }
+            if adheres_to_schema(&heap[*param1], &schemas[*param0]) {
+                None
+            } else {
+                ${raiseErrorWithMessage("Variable does not match the schema")}
+            }   
             `,
             rustEnumMember: "enforceSchemaOnHeap"
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
-    } 
+    },
+    insertFromHeap: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["usize", "String"],
+            rustEnumMember: "insertFromHeap",
+            rustOpHandler: `
+            let schema = stores.get(param1).unwrap();
+            storage::append(eng, &param1, schema, &heap[*param0]).await;
+            None
+            `
+        },
+        factoryMethod: (v) => ({kind: "insertFromHeap", data: [v.heap_pos, v.store]})
+    }
 }

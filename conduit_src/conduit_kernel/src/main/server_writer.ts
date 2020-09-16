@@ -11,10 +11,7 @@ type ConstDataAddition = {
 }
 
 export enum Var {
-    MONGO_SERVICE_HOST="MONGO_SERVICE_HOST",
-    MONGO_INITDB_ROOT_USERNAME="MONGO_INITDB_ROOT_USERNAME",
-    MONGO_INITDB_ROOT_PASSWORD="MONGO_INITDB_ROOT_PASSWORD",
-    MONGO_DB="MONGO_DB",
+    MONGO_CONNECTION_URI="MONGO_CONNECTION_URI",
     PROCEDURES="PROCEDURES",
     SCHEMAS="SCHEMAS",
     STORES="STORES"
@@ -24,8 +21,8 @@ export type EnvVarType<E extends Var> =
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, OpInstance[]> :
-E extends Var.MONGO_DB | Var.MONGO_SERVICE_HOST | Var.MONGO_INITDB_ROOT_USERNAME | Var.MONGO_INITDB_ROOT_PASSWORD 
-? string : never
+E extends Var.MONGO_CONNECTION_URI ? string :
+never
 
 type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES 
 
@@ -77,32 +74,24 @@ export function generateServer(): string {
         {
             name: "storageEngine",
             type: "storage::Engine",
-            initializer: `match env::var("${Var.MONGO_SERVICE_HOST}") {
-                Ok(host) => {
-                    let user = match env::var("${Var.MONGO_INITDB_ROOT_USERNAME}") {
-                        Ok(user_str) => user_str,
-                        Err(e) => panic!("Received a mongo location, but didn't receive a mongo user: {}", e)
-                    };
-                    let pass = match env::var("${Var.MONGO_INITDB_ROOT_PASSWORD}") {
-                        Ok(p) => p,
-                        Err(e) => panic!("Did not receive the mongo password.")
-                    };
-                    let db = match env::var("${Var.MONGO_DB}") {
-                        Ok(d) => d,
-                        Err(e) => panic!("Don't know which mongo database to use")
-                    };
-                    
-                    let client_options = match mongodb::options::ClientOptions::parse(&format!("mongodb://{}:{}@{}", &user, &pass, &host)).await {
-                        Ok(r) => r,
-                        Err(e) => panic!("Error parsing mongo client options")
-                    };
-                    
-                    let client = match mongodb::Client::with_options(client_options) {
+            initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
+                Ok(uri) => {
+
+                    let client = match mongodb::Client::with_uri_str(&uri).await {
                         Ok(r) => r,
                         Err(e) => panic!("Failure connecting to mongo: {}", e)
                     };
+
+                    // List the names of the databases in that deployment.
+                    let cols = match client.database("conduit").list_collection_names(None).await {
+                        Ok(r) => r,
+                        Err(e) => panic!("Failure connecting to mongo: {}", e)
+                    };
+                    for col in  cols{
+                        println!("{}", col);
+                    }
                     storage::Engine::Mongo{
-                        db: client.database(&db)
+                        db: client.database("conduit")
                     }
                 },
                 Err(e) => {
@@ -167,15 +156,15 @@ export function generateServer(): string {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine, &data.stores),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.storageEngine)
+                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.storageEngine, &data.stores)
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine)
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine, &data.stores)
                     }
                 }
             }.await;

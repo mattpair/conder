@@ -5,7 +5,7 @@ import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     return `
-    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, storage: &storage::Engine) ->Result<InterpreterType, String> {
+    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, eng: &storage::Engine, stores: &HashMap<String, Schema>) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -14,7 +14,7 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
                 ${supportedOps.map(o => {
                     let header = o.rustEnumMember
                     if (o.kind === "param") {
-                        header = `${o.rustEnumMember}(op_param)`
+                        header = `${o.rustEnumMember}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
                     }
                     return `Op::${header} => {
                         ${o.rustOpHandler}
@@ -118,7 +118,7 @@ export function writeOperationInterpreter(): string {
     enum Op {
         ${supportedOps.map(o => {
             if (o.kind === "param") {
-                return `${o.rustEnumMember}(${o.paramType})`
+                return `${o.rustEnumMember}(${o.paramType.join(", ")})`
             }
             return o.rustEnumMember
         }).join(",\n")}
@@ -133,8 +133,8 @@ export function writeOperationInterpreter(): string {
 
     ${writeInternalOpInterpreter(supportedOps)}
 
-    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>, storage: &storage::Engine) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops, schemas, storage).await;
+    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>, eng: &storage::Engine, stores: &HashMap<String, Schema>) -> impl Responder {
+        let output = conduit_byte_code_interpreter_internal(state, ops, schemas, eng, stores).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),
             Err(s) => {

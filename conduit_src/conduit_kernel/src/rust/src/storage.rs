@@ -4,9 +4,10 @@ use crate::{InterpreterType, Schema};
 
 
 
-async fn append(eng: &Engine, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {
+pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {
     match eng {
         Engine::Mongo{db} => {
+            
             let collection = db.collection(&storeName);
             let result: Option<String> = match instance { 
                 InterpreterType::Array(v) => {

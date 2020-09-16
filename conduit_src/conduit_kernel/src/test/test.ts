@@ -16,7 +16,7 @@ describe("conduit kernel", () => {
             const string_env: Partial<ServerEnv> = {}
             for (const key in env) {
                 //@ts-ignore
-                string_env[key] = JSON.stringify(env[key])
+                string_env[key] = typeof env[key] === "string"? env[key] : JSON.stringify(env[key])
             }
 
             this.process = child_process.exec(`./app ${this.port}`, {
@@ -60,7 +60,7 @@ describe("conduit kernel", () => {
             this.process.kill("SIGTERM")
         }
 
-        async invoke(name: string, arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None) {
+        async invoke(name: string, arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None, expectJson=true) {
             const body = JSON.stringify({kind: "Exec", data: {proc: name, arg}})
             return fetch(`http://localhost:${this.port}/`, {
                 method: "PUT",
@@ -163,42 +163,6 @@ describe("conduit kernel", () => {
         bsonType: ["object"]
     } & ObjectReqs) | {bsonType: "bool"} | {bsonType: "double"}
 
-    function toMongoSchema(s: AnySchemaInstance): MongoSchema {
-        switch(s.kind) {
-            case "Array":
-                return {
-                    bsonType: "array",
-                    items: toMongoSchema(s.data[0])
-                }
-            case "Object":
-                const properties: Record<string, MongoSchema> = {}
-                const required: string[] = []
-                for (const key in s.data) {
-                    if (s.data[key].kind === "Optional") {
-                        properties[key] = toMongoSchema(s.data[key].data[0])
-                    } else {
-                        required.push(key)
-                        properties[key] = toMongoSchema(s.data[key])
-                    }
-                    
-                }
-                return {
-                    bsonType: "object",
-                    properties,
-                    required
-                }
-            case "Optional":
-            case Lexicon.Symbol.double:
-                return {bsonType: "double"}
-            case Lexicon.Symbol.int:
-                return {bsonType: "long"}
-            case Lexicon.Symbol.string:
-                return {bsonType: "string"}
-            case Lexicon.Symbol.bool:
-                return {bsonType: "bool"}
-        }
-    }
-
     describe("mongo storage layer", () => {
         // This test is temporary. 
         // Just validating I can stand up before moving on to integration testing.
@@ -208,13 +172,15 @@ describe("conduit kernel", () => {
           
         child_process.execSync(`docker pull mongo:4.4`)
 
+        
         it("should be able to store a document", async () => {
+            //-e ${Var.MONGO_INITDB_ROOT_USERNAME}=testadmin -e ${Var.MONGO_INITDB_ROOT_PASSWORD}=password 
             const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`)
             // child.stdout.pipe(process.stdout)
             child.stderr.pipe(process.stderr)
-            await sleep(3000)
-            const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {numberOfRetries: 15, reconnectInterval: 1000})
-            const db = client.db("test")
+            await sleep(5000)
+            const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {useUnifiedTopology: true})
+            const db = client.db("conduit")
             const store = {
                 kind: "HierarchicalStore",
                 typeName: "SomeTypeName",
@@ -230,9 +196,27 @@ describe("conduit kernel", () => {
                         )
                     })  
             }
+            db.createCollection(store.name)
+
+            const server = await TestServer.start({
+                MONGO_CONNECTION_URI: "mongodb://localhost", 
+                STORES: {
+                    storeName: store.schema
+                },
+                PROCEDURES: {
+                    testStore: [opWriter.insertFromHeap({heap_pos: 0, store: store.name}), opWriter.returnVariable(0)]
+                },
+                SCHEMAS: []
+            })
+            await server.invoke("testStore", interpeterTypeFactory.Object({
+                int: interpeterTypeFactory.int(12),
+                opt: interpeterTypeFactory.None
+            }))
+
+            server.kill()
                         
             child.kill("SIGTERM")
 
-        }, 10000)
+        }, 15000)
     })
 });
