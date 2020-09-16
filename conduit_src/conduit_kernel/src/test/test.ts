@@ -196,13 +196,7 @@ describe("conduit kernel", () => {
         const client = await mongodb.MongoClient.connect("mongodb://localhost:27017", {numberOfRetries: 15, reconnectInterval: 1000})
         const db = client.db("test")
         
-        return await db.createCollection(s.name, {
-            validator: {
-                "$jsonSchema": toMongoSchema(s.schema)
-            }
-        })
-        
-
+        return await db.createCollection(s.name)
     }
     describe("mongo storage layer", () => {
         // This test is temporary. 

@@ -40,30 +40,36 @@ export function generateServer(): string {
         {
             name: "storageEngine",
             type: "storage::Engine",
-            initializer: `match env::var("POSTGRES_SERVICE_HOST") {
-                Ok(pgloc) => {
-                    let pass = match env::var("POSTGRES_PASSWORD") {
-                        Ok(pwd) => pwd,
-                        Err(e) => panic!("Received a postgres location, but didn't receive postgres password: {}", e)
+            initializer: `match env::var("MONGO_SERVICE_HOST") {
+                Ok(host) => {
+                    let user = match env::var("MONGO_INITDB_ROOT_USERNAME") {
+                        Ok(user_str) => user_str,
+                        Err(e) => panic!("Received a mongo location, but didn't receive a mongo user: {}", e)
                     };
-                    let (client, connection) = match tokio_postgres::connect(&format!("host={} user=postgres password={}", pgloc, pass), NoTls).await {
-                        Ok(out) => out,
-                        Err(e) => panic!("couldn't create connection: {}", e)
+                    let pass = match env::var("MONGO_INITDB_ROOT_PASSWORD") {
+                        Ok(p) => p,
+                        Err(e) => panic!("Did not receive the mongo password.")
+                    };
+                    let db = match env::var("MONGO_DB") {
+                        Ok(d) => d,
+                        Err(e) => panic!("Don't know which mongo database to use")
                     };
                     
-                    // The connection object performs the actual communication with the database,
-                    // so spawn it off to run on its own.
-                    actix_rt::spawn(async move {
-                        if let Err(e) = connection.await {
-                            eprintln!("connection error: {}", e);
-                        }
-                    });
-                    storage::Engine::Postgres{
-                        client: client
+                    let client_options = match mongodb::options::ClientOptions::parse(&format!("mongodb://{}:{}@{}", &user, &pass, &host)).await {
+                        Ok(r) => r,
+                        Err(e) => panic!("Error parsing mongo client options")
+                    };
+                    
+                    let client = match mongodb::Client::with_options(client_options) {
+                        Ok(r) => r,
+                        Err(e) => panic!("Failure connecting to mongo: {}", e)
+                    };
+                    storage::Engine::Mongo{
+                        db: client.database(&db)
                     }
                 },
                 Err(e) => {
-                    eprintln!("No postgres location specified. Running without storage.");
+                    eprintln!("No mongo location specified. Running without storage.");
                     storage::Engine::Panic
                 }
             }`
@@ -78,12 +84,10 @@ export function generateServer(): string {
         #![allow(unused_variables)]
         #![allow(dead_code)]
         #![allow(unused_imports)]
-        use tokio_postgres::{NoTls, Client};
         use actix_web::{web, App, HttpResponse, HttpServer, Responder, http};
         use actix_rt::System;
         use std::env;
         use serde::{Deserialize, Serialize};
-        use tokio_postgres::error::{Error};
         use std::collections::HashMap;
         use std::future::Future;
         use std::task::{Poll, Context};
@@ -91,6 +95,7 @@ export function generateServer(): string {
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
+        use mongodb::{Database};
         mod storage;
 
 

@@ -1,11 +1,11 @@
 
-use tokio_postgres::{NoTls, Client};
+use mongodb::{Database, options::ClientOptions};
 use crate::{InterpreterType, GlobalDef};
 
 
 async fn append(eng: &Engine, def: &GlobalDef, instance: &InterpreterType) -> InterpreterType {
     match eng {
-        Engine::Postgres{client} => {
+        Engine::Mongo{db} => {
             return InterpreterType::None
         },
         Engine::Panic => {
@@ -16,5 +16,5 @@ async fn append(eng: &Engine, def: &GlobalDef, instance: &InterpreterType) -> In
 
 pub enum Engine {
     Panic,
-    Postgres{client: Client}
+    Mongo{db: Database}
 }
