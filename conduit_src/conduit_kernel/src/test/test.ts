@@ -30,8 +30,7 @@ describe("conduit kernel", () => {
       const string_env: Partial<ServerEnv> = {};
       for (const key in env) {
         //@ts-ignore
-        string_env[key] =
-          typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
+        string_env[key] = typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
       }
 
       this.process = child_process.exec(`./app ${this.port}`, {
