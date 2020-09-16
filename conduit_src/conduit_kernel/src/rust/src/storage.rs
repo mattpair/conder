@@ -1,8 +1,7 @@
 
 use mongodb::{Database, options::ClientOptions, bson, results, Client};
 use crate::{InterpreterType, Schema};
-
-
+use futures::stream::StreamExt;
 
 pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {
     match eng {
@@ -11,21 +10,13 @@ pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, insta
             let collection = db.collection(&storeName);
             let result: Option<String> = match instance { 
                 InterpreterType::Array(v) => {
-                    let bs: Vec<bson::Document> = v.into_iter().map(|i| {
-                        match bson::to_document(i) {
-                            Ok(b) => b,
-                            Err(e) => panic!("Unable to convert document to bson")
-                        }
-                    }).collect();
+                    let bs: Vec<bson::Document> = v.into_iter().map(|i| bson::to_document(i).unwrap()).collect();
                     match collection.insert_many(bs, None).await {
                         Ok(r) => None,
                         Err(e) => Some(format!("Failure inserting {}", e))
                     }
                 },
-                _ => match collection.insert_one(match bson::to_document(instance) {
-                    Ok(b) => b,
-                    Err(e) => panic!("Unable to convert to bson")
-                }, None).await {
+                _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
                     Ok(r) => None,
                     Err(e) => Some(format!("Failure inserting {}", e))
                 }
@@ -35,6 +26,31 @@ pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, insta
                 Some(e) => panic!(e),
                 None => return InterpreterType::None
             };
+        },
+        Engine::Panic => {
+            panic!("invoking panic storage.")
+        }
+    }
+}
+pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> InterpreterType {
+    match eng {
+        Engine::Mongo{db} => {
+            
+            let collection = db.collection(&storeName);
+            let mut res = match collection.find(None, None).await {
+                Ok(c) => c,
+                Err(e) => panic!(e)
+            };
+
+            let mut ret = vec![];
+            while let Some(v) = res.next().await {
+                match v {
+                    Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
+                    Err(e) => panic!(e)
+                };
+            }
+            
+            return InterpreterType::Array(ret)
         },
         Engine::Panic => {
             panic!("invoking panic storage.")

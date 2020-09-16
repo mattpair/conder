@@ -1,11 +1,11 @@
 
-type OpDef<K="static"> = {
+type OpDef<NAME, K="static"> = {
     readonly kind: K
-    readonly rustEnumMember: string
+    readonly rustEnumMember: NAME
     readonly rustOpHandler: string
 }
-type OpDefWithParameter = OpDef<"param"> & {readonly paramType: string[]}
-export type AnyOpDef = OpDef | OpDefWithParameter
+type OpDefWithParameter<NAME> = OpDef<NAME, "param"> & {readonly paramType: string[]}
+export type AnyOpDef = OpDef<string> | OpDefWithParameter<string>
 
 type StaticOp<KIND> = Op<KIND, "static">
 
@@ -26,7 +26,8 @@ StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
 ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
-ParamOp<"insertFromHeap", {heap_pos: number, store: string}>
+ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
+ParamOp<"getAllFromStore", string>
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -41,8 +42,8 @@ export type CompleteOpFactory = {
     readonly [P in Ops["kind"]]: OpFactoryFinder<Extract<Ops, {kind: P}>>
 };
 
-type OpDefFinder<C extends Ops> = C["class"] extends "static" ? OpDef: 
-C["class"] extends "param" ? OpDefWithParameter :
+type OpDefFinder<C extends Ops> = C["class"] extends "static" ? OpDef<C["kind"]>: 
+C["class"] extends "param" ? OpDefWithParameter<C["kind"]> :
 never
 
 export type OpSpec<P extends Ops["kind"]> = Readonly<{
@@ -251,5 +252,18 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (v) => ({kind: "insertFromHeap", data: [v.heap_pos, v.store]})
+    },
+    getAllFromStore: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["String"],
+            rustEnumMember: "getAllFromStore",
+            rustOpHandler: `
+            let res = storage::getAll(eng, op_param, stores.get(op_param).unwrap()).await;
+            ${pushStack(`res`)};
+            None
+            `
+        },
+        factoryMethod: (s) => ({kind: "getAllFromStore", data: s})
     }
 }
