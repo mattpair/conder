@@ -49,8 +49,6 @@ export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     }
     
 }
-export type Type = ReturnType<Parse.CompleteType["differentiate"]>
-
 export type Variable = Readonly<{
     name: string,
     type: Parse.CompleteType
@@ -62,7 +60,7 @@ export type Statement = Parse.Statement
 export type ReturnableStatement = Parse.Returnable
 export type Function =  basic.NamedIntrafile<"Function", {
     returnType: RetType,
-    parameter: Parse.NoParameter | {name: string, schema: AnySchemaInstance},
+    parameter: Parse.NoParameter | {name: string, schema: AnySchemaInstance, kind: "WithParam"},
     body: Parse.Statement[],
     method: "POST" | "GET"
 }>
@@ -71,10 +69,11 @@ export type Function =  basic.NamedIntrafile<"Function", {
 export type Entity = Struct | Enum  | HierarchicalStore | Function | Python3Install
 export type ScopeMap = EntityMap<Entity>
 
-    
+export type SchemaFactory = (t: Parse.CompleteType) => AnySchemaInstance
 
 export type Manifest = {
     readonly inScope: ScopeMap
+    readonly schemaFactory: SchemaFactory
 }
 
 

@@ -2,8 +2,8 @@
   "name": "conduit_kernel_writer",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -b",
-    "pretest": "npm run compile && node -e 'require(\"./dist/index.js\").writeMain()' && cd src/rust && cargo build",
+    "compile": "tsc -b && node -e 'require(\"./dist/index.js\").writeMain()' && cd src/rust && cargo build",
+    "pretest": "npm run compile",
     "test": "jest",
     "pkg": "node -e 'require(\"./dist/index.js\").containerize()'"
   },

@@ -77,7 +77,6 @@ describe("conduit kernel", () => {
     async invoke(
       name: string,
       arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None,
-      expectJson = true
     ) {
       const body = JSON.stringify({ kind: "Exec", data: { proc: name, arg } });
       return fetch(`http://localhost:${this.port}/`, {

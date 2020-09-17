@@ -1,72 +1,86 @@
-import { CompleteOpFactory, OpInstance } from './interpreter/derive_supported_ops';
-import { Utilities, CompiledTypes, Parse, Lexicon } from "conduit_parser";
+import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter } from 'conduit_kernel';
+import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance } from "conduit_parser";
 
-export type WritableFunction = Readonly<{
-    name: string
-    method: "POST" | "GET"
-    body: OpInstance[],
-    parameter: Parse.Parameter
-    maximumNumberOfVariables: number
-}>
+export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, RequiredEnv> {
+    const PROCEDURES: StrongServerEnv[Var.PROCEDURES] = {}
+    const SCHEMAS: StrongServerEnv[Var.SCHEMAS] = []
+    const STORES: StrongServerEnv[Var.STORES] = {}
 
-export const functionToByteCode: Utilities.StepDefinition<
-{manifest: CompiledTypes.Manifest, opFactory: CompleteOpFactory}, 
-{functions: WritableFunction[]}> = {
-    stepName: "Converting function to byte code",
-    func({manifest, opFactory}) {   
-
-        const functions: WritableFunction[] = []
-        const gatheredFunctions: CompiledTypes.Function[] = []
-        manifest.inScope.forEach(f => {
-            if (f.kind === "Function") {
-                gatheredFunctions.push(f)
+    const structToSchemaNum: Record<string, number> = {}
+    manifest.inScope.forEach(val => {
+        if (val.kind === "Struct") {
+            SCHEMAS.push(val.schema)
+            structToSchemaNum[val.name] = SCHEMAS.length - 1
+        }
+        if (val.kind === "Function") {
+            if (val.parameter.kind === "WithParam") {
+                SCHEMAS.push(val.parameter.schema)
+                structToSchemaNum[`__func__${val.name}`] = SCHEMAS.length - 1
             }
-        })
-        
-        gatheredFunctions.forEach(f => {
-            try {
-                functions.push(convertFunction(f, opFactory, manifest.inScope))
-            } catch (e) {
-                throw Error(`Within function ${f.name}: ${e}`)
-            }  
-        })
-        
-        
-        
-        return Promise.resolve({functions})
+        }
+
+
+        if (val.kind === "HierarchicalStore") {
+            STORES[val.name] = val.schema
+        }
+    })
+    const opWriter = getOpWriter()
+
+    manifest.inScope.forEach(val => {
+        if (val.kind === "Function") {
+            PROCEDURES[val.name] = toByteCode(val, structToSchemaNum, manifest, opWriter)
+        }
+    })
+
+    return {
+        PROCEDURES,
+        SCHEMAS,
+        STORES
     }
 }
 
+function toByteCode(f: CompiledTypes.Function, schemaLookup: Record<string, number>, manifest: CompiledTypes.Manifest, opWriter: CompleteOpWriter): AnyOpInstance[] {
+    const ops: AnyOpInstance[] = []
+    const varmap = new VarMap()
+    if (f.parameter.kind === "WithParam") {
+        ops.push(opWriter.enforceSchemaOnHeap({heap_pos: 0, schema: schemaLookup[`__func__${f.name}`]}))
+        varmap.add(f.parameter.name, f.parameter.schema)
+    }
+    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
+    
+    const summary = statementsToOps(f.body, targetType, {ops, varmap, manifest, opWriter}, {numberOfPrecedingOps: 0})
+    if (!summary.alwaysReturns && targetType.kind !== "none") {
+        throw Error(`Function fails to return a value for all paths`)
+    }
 
-interface VarMapEntryI{
-    readonly id: number,
-    readonly type: CompiledTypes.Type
+    return ops
 }
 
-class VarMapEntry implements VarMapEntryI{
-    readonly id: number
-    readonly type: CompiledTypes.Type
 
-    constructor(id: number, type: CompiledTypes.Type) {
+class HeapEntry {
+    readonly id: number
+    readonly type: AnySchemaInstance
+
+    constructor(id: number, type: AnySchemaInstance) {
         this.id = id 
         this.type = type
     }
 }
 
-class VarMap extends Map<string, VarMapEntryI> {
+class VarMap extends Map<string, HeapEntry> {
     private count = 0
     private keysInLevel: string[]= []
     maximumVars = 0
 
-    public add(s: string, t: CompiledTypes.Type): number {
-        super.set(s, new VarMapEntry(this.count, t));
+    public add(s: string, t: AnySchemaInstance): number {
+        super.set(s, new HeapEntry(this.count, t));
         const v = this.count++
         this.keysInLevel.push(s)
         this.maximumVars = Math.max(this.maximumVars, v)
         return v
     }
     
-    public get(s: string): VarMapEntryI {
+    public get(s: string): HeapEntry {
         const ret = super.get(s)
         if (ret === undefined) {
             throw Error(`Failure looking up variable ${s}`)
@@ -74,7 +88,7 @@ class VarMap extends Map<string, VarMapEntryI> {
         return ret
     }
 
-    public tryGet(s: string): VarMapEntryI | undefined {
+    public tryGet(s: string): HeapEntry | undefined {
         return super.get(s)
     }
 
@@ -91,32 +105,46 @@ class VarMap extends Map<string, VarMapEntryI> {
 
 }
 
-function typesAreEqual(l: CompiledTypes.Type, r: CompiledTypes.Type): boolean {
+function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
     if (l.kind !== r.kind) {
         return false
     }
     switch(l.kind) {
-        case "TypeName":
-            //@ts-ignore
-            return l.name === r.name
-        case "DetailedType":
-            //@ts-ignore
-            return l.modification === r.modification && typesAreEqual(l.part.CompleteType.differentiate(), r.part.CompleteType.differentiate())
-        case "Primitive":
-            //@ts-ignore
-            return l.type === r.type
-        default: Utilities.assertNever(l)
+        case "Array":
+        case "Optional":
+            return typesAreEqual(l.data[0], r.data[0])
+    
+        case "Object":
+            if (Object.keys(l.data).length !== Object.keys(r.data).length) {
+                return false
+            }
+            for (const key in l.data) {
+                //@ts-ignore
+                if (!(key in r.data) || !typesAreEqual(l.data[key], r.data[key])) {
+                    return false
+                }
+            }
+            
+            return true
+        
+
+        default: {
+            if (l.data !== undefined) {
+                throw Error(`Unexpected type ${l}`)
+            }
+            return true
+        }
     }
 }
 
 type CompilationTools = Readonly<{
     varmap: VarMap,
-    factory: CompleteOpFactory,
-    inScope: CompiledTypes.ScopeMap,
-    ops: OpInstance[]
+    opWriter: CompleteOpWriter,
+    manifest: CompiledTypes.Manifest,
+    ops: AnyOpInstance[]
 }>
 
-type TargetType = CompiledTypes.Type | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
+type TargetType = AnySchemaInstance | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
     invocation: Parse.MethodInvocation,
@@ -141,8 +169,8 @@ const hierStoreMethodToOps: HierStoreMethods = {
         if (target.kind === "any" || target.kind === "none") {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
-                assignableToOps(asn, {kind: "TypeName", name: store.typeName}, tools)
-                tools.ops.push(tools.factory.storeInsertPrevious(store))
+                assignableToOps(asn, store.schema, tools)
+                tools.ops.push(tools.opWriter.insertFromStack(store.name))
             })    
         } else {
             throw Error(`Appending to a store does not return any data`)
@@ -180,10 +208,8 @@ const hierStoreMethodToOps: HierStoreMethods = {
         if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
             throw Error(`Currently only support returning the entire row variable in select statements`)
         }
-        if (target.kind === "any" || typesAreEqual(target, 
-            {kind: "DetailedType", modification: Lexicon.Symbol.Array, 
-                part: {CompleteType: {kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: store.typeName})}}})) {
-            tools.ops.push(tools.factory.storeQuery(store))
+        if (target.kind === "any" || typesAreEqual(target, store.schema)) {
+            tools.ops.push(tools.opWriter.getAllFromStore(store.name))
         } else {
             throw Error(`Type returned from select statement doesn't match expectations`)
         }
@@ -192,6 +218,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
 
 const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
     python3: (module, dots, targetType, tools) => {
+        throw Error(`Python calls are currently unsupported`)
         if (targetType.kind === "anonFunc") {
             throw Error(`Cannot retrieve an anonymous function from python3`)
         }
@@ -202,9 +229,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (targetType.kind === "any") {
             throw Error(`Cannot determine what type python3 call should be.`)
         }
-        if (targetType.kind === "DetailedType" && targetType.modification !== Lexicon.Symbol.none) {
-            throw Error(`Can only convert foreign function results into base types, not arrays or optionals.`)
-        }
+        // if (targetType.kind === "DetailedType" && targetType.modification !== Lexicon.Symbol.none) {
+        //     throw Error(`Can only convert foreign function results into base types, not arrays or optionals.`)
+        // }
         if (targetType.kind === "none") {
             throw Error(`Foreign function results must be returned or saved to a variable`)   
         }
@@ -214,22 +241,19 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
         if (m.kind === "FieldAccess") {
             throw Error(`Accessing a field on a foreign function doesn't make sense`)
         }
-        m.children.Assignable.forEach(a => {
-            assignableToOps(a, {kind: "any"}, tools)
-            tools.ops.push(tools.factory.pushPreviousOnCallStack)
-        })
+        // m.children.Assignable.forEach(a => {
+        //     assignableToOps(a, {kind: "any"}, tools)
+        //     tools.ops.push(tools.factory.pushPreviousOnCallStack)
+        // })
 
-        tools.ops.push(
-            tools.factory.invokeInstalled(module, m.name),
-        )
+        // tools.ops.push(
+        //     tools.factory.invokeInstalled(module, m.name),
+        // )
    
-        tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
+        // tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
     },
 
-    HierarchicalStore: (store, dots, targetType, {varmap, factory, inScope, ops}) => {
-        if (targetType.kind === "Primitive") {
-            throw Error("Stores contain structured data, not primitives")
-        }
+    HierarchicalStore: (store, dots, targetType, tools) => {
         if (targetType.kind === "anonFunc") {
             throw Error(`Cannot convert a store into an anonymous function`)
         }
@@ -251,7 +275,7 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                         throw Error(`Method ${m.name} doesn't exist on global arrays`)
                     }
                     
-                    method(store, m, targetType, {varmap, factory, inScope, ops})
+                    method(store, m, targetType, tools)
                     return   
                 default: Utilities.assertNever(m)
             }
@@ -262,30 +286,30 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
             if (targetType.kind !== "any") {
 
                 
-                if (!typesAreEqual(targetType, {kind: "DetailedType", modification: Lexicon.Symbol.Array, part: {CompleteType: {kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: store.typeName})}}})) {
+                if (!typesAreEqual(targetType, store.schema)) {
                     throw Error(`The store contains a different type than the one desired`)
                 }
             }
             
-            return ops.push(factory.storeQuery(store))
+            return tools.ops.push(tools.opWriter.getAllFromStore(store.name))
         }
     }
 }
 
-function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, {varmap, factory, inScope, ops}: CompilationTools): void {
+function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, tools: CompilationTools): void {
     if (targetType.kind === "anonFunc") {
         throw Error(`Variable references cannot produce anon functions`)
     }
-    const ref = varmap.tryGet(assign.val)
+    const ref = tools.varmap.tryGet(assign.val)
     if (ref !== undefined) {
         // It is actually possible for a variable reference to return none, if the method returns none,
         // but for now we will assume it's impossible.
         if (targetType.kind === "none") {
             throw Error(`Returning a variable doesn't make sense when the expected result is none`)
         }
-        ops.push(factory.echoVariable(ref.id))
+        tools.ops.push(tools.opWriter.copyFromHeap(ref.id))
 
-        let currentType: CompiledTypes.Type = ref.type
+        let currentType: AnySchemaInstance = ref.type
 
         if (assign.children.DotStatement.length > 0) {
             
@@ -293,19 +317,15 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
                 const method = dot.differentiate()
                 switch(method.kind) {
                     case "FieldAccess":
-                        if (currentType.kind === "Primitive") {
-                            throw Error(`Attempting to access field on a primitive type`)
+                        if (currentType.kind !== "Object") {
+                            throw Error(`Attempting to access field on a ${currentType.kind}`)
                         }
-                        if (currentType.kind === "DetailedType") {
-                            throw Error(`There does not currently exist any methods on generic types`)
-                        }
-                        const fullType = inScope.getEntityOfType(currentType.name, "Struct")
-                        const childField = fullType.children.Field.find(c => c.name === method.name)
-                        if (!childField) {
+
+                        if (!(method.name in currentType.data)) {
                             throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
                         }
-                        ops.push(factory.structFieldAccess(fullType, method.name))
-                        currentType = childField.part.CompleteType.differentiate()
+                        tools.ops.push(tools.opWriter.fieldAccess(method.name))
+                        currentType = currentType.data[method.name]
                         break
 
                     case "MethodInvocation":
@@ -325,14 +345,14 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         return
     } else {
         // Must be global then
-        const ent  = inScope.getEntityOfType(assign.val, "HierarchicalStore", "python3")
+        const ent  = tools.manifest.inScope.getEntityOfType(assign.val, "HierarchicalStore", "python3")
         
         return globalReferenceToOpsConverter[ent.kind](
             //@ts-ignore - typescript doesn't recognize that ent.kind ensures we grab the right handler.
             ent, 
             assign.children.DotStatement, 
             targetType, 
-            {varmap, factory, inScope, ops})
+            tools)
     }
 }
 
@@ -352,15 +372,13 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
 
 type StatementSummary = Readonly<{
     alwaysReturns: boolean
-    ops: OpInstance[],
 }>
 type ManyStatementConversionInfo = Readonly<{
     numberOfPrecedingOps: number
 }>
 
-function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: Omit<CompilationTools, "ops">, info: ManyStatementConversionInfo): StatementSummary {
+function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: CompilationTools, info: ManyStatementConversionInfo): StatementSummary {
     let alwaysReturns = false
-    const ops: OpInstance[] = []
     for (let j = 0; j < a.length; j++) {
         
         const stmt = a[j].differentiate()
@@ -369,21 +387,20 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
         }
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "any"}, {...tools, ops})
+                variableReferenceToOps(stmt, {kind: "any"}, tools)
                 break
 
             
             case "VariableCreation":
-                const t = stmt.part.CompleteType.differentiate()
-                
+                const type = tools.manifest.schemaFactory(stmt.part.CompleteType)
                 assignableToOps(
                     stmt.part.Assignable, 
-                    t, 
-                    {...tools, ops})
+                    type, 
+                    tools)
                 
                 
-                tools.varmap.add(stmt.name, t)
-                ops.push(tools.factory.savePrevious)
+                tools.varmap.add(stmt.name, type)
+                tools.ops.push(tools.opWriter.moveStackTopToHeap)
                 break
             case "ReturnStatement":
                 const e = stmt.part.Returnable.differentiate()
@@ -395,8 +412,8 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                         }
                         break
                     case "Assignable":
-                        assignableToOps(e, targetType, {...tools, ops})
-                        ops.push(tools.factory.returnPrevious)
+                        assignableToOps(e, targetType, tools)
+                        tools.ops.push(tools.opWriter.returnStackTop)
                         break
 
                     default: Utilities.assertNever(e)
@@ -404,22 +421,23 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
                 break
             
             case "If":
-                assignableToOps(stmt.part.Assignable, {kind: "Primitive", type: Lexicon.Symbol.bool}, {...tools, ops})
+                assignableToOps(stmt.part.Assignable, {kind: Lexicon.Symbol.bool, data: undefined}, tools)
                 // Negate the previous value to jump ahead
-                ops.push(tools.factory.negatePrev)
+                tools.ops.push(tools.opWriter.negatePrev)
                 tools.varmap.startLevel()
-                const totalNumberOfPreceding = info.numberOfPrecedingOps + ops.length
+                const totalNumberOfPreceding = info.numberOfPrecedingOps + tools.ops.length
                 // +1 because ths conditional go to takes a spot.
-                const ifSum = statementsToOps(stmt.part.Statements.children.Statement, targetType, tools, {numberOfPrecedingOps:  totalNumberOfPreceding + 1}) 
+                const childOps: AnyOpInstance[] = []
+                const ifSum = statementsToOps(stmt.part.Statements.children.Statement, targetType, {...tools, ops: childOps}, {numberOfPrecedingOps:  totalNumberOfPreceding + 1}) 
                 const numNewVars = tools.varmap.endLevel()
                 // The conditional should jump beyond the end of the if's inner statement
-                ops.push(tools.factory.conditionalGoto(totalNumberOfPreceding + ifSum.ops.length + 1))
-                ops.push(...ifSum.ops)
+                tools.ops.push(tools.opWriter.conditionalGoto(totalNumberOfPreceding + childOps.length + 1))
+                tools.ops.push(...childOps)
                 if (numNewVars > 0) {
-                    ops.push(tools.factory.dropVariables(numNewVars))
+                    tools.ops.push(tools.opWriter.truncateHeap(numNewVars))
                 } else {
                     // Push a noop so we don't go beyond the end of operation list.
-                    ops.push(tools.factory.noop)
+                    tools.ops.push(tools.opWriter.noop)
                 }
             
                 break
@@ -431,27 +449,5 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
         }
     }
 
-    return {alwaysReturns, ops}
-}
-
-function convertFunction(f: CompiledTypes.Function, factory: CompleteOpFactory, inScope: CompiledTypes.ScopeMap): WritableFunction {
-    const varmap = new VarMap()
-    const parameter = f.parameter.differentiate()
-    if (parameter.kind === "UnaryParameter") {
-        varmap.add(parameter.name, parameter.part.UnaryParameterType.part.CompleteType.differentiate())
-    }
-    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType.differentiate()
-    
-    const summary = statementsToOps(f.body, targetType, {varmap, inScope, factory}, {numberOfPrecedingOps: 0})
-    if (!summary.alwaysReturns && targetType.kind !== "none") {
-        throw Error(`Function fails to return a value for all paths`)
-    }
-
-    return {
-        name: f.name,
-        method: f.method,
-        body: summary.ops,
-        parameter: f.parameter,
-        maximumNumberOfVariables: varmap.maximumVars
-    }
+    return {alwaysReturns}
 }

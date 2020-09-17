@@ -1,7 +1,7 @@
 import { AnySchemaInstance } from 'conduit_parser';
 
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
-import { OpInstance } from './interpreter/supported_op_definition';
+import { OpInstance, AnyOpInstance } from './interpreter/supported_op_definition';
 
 
 type ConstDataAddition = {
@@ -20,11 +20,11 @@ export enum Var {
 export type EnvVarType<E extends Var> = 
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
-E extends Var.PROCEDURES ? Record<string, OpInstance[]> :
+E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
 E extends Var.MONGO_CONNECTION_URI ? string :
 never
 
-type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES 
+export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES 
 
 // Strong refers to the fact that the type bounds are more specific.
 export type StrongServerEnv= {[E in Exclude<Var, RequiredEnv>]?: EnvVarType<E>} & {

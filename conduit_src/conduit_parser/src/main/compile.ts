@@ -11,7 +11,8 @@ export function compileFiles(files: Record<string, () => string>, build: Conduit
     for (const file in files) {
         conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
     }
-    const map: PartialEntityMap<Python3Install>  = generateSystemObjects(toEntityMap(conduits))
+    const mapAndSchemaFactory = toEntityMap(conduits)
+    const map: PartialEntityMap<Python3Install>  = generateSystemObjects(mapAndSchemaFactory[0])
     
     if (build.install) {
         build.install.forEach(i => {
@@ -23,5 +24,5 @@ export function compileFiles(files: Record<string, () => string>, build: Conduit
         })
     }
     
-    return {inScope: new EntityMap(map)}
+    return {inScope: new EntityMap(map), schemaFactory: mapAndSchemaFactory[1]}
 } 

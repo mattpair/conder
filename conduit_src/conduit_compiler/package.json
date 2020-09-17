@@ -1,5 +1,5 @@
 {
-  "name": "conduit_kernel_writer",
+  "name": "conduit_compiler",
   "version": "0.0.1",
   "scripts": {
     "compile": "tsc -b",
@@ -16,7 +16,7 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "conduit_foreign_install": "file:../conduit_foreign_install",
+    "conduit_kernel": "file:../conduit_kernel",
     "conduit_parser": "file:../conduit_parser"
   },
   "jest": {

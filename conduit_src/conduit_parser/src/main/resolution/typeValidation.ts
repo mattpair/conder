@@ -3,7 +3,7 @@ import { TypeModifierUnion } from '../lexicon';
 
 import { Parse } from '../parse';
 import { FileLocation } from '../utils';
-import { Struct, EntityMap, HierarchicalStore, Function } from '../entity/resolved';
+import { Struct, EntityMap, HierarchicalStore, Function, SchemaFactory } from '../entity/resolved';
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
 import { Symbol } from '../lexicon';
@@ -14,7 +14,7 @@ type FirstPassEntity = (Parse.Struct | basic.Enum ) & {file: FileLocation}
 type ParentTypeInfo = Readonly<{kind: "type", name: string} | {kind: "modification", mod: TypeModifierUnion}>
 type SchemaLookup = Map<string, SchemaInstance<"Object">>
 
-export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
+export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, SchemaFactory] {
     const firstPassScope: Map<string, FirstPassEntity> = new Map()
     const childType = ["Struct", "Enum"]
     unresolved.forEach(file => {
@@ -191,7 +191,7 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
             partialEntityMap.set(f.name, {
                 ...f, 
                 returnType: returnType.kind === "CompleteType" ? getSchema(returnType, []) : returnType,
-                parameter: param.kind === "NoParameter" ? param : {name: param.name, schema: getSchema(param.part.UnaryParameterType.part.CompleteType, [])},
+                parameter: param.kind === "NoParameter" ? param : {kind: "WithParam", name: param.name, schema: getSchema(param.part.UnaryParameterType.part.CompleteType, [])},
                 body: f.part.FunctionBody.children.Statement,
                 method: param.kind === "UnaryParameter" ? "POST" : "GET",
             })
@@ -218,5 +218,5 @@ export function toEntityMap(unresolved: Parse.File[]): PartialEntityMap {
         })
     })
 
-    return partialEntityMap
+    return [partialEntityMap, (t) => getSchema(t, [])]
 }

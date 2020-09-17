@@ -27,7 +27,9 @@ StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
 ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
-ParamOp<"getAllFromStore", string>
+ParamOp<"getAllFromStore", string> |
+ParamOp<"insertFromStack", string> |
+StaticOp<"moveStackTopToHeap">
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -64,7 +66,7 @@ export type OpInstance<S=string> = Readonly<{
     kind: S
     data: any
 }>
-
+export type AnyOpInstance = OpInstance<Ops["kind"]>
 
 function raiseErrorWithMessage(s: string): string {
     return `Some("${s}".to_string())`
@@ -253,6 +255,21 @@ export const OpSpec: CompleteOpSpec = {
         },
         factoryMethod: (v) => ({kind: "insertFromHeap", data: [v.heap_pos, v.store]})
     },
+
+    insertFromStack: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["String"],
+            rustEnumMember: "insertFromStack",
+            rustOpHandler: `
+            let schema = stores.get(op_param).unwrap();
+            storage::append(eng, op_param, schema &stack[stack.len() -1]).await;
+            None
+            `
+        },
+        factoryMethod: (v) => ({kind: "insertFromStack", data: v})
+    },
+
     getAllFromStore: {
         opDefinition: {
             kind: "param",
@@ -265,5 +282,16 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (s) => ({kind: "getAllFromStore", data: s})
+    },
+    moveStackTopToHeap: {
+        opDefinition: {
+            kind: "static",
+            rustEnumMember: "moveStackTopToHeap",
+            rustOpHandler: `
+            heap.push(stack.pop().unwrap());
+            None
+            `
+        },
+        factoryMethod: {kind: "moveStackTopToHeap", data: undefined}
     }
 }
