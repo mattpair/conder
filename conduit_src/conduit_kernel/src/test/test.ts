@@ -76,7 +76,7 @@ describe("conduit kernel", () => {
 
     async invoke(
       name: string,
-      arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None,
+      arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None
     ) {
       const body = JSON.stringify({ kind: "Exec", data: { proc: name, arg } });
       return fetch(`http://localhost:${this.port}/`, {
@@ -290,8 +290,9 @@ describe("conduit kernel", () => {
     child_process.execSync(`docker pull mongo:4.4`);
 
     it("should be able to store a document", async () => {
-      
-      const child = child_process.exec(`docker run --rm --mount type=tmpfs,destination=/data/db -p 27017:27017 mongo:4.4`);
+      const child = child_process.exec(
+        `docker run --rm --mount type=tmpfs,destination=/data/db -p 27017:27017 mongo:4.4`
+      );
       // child.stdout.pipe(process.stdout)
       child.stderr.pipe(process.stderr);
       await sleep(5000);
@@ -326,8 +327,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: store.name }),
-            opWriter.returnVariable(0),
-            opWriter.getAllFromStore("testStore"),
+            opWriter.getAllFromStore("storeName"),
             opWriter.returnStackTop,
           ],
         },
@@ -341,10 +341,12 @@ describe("conduit kernel", () => {
         })
       );
       expect(res).toMatchInlineSnapshot(`
-        Object {
-          "int": 12,
-          "opt": null,
-        }
+        Array [
+          Object {
+            "int": 12,
+            "opt": null,
+          },
+        ]
       `);
 
       server.kill();

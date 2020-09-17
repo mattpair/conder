@@ -1,5 +1,5 @@
 
-use mongodb::{Database, options::ClientOptions, bson, results, Client};
+use mongodb::{Database, options::{ClientOptions, FindOptions}, bson, bson::{doc}, results, Client};
 use crate::{InterpreterType, Schema};
 use futures::stream::StreamExt;
 
@@ -37,7 +37,11 @@ pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> In
         Engine::Mongo{db} => {
             
             let collection = db.collection(&storeName);
-            let mut res = match collection.find(None, None).await {
+            let options = FindOptions::builder().projection(Some(
+                doc! {"_id": false}
+
+            )).build();
+            let mut res = match collection.find(None, options).await {
                 Ok(c) => c,
                 Err(e) => panic!(e)
             };
