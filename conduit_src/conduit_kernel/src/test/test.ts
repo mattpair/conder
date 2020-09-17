@@ -291,7 +291,7 @@ describe("conduit kernel", () => {
 
     it("should be able to store a document", async () => {
       
-      const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`);
+      const child = child_process.exec(`docker run --rm --mount type=tmpfs,destination=/data/db -p 27017:27017 mongo:4.4`);
       // child.stdout.pipe(process.stdout)
       child.stderr.pipe(process.stderr);
       await sleep(5000);
