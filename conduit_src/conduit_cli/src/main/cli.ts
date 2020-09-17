@@ -46,9 +46,12 @@ async function writeClientFile(clients: string, buildConf: ConduitBuildConfig) {
 }
 
 async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
-    child_process.execSync(`docker pull mongo:4.4`, {stdio: "pipe"});
-    const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`);
-    child.stderr.pipe(process.stderr)
+    // child_process.execSync(`docker pull mongo:4.4`, {stdio: "pipe"});
+    console.log("starting mongo")
+    child_process.execSync(`docker run --rm -d --mount type=tmpfs,destination=/data/db -p 27017:27017 --name mongodb mongo:4.4`);
+    process.addListener("exit", () => child_process.execSync(`docker kill mongodb`))
+
+    const ipaddress = child_process.execSync(`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mongodb`, {encoding: "utf-8"})
     
     const client = await mongodb.MongoClient.connect(
         "mongodb://localhost:27017",
@@ -58,19 +61,19 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
     Object.keys(env.STORES).forEach(storeName => db.createCollection(storeName))
     await db.listCollections().toArray()
     const string_env: Partial<ServerEnv> = {
-        MONGO_CONNECTION_URI: "mongodb://localhost"
+        MONGO_CONNECTION_URI: `mongodb://${ipaddress}`
     };
     for (const key in env) {
         //@ts-ignore
         string_env[key] = typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
     }
-
+    console.log("starting server")
     // blocks until force quit.
     //@ts-ignore
-    child_process.execSync(`docker run -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=\`${string_env[k]}\``).join(' ')} kernel-server`, {
+    const server= child_process.exec(`docker run -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} kernel-server`, {
     env: string_env,
-    stdio: "pipe"
     });
+    server.stderr.pipe(process.stderr)
 }
 
 const commands: Record<string, () => void> = {

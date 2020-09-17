@@ -21,7 +21,7 @@ export function generateClients(url: string, manifest: CompiledTypes.Manifest) {
                 // { kind: "Exec", data: { proc: f, arg: arg  === undefined ? interpeterTypeFactory.None :  } }
                 beforeReq = `const body = JSON.stringify({
                     kind: "Exec", 
-                    data: {"proc": "${fn.name}", arg: ${param.kind === "NoParameter" ? "undefined" : "a"}}})`
+                    data: {"proc": "${fn.name}", arg: ${param.kind === "NoParameter" ? "null" : "a"}}})`
                 body = `
                 body,
                 headers: {
