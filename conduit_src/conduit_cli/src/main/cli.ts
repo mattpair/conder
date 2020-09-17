@@ -49,7 +49,17 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
     // child_process.execSync(`docker pull mongo:4.4`, {stdio: "pipe"});
     console.log("starting mongo")
     child_process.execSync(`docker run --rm -d --mount type=tmpfs,destination=/data/db -p 27017:27017 --name mongodb mongo:4.4`);
-    process.addListener("exit", () => child_process.execSync(`docker kill mongodb`))
+    const killList = ["mongodb"]
+    function kill() {
+        killList.forEach(m => {
+            console.log(`Exiting ${m}...`)
+            child_process.execSync(`docker kill ${m}`)
+        })
+        
+        process.exit(1)
+    }
+    process.on("SIGINT", kill)
+    process.on("SIGTERM", kill)
 
     const ipaddress = child_process.execSync(`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mongodb`, {encoding: "utf-8"})
     
@@ -70,10 +80,12 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
     console.log("starting server")
     // blocks until force quit.
     //@ts-ignore
-    const server= child_process.exec(`docker run -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} kernel-server`, {
+    
+    child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run kernel-server`, {
     env: string_env,
     });
-    server.stderr.pipe(process.stderr)
+    killList.push("conduit-run")
+    console.log("server available at: http://localhost:7213")
 }
 
 const commands: Record<string, () => void> = {
