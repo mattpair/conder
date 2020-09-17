@@ -2,7 +2,7 @@ import * as fs from 'fs'
 import * as child_process from 'child_process'
 import { generateServer } from './src/main/server_writer'
 import { CompleteOpWriter, OpSpec, OpInstance } from './src/main/interpreter/supported_op_definition'
-import {InterpreterTypeInstanceMap} from './src/main/interpreter/interpreter_writer'
+import {InterpreterTypeInstanceMap, interpeterTypeFactory} from './src/main/interpreter/interpreter_writer'
 
 
 function writeMain() {
@@ -13,6 +13,7 @@ module.exports.writeMain = writeMain
 
 module.exports.containerize = function () {
     writeMain()
+    console.log("PWD", process.cwd())
     child_process.execSync(`docker build -t kernel-server .`, {cwd: "./src/rust", stdio: "inherit"})
 }
 

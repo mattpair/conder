@@ -263,7 +263,7 @@ export const OpSpec: CompleteOpSpec = {
             rustEnumMember: "insertFromStack",
             rustOpHandler: `
             let schema = stores.get(op_param).unwrap();
-            storage::append(eng, op_param, schema &stack[stack.len() -1]).await;
+            storage::append(eng, op_param, schema, &stack[stack.len() -1]).await;
             None
             `
         },

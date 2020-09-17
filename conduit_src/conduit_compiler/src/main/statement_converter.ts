@@ -129,9 +129,6 @@ function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
         
 
         default: {
-            if (l.data !== undefined) {
-                throw Error(`Unexpected type ${l}`)
-            }
             return true
         }
     }
@@ -284,10 +281,12 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 throw Error(`Global reference return real data, not none`)
             }
             if (targetType.kind !== "any") {
-
+                if (targetType.kind !== "Array") {
+                    throw Error(`Referencing ${store.name} returns an array of data.`)
+                }
                 
-                if (!typesAreEqual(targetType, store.schema)) {
-                    throw Error(`The store contains a different type than the one desired`)
+                if (!typesAreEqual(targetType.data[0], store.schema)) {
+                    throw Error(`${store.name} contains type: ${JSON.stringify(store.schema, null, 2)}\n\nFound: ${JSON.stringify(targetType, null, 2)}`)
                 }
             }
             

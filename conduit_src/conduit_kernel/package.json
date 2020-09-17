@@ -1,10 +1,12 @@
 {
-  "name": "conduit_kernel_writer",
+  "name": "conduit_kernel",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -b && node -e 'require(\"./dist/index.js\").writeMain()' && cd src/rust && cargo build",
+    "gen": "node -e 'require(\"./dist/index.js\").writeMain()'",
+    "compile": "tsc -b && npm run gen && cd src/rust && cargo build",
     "pretest": "npm run compile",
     "test": "jest",
+    "prepkg": "npm run gen",
     "pkg": "node -e 'require(\"./dist/index.js\").containerize()'"
   },
   "author": "Jeremy",

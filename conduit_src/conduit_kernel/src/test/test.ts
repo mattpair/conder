@@ -290,7 +290,7 @@ describe("conduit kernel", () => {
     child_process.execSync(`docker pull mongo:4.4`);
 
     it("should be able to store a document", async () => {
-      //-e ${Var.MONGO_INITDB_ROOT_USERNAME}=testadmin -e ${Var.MONGO_INITDB_ROOT_PASSWORD}=password
+      
       const child = child_process.exec(`docker run -p 27017:27017 mongo:4.4`);
       // child.stdout.pipe(process.stdout)
       child.stderr.pipe(process.stderr);

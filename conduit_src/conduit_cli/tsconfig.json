@@ -11,12 +11,14 @@
         "typeRoots": [ "node_modules/@types/", "src/" ],
         "types": [
             "node",
+            "mongodb"
         ],
         "outDir": "dist",
  
     },
     "references": [
         {"path": "../conduit_parser/"},
-        {"path": "../conduit_kernel_writer"}
+        {"path": "../conduit_kernel/"},
+        {"path": "../conduit_compiler/"}
     ]
 }

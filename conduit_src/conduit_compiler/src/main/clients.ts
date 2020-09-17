@@ -1,70 +1,53 @@
-// import { assertNever } from 'conduit_parser/dist/src/main/utils';
-// import { CompiledTypes, Utilities } from 'conduit_parser';
-// import { TypeWriter } from './type_writing/type_writer';
+import { CompiledTypes } from 'conduit_parser';
 
-// export function generateClients(url: string, manifest: CompiledTypes.Manifest, models: string[]) {
-//     const clients: string[] = []
-//     manifest.inScope.forEach(fn => {
-//         if (fn.kind !== "Function") {
-//             return
-//         }
+export function generateClients(url: string, manifest: CompiledTypes.Manifest) {
+    const clients: string[] = []
+    manifest.inScope.forEach(fn => {
+        if (fn.kind !== "Function") {
+            return
+        }
 
-//         let returnType = ''
-//         let followOn = ''
-//         let body =  ''
-//         let paramString = ''
-//         let beforeReq = ''
-//         let method: "GET" | "POST" = "GET"
-//         switch (fn.returnType.kind) {
-//             case "CompleteType":
+        const followOn = fn.returnType.kind !== "VoidReturnType" ? '.then( data=> data.json())' : ""
+        let body =  ''
+        let paramString = 'a'
+        let beforeReq = ''
+        const method = "PUT"
+        const param = fn.parameter
+        switch (param.kind) {
+            case "NoParameter":
+                paramString = ``
+            case "WithParam":
                 
-//                 returnType = `: Promise<${TypeWriter.typescript.reference(fn.returnType.differentiate(), manifest.inScope)}>`
-//                 followOn = '.then( data=> data.json())'
-//                 break
-//             case "VoidReturnType":
-//                 break
+                // { kind: "Exec", data: { proc: f, arg: arg  === undefined ? interpeterTypeFactory.None :  } }
+                beforeReq = `const body = JSON.stringify({
+                    kind: "Exec", 
+                    data: {"proc": "${fn.name}", arg: ${param.kind === "NoParameter" ? "undefined" : "a"}}})`
+                body = `
+                body,
+                headers: {
+                    "content-type": "application/json",
+                    "content-length": \`\${body.length}\`
+                },
+                `
 
-//             default: assertNever(fn.returnType)
-//         }
-//         const param = fn.parameter.differentiate()
-//         switch (param.kind) {
-//             case "NoParameter":
-//                 break
-//             case "UnaryParameter":
-//                 paramString = `a: ${TypeWriter.typescript.reference(param.part.UnaryParameterType.part.CompleteType.differentiate(), manifest.inScope)}`
-//                 beforeReq = 'const body = JSON.stringify(a)'
-//                 body = `
-//                 body,
-//                 headers: {
-//                     "content-type": "application/json",
-//                     "content-length": \`\${body.length}\`
-//                 },
-//                 `
-//                 method = "POST"
-
-//                 break
-//         }
+                break
+        }
 
 
-//         clients.push(`
-//         export function ${fn.name}(${paramString})${returnType} {
-//             ${beforeReq}
-//             return fetch("${url}/${fn.name}", {
-//                 ${body}
-//                 method: "${method}"
-//             })${followOn}
+        clients.push(`
+        export function ${fn.name}(${paramString}) {
+            ${beforeReq}
+            return fetch("${url}/", {
+                ${body}
+                method: "${method}"
+            })${followOn}
 
-//         }`) 
-//     })
-//     return  `
-//         const url = '${url}'
+        }`) 
+    })
+    return  `
+        const url = '${url}'
 
-//         ${models.join("\n")}
 
-//         export function hello() {
-//             return fetch(url)
-//         }
-
-//         ${clients.join("\n")}
-//         `
-// }
+        ${clients.join("\n")}
+        `
+}
