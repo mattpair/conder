@@ -70,10 +70,10 @@ static ADDRESS: &str = "__conduit_entity_id";
 fn suppression_into_mongo_projection(suppress: &Suppression) -> bson::Document {
     let mut result = doc! {};
 
-    if suppress.values.contains_key(ADDRESS) {
+    if suppress.suppress.contains_key(ADDRESS) {
         result.insert("_id", false);
     }
-    for (k, v) in &suppress.values {
+    for (k, v) in &suppress.suppress {
         if k == ADDRESS {
             continue;
         }
@@ -125,5 +125,5 @@ pub enum Engine {
 //Otherwise, include.
 #[derive(Deserialize, Clone)]
 pub(crate) struct Suppression {
-    values: HashMap<String, Option<Suppression>>
+    suppress: HashMap<String, Option<Suppression>>
 }

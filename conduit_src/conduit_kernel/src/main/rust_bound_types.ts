@@ -3,7 +3,7 @@
 
 //Associated with the eponym in the storage module.
 export type Suppression = {
-    values: {
+    suppress: {
     [p in string]?: Suppression
     }
 }

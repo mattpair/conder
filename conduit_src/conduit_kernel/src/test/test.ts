@@ -387,7 +387,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
-            opWriter.queryStore(["storeName", {values: {right: null, __conduit_entity_id: null}}]),
+            opWriter.queryStore(["storeName", {suppress: {right: null, __conduit_entity_id: null}}]),
             opWriter.returnStackTop,
           ],
         }
