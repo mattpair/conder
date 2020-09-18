@@ -402,5 +402,33 @@ describe("conduit kernel", () => {
         );
         expect(res).toEqual([{left: -1}])
       })
+
+      storageTest("should be able to suppress objects in a query", 
+        {
+          STORES: {
+            storeName: schemaFactory.Object({
+              left: schemaFactory.Object({a: schemaFactory.bool, b: schemaFactory.bool}),
+              right: schemaFactory.Object({c: schemaFactory.bool}),
+            }),
+          },
+          PROCEDURES: {
+            testStore: [
+              opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
+              opWriter.queryStore(["storeName", {suppress: {right: null, __conduit_entity_id: null}}]),
+              opWriter.returnStackTop,
+            ],
+          }
+        },
+        async (server) => {
+          const res = await server.invoke(
+            "testStore",
+            interpeterTypeFactory.Object({
+              left: interpeterTypeFactory.Object({a: true, b: false}),
+              right: interpeterTypeFactory.Object({c: false}),
+            })
+          );
+          expect(res).toEqual([{left: {a: true, b: false}}])
+      })
   });
+
 });
