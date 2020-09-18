@@ -1,7 +1,10 @@
 
 use mongodb::{Database, options::{ClientOptions, FindOptions}, bson, bson::{doc}, results, Client};
-use crate::{InterpreterType, Schema};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use futures::stream::StreamExt;
+
+use crate::{InterpreterType, Schema};
 
 pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {
     match eng {
@@ -62,7 +65,65 @@ pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> In
     }
 }
 
+static ADDRESS: &str = "__conduit_entity_id";
+
+fn suppression_into_mongo_projection(suppress: &Suppression) -> bson::Document {
+    let mut result = doc! {};
+
+    if suppress.values.contains_key(ADDRESS) {
+        result.insert("_id", false);
+    }
+    for (k, v) in &suppress.values {
+        if k == ADDRESS {
+            continue;
+        }
+        match v {
+            Some(sub) => result.insert(k, suppression_into_mongo_projection(sub)),
+            None => result.insert(k, false)
+        };
+    }
+
+    return result;
+}
+
+pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression) -> InterpreterType {
+    match eng {
+        Engine::Mongo{db} => {
+            
+            let collection = db.collection(&storeName);
+            let mongo_proj = suppression_into_mongo_projection(suppress);
+
+
+            let options = FindOptions::builder().projection(Some(mongo_proj)).build();
+            let mut res = match collection.find(None, options).await {
+                Ok(c) => c,
+                Err(e) => panic!(e)
+            };
+
+            let mut ret = vec![];
+            while let Some(v) = res.next().await {
+                match v {
+                    Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
+                    Err(e) => panic!(e)
+                };
+            }
+            
+            return InterpreterType::Array(ret)
+        },
+        Engine::Panic => {
+            panic!("invoking panic storage.")
+        }
+    }
+}
+
 pub enum Engine {
     Panic,
     Mongo{db: mongodb::Database}
+}
+
+//If a field is present it means don't select.
+//Otherwise, include.
+#[derive(Deserialize, Clone)]
+pub(crate) struct Suppression {
+    values: HashMap<String, Option<Suppression>>
 }

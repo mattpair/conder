@@ -113,7 +113,7 @@ export function writeOperationInterpreter(): string {
         ].join(",\n")}
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Deserialize, Clone)]
     #[serde(tag = "kind", content= "data")]
     enum Op {
         ${supportedOps.map(o => {

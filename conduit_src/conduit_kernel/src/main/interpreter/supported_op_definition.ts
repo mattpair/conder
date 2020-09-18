@@ -1,3 +1,4 @@
+import { Suppression } from "../rust_bound_types"
 
 type OpDef<NAME, K="static"> = {
     readonly kind: K
@@ -29,7 +30,8 @@ ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
-StaticOp<"moveStackTopToHeap">
+StaticOp<"moveStackTopToHeap"> |
+ParamOp<"queryStore", [string, Suppression]>
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -293,5 +295,21 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: {kind: "moveStackTopToHeap", data: undefined}
+    },
+    queryStore: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["String", "storage::Suppression"],
+            rustEnumMember: "queryStore",
+            rustOpHandler: `
+            let res = storage::query(eng, &param0, &param1).await;
+            ${pushStack("res")};
+            None
+            `
+        },
+        factoryMethod: (p) => ({
+            kind: "queryStore",
+            data: p
+        })
     }
 }

@@ -33,3 +33,5 @@ export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof Interp
 
 export { interpeterTypeFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
 export {ServerEnv, EnvVarType, Var, StrongServerEnv, RequiredEnv} from './src/main/server_writer'
+
+export * as Kernel from './src/main/rust_bound_types'

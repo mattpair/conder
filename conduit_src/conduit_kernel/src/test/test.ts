@@ -8,7 +8,7 @@ import {
   AnyInterpreterTypeInstance,
   ServerEnv,
   Var,
-  StrongServerEnv,
+  StrongServerEnv
 } from "../../index";
 import {
   Schemas,
@@ -281,77 +281,126 @@ describe("conduit kernel", () => {
     | { bsonType: "double" };
 
   describe("mongo storage layer", () => {
-    // This test is temporary.
-    // Just validating I can stand up before moving on to integration testing.
-    function sleep(ms: number) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
     child_process.execSync(`docker pull mongo:4.4`);
 
-    it("should be able to store a document", async () => {
-      const child = child_process.exec(
-        `docker run --rm --mount type=tmpfs,destination=/data/db -p 27017:27017 mongo:4.4`
-      );
-      // child.stdout.pipe(process.stdout)
-      child.stderr.pipe(process.stderr);
-      await sleep(5000);
-      const client = await mongodb.MongoClient.connect(
-        "mongodb://localhost:27017",
-        { useUnifiedTopology: true }
-      );
-      const db = client.db("conduit");
-      const store = {
-        kind: "HierarchicalStore",
-        typeName: "SomeTypeName",
-        specName: "specName",
-        name: "storeName",
-        schema: schemaFactory.Object({
-          int: schemaFactory.int,
-          opt: schemaFactory.Optional(
-            schemaFactory.Object({
-              arr: schemaFactory.Array(
-                schemaFactory.Object({ b: schemaFactory.bool })
-              ),
-            })
-          ),
-        }),
-      };
-      db.createCollection(store.name);
+    class TestMongo {
+      readonly port: number;
+      private static next_port = 27017;
+      private constructor()  {
+        this.port = TestMongo.next_port++
+        child_process.execSync(
+          `docker run --rm --name mongo${this.port} -d  --mount type=tmpfs,destination=/data/db -p ${this.port}:27017 mongo:4.4 `
+        );
+      }
 
-      const server = await TestServer.start({
-        MONGO_CONNECTION_URI: "mongodb://localhost",
+      public static async start(stores: Stores): Promise<TestMongo> {
+        const ret = new TestMongo()
+        const client = await mongodb.MongoClient.connect(
+          `mongodb://localhost:${ret.port}`,
+          { useUnifiedTopology: true }
+        );
+        const db = client.db("conduit");
+        Object.keys(stores.STORES).forEach(async (k) => await db.createCollection(k))
+        await db.listCollections()
+        return ret
+      }
+      public kill() {
+        child_process.execSync(`docker kill mongo${this.port}`)
+      }
+    }
+
+    type Stores = Pick<StrongServerEnv, Var.STORES>
+    function storageTest(descr: string, params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,  test: (server: TestServer) => Promise<void>, ) {
+      let mongo: TestMongo = undefined
+      let server: TestServer = undefined
+      beforeEach(async () => {
+        mongo = await TestMongo.start(params)
+        server = await TestServer.start({
+          MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
+          ...params,
+          SCHEMAS: [],
+        });
+
+      })
+      it(descr, async () => {
+        await test(server)
+      }, 15000)
+      
+      afterEach(() => {
+        if (mongo !== undefined) {
+          mongo.kill()
+        }
+        if (server !== undefined) {
+          server.kill()
+        }
+      })
+    }
+
+    storageTest("should be able to store a document", 
+      {
         STORES: {
-          storeName: store.schema,
+          storeName: schemaFactory.Object({
+            int: schemaFactory.int,
+            opt: schemaFactory.Optional(
+              schemaFactory.Object({
+                arr: schemaFactory.Array(
+                  schemaFactory.Object({ b: schemaFactory.bool })
+                ),
+              })
+            ),
+          }),
         },
         PROCEDURES: {
           testStore: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: store.name }),
+            opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
             opWriter.getAllFromStore("storeName"),
             opWriter.returnStackTop,
           ],
+        }
+      },
+      async (server) => {
+        const res = await server.invoke(
+          "testStore",
+          interpeterTypeFactory.Object({
+            int: interpeterTypeFactory.int(12),
+            opt: interpeterTypeFactory.None,
+          })
+        );
+        expect(res).toMatchInlineSnapshot(`
+          Array [
+            Object {
+              "int": 12,
+              "opt": null,
+            },
+          ]
+        `);
+      })
+
+      storageTest("should be able to suppress fields in a query", 
+      {
+        STORES: {
+          storeName: schemaFactory.Object({
+            left: schemaFactory.int,
+            right: schemaFactory.int,
+          }),
         },
-        SCHEMAS: [],
-      });
-      const res = await server.invoke(
-        "testStore",
-        interpeterTypeFactory.Object({
-          int: interpeterTypeFactory.int(12),
-          opt: interpeterTypeFactory.None,
-        })
-      );
-      expect(res).toMatchInlineSnapshot(`
-        Array [
-          Object {
-            "int": 12,
-            "opt": null,
-          },
-        ]
-      `);
-
-      server.kill();
-
-      child.kill("SIGTERM");
-    }, 15000);
+        PROCEDURES: {
+          testStore: [
+            opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
+            opWriter.queryStore(["storeName", {values: {right: null, __conduit_entity_id: null}}]),
+            opWriter.returnStackTop,
+          ],
+        }
+      },
+      async (server) => {
+        const res = await server.invoke(
+          "testStore",
+          interpeterTypeFactory.Object({
+            left: interpeterTypeFactory.int(-1),
+            right: interpeterTypeFactory.int(1),
+          })
+        );
+        expect(res).toEqual([{left: -1}])
+      })
   });
 });
