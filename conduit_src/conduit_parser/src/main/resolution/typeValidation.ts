@@ -10,17 +10,17 @@ import { Symbol } from '../lexicon';
 export type PartialEntityMap<T=undefined> = Map<string, Struct | basic.Enum | Function | HierarchicalStore | T>
 
 
-type FirstPassEntity = (Parse.Struct | basic.Enum ) & {file: FileLocation}
+type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.StoreDefinition ) & {file: FileLocation}
 type ParentTypeInfo = Readonly<{kind: "type", name: string} | {kind: "modification", mod: TypeModifierUnion}>
 type SchemaLookup = Map<string, SchemaInstance<"Object">>
 
 export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, SchemaFactory] {
     const firstPassScope: Map<string, FirstPassEntity> = new Map()
-    const childType = ["Struct", "Enum"]
+    const childType = ["Struct", "Enum", "StoreDefinition"]
     unresolved.forEach(file => {
         childType.forEach((type) => {
             //@ts-ignore
-            file.children[type].forEach((ent: Parse.Struct | basic.Enum) => {
+            file.children[type].forEach((ent: Parse.Struct | basic.Enum | Parse.StoreDefinition) => {
                 const existing = firstPassScope.get(ent.name)
                 if (existing !== undefined) {
                     throw new Error(`Entity name: ${ent.name} is defined multiple times in default namespace
@@ -50,9 +50,16 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                 if (ref === undefined) {
                     throw Error(`${t.name} does not refer to any known type`)
                 }
+
                 if (last !== undefined && last.kind === "modification" && last.mod === Symbol.Ref) {
-                    throw Error("Refs are currently unsupported")
-                }
+                    if (ref.kind === "StoreDefinition") {
+                        return schemaFactory.string
+                    } else {
+                        throw Error("Refs must refer to an array at the global level.")
+                    }                   
+                } 
+                
+                
             
                 let newSchema: AnySchemaInstance = undefined
                  
@@ -79,6 +86,8 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                             newSchema = schemaMap
                             info.pop()
                             break
+                        case "StoreDefinition":
+                            throw Error("Globals may only be referenced in types to define refs.")
                         default: assertNever(ref)
                     }
                     
@@ -132,7 +141,8 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                         schemaWrapper = schemaFactory.Array
                         break
                     case Symbol.Ref:
-                        throw Error(`Refs currently aren't supported`)
+                        schemaWrapper = (a: AnySchemaInstance) => a
+                        break
 
                     case Symbol.none:
                         return getSchema(t.part.CompleteType, info)

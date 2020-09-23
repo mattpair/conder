@@ -153,6 +153,7 @@ Object {
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
+          "kind": "WithParam",
           "name": "input",
           "schema": Object {
             "data": Object {
@@ -214,6 +215,7 @@ Object {
     },
     "size": 4,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -356,6 +358,7 @@ Object {
         "method": "POST",
         "name": "returnInputIntermediate",
         "parameter": Object {
+          "kind": "WithParam",
           "name": "i",
           "schema": Object {
             "data": Array [
@@ -422,18 +425,13 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Array [
-            Object {
-              "data": Object {
-                "s": Object {
-                  "data": null,
-                  "kind": "string",
-                },
-              },
-              "kind": "Object",
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
             },
-          ],
-          "kind": "Array",
+          },
+          "kind": "Object",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -455,6 +453,7 @@ Object {
     },
     "size": 5,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -505,18 +504,13 @@ Object {
         "kind": "HierarchicalStore",
         "name": "myFirstStore",
         "schema": Object {
-          "data": Array [
-            Object {
-              "data": Object {
-                "s": Object {
-                  "data": null,
-                  "kind": "string",
-                },
-              },
-              "kind": "Object",
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
             },
-          ],
-          "kind": "Array",
+          },
+          "kind": "Object",
         },
         "specName": "querySpec_myFirstStore",
         "typeName": "stored",
@@ -538,6 +532,7 @@ Object {
     },
     "size": 3,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -694,6 +689,7 @@ Object {
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
+          "kind": "WithParam",
           "name": "input",
           "schema": Object {
             "data": Array [
@@ -754,6 +750,7 @@ Object {
     },
     "size": 4,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -871,18 +868,13 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Array [
-            Object {
-              "data": Object {
-                "s": Object {
-                  "data": null,
-                  "kind": "string",
-                },
-              },
-              "kind": "Object",
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
             },
-          ],
-          "kind": "Array",
+          },
+          "kind": "Object",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -904,6 +896,7 @@ Object {
     },
     "size": 4,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1021,18 +1014,13 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Array [
-            Object {
-              "data": Object {
-                "s": Object {
-                  "data": null,
-                  "kind": "string",
-                },
-              },
-              "kind": "Object",
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
             },
-          ],
-          "kind": "Array",
+          },
+          "kind": "Object",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -1054,6 +1042,7 @@ Object {
     },
     "size": 4,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1161,6 +1150,7 @@ Object {
         "method": "POST",
         "name": "getAllDataIntermediate",
         "parameter": Object {
+          "kind": "WithParam",
           "name": "input",
           "schema": Object {
             "data": Object {
@@ -1219,6 +1209,142 @@ Object {
     },
     "size": 2,
   },
+  "schemaFactory": [Function],
+}
+`;
+
+exports[`references  1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "stored" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 13,
+                "endLineNumber": 2,
+                "startColNumber": 19,
+                "startLineNumber": 1,
+              },
+              "name": "val",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 19,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "stored",
+        "schema": Object {
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+      "refTest" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 20,
+          "endLineNumber": 7,
+          "startColNumber": 35,
+          "startLineNumber": 5,
+        },
+        "method": "POST",
+        "name": "refTest",
+        "parameter": Object {
+          "kind": "WithParam",
+          "name": "r",
+          "schema": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 61,
+              "endLineNumber": 7,
+              "startColNumber": 59,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": null,
+          "kind": "string",
+        },
+      },
+      "secondStore" => Object {
+        "kind": "HierarchicalStore",
+        "name": "secondStore",
+        "schema": Object {
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+        "specName": "querySpec_secondStore",
+        "typeName": "stored",
+      },
+      "querySpec_secondStore" => Object {
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_secondStore",
+        "schema": Object {
+          "data": Object {
+            "getAll": Object {
+              "data": null,
+              "kind": "bool",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+    },
+    "size": 4,
+  },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1336,18 +1462,13 @@ Object {
         "kind": "HierarchicalStore",
         "name": "secondStore",
         "schema": Object {
-          "data": Array [
-            Object {
-              "data": Object {
-                "val": Object {
-                  "data": null,
-                  "kind": "string",
-                },
-              },
-              "kind": "Object",
+          "data": Object {
+            "val": Object {
+              "data": null,
+              "kind": "string",
             },
-          ],
-          "kind": "Array",
+          },
+          "kind": "Object",
         },
         "specName": "querySpec_secondStore",
         "typeName": "stored",
@@ -1369,6 +1490,7 @@ Object {
     },
     "size": 4,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1453,6 +1575,7 @@ Object {
     },
     "size": 1,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1537,6 +1660,7 @@ Object {
     },
     "size": 1,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1665,6 +1789,7 @@ Object {
     },
     "size": 2,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1782,6 +1907,7 @@ Object {
     },
     "size": 2,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -1911,6 +2037,7 @@ Object {
     },
     "size": 1,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -2039,6 +2166,7 @@ Object {
     },
     "size": 2,
   },
+  "schemaFactory": [Function],
 }
 `;
 
@@ -2148,5 +2276,6 @@ Object {
     },
     "size": 1,
   },
+  "schemaFactory": [Function],
 }
 `;

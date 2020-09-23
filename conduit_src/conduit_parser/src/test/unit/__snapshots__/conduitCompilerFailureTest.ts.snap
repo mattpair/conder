@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Refing a struct  1`] = `"Refs currently aren't supported"`;
+exports[`Refing a struct  1`] = `"Refs must refer to an array at the global level."`;
 
 exports[`attempting to store enums 1`] = `"Global arrays must contain structs"`;
 
