@@ -1277,7 +1277,7 @@ Object {
           "name": "r",
           "schema": Object {
             "data": null,
-            "kind": "string",
+            "kind": "Ref",
           },
         },
         "part": Object {
@@ -1309,7 +1309,7 @@ Object {
         },
         "returnType": Object {
           "data": null,
-          "kind": "string",
+          "kind": "Ref",
         },
       },
       "secondStore" => Object {
