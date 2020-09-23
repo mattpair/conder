@@ -35,7 +35,7 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion>, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion | "Ref">, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
@@ -89,9 +89,9 @@ const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
     double: ["f64"],
     bool: ["bool"],
     string: ["String"],
-    None: null,
     Array: ["Vec<InterpreterType>"],
-    Object: ["HashMap<String, InterpreterType>"]
+    Object: ["HashMap<String, InterpreterType>"],
+    None: null,
 }
 
 export function writeOperationInterpreter(): string {
@@ -107,6 +107,7 @@ export function writeOperationInterpreter(): string {
     #[serde(tag = "kind", content= "data")]
     enum Schema {
         ${[
+            "Ref",
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
             ...Lexicon.Primitives
@@ -124,7 +125,7 @@ export function writeOperationInterpreter(): string {
         }).join(",\n")}
     }
 
-    #[derive(Serialize, Deserialize, Clone)]
+    #[derive(Serialize, Deserialize, Clone, Debug)]
     #[serde(untagged)]
     enum InterpreterType {
         ${//@ts-ignore
@@ -146,6 +147,8 @@ export function writeOperationInterpreter(): string {
 
     fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {
         return match schema {
+            Schema::Ref => true,
+            
             Schema::Object(internal) => match value {
                 InterpreterType::Object(internal_value) => internal.iter().all(|(k, v)| match internal_value.get(k) {
                     Some(matching_val) => adheres_to_schema(matching_val, &v),

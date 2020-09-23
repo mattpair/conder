@@ -1,3 +1,4 @@
+import { ADDRESS } from './../main/rust_bound_types';
 import * as child_process from "child_process";
 import * as fs from "fs";
 import "isomorphic-fetch";
@@ -428,6 +429,63 @@ describe("conduit kernel", () => {
             })
           );
           expect(res).toEqual([{left: {a: true, b: false}}])
+      })
+
+      storageTest("should be able to dereference a ref - exists", 
+        {
+          STORES: {
+            test: schemaFactory.Object({
+              data: schemaFactory.string,
+            }),
+          },
+          PROCEDURES: {
+            getPtr: [
+              opWriter.instantiate(interpeterTypeFactory.Array([])),
+              opWriter.moveStackTopToHeap,
+              opWriter.queryStore(["test", {suppress: {}}]),
+              opWriter.popArray, // 3
+              opWriter.toBool,
+              opWriter.negatePrev,
+              opWriter.conditionalGoto(9),
+              opWriter.moveStackToHeapArray(1), // Arg is always at 0, even if none.
+              opWriter.gotoOp(3),
+              opWriter.returnVariable(1), // 9
+            ],
+            insert: [
+              opWriter.insertFromHeap({heap_pos: 0, store: "test"}),
+              opWriter.instantiate("Success!"),
+              opWriter.returnStackTop
+            ],
+            deref: [
+              opWriter.copyFromHeap(0),
+              opWriter.findOneInStore({store: "test"}),
+              opWriter.returnStackTop
+            ]
+          },
+        },
+        async (server) => {
+          let res = await server.invoke(
+            "insert",
+            interpeterTypeFactory.Array([
+              interpeterTypeFactory.Object({
+                data: "First object",
+              }),
+              interpeterTypeFactory.Object({
+                data: "Second object",
+              }),
+            ])
+          );
+          expect(res).toEqual("Success!")
+
+          res = await server.invoke("getPtr")
+          expect(res.length).toBe(2)
+          //@ts-ignore
+          const interestedIn = res.find(f => f.data === "First object");
+
+          res = await server.invoke("deref", interestedIn)
+
+          expect(res.data).toEqual("First object")
+
       })
   });
 

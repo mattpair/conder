@@ -1,5 +1,5 @@
 
-use mongodb::{Database, options::{ClientOptions, FindOptions}, bson, bson::{doc}, results, Client};
+use mongodb::{Database, options::{ClientOptions, FindOptions, FindOneOptions}, bson, bson::{doc}, results, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::stream::StreamExt;
@@ -116,6 +116,28 @@ pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression)
     }
 }
 
+pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery) -> InterpreterType {
+    let r = match eng {
+        Engine::Mongo{db} => {
+            let collection = db.collection(&storeName);
+
+            let res = match collection.find_one(bson::to_document(&q.resembling).unwrap(), None).await {
+                Ok(r) => match r {
+                    Some(o) => bson::from_document(o).unwrap(),
+                    None => InterpreterType::None
+                },
+                Err(e) => {
+                    eprintln!("Could not dereference pointer: {}", e);
+                    InterpreterType::None
+                }
+            };
+            res
+        },
+        _ => panic!("Invalid derefence")
+    };
+    return r;
+}
+
 pub enum Engine {
     Panic,
     Mongo{db: mongodb::Database}
@@ -126,4 +148,8 @@ pub enum Engine {
 #[derive(Deserialize, Clone)]
 pub(crate) struct Suppression {
     suppress: HashMap<String, Option<Suppression>>
+}
+
+pub(crate) struct FindOneQuery {
+    pub resembling: InterpreterType,
 }

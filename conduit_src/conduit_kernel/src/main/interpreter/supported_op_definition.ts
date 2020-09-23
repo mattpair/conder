@@ -1,3 +1,4 @@
+import { AnyInterpreterTypeInstance } from "index"
 import { Suppression } from "../rust_bound_types"
 
 type OpDef<NAME, K="static"> = {
@@ -31,7 +32,12 @@ ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
-ParamOp<"queryStore", [string, Suppression]>
+ParamOp<"queryStore", [string, Suppression]> |
+ParamOp<"findOneInStore", {store: string}> |
+ParamOp<"instantiate", AnyInterpreterTypeInstance> |
+StaticOp<"popArray"> |
+StaticOp<"toBool"> |
+ParamOp<"moveStackToHeapArray", number>
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -80,7 +86,7 @@ const popStack = `
         _ => panic!("Attempting to access non existent value")
     }
     `
-
+const lastStack = `stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
     return `
@@ -218,12 +224,17 @@ export const OpSpec: CompleteOpSpec = {
             paramType: [`String`],
             rustEnumMember: `fieldAccess`,
             rustOpHandler: `
-                    match ${popStack} {
+                    let res = match ${lastStack} {
                         InterpreterType::Object(inside) => match inside.get(op_param) {
-                            Some(o) =>  {${pushStack("o.clone()")}; None},
-                            _ => ${raiseErrorWithMessage("Field does not access")}
+                            Some(o) =>  Ok(o.clone()),
+                            _ => Err("Field does not exist")
                         },
-                        _ => ${raiseErrorWithMessage("Attempting to reference a field that doesn't exist on current type")}
+                        _ => Err("Attempting to reference a field that doesn't exist on current type")
+                    };
+
+                    match res {
+                        Ok(d) => {${pushStack("d")}; None},
+                        Err(e) => Some(e.to_string())
                     }
                         
             `
@@ -290,7 +301,7 @@ export const OpSpec: CompleteOpSpec = {
             kind: "static",
             rustEnumMember: "moveStackTopToHeap",
             rustOpHandler: `
-            heap.push(stack.pop().unwrap());
+            heap.push(${popStack});
             None
             `
         },
@@ -311,5 +322,88 @@ export const OpSpec: CompleteOpSpec = {
             kind: "queryStore",
             data: p
         })
+    },
+    findOneInStore: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["String"],
+            rustEnumMember: "findOneInStore",
+            rustOpHandler: `
+            let res = storage::find_one(eng, op_param, &storage::FindOneQuery {
+                resembling: ${popStack}
+            }).await;
+            ${pushStack("res")};
+            None
+            `
+        },
+        factoryMethod: (d) => ({kind: "findOneInStore", data: d.store})
+    },
+
+    instantiate: {
+        opDefinition: {
+            kind: "param",
+            paramType: ["InterpreterType"],
+            rustEnumMember: "instantiate",
+            rustOpHandler: `
+            ${pushStack("op_param.clone()")};
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "instantiate", data})
+    },
+    popArray: {
+        opDefinition: {
+            kind: "static",
+            rustEnumMember: "popArray",
+            rustOpHandler: `
+            let res = match ${lastStack} {
+                InterpreterType::Array(inner) => match inner.pop() {
+                    Some(v) => v,
+                    None => InterpreterType::None
+                },
+                _ => panic!("Cannot pop from non-array")
+            };
+            ${pushStack("res")};
+            None
+            `
+        },
+        factoryMethod: {
+            kind: "popArray",
+            data: undefined
+        }
+    },
+    toBool: {
+        opDefinition: {
+            kind: "static",
+            rustEnumMember: "toBool",
+            rustOpHandler: `
+            let val = match &${lastStack} {
+                InterpreterType::None => InterpreterType::bool(false),
+                _ => InterpreterType::bool(true)
+            };
+            ${pushStack("val")};
+            None
+            `
+        },
+        factoryMethod: {kind: "toBool", data: undefined}
+    },
+    moveStackToHeapArray: {
+        opDefinition: {
+            kind: "param",
+            rustEnumMember: "moveStackToHeapArray",
+            paramType: ["usize"],
+            rustOpHandler: `
+            let p = ${popStack};
+            match heap.get_mut(*op_param).unwrap() {
+                InterpreterType::Array(inner) => {
+                    inner.push(p);
+                    None
+                }, 
+                _ => ${raiseErrorWithMessage("Cannot push to a non array variable")}
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "moveStackToHeapArray", data})
+        
     }
 }
