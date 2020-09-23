@@ -431,6 +431,31 @@ describe("conduit kernel", () => {
           expect(res).toEqual([{left: {a: true, b: false}}])
       })
 
+      const getPtr = [
+        opWriter.instantiate(interpeterTypeFactory.Array([])),
+        opWriter.moveStackTopToHeap,
+        opWriter.queryStore(["test", {suppress: {}}]),
+        opWriter.popArray, // 3
+        opWriter.toBool,
+        opWriter.negatePrev,
+        opWriter.conditionalGoto(9),
+        opWriter.moveStackToHeapArray(1), // Arg is always at 0, even if none.
+        opWriter.gotoOp(3),
+        opWriter.returnVariable(1), // 9
+      ] 
+
+      const insert = [
+        opWriter.insertFromHeap({heap_pos: 0, store: "test"}),
+        opWriter.instantiate("Success!"),
+        opWriter.returnStackTop
+      ]
+
+      const deref = [
+        opWriter.copyFromHeap(0),
+        opWriter.findOneInStore({store: "test"}),
+        opWriter.returnStackTop
+      ]
+
       storageTest("should be able to dereference a ref - exists", 
         {
           STORES: {
@@ -439,28 +464,9 @@ describe("conduit kernel", () => {
             }),
           },
           PROCEDURES: {
-            getPtr: [
-              opWriter.instantiate(interpeterTypeFactory.Array([])),
-              opWriter.moveStackTopToHeap,
-              opWriter.queryStore(["test", {suppress: {}}]),
-              opWriter.popArray, // 3
-              opWriter.toBool,
-              opWriter.negatePrev,
-              opWriter.conditionalGoto(9),
-              opWriter.moveStackToHeapArray(1), // Arg is always at 0, even if none.
-              opWriter.gotoOp(3),
-              opWriter.returnVariable(1), // 9
-            ],
-            insert: [
-              opWriter.insertFromHeap({heap_pos: 0, store: "test"}),
-              opWriter.instantiate("Success!"),
-              opWriter.returnStackTop
-            ],
-            deref: [
-              opWriter.copyFromHeap(0),
-              opWriter.findOneInStore({store: "test"}),
-              opWriter.returnStackTop
-            ]
+            getPtr,
+            insert,
+            deref
           },
         },
         async (server) => {
@@ -481,11 +487,39 @@ describe("conduit kernel", () => {
           expect(res.length).toBe(2)
           //@ts-ignore
           const interestedIn = res.find(f => f.data === "First object");
-
+          delete interestedIn.data
           res = await server.invoke("deref", interestedIn)
 
           expect(res.data).toEqual("First object")
+      })
 
+      storageTest("should be able to dereference a ref - does not exist", 
+        {
+          STORES: {
+            test: schemaFactory.Object({
+              data: schemaFactory.string,
+            }),
+          },
+          PROCEDURES: {
+            insert,
+            deref
+          },
+        },
+        async (server) => {
+          let res = await server.invoke(
+            "insert",
+            interpeterTypeFactory.Array([
+              interpeterTypeFactory.Object({
+                data: "First object",
+              }),
+            ])
+          );
+          expect(res).toEqual("Success!")
+
+   
+          res = await server.invoke("deref", {_id: -1})
+
+          expect(res).toEqual(null)
       })
   });
 
