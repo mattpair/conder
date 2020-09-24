@@ -51,7 +51,7 @@ function toByteCode(f: CompiledTypes.Function, schemaLookup: Record<string, numb
         ops.push(opWriter.enforceSchemaOnHeap({heap_pos: 0, schema: schemaLookup[`__func__${f.name}`]}))
         varmap.add(f.parameter.name, f.parameter.schema)
     }
-    const targetType: TargetType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
+    const targetType: AnyType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
     
     const summary = statementsToOps(f.body, targetType, {ops, varmap, manifest, opWriter}, {numberOfPrecedingOps: 0})
     if (!summary.alwaysReturns && targetType.kind !== "none") {
@@ -110,12 +110,17 @@ class VarMap extends Map<string, HeapEntry> {
 
 }
 
-function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
+function typesAreEqual(l: AnyType, r: AnyType): boolean {
     if (l.kind !== r.kind) {
         return false
     }
+    
     switch(l.kind) {
+        case "none": 
+            return true
+
         case "Ref":
+            //@ts-ignore
             return l.data === r.data
         case "Array":
         case "Optional":
@@ -123,6 +128,7 @@ function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
             return typesAreEqual(l.data[0], r.data[0])
     
         case "Object":
+            //@ts-ignore
             if (Object.keys(l.data).length !== Object.keys(r.data).length) {
                 return false
             }
@@ -155,13 +161,13 @@ enum ArrayMethods {
     len="len",
 }
 
-type TargetType = AnySchemaInstance | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
+type AnyType = AnySchemaInstance | {kind: "none"} | {kind: "anonFunc"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
     invocation: Parse.MethodInvocation,
-    targetType: Exclude<TargetType, {kind: "anonFunc" }>, 
+    targetType: Exclude<AnyType, {kind: "anonFunc" }>, 
     
-    tools: CompilationTools) => void
+    tools: CompilationTools) => AnyType
 type HierStoreMethods = Record<ArrayMethods, HierStoreMethodCompiler>
 
 type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function" | "python3"}>
@@ -169,7 +175,7 @@ type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struc
 type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
     global: Extract<AllowGlobalReference, {kind: K}>, 
     stmt: Parse.DotStatement[],
-    targetType: TargetType, 
+    targetType: AnyType, 
     tools: CompilationTools) => void
 type GlobalReferenceToOpsConverter = {
     [K in AllowGlobalReference["kind"]]: GlobalReferenceToOps<K>
@@ -177,34 +183,31 @@ type GlobalReferenceToOpsConverter = {
 
 const hierStoreMethodToOps: HierStoreMethods = {
     append: (store, invoc, target, tools) => {
-        if (target.kind === "any" || target.kind === "none") {
+        if (target.kind === "none") {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
                 assignableToOps(asn, schemaFactory.Array(store.schema), tools)
                 tools.ops.push(tools.opWriter.insertFromStack(store.name))
-            })    
+            })
+            return {kind: "none"}
         } else {
             throw Error(`Appending to a store does not return any data`)
         }
     },
 
     len: (store, invoc, target, tools) => {
-        if (target.kind !== Lexicon.Symbol.int && target.kind !== Lexicon.Symbol.double) {
-            throw Error(`len() returns an int, not a ${target.kind}`)
-        }
         if (invoc.children.Assignable.length > 0) {
             throw Error(`len() should be called without any args`)
         }
         tools.ops.push(tools.opWriter.storeLen(store.name))
+        return schemaFactory.int
     },
 
     select: (store, invoc, target, tools) => {
         if (invoc.children.Assignable.length > 1) {
             throw Error(`Select may only be called with one argument`)
         }
-        if (target.kind === "none") {
-            throw Error(`Select must yield some result`)
-        }
+
         const a = invoc.children.Assignable[0].differentiate()
         if (a.kind !== "AnonFunction") {
             throw Error(`Select must be invoked with an anonymous function`)
@@ -248,27 +251,21 @@ const hierStoreMethodToOps: HierStoreMethods = {
             if (method.children.Assignable.length > 0) {
                 throw Error(`ref should not be called with any arguments`)
             }
-
-            if (target.kind === "any" || typesAreEqual(target, schemaFactory.Array(schemaFactory.Ref(store.name)))) {
-                const suppression: Suppression = {suppress: {}}
-                for (const key in store.schema.data) {
-                    suppression.suppress[key] = null
-                }
-                tools.ops.push(tools.opWriter.queryStore([store.name, suppression]))
-                return
-            } else {
-                throw Error(`Select statement does not return the expected type`)
+            const refSchema = schemaFactory.Array(schemaFactory.Ref(store.name))
+            
+            const suppression: Suppression = {suppress: {}}
+            for (const key in store.schema.data) {
+                suppression.suppress[key] = null
             }
+            tools.ops.push(tools.opWriter.queryStore([store.name, suppression]))
+            return refSchema
         }
 
         if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
             throw Error(`Currently only support returning the entire row variable in select statements`)
         }
-        if (target.kind === "any" || typesAreEqual(target, store.schema)) {
-            tools.ops.push(tools.opWriter.getAllFromStore(store.name))
-        } else {
-            throw Error(`Type returned from select statement doesn't match expectations`)
-        }
+        tools.ops.push(tools.opWriter.getAllFromStore(store.name))
+        return schemaFactory.Array(store.schema)
     }
 }
 
@@ -279,10 +276,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
             throw Error(`Cannot convert a store into an anonymous function`)
         }
         
-        if(dots.length > 1) {
-            throw Error(`Invoking methods which don't exist on store method results`)
-        } else if (dots.length === 1) {
+        if(dots.length >= 1) {
             const m = dots[0].differentiate()
+            let currentType: AnyType = undefined
             switch(m.kind) {
                 case "FieldAccess":
                     throw Error(`Attempting to access a field on a global array of data does not make sense`)
@@ -296,30 +292,108 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                         throw Error(`Method ${m.name} doesn't exist on global arrays`)
                     }
                     
-                    method(store, m, targetType, tools)
-                    return   
+                    currentType = method(store, m, targetType, tools)
+                    break   
                 default: Utilities.assertNever(m)
+            }
+            if (dots.length > 1) {
+                if (targetType.kind === "none" && currentType.kind !== "none") {
+                    throw Error(`There is no point in calling methods on global methods here because it does not product any side-effect.`)
+                }
+
+                dotsToOps(dots.slice(1), targetType, currentType, tools)
+            } else if (!typesAreEqual(targetType, currentType)) {
+                throw Error(`Global access did not produce the expected type`)
             }
         } else {
             if (targetType.kind === "none") {
                 throw Error(`Global reference return real data, not none`)
             }
-            if (targetType.kind !== "any") {
-                if (targetType.kind !== "Array") {
-                    throw Error(`Referencing ${store.name} returns an array of data.`)
-                }
-                
-                if (!typesAreEqual(targetType.data[0], store.schema)) {
-                    throw Error(`${store.name} contains type: ${JSON.stringify(store.schema, null, 2)}\n\nFound: ${JSON.stringify(targetType, null, 2)}`)
-                }
+            if (targetType.kind !== "Array") {
+                throw Error(`Referencing ${store.name} returns an array of data.`)
             }
+            
+            if (!typesAreEqual(targetType.data[0], store.schema)) {
+                throw Error(`${store.name} contains type: ${JSON.stringify(store.schema, null, 2)}\n\nFound: ${JSON.stringify(targetType, null, 2)}`)
+            }
+            
             
             return tools.ops.push(tools.opWriter.getAllFromStore(store.name))
         }
     }
 }
 
-function variableReferenceToOps(assign: Parse.VariableReference, targetType: TargetType, tools: CompilationTools): void {
+function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType: AnyType, tools: CompilationTools): void {
+    dots.forEach((dot, index) => {
+        const method = dot.differentiate()
+        switch(method.kind) {
+            case "FieldAccess":
+                if (currentType.kind !== "Object") {
+                    throw Error(`Attempting to access field on a ${currentType.kind}`)
+                }
+
+                if (!(method.name in currentType.data)) {
+                    throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
+                }
+                tools.ops.push(tools.opWriter.fieldAccess(method.name))
+                currentType = currentType.data[method.name]
+                break
+
+            case "MethodInvocation":
+                switch (currentType.kind) {
+                    case "Ref":
+                        const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
+
+                        if (method.name === "delete") {
+                            if (method.children.Assignable.length > 0) {
+                                throw Error(`Deleting a pointer takes no args`)
+                            }
+                            currentType = schemaFactory.bool
+                            tools.ops.push(tools.opWriter.deleteOneInStore({store: store.name}))
+                            break
+                        }
+
+                        if (method.name !== "deref") {
+                            throw Error(`References only support the deref method`)
+                        }
+                        if (method.children.Assignable.length > 0) {
+                            throw Error("deref takes no arguments")
+                        }
+                        
+                        currentType = schemaFactory.Optional(store.schema)
+                        const suppression: Suppression = {suppress: {}}
+                        suppression.suppress[ADDRESS] = null
+                        tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
+                        break
+
+                    case "Array":
+                        if (method.name !== "len") {
+                            throw Error(`Unrecognized method on a local array: ${method.name}`)
+                        } 
+                        if (method.children.Assignable.length > 0) {
+                            throw Error(`len takes no args`)
+                        }
+                        currentType = schemaFactory.int
+                        tools.ops.push(tools.opWriter.arrayLen)
+                        break
+                        
+                    default:
+                        throw Error(`${method.name} does not exist on ${currentType.kind}`)
+                }
+                break
+                
+            default: Utilities.assertNever(method)
+        }
+        
+    })
+
+
+    if (!typesAreEqual(targetType, currentType)) {
+        throw Error(`Types are not equal. Expected: ${JSON.stringify(targetType, null, 2)}\n\n Received: ${JSON.stringify(currentType, null, 2)}`)
+    }
+}
+
+function variableReferenceToOps(assign: Parse.VariableReference, targetType: AnyType, tools: CompilationTools): void {
     if (targetType.kind === "anonFunc") {
         throw Error(`Variable references cannot produce anon functions`)
     }
@@ -335,73 +409,8 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         let currentType: AnySchemaInstance = ref.type
 
         if (assign.children.DotStatement.length > 0) {
-            
-            assign.children.DotStatement.forEach((dot, index) => {
-                const method = dot.differentiate()
-                switch(method.kind) {
-                    case "FieldAccess":
-                        if (currentType.kind !== "Object") {
-                            throw Error(`Attempting to access field on a ${currentType.kind}`)
-                        }
-
-                        if (!(method.name in currentType.data)) {
-                            throw Error(`Attempting to access ${method.name} but it doesn't exist on type`)
-                        }
-                        tools.ops.push(tools.opWriter.fieldAccess(method.name))
-                        currentType = currentType.data[method.name]
-                        break
-
-                    case "MethodInvocation":
-                        switch (currentType.kind) {
-                            case "Ref":
-                                const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
-
-                                if (method.name === "delete") {
-                                    if (method.children.Assignable.length > 0) {
-                                        throw Error(`Deleting a pointer takes no args`)
-                                    }
-                                    currentType = schemaFactory.bool
-                                    tools.ops.push(tools.opWriter.deleteOneInStore({store: store.name}))
-                                    break
-                                }
-    
-                                if (method.name !== "deref") {
-                                    throw Error(`References only support the deref method`)
-                                }
-                                if (method.children.Assignable.length > 0) {
-                                    throw Error("deref takes no arguments")
-                                }
-                                
-                                currentType = schemaFactory.Optional(store.schema)
-                                const suppression: Suppression = {suppress: {}}
-                                suppression.suppress[ADDRESS] = null
-                                tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
-                                break
-
-                            case "Array":
-                                if (method.name !== "len") {
-                                    throw Error(`Unrecognized method on a local array: ${method.name}`)
-                                } 
-                                if (method.children.Assignable.length > 0) {
-                                    throw Error(`len takes no args`)
-                                }
-                                currentType = schemaFactory.int
-                                tools.ops.push(tools.opWriter.arrayLen)
-                                break
-                                
-                            default:
-                                throw Error(`${method.name} does not exist on ${currentType.kind}`)
-                        }
-                        break
-                        
-                    default: Utilities.assertNever(method)
-                }
-                
-            })
-        }
-        
-
-        if (targetType.kind !== "any" && !typesAreEqual(targetType, currentType)) {
+            dotsToOps(assign.children.DotStatement, targetType, currentType, tools)
+        } else if (!typesAreEqual(targetType, currentType)) {
             throw Error(`Types are not equal. Expected: ${JSON.stringify(targetType, null, 2)}\n\n Received: ${JSON.stringify(currentType, null, 2)}`)
         }
         return
@@ -418,7 +427,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
     }
 }
 
-function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: CompilationTools): void {
+function assignableToOps(a: Parse.Assignable, targetType: AnyType, tools: CompilationTools): void {
     const assign = a.differentiate()
     switch (assign.kind) {
         case "VariableReference":
@@ -428,7 +437,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
             throw Error(`Unexpected anon function`)
             
         case "ArrayLiteral":
-            if (targetType.kind === "Array" || targetType.kind === "any") {
+            if (targetType.kind === "Array") {
                 tools.ops.push(tools.opWriter.instantiate([]))
                 const childTarget = targetType.kind === "Array" ? targetType.data[0] : targetType
                 assign.children.Assignable.forEach(child => {
@@ -440,7 +449,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
             }
             break
         case "ObjectLiteral":
-            if (targetType.kind !== "Object" && targetType.kind !== "any") {
+            if (targetType.kind !== "Object") {
                 throw Error(`Object literal is not equivalent to ${targetType.kind}`)
             }
             tools.ops.push(tools.opWriter.instantiate({}))
@@ -448,9 +457,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
                 throw Error(`Object literal is not equivalent to desired type`)
             }
             assign.children.FieldLiteral.forEach(field => {
-                if (targetType.kind === "any") {
-                    assignableToOps(field.part.Assignable, targetType, tools)
-                } else if (!(field.name in targetType.data)) {
+                if (!(field.name in targetType.data)) {
                     throw Error(`Unexpected field in object literal: ${field.name}`)
                 } else {
                     assignableToOps(field.part.Assignable, targetType.data[field.name], tools)
@@ -462,7 +469,6 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
         case "NumberLiteral":
             
             switch (targetType.kind) {
-                case "any":
                 case Lexicon.Symbol.double:
                     tools.ops.push(tools.opWriter.instantiate(interpeterTypeFactory.double(assign.val)))
                     break
@@ -487,7 +493,7 @@ type ManyStatementConversionInfo = Readonly<{
     numberOfPrecedingOps: number
 }>
 
-function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, tools: CompilationTools, info: ManyStatementConversionInfo): StatementSummary {
+function statementsToOps(a: CompiledTypes.Statement[], targetType: AnyType, tools: CompilationTools, info: ManyStatementConversionInfo): StatementSummary {
     let alwaysReturns = false
     for (let j = 0; j < a.length; j++) {
         
@@ -497,7 +503,7 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: TargetType, t
         }
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "any"}, tools)
+                variableReferenceToOps(stmt, {kind: "none"}, tools)
                 break
 
             

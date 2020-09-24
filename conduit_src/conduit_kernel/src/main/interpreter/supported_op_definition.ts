@@ -409,14 +409,9 @@ export const OpSpec: CompleteOpSpec = {
     arrayLen: {
         opDefinition: {
             rustOpHandler: `
-            let res = match ${lastStack} {
-                InterpreterType::Array(a) => Ok(InterpreterType::int(i64::try_from(a.len()).unwrap())),
-                _ => Err(${raiseErrorWithMessage("Cannot take len of non array object")})
-            };
-
-            match res {
-                Ok(i) => {${pushStack("i")}; None},
-                Err(e) => e
+            match ${popStack} {
+                InterpreterType::Array(a) => {${pushStack("InterpreterType::int(i64::try_from(a.len()).unwrap())")}; None},
+                _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             }
             `
         }
