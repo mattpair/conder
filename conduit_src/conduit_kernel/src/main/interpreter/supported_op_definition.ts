@@ -38,9 +38,8 @@ ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
 StaticOp<"toBool"> |
 ParamOp<"moveStackToHeapArray", number> |
-StaticOp<"arrayPush">
-
-
+StaticOp<"arrayPush"> |
+ParamOp<"assignPreviousToField", string>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -387,5 +386,22 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
     },
+
+    assignPreviousToField: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let value = ${popStack};
+            match ${lastStack} {
+                InterpreterType::Object(m) => {
+                    m.insert(op_param.to_string(), value);
+                    None
+                },
+                _ => ${raiseErrorWithMessage("Cannot add a field to a non-object")}
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "assignPreviousToField", data})
+    }
 
 }
