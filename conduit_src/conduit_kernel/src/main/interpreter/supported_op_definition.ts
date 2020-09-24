@@ -40,7 +40,8 @@ StaticOp<"toBool"> |
 ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
 ParamOp<"assignPreviousToField", string> |
-StaticOp<"arrayLen">
+StaticOp<"arrayLen"> |
+ParamOp<"storeLen", string>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -419,6 +420,16 @@ export const OpSpec: CompleteOpSpec = {
             }
             `
         }
+    },
+    storeLen: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            ${pushStack("storage::measure(eng, op_param).await")};
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "storeLen", data})
     }
 
 }

@@ -158,6 +158,24 @@ pub(crate) async fn delete_one(eng: &Engine, storeName: &str, q: &FindOneQuery) 
     return r
 }
 
+pub(crate) async fn measure(eng: &Engine, storeName: &str) -> InterpreterType {
+    let r = match eng {
+        Engine::Mongo{db} => {
+            let collection = db.collection(&storeName);
+            let d = match collection.estimated_document_count(None).await {
+                Ok(count) => count,
+                Err(e) => {
+                    eprintln!("Failure measuring: {}", e);
+                    0
+                }
+            };
+            InterpreterType::int(d)
+        },
+        _ => panic!("invalid delete")
+    };
+    return r
+}
+
 pub enum Engine {
     Panic,
     Mongo{db: mongodb::Database}

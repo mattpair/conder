@@ -466,13 +466,19 @@ describe("conduit kernel", () => {
         opWriter.returnStackTop
       ]
 
+      const len = [
+        opWriter.storeLen("test"),
+        opWriter.returnStackTop
+      ]
+      const STORES = {
+        test: schemaFactory.Object({
+          data: schemaFactory.string,
+        }),
+      }
+
       storageTest("should be able to dereference a ref - exists", 
         {
-          STORES: {
-            test: schemaFactory.Object({
-              data: schemaFactory.string,
-            }),
-          },
+          STORES,
           PROCEDURES: {
             getPtr,
             insert,
@@ -505,11 +511,7 @@ describe("conduit kernel", () => {
 
       storageTest("should be able to dereference a ref - does not exist", 
         {
-          STORES: {
-            test: schemaFactory.Object({
-              data: schemaFactory.string,
-            }),
-          },
+          STORES,
           PROCEDURES: {
             insert,
             deref
@@ -534,11 +536,7 @@ describe("conduit kernel", () => {
 
       storageTest("should be able to delete a ref", 
         {
-          STORES: {
-            test: schemaFactory.Object({
-              data: schemaFactory.string,
-            }),
-          },
+          STORES,
           PROCEDURES: {
             insert,
             deref,
@@ -571,7 +569,11 @@ describe("conduit kernel", () => {
 
           res = await server.invoke("del", {_id})
           expect(res).toBe(false)
-    
+      })
+
+      storageTest("measure global store", {STORES, PROCEDURES: {len, insert}}, async (server) => {
+        expect(await server.invoke("insert", [{data: "first"}, {data: "second"}])).toEqual("Success!")
+        expect(await server.invoke("len")).toBe(2)
       })
 
   });
