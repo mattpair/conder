@@ -2,7 +2,6 @@ import * as fs from 'fs'
 import * as child_process from 'child_process'
 import { generateServer } from './src/main/server_writer'
 import { CompleteOpWriter, OpSpec, OpInstance } from './src/main/interpreter/supported_op_definition'
-import {InterpreterTypeInstanceMap, interpeterTypeFactory} from './src/main/interpreter/interpreter_writer'
 
 
 function writeMain() {
@@ -21,7 +20,16 @@ export function getOpWriter(): CompleteOpWriter {
     const ret: Partial<CompleteOpWriter> = {}
     for (const kind in OpSpec) {
         //@ts-ignore
-        ret[kind] = OpSpec[kind].factoryMethod
+        const inst: any = OpSpec[kind] 
+        
+        if (inst.factoryMethod) {
+            //@ts-ignore
+            ret[kind] = inst.factoryMethod
+        } else {
+            //@ts-ignore
+            ret[kind] = {kind, data: undefined}
+        }
+        
     }
     return ret as CompleteOpWriter
 }

@@ -41,12 +41,15 @@ ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush">
 
 
-type StaticFactory<S> = OpInstance<S>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
-type OpFactoryFinder<C extends Ops> = C["class"] extends "static" ? StaticFactory<C["kind"]> : 
+type OpProducer<C extends Ops> = C["class"] extends "static" ? OpInstance<C["kind"]> : 
 C["class"] extends "param" ? ParamFactory<C["paramType"], C["kind"]> :
+never
+
+type OpFactoryFinder<C extends Ops> = C["class"] extends "static" ? {} : 
+C["class"] extends "param" ? {factoryMethod: ParamFactory<C["paramType"], C["kind"]>} :
 never
 
 export type CompleteOpFactory = {
@@ -58,16 +61,15 @@ C["class"] extends "param" ? OpDefWithParameter<C["kind"]> :
 never
 
 export type OpSpec<P extends Ops["kind"]> = Readonly<{
-    factoryMethod: OpFactoryFinder<Extract<Ops, {kind: P}>>,
     opDefinition: OpDefFinder<Extract<Ops, {kind: P}>>
-}>
+} & OpFactoryFinder<Extract<Ops, {kind: P}>>>
 
 export type CompleteOpSpec = {
     readonly [P in Ops["kind"]]: OpSpec<P>
 }
 
 export type CompleteOpWriter = {
-    readonly [P in Ops["kind"]]: OpSpec<P>["factoryMethod"]
+    readonly [P in Ops["kind"]]: OpProducer<Extract<Ops, {kind: P}>>
 }
 
 export type OpInstance<S=string> = Readonly<{
@@ -111,13 +113,11 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
-        factoryMethod: {kind: "negatePrev", data: undefined}
     },
     noop: {
         opDefinition: {
             rustOpHandler: ` None`
         },
-        factoryMethod: {kind: "noop", data: undefined}
     },
     truncateHeap: {
         opDefinition: {
@@ -176,10 +176,6 @@ export const OpSpec: CompleteOpSpec = {
     },
 
     returnStackTop: {
-        factoryMethod: {    
-            kind: "returnStackTop",
-            data: undefined    
-        },
         opDefinition: {
             rustOpHandler: `return Ok(${popStack})`
         }
@@ -278,7 +274,6 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: {kind: "moveStackTopToHeap", data: undefined}
     },
     queryStore: {
         opDefinition: {
@@ -334,10 +329,6 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: {
-            kind: "popArray",
-            data: undefined
-        }
     },
     toBool: {
         opDefinition: {
@@ -351,7 +342,6 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: {kind: "toBool", data: undefined}
     },
     moveStackToHeapArray: {
         opDefinition: {
@@ -371,8 +361,7 @@ export const OpSpec: CompleteOpSpec = {
         factoryMethod: (data) => ({kind: "moveStackToHeapArray", data})   
     }, 
     arrayPush: {
-        opDefinition: {
-            
+        opDefinition: {     
             rustOpHandler: `
             let pushme = ${popStack};
             match ${lastStack} {
@@ -384,7 +373,6 @@ export const OpSpec: CompleteOpSpec = {
             }
             `
         },
-        factoryMethod: {kind: "arrayPush", data: undefined}
     },
 
 }
