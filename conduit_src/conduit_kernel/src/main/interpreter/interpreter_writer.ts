@@ -12,7 +12,7 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
             let err: Option<String> = match &ops[next_op_index] {
                 ${supportedOps.map(o => {
                     let header = o.rustEnumMember
-                    if (o.kind === "param") {
+                    if (o.paramType) {
                         header = `${o.rustEnumMember}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
                     }
                     return `Op::${header} => {
@@ -117,7 +117,7 @@ export function writeOperationInterpreter(): string {
     #[serde(tag = "kind", content= "data")]
     enum Op {
         ${supportedOps.map(o => {
-            if (o.kind === "param") {
+            if (o.paramType) {
                 return `${o.rustEnumMember}(${o.paramType.join(", ")})`
             }
             return o.rustEnumMember
