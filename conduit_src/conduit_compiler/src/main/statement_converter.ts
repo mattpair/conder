@@ -149,6 +149,12 @@ type CompilationTools = Readonly<{
     ops: AnyOpInstance[]
 }>
 
+enum ArrayMethods {
+    append="append",
+    select="select",
+    len="len",
+}
+
 type TargetType = AnySchemaInstance | {kind: "any"} | {kind: "none"} | {kind: "anonFunc"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
@@ -156,9 +162,9 @@ type HierStoreMethodCompiler = (
     targetType: Exclude<TargetType, {kind: "anonFunc" }>, 
     
     tools: CompilationTools) => void
-type HierStoreMethods = Record<"append" | "select", HierStoreMethodCompiler>
+type HierStoreMethods = Record<ArrayMethods, HierStoreMethodCompiler>
 
-type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function"}>
+type AllowGlobalReference = Exclude<CompiledTypes.Entity, {kind: "Enum" | "Struct" | "Function" | "python3"}>
 
 type GlobalReferenceToOps<K extends AllowGlobalReference["kind"]> = (
     global: Extract<AllowGlobalReference, {kind: K}>, 
@@ -181,6 +187,17 @@ const hierStoreMethodToOps: HierStoreMethods = {
             throw Error(`Appending to a store does not return any data`)
         }
     },
+
+    len: (store, invoc, target, tools) => {
+        if (target.kind !== Lexicon.Symbol.int && target.kind !== Lexicon.Symbol.double) {
+            throw Error(`len() returns an int, not a ${target.kind}`)
+        }
+        if (invoc.children.Assignable.length > 0) {
+            throw Error(`len() should be called without any args`)
+        }
+        tools.ops.push(tools.opWriter.storeLen(store.name))
+    },
+
     select: (store, invoc, target, tools) => {
         if (invoc.children.Assignable.length > 1) {
             throw Error(`Select may only be called with one argument`)
@@ -256,41 +273,6 @@ const hierStoreMethodToOps: HierStoreMethods = {
 }
 
 const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
-    python3: (module, dots, targetType, tools) => {
-        throw Error(`Python calls are currently unsupported`)
-        if (targetType.kind === "anonFunc") {
-            throw Error(`Cannot retrieve an anonymous function from python3`)
-        }
-        
-        if (dots.length !== 1) {
-            throw Error(`Invalid reference to the installed python module ${module.name}`)
-        }
-        if (targetType.kind === "any") {
-            throw Error(`Cannot determine what type python3 call should be.`)
-        }
-        // if (targetType.kind === "DetailedType" && targetType.modification !== Lexicon.Symbol.none) {
-        //     throw Error(`Can only convert foreign function results into base types, not arrays or optionals.`)
-        // }
-        if (targetType.kind === "none") {
-            throw Error(`Foreign function results must be returned or saved to a variable`)   
-        }
-
-        const dot = dots[0]
-        const m = dot.differentiate()
-        if (m.kind === "FieldAccess") {
-            throw Error(`Accessing a field on a foreign function doesn't make sense`)
-        }
-        // m.children.Assignable.forEach(a => {
-        //     assignableToOps(a, {kind: "any"}, tools)
-        //     tools.ops.push(tools.factory.pushPreviousOnCallStack)
-        // })
-
-        // tools.ops.push(
-        //     tools.factory.invokeInstalled(module, m.name),
-        // )
-   
-        // tools.ops.push(tools.factory.deserializeRpcBufTo(targetType))
-    },
 
     HierarchicalStore: (store, dots, targetType, tools) => {
         if (targetType.kind === "anonFunc") {
@@ -425,7 +407,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         return
     } else {
         // Must be global then
-        const ent  = tools.manifest.inScope.getEntityOfType(assign.val, "HierarchicalStore", "python3")
+        const ent  = tools.manifest.inScope.getEntityOfType(assign.val, "HierarchicalStore")
         
         return globalReferenceToOpsConverter[ent.kind](
             //@ts-ignore - typescript doesn't recognize that ent.kind ensures we grab the right handler.
