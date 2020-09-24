@@ -23,12 +23,13 @@ export namespace Parse {
     export type VariableReference = e.IntrafileEntity<"VariableReference", {val: string} & e.ParentOfMany<DotStatement>>
     export type FieldLiteral = e.NamedIntrafile<"FieldLiteral", e.RequiresOne<Assignable>>
     export type ObjectLiteral = e.IntrafileEntity<"ObjectLiteral", e.ParentOfMany<FieldLiteral>>
+    export type NumberLiteral = e.IntrafileEntity<"NumberLiteral", {val: number}>
     export type MethodInvocation = e.NamedIntrafile<"MethodInvocation", e.ParentOfMany<Assignable>>
     export type Nothing = e.IntrafileEntity<"Nothing", {}>
     export type Returnable = e.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = e.IntrafileEntity<"ReturnStatement", e.RequiresOne<Returnable>>
     export type ArrayLiteral = e.IntrafileEntity<"ArrayLiteral", e.ParentOfMany<Assignable>>
-    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral>
+    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral | NumberLiteral>
     export type DotStatement = e.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = e.NamedIntrafile<"VariableCreation", e.RequiresOne<CompleteType> & e.RequiresOne<Assignable>>
     export type Statement = e.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
@@ -215,7 +216,8 @@ export namespace Parse {
         e.PrimitiveEntity |
         ArrayLiteral |
         FieldLiteral |
-        ObjectLiteral
+        ObjectLiteral |
+        NumberLiteral
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -655,6 +657,7 @@ export namespace Parse {
             kind: "polymorph",
             priority: {
                 ArrayLiteral: 3,
+                NumberLiteral: 5,
                 ObjectLiteral: 4,
                 VariableReference: 2,
                 AnonFunction: 1
@@ -847,6 +850,11 @@ export namespace Parse {
                     children
                 }
             }
+        },
+        NumberLiteral: {
+            kind: "leaf",
+            regex: /^(?<val>\d+(\.\d+)?)/,
+            assemble: (c, loc) => ({kind: "NumberLiteral", val: Number(c.groups.val), loc})
         }
     }
 }

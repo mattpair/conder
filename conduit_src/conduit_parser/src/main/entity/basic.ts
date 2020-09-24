@@ -42,7 +42,8 @@ export type EntityKinds =
 "DetailedType" |
 "ArrayLiteral" |
 "ObjectLiteral" |
-"FieldLiteral"
+"FieldLiteral" |
+"NumberLiteral"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

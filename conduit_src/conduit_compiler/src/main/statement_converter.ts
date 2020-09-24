@@ -215,6 +215,9 @@ const hierStoreMethodToOps: HierStoreMethods = {
 
             case "ObjectLiteral":
                 throw Error("Returning an object literal from within a select is not supported")
+
+            case "NumberLiteral":
+                throw Error("Returning a number literal does not make sense")
         }
 
         if (assignable.children.DotStatement.length  === 1) {
@@ -459,7 +462,9 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
                 tools.ops.push(tools.opWriter.assignPreviousToField(field.name))
             })
             break
-            
+
+        case "NumberLiteral":
+            throw Error(`Number literals are not supported`)
         default: Utilities.assertNever(assign)
     }
     
