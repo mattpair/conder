@@ -236,3 +236,25 @@ compileTest("object literal ", `
         return {a:c.genString(),b:c.genString()}
     }
 `)
+
+compileTest("string literal", `
+    struct obj {
+        a: string
+    }
+    function t1(): obj {
+        return {
+            a: \`this is a single line string\`
+        }
+    }
+    function t2(): obj {
+        return {
+            a: \` this
+            is 
+            a
+            multiline
+            string
+            \`
+        }
+    }
+
+`)

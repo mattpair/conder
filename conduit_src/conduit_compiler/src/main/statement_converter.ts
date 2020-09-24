@@ -238,6 +238,9 @@ const hierStoreMethodToOps: HierStoreMethods = {
 
             case "NumberLiteral":
                 throw Error("Returning a number literal does not make sense")
+
+            case "StringLiteral":
+                throw Error("Returning a string literal does not make sense")
         }
 
         if (assignable.children.DotStatement.length  === 1) {
@@ -433,6 +436,7 @@ function assignableToOps(a: Parse.Assignable, targetType: AnyType, tools: Compil
         case "VariableReference":
             return variableReferenceToOps(assign, targetType, tools)
 
+        case "StringLiteral":
         case "AnonFunction":
             throw Error(`Unexpected anon function`)
             

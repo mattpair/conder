@@ -2481,3 +2481,115 @@ Object {
   "schemaFactory": [Function],
 }
 `;
+
+exports[`string literal 1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "obj" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 2,
+                "startColNumber": 16,
+                "startLineNumber": 1,
+              },
+              "name": "a",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "obj",
+        "schema": Object {
+          "data": Object {
+            "a": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+      "t1" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 15,
+          "endLineNumber": 4,
+          "startColNumber": 5,
+          "startLineNumber": 3,
+        },
+        "method": "GET",
+        "name": "t1",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 17,
+            "endLineNumber": 4,
+            "startColNumber": 15,
+            "startLineNumber": 4,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 24,
+              "endLineNumber": 4,
+              "startColNumber": 22,
+              "startLineNumber": 4,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": Object {
+            "a": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+    },
+    "size": 2,
+  },
+  "schemaFactory": [Function],
+}
+`;

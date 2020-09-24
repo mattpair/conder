@@ -24,12 +24,13 @@ export namespace Parse {
     export type FieldLiteral = e.NamedIntrafile<"FieldLiteral", e.RequiresOne<Assignable>>
     export type ObjectLiteral = e.IntrafileEntity<"ObjectLiteral", e.ParentOfMany<FieldLiteral>>
     export type NumberLiteral = e.IntrafileEntity<"NumberLiteral", {val: number}>
+    export type StringLiteral = e.IntrafileEntity<"StringLiteral", {val: string}>
     export type MethodInvocation = e.NamedIntrafile<"MethodInvocation", e.ParentOfMany<Assignable>>
     export type Nothing = e.IntrafileEntity<"Nothing", {}>
     export type Returnable = e.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = e.IntrafileEntity<"ReturnStatement", e.RequiresOne<Returnable>>
     export type ArrayLiteral = e.IntrafileEntity<"ArrayLiteral", e.ParentOfMany<Assignable>>
-    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral | NumberLiteral>
+    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral | NumberLiteral | StringLiteral>
     export type DotStatement = e.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = e.NamedIntrafile<"VariableCreation", e.RequiresOne<CompleteType> & e.RequiresOne<Assignable>>
     export type Statement = e.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
@@ -217,7 +218,8 @@ export namespace Parse {
         ArrayLiteral |
         FieldLiteral |
         ObjectLiteral |
-        NumberLiteral
+        NumberLiteral | 
+        StringLiteral
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -664,7 +666,8 @@ export namespace Parse {
                 NumberLiteral: 5,
                 ObjectLiteral: 4,
                 VariableReference: 2,
-                AnonFunction: 1
+                AnonFunction: 1,
+                StringLiteral: 6
             },
             groupKind: "Assignable"
         },
@@ -859,6 +862,11 @@ export namespace Parse {
             kind: "leaf",
             regex: /^(?<val>\d+(\.\d+)?)/,
             assemble: (c, loc) => ({kind: "NumberLiteral", val: Number(c.groups.val), loc})
+        },
+        StringLiteral: {
+            kind: "leaf",
+            regex: /^\s*`(?<val>[\S\s]*(?<!\\))`/,
+            assemble:(c, loc) => ({kind: "StringLiteral", loc, val: c.groups.val.replace("\`", "`")})
         }
     }
 }
