@@ -39,7 +39,8 @@ StaticOp<"popArray"> |
 StaticOp<"toBool"> |
 ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
-ParamOp<"assignPreviousToField", string>
+ParamOp<"assignPreviousToField", string> |
+StaticOp<"arrayLen">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -402,6 +403,22 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "assignPreviousToField", data})
+    },
+
+    arrayLen: {
+        opDefinition: {
+            rustOpHandler: `
+            let res = match ${lastStack} {
+                InterpreterType::Array(a) => Ok(InterpreterType::int(i64::try_from(a.len()).unwrap())),
+                _ => Err(${raiseErrorWithMessage("Cannot take len of non array object")})
+            };
+
+            match res {
+                Ok(i) => {${pushStack("i")}; None},
+                Err(e) => e
+            }
+            `
+        }
     }
 
 }

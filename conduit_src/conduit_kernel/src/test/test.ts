@@ -576,4 +576,13 @@ describe("conduit kernel", () => {
 
   });
 
+
+  describe("instructions", () => {
+    kernelTest("measuring local arrays", async (server) => {
+      let len = await server.invoke("measure", interpeterTypeFactory.Array([0, 1]))
+      expect(len).toBe(2)
+      len = await server.invoke("measure", [])
+      expect(len).toBe(0)
+    }, {PROCEDURES: {measure: [opWriter.copyFromHeap(0), opWriter.arrayLen, opWriter.returnStackTop]}})
+  })
 });

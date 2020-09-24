@@ -122,6 +122,7 @@ export function generateServer(): string {
         use std::borrow::Borrow;
         use bytes::Bytes;
         use mongodb::{Database};
+        use std::convert::TryFrom;
         mod storage;
 
 
