@@ -216,7 +216,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
             case "ObjectLiteral":
                 throw Error("Returning an object literal from within a select is not supported")
         }
-        
+
         if (assignable.children.DotStatement.length  === 1) {
             const method = assignable.children.DotStatement[0].differentiate()
             if (assignable.val !== a.rowVarName || method.kind !== "MethodInvocation") {
@@ -426,7 +426,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
             return variableReferenceToOps(assign, targetType, tools)
 
         case "AnonFunction":
-            throw Error(`Anonmous functions cannot be compiled yet`)
+            throw Error(`Unexpected anon function`)
             
         case "ArrayLiteral":
             if (targetType.kind === "Array" || targetType.kind === "any") {
@@ -441,7 +441,25 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
             }
             break
         case "ObjectLiteral":
-            throw Error("Object literals are currently not supported")
+            if (targetType.kind !== "Object" && targetType.kind !== "any") {
+                throw Error(`Object literal is not equivalent to ${targetType.kind}`)
+            }
+            tools.ops.push(tools.opWriter.instantiate({}))
+            if (targetType.kind === "Object" && Object.keys(targetType.data).length !== assign.children.FieldLiteral.length) {
+                throw Error(`Object literal is not equivalent to desired type`)
+            }
+            assign.children.FieldLiteral.forEach(field => {
+                if (targetType.kind === "any") {
+                    assignableToOps(field.part.Assignable, targetType, tools)
+                } else if (!(field.name in targetType.data)) {
+                    throw Error(`Unexpected field in object literal: ${field.name}`)
+                } else {
+                    assignableToOps(field.part.Assignable, targetType.data[field.name], tools)
+                }
+                tools.ops.push(tools.opWriter.assignPreviousToField(field.name))
+            })
+            break
+            
         default: Utilities.assertNever(assign)
     }
     
