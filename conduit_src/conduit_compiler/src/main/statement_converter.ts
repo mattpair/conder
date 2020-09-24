@@ -206,11 +206,17 @@ const hierStoreMethodToOps: HierStoreMethods = {
             throw Error(`It only makes sense to select from a store if you are going to return results`)
         }
         const assignable = r.differentiate()
-        if (assignable.kind === "AnonFunction") {
-            throw Error(`It does not make sense to return an anonymous function from a select statement`)
-        } else if (assignable.kind === "ArrayLiteral") {
-            throw Error(`Returning an array literal from within a select is not supported`)
+        switch (assignable.kind) {
+            case "AnonFunction":
+                throw Error(`It does not make sense to return an anonymous function from a select statement`)
+                
+            case "ArrayLiteral":
+                throw Error(`Returning an array literal from within a select is not supported`)
+
+            case "ObjectLiteral":
+                throw Error("Returning an object literal from within a select is not supported")
         }
+        
         if (assignable.children.DotStatement.length  === 1) {
             const method = assignable.children.DotStatement[0].differentiate()
             if (assignable.val !== a.rowVarName || method.kind !== "MethodInvocation") {
@@ -434,6 +440,8 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
                 throw Error(`Array literal is not assignable to the desired type.`)
             }
             break
+        case "ObjectLiteral":
+            throw Error("Object literals are currently not supported")
         default: Utilities.assertNever(assign)
     }
     

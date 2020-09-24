@@ -1,56 +1,58 @@
 import { Symbol, Primitives, TypeModifiers, TypeModifierUnion } from './lexicon';
 import { assertNever } from './utils';
 import { FileLocation } from "./utils";
-import * as common from './entity/basic'
+import * as e from './entity/basic'
 
 
 export namespace Parse {
     
     export type File = 
-    common.Entity<"File"> & 
-    common.ParentOfMany<Struct> &  
-    common.ParentOfMany<common.Enum> & 
-    common.ParentOfMany<Function> &
-    common.ParentOfMany<StoreDefinition> &
+    e.Entity<"File"> & 
+    e.ParentOfMany<Struct> &  
+    e.ParentOfMany<e.Enum> & 
+    e.ParentOfMany<Function> &
+    e.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
 
-    export type TypeName = common.NamedIntrafile<"TypeName", {}>
-    export type DetailedType = common.IntrafileEntity<"DetailedType", common.RequiresOne<CompleteType> & {modification: TypeModifierUnion}>
-    export type CompleteType = common.PolymorphicEntity<"CompleteType", () => TypeName | DetailedType | common.PrimitiveEntity >
+    export type TypeName = e.NamedIntrafile<"TypeName", {}>
+    export type DetailedType = e.IntrafileEntity<"DetailedType", e.RequiresOne<CompleteType> & {modification: TypeModifierUnion}>
+    export type CompleteType = e.PolymorphicEntity<"CompleteType", () => TypeName | DetailedType | e.PrimitiveEntity >
     
-    export type Field = common.NamedIntrafile<"Field",  common.RequiresOne<CompleteType>>
+    export type Field = e.NamedIntrafile<"Field",  e.RequiresOne<CompleteType>>
 
-    export type VariableReference = common.IntrafileEntity<"VariableReference", {val: string} & common.ParentOfMany<DotStatement>>
-    export type MethodInvocation = common.NamedIntrafile<"MethodInvocation", common.ParentOfMany<Assignable>>
-    export type Nothing = common.IntrafileEntity<"Nothing", {}>
-    export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
-    export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
-    export type ArrayLiteral = common.IntrafileEntity<"ArrayLiteral", common.ParentOfMany<Assignable>>
-    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral>
-    export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
-    export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CompleteType> & common.RequiresOne<Assignable>>
-    export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
-    export type Statements = common.IntrafileEntity<"Statements", common.ParentOfMany<Statement>>
-    export type FieldAccess = common.NamedIntrafile<"FieldAccess", {}>
-    export type FunctionBody = common.BaseFunctionBody<Statement>
-    export type UnaryParameterType = common.IntrafileEntity<"UnaryParameterType", common.RequiresOne<CompleteType>>
-    export type NoParameter = common.IntrafileEntity<"NoParameter", {}>
-    export type UnaryParameter = common.BaseUnaryParameter<UnaryParameterType>
-    export type Parameter = common.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
-    export type ReturnTypeSpec = common.BaseReturnTypeSpec<() => common.VoidReturn | CompleteType >
-    export type Function = common.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
-    export type Struct = common.BaseStruct<Field>
-    export type WithinForIn = common.PolymorphicEntity<"WithinForIn", () => VariableReference>
-    export type ForInBody = common.IntrafileEntity<"ForInBody", common.ParentOfMany<WithinForIn>>
-    export type ForIn = common.IntrafileEntity<"ForIn", {rowVarName: string} & common.RequiresOne<ForInBody> & common.RequiresOne<Assignable>>
-    export type If = common.IntrafileEntity<"If", common.RequiresOne<Assignable> & common.RequiresOne<Statements>>
-    export type AnonFunction = common.IntrafileEntity<"AnonFunction", common.RequiresOne<Statements> & {rowVarName: string}>
-    
-    export type StoreDefinition = common.NamedIntrafile<"StoreDefinition", common.RequiresOne<CompleteType>>
+    export type VariableReference = e.IntrafileEntity<"VariableReference", {val: string} & e.ParentOfMany<DotStatement>>
+    export type FieldLiteral = e.NamedIntrafile<"FieldLiteral", e.RequiresOne<Assignable>>
+    export type ObjectLiteral = e.IntrafileEntity<"ObjectLiteral", e.ParentOfMany<FieldLiteral>>
+    export type MethodInvocation = e.NamedIntrafile<"MethodInvocation", e.ParentOfMany<Assignable>>
+    export type Nothing = e.IntrafileEntity<"Nothing", {}>
+    export type Returnable = e.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
+    export type ReturnStatement = e.IntrafileEntity<"ReturnStatement", e.RequiresOne<Returnable>>
+    export type ArrayLiteral = e.IntrafileEntity<"ArrayLiteral", e.ParentOfMany<Assignable>>
+    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral>
+    export type DotStatement = e.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
+    export type VariableCreation = e.NamedIntrafile<"VariableCreation", e.RequiresOne<CompleteType> & e.RequiresOne<Assignable>>
+    export type Statement = e.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
+    export type Statements = e.IntrafileEntity<"Statements", e.ParentOfMany<Statement>>
+    export type FieldAccess = e.NamedIntrafile<"FieldAccess", {}>
+    export type FunctionBody = e.BaseFunctionBody<Statement>
+    export type UnaryParameterType = e.IntrafileEntity<"UnaryParameterType", e.RequiresOne<CompleteType>>
+    export type NoParameter = e.IntrafileEntity<"NoParameter", {}>
+    export type UnaryParameter = e.BaseUnaryParameter<UnaryParameterType>
+    export type Parameter = e.PolymorphicEntity<"Parameter", () => UnaryParameter| NoParameter> 
+    export type ReturnTypeSpec = e.BaseReturnTypeSpec<() => e.VoidReturn | CompleteType >
+    export type Function = e.BaseFunction<FunctionBody, ReturnTypeSpec, Parameter>
+    export type Struct = e.BaseStruct<Field>
+    export type WithinForIn = e.PolymorphicEntity<"WithinForIn", () => VariableReference>
+    export type ForInBody = e.IntrafileEntity<"ForInBody", e.ParentOfMany<WithinForIn>>
+    export type ForIn = e.IntrafileEntity<"ForIn", {rowVarName: string} & e.RequiresOne<ForInBody> & e.RequiresOne<Assignable>>
+    export type If = e.IntrafileEntity<"If", e.RequiresOne<Assignable> & e.RequiresOne<Statements>>
+    export type AnonFunction = e.IntrafileEntity<"AnonFunction", e.RequiresOne<Statements> & {rowVarName: string}>
+
+    export type StoreDefinition = e.NamedIntrafile<"StoreDefinition", e.RequiresOne<CompleteType>>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})$`)
 
-    type MatchResult = {hit: true, match: RegExpExecArray, loc: common.EntityLocation} | {hit: false}
+    type MatchResult = {hit: true, match: RegExpExecArray, loc: e.EntityLocation} | {hit: false}
     class FileCursor {
         private absOffset=0
         private line=0
@@ -180,13 +182,13 @@ export namespace Parse {
         File | 
         Struct | 
         Field | 
-        common.Enum | 
-        common.EnumMember | 
+        e.Enum | 
+        e.EnumMember | 
         Function |
         FunctionBody |
         ReturnTypeSpec |
         Parameter | 
-        common.VoidReturn |
+        e.VoidReturn |
         ReturnStatement | 
         Statement |
         UnaryParameterType |
@@ -210,8 +212,10 @@ export namespace Parse {
         CompleteType |
         DetailedType |
         TypeName |
-        common.PrimitiveEntity |
-        ArrayLiteral
+        e.PrimitiveEntity |
+        ArrayLiteral |
+        FieldLiteral |
+        ObjectLiteral
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -305,7 +309,7 @@ export namespace Parse {
     type AggregationParserV2<K extends WithChildren> = Readonly<{
         kind: "aggregate"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, children: K["children"]): K | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: e.EntityLocation, children: K["children"]): K | undefined
         endRegex: RegExp
         hasMany: ChildrenDescription<K>,
         options: AggregationOptions
@@ -314,7 +318,7 @@ export namespace Parse {
     type LeafParserV2<K extends AnyEntity> = Readonly<{
         kind: "leaf"
         regex: RegExp
-        assemble(c: RegExpExecArray, loc: common.EntityLocation): K | undefined
+        assemble(c: RegExpExecArray, loc: e.EntityLocation): K | undefined
     }>
 
     type ConglomerateChildParseDefinition = Readonly<{
@@ -325,7 +329,7 @@ export namespace Parse {
     type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
         kind: "conglomerate"
         startRegex: RegExp
-        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: common.EntityLocation, part: K["part"]): K | undefined
+        assemble(start: RegExpExecArray, end: RegExpExecArray, loc: e.EntityLocation, part: K["part"]): K | undefined
         endRegex: RegExp
         requiresOne: Record<Extract<keyof CompleteParserV2, keyof K["part"]>, ConglomerateChildParseDefinition>
     }>
@@ -344,7 +348,7 @@ export namespace Parse {
         groupKind: K["kind"]
     }
 
-    type ToFullEntity<K extends common.EntityKinds> = Extract<AnyEntity, {kind: K}>
+    type ToFullEntity<K extends e.EntityKinds> = Extract<AnyEntity, {kind: K}>
     type SelectParserType<E extends AnyEntity> = E extends WithChildren ? AggregationParserV2<E> : (
         E extends WithDependentClause ? ConglomerateParserV2<E> : 
             E extends PolymorphicEntity ? PolymorphParser<E> :
@@ -369,7 +373,7 @@ export namespace Parse {
         Enum: {
             kind: "aggregate",
             startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end, loc, children): common.Enum | undefined {
+            assemble(start, end, loc, children): e.Enum | undefined {
                 return {
                     kind: "Enum",
                     name: start.groups.name,
@@ -385,7 +389,7 @@ export namespace Parse {
         EnumMember: {
             kind: "leaf",
             regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-            assemble(c, loc): common.EnumMember | undefined {
+            assemble(c, loc): e.EnumMember | undefined {
 
                 return{
                     kind: "EnumMember",
@@ -651,6 +655,7 @@ export namespace Parse {
             kind: "polymorph",
             priority: {
                 ArrayLiteral: 3,
+                ObjectLiteral: 4,
                 VariableReference: 2,
                 AnonFunction: 1
             },
@@ -805,6 +810,42 @@ export namespace Parse {
             },
             options: {
                 inBetweenAll: /^(\n|,)/
+            }
+        },
+        FieldLiteral: {
+            kind: "conglomerate",
+            startRegex: /^\s*(?<name>[a-zA-Z]\w*):/,
+            endRegex: /^/,
+            requiresOne: {
+                Assignable: {
+                    order: 1
+                }
+            },
+            assemble(start, end, loc, part) {
+                return {
+                    kind: "FieldLiteral",
+                    loc,
+                    name: start.groups.name,
+                    part
+                }
+            }
+        },
+        ObjectLiteral: {
+            kind: "aggregate",
+            startRegex: /^\s*{/,
+            endRegex: /^(\s*|,)\s*}/,
+            hasMany: {
+                FieldLiteral: true
+            },
+            options: {
+                inBetweenAll: /^(\n|,)/
+            },
+            assemble(start, end, loc, children) {
+                return {
+                    kind: "ObjectLiteral",
+                    loc,
+                    children
+                }
             }
         }
     }

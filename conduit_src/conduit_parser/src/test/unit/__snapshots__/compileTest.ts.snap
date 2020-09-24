@@ -1213,6 +1213,208 @@ Object {
 }
 `;
 
+exports[`object literal  1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "obj" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 2,
+                "startColNumber": 16,
+                "startLineNumber": 1,
+              },
+              "name": "a",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 3,
+                "startColNumber": 18,
+                "startLineNumber": 2,
+              },
+              "name": "b",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 16,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "obj",
+        "schema": Object {
+          "data": Object {
+            "a": Object {
+              "data": null,
+              "kind": "string",
+            },
+            "b": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+      "litTest1" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 21,
+          "endLineNumber": 6,
+          "startColNumber": 5,
+          "startLineNumber": 4,
+        },
+        "method": "GET",
+        "name": "litTest1",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 6,
+            "startColNumber": 21,
+            "startLineNumber": 6,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 30,
+              "endLineNumber": 6,
+              "startColNumber": 28,
+              "startLineNumber": 6,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": Object {
+            "a": Object {
+              "data": null,
+              "kind": "string",
+            },
+            "b": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+      "litTest2" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 21,
+          "endLineNumber": 13,
+          "startColNumber": 5,
+          "startLineNumber": 11,
+        },
+        "method": "GET",
+        "name": "litTest2",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 13,
+            "startColNumber": 21,
+            "startLineNumber": 13,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 30,
+              "endLineNumber": 13,
+              "startColNumber": 28,
+              "startLineNumber": 13,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": Object {
+            "a": Object {
+              "data": null,
+              "kind": "string",
+            },
+            "b": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+    },
+    "size": 3,
+  },
+  "schemaFactory": [Function],
+}
+`;
+
 exports[`references  1`] = `
 Object {
   "inScope": EntityMap {
@@ -1276,7 +1478,7 @@ Object {
           "kind": "WithParam",
           "name": "r",
           "schema": Object {
-            "data": null,
+            "data": "secondStore",
             "kind": "Ref",
           },
         },
@@ -1308,7 +1510,7 @@ Object {
           },
         },
         "returnType": Object {
-          "data": null,
+          "data": "secondStore",
           "kind": "Ref",
         },
       },

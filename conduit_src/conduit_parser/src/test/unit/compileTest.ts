@@ -218,3 +218,21 @@ compileTest("references ", `
         return r
     }
 `)
+
+compileTest("object literal ", `
+    struct obj {
+        a: string,
+        b: string
+    }
+    
+    function litTest1(): obj {
+        return {
+            a: c.genString()
+            b: c.genString()
+        }
+    }
+
+    function litTest2(): obj {
+        return {a:c.genString(),b:c.genString()}
+    }
+`)
