@@ -532,7 +532,7 @@ describe("conduit kernel", () => {
           expect(res).toEqual(null)
       })
 
-      storageTest("should be able to delete a ref - does exist", 
+      storageTest("should be able to delete a ref", 
         {
           STORES: {
             test: schemaFactory.Object({
@@ -560,11 +560,18 @@ describe("conduit kernel", () => {
           res = await server.invoke("getPtr")
           expect(res.length).toBe(1)
           const  _id = res[0]._id
+          res = await server.invoke("deref", {_id})
+          expect(res).toEqual({data: "First object"})
+
           res = await server.invoke("del", {_id})
           expect(res).toBe(true)
     
           res = await server.invoke("deref", {_id})
           expect(res).toEqual(null)
+
+          res = await server.invoke("del", {_id})
+          expect(res).toBe(false)
+    
       })
 
   });
