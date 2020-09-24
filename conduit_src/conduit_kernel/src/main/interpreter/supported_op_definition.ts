@@ -1,5 +1,5 @@
-import { AnyInterpreterTypeInstance } from "index"
 import { Suppression } from "../rust_bound_types"
+import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 
 type OpDef<NAME, K="static"> = {
     readonly kind: K
@@ -33,11 +33,12 @@ ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
 ParamOp<"queryStore", [string, Suppression]> |
-ParamOp<"findOneInStore", {store: string}> |
+ParamOp<"findOneInStore", [{store: string}, Suppression]> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
 StaticOp<"toBool"> |
-ParamOp<"moveStackToHeapArray", number>
+ParamOp<"moveStackToHeapArray", number> |
+StaticOp<"arrayPush">
 
 
 type StaticFactory<S> = OpInstance<S>
@@ -326,17 +327,17 @@ export const OpSpec: CompleteOpSpec = {
     findOneInStore: {
         opDefinition: {
             kind: "param",
-            paramType: ["String"],
+            paramType: ["String", "storage::Suppression"],
             rustEnumMember: "findOneInStore",
             rustOpHandler: `
-            let res = storage::find_one(eng, op_param, &storage::FindOneQuery {
+            let res = storage::find_one(eng, param0, &storage::FindOneQuery {
                 resembling: ${popStack}
-            }).await;
+            }, param1).await;
             ${pushStack("res")};
             None
             `
         },
-        factoryMethod: (d) => ({kind: "findOneInStore", data: d.store})
+        factoryMethod: (d) => ({kind: "findOneInStore", data: [d[0].store, d[1]]})
     },
 
     instantiate: {
@@ -403,7 +404,23 @@ export const OpSpec: CompleteOpSpec = {
             }
             `
         },
-        factoryMethod: (data) => ({kind: "moveStackToHeapArray", data})
-        
+        factoryMethod: (data) => ({kind: "moveStackToHeapArray", data})   
+    }, 
+    arrayPush: {
+        opDefinition: {
+            kind: "static",
+            rustEnumMember: "arrayPush",
+            rustOpHandler: `
+            let pushme = ${popStack};
+            match ${lastStack} {
+                InterpreterType::Array(inner) => {
+                    inner.push(pushme);
+                    None
+                },
+                _ => ${raiseErrorWithMessage("Cannot push on non array")}
+            }
+            `
+        },
+        factoryMethod: {kind: "arrayPush", data: undefined}
     }
 }

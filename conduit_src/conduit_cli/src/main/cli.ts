@@ -88,7 +88,7 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
     console.log("server available at: http://localhost:7213")
 }
 
-const commands: Record<string, () => void> = {
+const commands: Record<string, () => Promise<void>> = {
     async init() {
         child_process.execSync(`docker pull mongo:4.4`);
 
@@ -110,7 +110,7 @@ export function execute() {
     const command = args[2]
     if (!(command in commands)) {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
-    }
+    }    
 
-    commands[command]()
+    commands[command]().catch((e) => {console.error(e.message); console.log("killing", process.pid); process.exit(1);})
 }

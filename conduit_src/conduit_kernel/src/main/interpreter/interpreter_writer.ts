@@ -1,5 +1,4 @@
-import { SchemaType } from '../../../../conduit_parser/src/main/SchemaFactory';
-import { Lexicon } from 'conduit_parser';
+import { Lexicon, SchemaType } from 'conduit_parser';
 import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 
@@ -35,13 +34,14 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion | "Ref">, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion>, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
-    Array: "Vec<Schema>",    
+    Array: "Vec<Schema>",
+    Ref: "String"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
@@ -107,7 +107,6 @@ export function writeOperationInterpreter(): string {
     #[serde(tag = "kind", content= "data")]
     enum Schema {
         ${[
-            "Ref",
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
             ...Lexicon.Primitives
@@ -147,7 +146,7 @@ export function writeOperationInterpreter(): string {
 
     fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {
         return match schema {
-            Schema::Ref => true,
+            Schema::Ref(_) => true,
             
             Schema::Object(internal) => match value {
                 InterpreterType::Object(internal_value) => internal.iter().all(|(k, v)| match internal_value.get(k) {
@@ -185,3 +184,4 @@ export function writeOperationInterpreter(): string {
     }
     `
 }
+export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap]

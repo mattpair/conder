@@ -39,7 +39,8 @@ export type EntityKinds =
 "AnonFunction" |
 "TypeName" |
 "CompleteType" |
-"DetailedType"
+"DetailedType" |
+"ArrayLiteral"
 
 export type IntrafileEntityKinds = Exclude<EntityKinds, "File">
 

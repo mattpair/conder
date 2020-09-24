@@ -1,5 +1,5 @@
-import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter } from 'conduit_kernel';
-import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance } from "conduit_parser";
+import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter , Suppression, ADDRESS} from 'conduit_kernel';
+import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance, schemaFactory } from "conduit_parser";
 
 export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, RequiredEnv> {
     const PROCEDURES: StrongServerEnv[Var.PROCEDURES] = {}
@@ -28,7 +28,12 @@ export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv,
 
     manifest.inScope.forEach(val => {
         if (val.kind === "Function") {
-            PROCEDURES[val.name] = toByteCode(val, structToSchemaNum, manifest, opWriter)
+            try {
+                PROCEDURES[val.name] = toByteCode(val, structToSchemaNum, manifest, opWriter)
+            } catch (e) {
+                throw Error(`While compiling function ${val.name}: ${e.message}`)
+            }
+            
         }
     })
 
@@ -110,8 +115,11 @@ function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
         return false
     }
     switch(l.kind) {
+        case "Ref":
+            return l.data === r.data
         case "Array":
         case "Optional":
+            //@ts-ignore
             return typesAreEqual(l.data[0], r.data[0])
     
         case "Object":
@@ -126,7 +134,7 @@ function typesAreEqual(l: AnySchemaInstance, r: AnySchemaInstance): boolean {
             }
             
             return true
-        
+    
 
         default: {
             return true
@@ -166,7 +174,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
         if (target.kind === "any" || target.kind === "none") {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
-                assignableToOps(asn, store.schema, tools)
+                assignableToOps(asn, schemaFactory.Array(store.schema), tools)
                 tools.ops.push(tools.opWriter.insertFromStack(store.name))
             })    
         } else {
@@ -200,6 +208,31 @@ const hierStoreMethodToOps: HierStoreMethods = {
         const assignable = r.differentiate()
         if (assignable.kind === "AnonFunction") {
             throw Error(`It does not make sense to return an anonymous function from a select statement`)
+        } else if (assignable.kind === "ArrayLiteral") {
+            throw Error(`Returning an array literal from within a select is not supported`)
+        }
+        if (assignable.children.DotStatement.length  === 1) {
+            const method = assignable.children.DotStatement[0].differentiate()
+            if (assignable.val !== a.rowVarName || method.kind !== "MethodInvocation") {
+                throw Error(`Invalid select statement`)
+            }
+            if (method.name !== "ref") {
+                throw Error(`Unknown method: ${method.name} called on row variable`)
+            }
+            if (method.children.Assignable.length > 0) {
+                throw Error(`ref should not be called with any arguments`)
+            }
+
+            if (target.kind === "any" || typesAreEqual(target, schemaFactory.Array(schemaFactory.Ref(store.name)))) {
+                const suppression: Suppression = {suppress: {}}
+                for (const key in store.schema.data) {
+                    suppression.suppress[key] = null
+                }
+                tools.ops.push(tools.opWriter.queryStore([store.name, suppression]))
+                return
+            } else {
+                throw Error(`Select statement does not return the expected type`)
+            }
         }
 
         if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
@@ -328,8 +361,22 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
                         break
 
                     case "MethodInvocation":
-                        throw Error(`No methods are currently supported on local variables`)
-                        
+                        if (currentType.kind === "Ref") {
+                            if (method.name !== "deref") {
+                                throw Error(`References only support the deref method`)
+                            }
+                            if (method.children.Assignable.length > 0) {
+                                throw Error("deref takes no arguments")
+                            }
+                            const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
+                            currentType = schemaFactory.Optional(store.schema)
+                            const suppression: Suppression = {suppress: {}}
+                            suppression.suppress[ADDRESS] = null
+                            tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
+                            break
+                        } else {
+                            throw Error(`${method.name} does not exist on ${currentType.kind}`)
+                        }
                         
                     default: Utilities.assertNever(method)
                 }
@@ -339,7 +386,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
         
 
         if (targetType.kind !== "any" && !typesAreEqual(targetType, currentType)) {
-            throw Error(`Types are not equal`)
+            throw Error(`Types are not equal. Expected: ${JSON.stringify(targetType, null, 2)}\n\n Received: ${JSON.stringify(currentType, null, 2)}`)
         }
         return
     } else {
@@ -364,6 +411,18 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
         case "AnonFunction":
             throw Error(`Anonmous functions cannot be compiled yet`)
             
+        case "ArrayLiteral":
+            if (targetType.kind === "Array" || targetType.kind === "any") {
+                tools.ops.push(tools.opWriter.instantiate([]))
+                const childTarget = targetType.kind === "Array" ? targetType.data[0] : targetType
+                assign.children.Assignable.forEach(child => {
+                    assignableToOps(child, childTarget, tools)
+                    tools.ops.push(tools.opWriter.arrayPush)
+                })
+            } else {
+                throw Error(`Array literal is not assignable to the desired type.`)
+            }
+            break
         default: Utilities.assertNever(assign)
     }
     

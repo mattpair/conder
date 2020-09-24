@@ -53,7 +53,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
 
                 if (last !== undefined && last.kind === "modification" && last.mod === Symbol.Ref) {
                     if (ref.kind === "StoreDefinition") {
-                        return schemaFactory.Ref
+                        return schemaFactory.Ref(ref.name)
                     } else {
                         throw Error("Refs must refer to an array at the global level.")
                     }                   

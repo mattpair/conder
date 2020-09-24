@@ -29,9 +29,8 @@ export function getOpWriter(): CompleteOpWriter {
 export {AnyOpInstance, CompleteOpWriter} from './src/main/interpreter/supported_op_definition'
 export type Procedures = Record<string, OpInstance[]>
 
-export type AnyInterpreterTypeInstance = InterpreterTypeInstanceMap[keyof InterpreterTypeInstanceMap]
 
-export { interpeterTypeFactory, InterpreterTypeInstanceMap } from './src/main/interpreter/interpreter_writer'
+export { interpeterTypeFactory, InterpreterTypeInstanceMap, AnyInterpreterTypeInstance  } from './src/main/interpreter/interpreter_writer'
 export {ServerEnv, EnvVarType, Var, StrongServerEnv, RequiredEnv} from './src/main/server_writer'
 
-export * as Kernel from './src/main/rust_bound_types'
+export * from './src/main/rust_bound_types'

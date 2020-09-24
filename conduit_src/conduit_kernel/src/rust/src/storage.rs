@@ -116,12 +116,14 @@ pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression)
     }
 }
 
-pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery) -> InterpreterType {
+pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery, suppress: &Suppression) -> InterpreterType {
     let r = match eng {
         Engine::Mongo{db} => {
             let collection = db.collection(&storeName);
+            let mongo_proj = suppression_into_mongo_projection(suppress);
+            let options = FindOneOptions::builder().projection(Some(mongo_proj)).build();
 
-            let res = match collection.find_one(bson::to_document(&q.resembling).unwrap(), None).await {
+            let res = match collection.find_one(bson::to_document(&q.resembling).unwrap(), options).await {
                 Ok(r) => match r {
                     Some(o) => bson::from_document(o).unwrap(),
                     None => InterpreterType::None

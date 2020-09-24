@@ -1,6 +1,4 @@
-import { ADDRESS } from './../main/rust_bound_types';
 import * as child_process from "child_process";
-import * as fs from "fs";
 import "isomorphic-fetch";
 import {
   getOpWriter,
@@ -310,31 +308,37 @@ describe("conduit kernel", () => {
       }
     }
 
-    type Stores = Pick<StrongServerEnv, Var.STORES>
-    function storageTest(descr: string, params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,  test: (server: TestServer) => Promise<void>, ) {
-      let mongo: TestMongo = undefined
-      let server: TestServer = undefined
-      beforeEach(async () => {
-        mongo = await TestMongo.start(params)
-        server = await TestServer.start({
-          MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
-          ...params,
-          SCHEMAS: [],
-        });
 
+    const fixture: Map<string, {mongo: TestMongo, server: TestServer}> = new Map()
+    const setupPromises: Promise<any>[] = []
+    beforeAll(() => {
+      return Promise.all(setupPromises)
+    })
+
+    afterAll(() => {
+      fixture.forEach(val => {
+        val.mongo.kill()
+        val.server.kill()
       })
+    }, 10000)
+
+
+    type Stores = Pick<StrongServerEnv, Var.STORES>
+  
+    function storageTest(descr: string, params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,  test: (server: TestServer) => Promise<void>, ) {
+  
+      setupPromises.push(TestMongo.start(params)
+      .then((mongo) => TestServer.start({
+        MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
+        ...params,
+        SCHEMAS: [],
+      }).then((server) => {
+        fixture.set(descr, {mongo, server})
+      })))
+
       it(descr, async () => {
-        await test(server)
+        await test(fixture.get(descr).server)
       }, 15000)
-      
-      afterEach(() => {
-        if (mongo !== undefined) {
-          mongo.kill()
-        }
-        if (server !== undefined) {
-          server.kill()
-        }
-      })
     }
 
     storageTest("should be able to store a document", 
@@ -452,7 +456,7 @@ describe("conduit kernel", () => {
 
       const deref = [
         opWriter.copyFromHeap(0),
-        opWriter.findOneInStore({store: "test"}),
+        opWriter.findOneInStore([{store: "test"}, {suppress: {__conduit_entity_id: null}}]),
         opWriter.returnStackTop
       ]
 
@@ -490,7 +494,7 @@ describe("conduit kernel", () => {
           delete interestedIn.data
           res = await server.invoke("deref", interestedIn)
 
-          expect(res.data).toEqual("First object")
+          expect(res).toEqual({data: "First object"})
       })
 
       storageTest("should be able to dereference a ref - does not exist", 
@@ -521,6 +525,7 @@ describe("conduit kernel", () => {
 
           expect(res).toEqual(null)
       })
+
   });
 
 });

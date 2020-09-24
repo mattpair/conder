@@ -25,7 +25,8 @@ export namespace Parse {
     export type Nothing = common.IntrafileEntity<"Nothing", {}>
     export type Returnable = common.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = common.IntrafileEntity<"ReturnStatement", common.RequiresOne<Returnable>>
-    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction>
+    export type ArrayLiteral = common.IntrafileEntity<"ArrayLiteral", common.ParentOfMany<Assignable>>
+    export type Assignable = common.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral>
     export type DotStatement = common.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = common.NamedIntrafile<"VariableCreation", common.RequiresOne<CompleteType> & common.RequiresOne<Assignable>>
     export type Statement = common.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
@@ -129,17 +130,18 @@ export namespace Parse {
     function extractChildren<K extends WithChildren["kind"]>(cursor: FileCursor, parserSet: CompleteParserV2, accepts: ChildrenDescription<EntityOf<K>>, options: AggregationOptions): EntityOf<K>["children"] {
         let tryExtractChild = true
         let foundAny = false
+        let tryFindAnother = true
         const children: any = {}
         for (const k in accepts) {
             children[k] = []
         }
     
-        while (tryExtractChild) {
+        while (tryExtractChild && tryFindAnother) {
             tryExtractChild = false
             if (foundAny && options && options.inBetweenAll) {
                 const sep = cursor.tryMatch(options.inBetweenAll)                
                 if (!sep.hit) {
-                    throw Error(`Did not find appropriate seperator`)
+                    tryFindAnother = false
                 }
             }
             for (const key in accepts) {
@@ -208,7 +210,8 @@ export namespace Parse {
         CompleteType |
         DetailedType |
         TypeName |
-        common.PrimitiveEntity
+        common.PrimitiveEntity |
+        ArrayLiteral
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -647,6 +650,7 @@ export namespace Parse {
         Assignable: {
             kind: "polymorph",
             priority: {
+                ArrayLiteral: 3,
                 VariableReference: 2,
                 AnonFunction: 1
             },
@@ -784,8 +788,24 @@ export namespace Parse {
             kind: "leaf",
             regex: /^\s*(?<name>[a-zA-Z_]\w*)/,
             assemble: (r, loc) => ({kind: "TypeName", name: r.groups.name, loc})
+        },
+        ArrayLiteral: {
+            kind: "aggregate",
+            startRegex: /^\s*\[/,
+            endRegex: /^\s*\]/,
+            assemble(start, end, loc, children) {
+                return {
+                    kind: 'ArrayLiteral',
+                    children,
+                    loc
+                }
+            },
+            hasMany: {
+                Assignable: true
+            },
+            options: {
+                inBetweenAll: /^(\n|,)/
+            }
         }
-        
-    
     }
 }
