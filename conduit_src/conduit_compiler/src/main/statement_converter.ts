@@ -1,4 +1,4 @@
-import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter , Suppression, ADDRESS} from 'conduit_kernel';
+import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter , Suppression, ADDRESS, interpeterTypeFactory} from 'conduit_kernel';
 import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance, schemaFactory } from "conduit_parser";
 
 export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, RequiredEnv> {
@@ -464,7 +464,21 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
             break
 
         case "NumberLiteral":
-            throw Error(`Number literals are not supported`)
+            
+            switch (targetType.kind) {
+                case "any":
+                case Lexicon.Symbol.double:
+                    tools.ops.push(tools.opWriter.instantiate(interpeterTypeFactory.double(assign.val)))
+                    break
+
+                case Lexicon.Symbol.int:
+                    tools.ops.push(tools.opWriter.instantiate(interpeterTypeFactory.int(assign.val)))
+                    break
+
+                default: throw Error(`Number literals are not equivalent to ${targetType.kind}`)
+            }
+            break
+            
         default: Utilities.assertNever(assign)
     }
     
