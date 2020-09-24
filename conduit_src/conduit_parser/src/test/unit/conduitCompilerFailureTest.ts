@@ -77,3 +77,11 @@ struct Container {
 }
 
 `)
+
+testFailsWhen("Global with contents", `
+struct s {
+    field: bool
+}
+
+ss: Array<s> = [{field: a.thing()}]
+`)

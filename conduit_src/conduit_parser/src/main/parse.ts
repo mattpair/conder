@@ -49,7 +49,7 @@ export namespace Parse {
     export type If = e.IntrafileEntity<"If", e.RequiresOne<Assignable> & e.RequiresOne<Statements>>
     export type AnonFunction = e.IntrafileEntity<"AnonFunction", e.RequiresOne<Statements> & {rowVarName: string}>
 
-    export type StoreDefinition = e.NamedIntrafile<"StoreDefinition", e.RequiresOne<CompleteType>>
+    export type StoreDefinition = e.NamedIntrafile<"StoreDefinition", e.RequiresOne<CompleteType> & e.RequiresOne<ArrayLiteral>>
 
     const symbolRegex: RegExp = new RegExp(`^(${Object.values(Symbol).join("|")})$`)
 
@@ -584,11 +584,15 @@ export namespace Parse {
         StoreDefinition: {
             kind: "conglomerate",
             startRegex: /^\s*(?<name>[a-zA-Z]+):\s*/,
-            endRegex: /^\s*=\s*\[\]/,
+            endRegex: /^/,
             requiresOne: {
-                CompleteType: {order: 1}
+                CompleteType: {order: 1},
+                ArrayLiteral: {order: 2, beforeRegex: /^\s*=\s*/}
             },
             assemble(start, end, loc, part) {
+                if (part.ArrayLiteral.children.Assignable.length > 0) {
+                    throw Error(`Global arrays must be initialized empty`)
+                }
                 return {
                     kind: "StoreDefinition",
                     loc: loc,
