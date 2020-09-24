@@ -370,33 +370,47 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Tar
                         break
 
                     case "MethodInvocation":
-                        if (currentType.kind === "Ref") {
-                            const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
+                        switch (currentType.kind) {
+                            case "Ref":
+                                const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
 
-                            if (method.name === "delete") {
-                                if (method.children.Assignable.length > 0) {
-                                    throw Error(`Deleting a pointer takes no args`)
+                                if (method.name === "delete") {
+                                    if (method.children.Assignable.length > 0) {
+                                        throw Error(`Deleting a pointer takes no args`)
+                                    }
+                                    currentType = schemaFactory.bool
+                                    tools.ops.push(tools.opWriter.deleteOneInStore({store: store.name}))
+                                    break
                                 }
-                                currentType = schemaFactory.bool
-                                tools.ops.push(tools.opWriter.deleteOneInStore({store: store.name}))
+    
+                                if (method.name !== "deref") {
+                                    throw Error(`References only support the deref method`)
+                                }
+                                if (method.children.Assignable.length > 0) {
+                                    throw Error("deref takes no arguments")
+                                }
+                                
+                                currentType = schemaFactory.Optional(store.schema)
+                                const suppression: Suppression = {suppress: {}}
+                                suppression.suppress[ADDRESS] = null
+                                tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
                                 break
-                            }
 
-                            if (method.name !== "deref") {
-                                throw Error(`References only support the deref method`)
-                            }
-                            if (method.children.Assignable.length > 0) {
-                                throw Error("deref takes no arguments")
-                            }
-                            
-                            currentType = schemaFactory.Optional(store.schema)
-                            const suppression: Suppression = {suppress: {}}
-                            suppression.suppress[ADDRESS] = null
-                            tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
-                            break
-                        } else {
-                            throw Error(`${method.name} does not exist on ${currentType.kind}`)
+                            case "Array":
+                                if (method.name !== "len") {
+                                    throw Error(`Unrecognized method on a local array: ${method.name}`)
+                                } 
+                                if (method.children.Assignable.length > 0) {
+                                    throw Error(`len takes no args`)
+                                }
+                                currentType = schemaFactory.int
+                                tools.ops.push(tools.opWriter.arrayLen)
+                                break
+                                
+                            default:
+                                throw Error(`${method.name} does not exist on ${currentType.kind}`)
                         }
+                        break
                         
                     default: Utilities.assertNever(method)
                 }
@@ -478,7 +492,7 @@ function assignableToOps(a: Parse.Assignable, targetType: TargetType, tools: Com
                 default: throw Error(`Number literals are not equivalent to ${targetType.kind}`)
             }
             break
-            
+
         default: Utilities.assertNever(assign)
     }
     
