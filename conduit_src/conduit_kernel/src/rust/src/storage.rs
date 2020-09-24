@@ -140,6 +140,24 @@ pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery, su
     return r;
 }
 
+pub(crate) async fn delete_one(eng: &Engine, storeName: &str, q: &FindOneQuery) -> InterpreterType {
+    let r = match eng {
+        Engine::Mongo{db} => {
+            let collection = db.collection(&storeName);
+            let d = match collection.delete_one(bson::to_document(&q.resembling).unwrap(), None).await {
+                Ok(result) => result.deleted_count == 1,
+                Err(e) => {
+                    eprintln!("Failure deleting: {}", e);
+                    false
+                }
+            };
+            InterpreterType::bool(d)
+        },
+        _ => panic!("invalid delete")
+    };
+    return r
+}
+
 pub enum Engine {
     Panic,
     Mongo{db: mongodb::Database}

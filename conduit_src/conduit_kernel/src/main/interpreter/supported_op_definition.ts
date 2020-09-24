@@ -33,7 +33,7 @@ ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
 ParamOp<"queryStore", [string, Suppression]> |
 ParamOp<"findOneInStore", [{store: string}, Suppression]> |
-// ParamOp<"deleteOneInStore", {store: string}> |
+ParamOp<"deleteOneInStore", {store: string}> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
 StaticOp<"toBool"> |
@@ -301,6 +301,19 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (d) => ({kind: "findOneInStore", data: [d[0].store, d[1]]})
+    },
+    deleteOneInStore: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let res = storage::delete_one(eng, op_param, &storage::FindOneQuery {
+                resembling: ${popStack}                
+            }).await;
+            ${pushStack("res")};
+            None
+            `
+        },
+        factoryMethod: (d) => ({kind: "deleteOneInStore", data: d.store})
     },
 
     instantiate: {

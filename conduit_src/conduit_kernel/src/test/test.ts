@@ -460,6 +460,12 @@ describe("conduit kernel", () => {
         opWriter.returnStackTop
       ]
 
+      const del = [
+        opWriter.copyFromHeap(0),
+        opWriter.deleteOneInStore({store: "test"}),
+        opWriter.returnStackTop
+      ]
+
       storageTest("should be able to dereference a ref - exists", 
         {
           STORES: {
@@ -523,6 +529,41 @@ describe("conduit kernel", () => {
    
           res = await server.invoke("deref", {_id: -1})
 
+          expect(res).toEqual(null)
+      })
+
+      storageTest("should be able to delete a ref - does exist", 
+        {
+          STORES: {
+            test: schemaFactory.Object({
+              data: schemaFactory.string,
+            }),
+          },
+          PROCEDURES: {
+            insert,
+            deref,
+            del,
+            getPtr
+          },
+        },
+        async (server) => {
+          let res = await server.invoke(
+            "insert",
+            interpeterTypeFactory.Array([
+              interpeterTypeFactory.Object({
+                data: "First object",
+              }),
+            ])
+          );
+          expect(res).toEqual("Success!")
+          
+          res = await server.invoke("getPtr")
+          expect(res.length).toBe(1)
+          const  _id = res[0]._id
+          res = await server.invoke("del", {_id})
+          expect(res).toBe(true)
+    
+          res = await server.invoke("deref", {_id})
           expect(res).toEqual(null)
       })
 
