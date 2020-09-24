@@ -1,8 +1,9 @@
 import { Lexicon, SchemaType } from 'conduit_parser';
 import { AnyOpDef, OpSpec } from './supported_op_definition';
 
+type DefAndName = AnyOpDef & {name: string}
 
-function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
+function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     return `
     async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, eng: &storage::Engine, stores: &HashMap<String, Schema>) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
@@ -11,9 +12,9 @@ function writeInternalOpInterpreter(supportedOps: AnyOpDef[]): string {
 
             let err: Option<String> = match &ops[next_op_index] {
                 ${supportedOps.map(o => {
-                    let header = o.rustEnumMember
+                    let header = o.name
                     if (o.paramType) {
-                        header = `${o.rustEnumMember}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
+                        header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
                     }
                     return `Op::${header} => {
                         ${o.rustOpHandler}
@@ -96,10 +97,13 @@ const interpreterTypeDef: RustInterpreterTypeEnumDefinition = {
 
 export function writeOperationInterpreter(): string {
 
-    const supportedOps: AnyOpDef[] = []
+    const supportedOps: DefAndName[] = []
     for (const key in OpSpec) {
-        //@ts-ignore
-        supportedOps.push(OpSpec[key].opDefinition)            
+        const d: DefAndName = {name: key, 
+            //@ts-ignore
+            ...OpSpec[key].opDefinition}
+        
+        supportedOps.push(d)            
     }
 
     return `
@@ -118,9 +122,9 @@ export function writeOperationInterpreter(): string {
     enum Op {
         ${supportedOps.map(o => {
             if (o.paramType) {
-                return `${o.rustEnumMember}(${o.paramType.join(", ")})`
+                return `${o.name}(${o.paramType.join(", ")})`
             }
-            return o.rustEnumMember
+            return o.name
         }).join(",\n")}
     }
 

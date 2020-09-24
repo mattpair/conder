@@ -2,7 +2,6 @@ import { Suppression } from "../rust_bound_types"
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 
 type OpDef<NAME> = {
-    readonly rustEnumMember: NAME
     readonly rustOpHandler: string
     readonly paramType?: string[]
 }
@@ -107,7 +106,6 @@ function pushStack(instance: string): string {
 export const OpSpec: CompleteOpSpec = {
     negatePrev: {
         opDefinition: {
-            rustEnumMember: `negatePrev`,
             rustOpHandler: `match ${popStack} {
                 InterpreterType::bool(b) =>  {${pushStack("InterpreterType::bool(!b)")}; None},
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
@@ -117,7 +115,6 @@ export const OpSpec: CompleteOpSpec = {
     },
     noop: {
         opDefinition: {
-            rustEnumMember: `noop`,
             rustOpHandler: ` None`
         },
         factoryMethod: {kind: "noop", data: undefined}
@@ -125,7 +122,6 @@ export const OpSpec: CompleteOpSpec = {
     truncateHeap: {
         opDefinition: {
             rustOpHandler: `heap.truncate(heap.len() - *op_param);  None`,
-            rustEnumMember: `truncateHeap`,
             paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
@@ -133,7 +129,6 @@ export const OpSpec: CompleteOpSpec = {
 
     gotoOp: {
         opDefinition: {
-            rustEnumMember: `gotoOp`,
             // Set op_param to -1 because the op is always incremented at the end of each op execution.
             rustOpHandler: safeGoto("*op_param"),
             paramType: ["usize"]
@@ -149,7 +144,6 @@ export const OpSpec: CompleteOpSpec = {
 
     conditionalGoto: {
         opDefinition: {
-            rustEnumMember: "conditionalGoto",
             rustOpHandler: `
                 match ${popStack} {
                     InterpreterType::bool(b) => {
@@ -177,7 +171,6 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {
             paramType: ["usize"],
-            rustEnumMember: `returnVariable`,
             rustOpHandler: ` return Ok(heap.swap_remove(*op_param))`
         }
     },
@@ -188,7 +181,6 @@ export const OpSpec: CompleteOpSpec = {
             data: undefined    
         },
         opDefinition: {
-            rustEnumMember: `returnStackTop`,
             rustOpHandler: `return Ok(${popStack})`
         }
     },
@@ -202,7 +194,6 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {                    
             paramType: ["usize"],
-            rustEnumMember: `copyFromHeap`,
             rustOpHandler: `match heap.get(*op_param) {
                 Some(d) => {${pushStack("d.clone()")}; None},
                 None => ${raiseErrorWithMessage("Echoing variable that does not exist")}
@@ -215,7 +206,6 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {
             paramType: [`String`],
-            rustEnumMember: `fieldAccess`,
             rustOpHandler: `
                     let res = match ${lastStack} {
                         InterpreterType::Object(inside) => match inside.get(op_param) {
@@ -243,14 +233,12 @@ export const OpSpec: CompleteOpSpec = {
                 ${raiseErrorWithMessage("Variable does not match the schema")}
             }   
             `,
-            rustEnumMember: "enforceSchemaOnHeap"
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
     },
     insertFromHeap: {
         opDefinition: {
             paramType: ["usize", "String"],
-            rustEnumMember: "insertFromHeap",
             rustOpHandler: `
             let schema = stores.get(param1).unwrap();
             storage::append(eng, &param1, schema, &heap[*param0]).await;
@@ -263,7 +251,6 @@ export const OpSpec: CompleteOpSpec = {
     insertFromStack: {
         opDefinition: {
             paramType: ["String"],
-            rustEnumMember: "insertFromStack",
             rustOpHandler: `
             let schema = stores.get(op_param).unwrap();
             storage::append(eng, op_param, schema, &stack[stack.len() -1]).await;
@@ -276,7 +263,6 @@ export const OpSpec: CompleteOpSpec = {
     getAllFromStore: {
         opDefinition: {
             paramType: ["String"],
-            rustEnumMember: "getAllFromStore",
             rustOpHandler: `
             let res = storage::getAll(eng, op_param, stores.get(op_param).unwrap()).await;
             ${pushStack(`res`)};
@@ -287,7 +273,6 @@ export const OpSpec: CompleteOpSpec = {
     },
     moveStackTopToHeap: {
         opDefinition: {
-            rustEnumMember: "moveStackTopToHeap",
             rustOpHandler: `
             heap.push(${popStack});
             None
@@ -298,7 +283,6 @@ export const OpSpec: CompleteOpSpec = {
     queryStore: {
         opDefinition: {
             paramType: ["String", "storage::Suppression"],
-            rustEnumMember: "queryStore",
             rustOpHandler: `
             let res = storage::query(eng, &param0, &param1).await;
             ${pushStack("res")};
@@ -313,7 +297,6 @@ export const OpSpec: CompleteOpSpec = {
     findOneInStore: {
         opDefinition: {
             paramType: ["String", "storage::Suppression"],
-            rustEnumMember: "findOneInStore",
             rustOpHandler: `
             let res = storage::find_one(eng, param0, &storage::FindOneQuery {
                 resembling: ${popStack}
@@ -328,7 +311,7 @@ export const OpSpec: CompleteOpSpec = {
     instantiate: {
         opDefinition: {
             paramType: ["InterpreterType"],
-            rustEnumMember: "instantiate",
+            
             rustOpHandler: `
             ${pushStack("op_param.clone()")};
             None
@@ -338,7 +321,7 @@ export const OpSpec: CompleteOpSpec = {
     },
     popArray: {
         opDefinition: {
-            rustEnumMember: "popArray",
+
             rustOpHandler: `
             let res = match ${lastStack} {
                 InterpreterType::Array(inner) => match inner.pop() {
@@ -358,7 +341,7 @@ export const OpSpec: CompleteOpSpec = {
     },
     toBool: {
         opDefinition: {
-            rustEnumMember: "toBool",
+            
             rustOpHandler: `
             let val = match &${lastStack} {
                 InterpreterType::None => InterpreterType::bool(false),
@@ -372,7 +355,7 @@ export const OpSpec: CompleteOpSpec = {
     },
     moveStackToHeapArray: {
         opDefinition: {
-            rustEnumMember: "moveStackToHeapArray",
+            
             paramType: ["usize"],
             rustOpHandler: `
             let p = ${popStack};
@@ -389,7 +372,7 @@ export const OpSpec: CompleteOpSpec = {
     }, 
     arrayPush: {
         opDefinition: {
-            rustEnumMember: "arrayPush",
+            
             rustOpHandler: `
             let pushme = ${popStack};
             match ${lastStack} {
