@@ -1,6 +1,5 @@
-import { Suppression } from "../rust_bound_types"
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
-
+import * as mongodb from 'mongodb'
 type OpDef<NAME> = {
     readonly rustOpHandler: string
     readonly paramType?: string[]
@@ -31,8 +30,8 @@ ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
-ParamOp<"queryStore", [string, Suppression]> |
-ParamOp<"findOneInStore", [{store: string}, Suppression]> |
+ParamOp<"queryStore", [string, mongodb.FindOneOptions<any>["projection"]]> |
+ParamOp<"findOneInStore", [{store: string}, mongodb.FindOneOptions<any>["projection"]]> |
 ParamOp<"deleteOneInStore", {store: string}> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |

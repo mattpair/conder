@@ -1,4 +1,4 @@
-import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter , Suppression, ADDRESS, interpeterTypeFactory} from 'conduit_kernel';
+import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter, interpeterTypeFactory} from 'conduit_kernel';
 import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance, schemaFactory } from "conduit_parser";
 
 export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, RequiredEnv> {
@@ -256,11 +256,11 @@ const hierStoreMethodToOps: HierStoreMethods = {
             }
             const refSchema = schemaFactory.Array(schemaFactory.Ref(store.name))
             
-            const suppression: Suppression = {}
+            const projection: Parameters<CompleteOpWriter["queryStore"]>[0][1] = {}
             for (const key in store.schema.data) {
-                suppression.suppress[key] = null
+                projection[key] = false
             }
-            tools.ops.push(tools.opWriter.queryStore([store.name, suppression]))
+            tools.ops.push(tools.opWriter.queryStore([store.name, projection]))
             return refSchema
         }
 
@@ -364,9 +364,9 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
                         }
                         
                         currentType = schemaFactory.Optional(store.schema)
-                        const suppression: Suppression = {}
-                        suppression.suppress[ADDRESS] = null
-                        tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
+                        const projection: Parameters<CompleteOpWriter["findOneInStore"]>[0][1] = {}
+                        projection._id = false
+                        tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, projection]))
                         break
 
                     case "Array":

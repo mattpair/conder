@@ -65,37 +65,13 @@ pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> In
     }
 }
 
-static ADDRESS: &str = "__conduit_entity_id";
-
-fn suppression_into_mongo_projection(suppress_doc: &HashMap<String, InterpreterType>) -> bson::Document {
-    let mut result = doc! {};
-
-    if suppress_doc.contains_key(ADDRESS) {
-        result.insert("_id", false);
-    }
-    for (k, v) in suppress_doc {
-        if k == ADDRESS {
-            continue;
-        }
-        match v {
-            InterpreterType::Object(inner) => result.insert(k, suppression_into_mongo_projection(inner)),
-            InterpreterType::None => result.insert(k, false),
-            _ => panic!("Malformatted suppression doc")
-        };
-    }
-
-    return result;
-}
-
-pub(crate) async fn query(eng: &Engine, storeName: &str, suppress_doc: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn query(eng: &Engine, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
     match eng {
         Engine::Mongo{db} => {
             
             let collection = db.collection(&storeName);
-            let mongo_proj = suppression_into_mongo_projection(suppress_doc);
 
-
-            let options = FindOptions::builder().projection(Some(mongo_proj)).build();
+            let options = FindOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
             let mut res = match collection.find(None, options).await {
                 Ok(c) => c,
                 Err(e) => panic!(e)
@@ -117,12 +93,11 @@ pub(crate) async fn query(eng: &Engine, storeName: &str, suppress_doc: &HashMap<
     }
 }
 
-pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, suppress_doc: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
     let r = match eng {
         Engine::Mongo{db} => {
             let collection = db.collection(&storeName);
-            let mongo_proj = suppression_into_mongo_projection(suppress_doc);
-            let options = FindOneOptions::builder().projection(Some(mongo_proj)).build();
+            let options = FindOneOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
 
             let res = match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
                 Ok(r) => match r {

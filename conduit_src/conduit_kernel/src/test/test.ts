@@ -392,7 +392,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
-            opWriter.queryStore(["storeName", {right: null, __conduit_entity_id: null}]),
+            opWriter.queryStore(["storeName", {right: false, _id: false}]),
             opWriter.returnStackTop,
           ],
         }
@@ -419,7 +419,7 @@ describe("conduit kernel", () => {
           PROCEDURES: {
             testStore: [
               opWriter.insertFromHeap({ heap_pos: 0, store: "storeName"}),
-              opWriter.queryStore(["storeName", {right: null, __conduit_entity_id: null}]),
+              opWriter.queryStore(["storeName", {right: false, _id: false}]),
               opWriter.returnStackTop,
             ],
           }
@@ -456,7 +456,7 @@ describe("conduit kernel", () => {
 
       const deref = [
         opWriter.copyFromHeap(0),
-        opWriter.findOneInStore([{store: "test"}, {__conduit_entity_id: null}]),
+        opWriter.findOneInStore([{store: "test"}, {_id: false}]),
         opWriter.returnStackTop
       ]
 
