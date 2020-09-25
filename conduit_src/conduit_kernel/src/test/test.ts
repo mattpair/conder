@@ -321,10 +321,11 @@ describe("conduit kernel", () => {
       descr: string,
       params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,
       test: (server: TestServer) => Promise<void>,
+      only=false
     ) {
-      
+      let tester = only ? it.only : it 
               
-        it(
+        tester(
           descr,
           async () => TestMongo.start(params).then((mongo) =>
               TestServer.start({
@@ -441,22 +442,8 @@ describe("conduit kernel", () => {
       }
     );
 
-    const getPtr = [
-      opWriter.instantiate(interpeterTypeFactory.Array([])),
-      opWriter.moveStackTopToHeap,
-      opWriter.queryStore(["test", {}]),
-      opWriter.popArray, // 3
-      opWriter.toBool,
-      opWriter.negatePrev,
-      opWriter.conditionalGoto(9),
-      opWriter.moveStackToHeapArray(1), // Arg is always at 0, even if none.
-      opWriter.gotoOp(3),
-      opWriter.returnVariable(1), // 9
-    ];
-
     const insert = [
       opWriter.insertFromHeap({ heap_pos: 0, store: "test" }),
-      opWriter.instantiate("Success!"),
       opWriter.returnStackTop,
     ];
 
@@ -484,7 +471,6 @@ describe("conduit kernel", () => {
       {
         STORES,
         PROCEDURES: {
-          getPtr,
           insert,
           deref,
         },
@@ -501,14 +487,10 @@ describe("conduit kernel", () => {
             }),
           ])
         );
-        expect(res).toEqual("Success!");
-
-        res = await server.invoke("getPtr");
         expect(res.length).toBe(2);
-        //@ts-ignore
-        const interestedIn = res.find((f) => f.data === "First object");
-        delete interestedIn.data;
-        res = await server.invoke("deref", interestedIn);
+        expect("data" in res[0]).toBe(false)
+        
+        res = await server.invoke("deref", res[0]);
 
         expect(res).toEqual({ data: "First object" });
       }
@@ -532,7 +514,7 @@ describe("conduit kernel", () => {
             }),
           ])
         );
-        expect(res).toEqual("Success!");
+        expect(res).toBeTruthy()
 
         res = await server.invoke("deref", { _id: -1 });
 
@@ -548,7 +530,6 @@ describe("conduit kernel", () => {
           insert,
           deref,
           del,
-          getPtr,
         },
       },
       async (server) => {
@@ -560,10 +541,8 @@ describe("conduit kernel", () => {
             }),
           ])
         );
-        expect(res).toEqual("Success!");
-
-        res = await server.invoke("getPtr");
         expect(res.length).toBe(1);
+
         const _id = res[0]._id;
         res = await server.invoke("deref", { _id });
         expect(res).toEqual({ data: "First object" });
@@ -578,14 +557,44 @@ describe("conduit kernel", () => {
         expect(res).toBe(false);
       }
     );
+    storageTest(
+      "refs should be in the order that they are inserted",
+      {
+        STORES,
+        PROCEDURES: {
+          insert,
+          deref,
+        },
+      },
+      async (server) => {
+        const ptrs = await server.invoke(
+          "insert",
+          [
+            {
+              data: 0,
+            },
+            {
+              data: 1
+            }
+          ]
+        );
+        expect(ptrs.length).toBe(2);
+        
+        let res = await server.invoke("deref", ptrs[1]);
+        expect(res).toEqual({ data: 1 });
+
+        res = await server.invoke("deref", ptrs[0]);
+        expect(res).toEqual({data: 0});
+      }
+    );
 
     storageTest(
       "measure global store",
       { STORES, PROCEDURES: { len, insert } },
       async (server) => {
         expect(
-          await server.invoke("insert", [{ data: "first" }, { data: "second" }])
-        ).toEqual("Success!");
+          (await server.invoke("insert", [{ data: "first" }, { data: "second" }])).length
+        ).toBe(2);
         expect(await server.invoke("len")).toBe(2);
       },
     );
@@ -601,7 +610,6 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           insert: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "nested" }),
-            opWriter.instantiate("success"),
             opWriter.returnStackTop,
           ],
           get: [
@@ -620,7 +628,7 @@ describe("conduit kernel", () => {
         },
       },
       async (server) => {
-        expect(await server.invoke("insert", { a: [] })).toEqual("success");
+        expect(await server.invoke("insert", { a: [] })).toBeTruthy();
         const first = await server.invoke("get");
         expect(first.a).toEqual([]);
         delete first.a;

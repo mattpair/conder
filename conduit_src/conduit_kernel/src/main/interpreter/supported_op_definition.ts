@@ -242,7 +242,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize", "String"],
             rustOpHandler: `
             let schema = stores.get(param1).unwrap();
-            storage::append(${getDb}, &param1, schema, &heap[*param0]).await;
+            ${pushStack(`storage::append(${getDb}, &param1, schema, &heap[*param0]).await`)};
             None
             `
         },
@@ -254,7 +254,8 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let schema = stores.get(op_param).unwrap();
-            storage::append(${getDb}, op_param, schema, &stack[stack.len() -1]).await;
+            let insert_elt = ${popStack};
+            ${pushStack(`storage::append(${getDb}, op_param, schema, &insert_elt).await`)};
             None
             `
         },

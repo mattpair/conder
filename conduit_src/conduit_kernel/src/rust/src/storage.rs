@@ -1,5 +1,5 @@
 
-use mongodb::{Database, options::{ClientOptions, FindOptions, FindOneOptions}, bson, bson::{doc}, results, Client};
+use mongodb::{Database, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions}, bson, bson::{doc}, results, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::stream::StreamExt;
@@ -8,24 +8,33 @@ use crate::{InterpreterType, Schema};
 
 pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {         
     let collection = db.collection(&storeName);
-    let result: Option<String> = match instance { 
+    match instance { 
         InterpreterType::Array(v) => {
             let bs: Vec<bson::Document> = v.into_iter().map(|i| bson::to_document(i).unwrap()).collect();
             match collection.insert_many(bs, None).await {
-                Ok(r) => None,
-                Err(e) => Some(format!("Failure inserting {}", e))
+                Ok(mut r) => {
+                    let mut ordered_keys: Vec<usize> = Vec::with_capacity(r.inserted_ids.len());
+                    for k in r.inserted_ids.keys() {
+                        ordered_keys.push(*k);
+                    }
+                    ordered_keys.sort();
+                    let mut ret = Vec::with_capacity(r.inserted_ids.len());
+                    for k in ordered_keys {
+                        let v = r.inserted_ids.remove(&k).unwrap();
+                        ret.push(bson::from_document(doc! {"_id": v}).unwrap())
+                    }
+
+                    InterpreterType::Array(ret)
+                },
+                Err(e) => panic!("Failure inserting {}", e)
             }
         },
         _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
-            Ok(r) => None,
-            Err(e) => Some(format!("Failure inserting {}", e))
+            Ok(r) => bson::from_document(doc! {"_id": r.inserted_id}).unwrap(),
+            Err(e) => panic!("Failure inserting {}", e)
         }
-    };
+    }
 
-    match result {
-        Some(e) => panic!(e),
-        None => return InterpreterType::None
-    } 
 }
 pub(crate) async fn getAll(db: &Database, storeName: &str, schema: &Schema) -> InterpreterType {
     let collection = db.collection(&storeName);
@@ -74,7 +83,7 @@ pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &Interpr
     let collection = db.collection(&storeName);
     let options = FindOneOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
 
-    match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
+    match collection.find_one(bson::to_document(query_doc).unwrap(), options).await {
         Ok(r) => match r {
             Some(o) => bson::from_document(o).unwrap(),
             None => InterpreterType::None
