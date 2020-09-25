@@ -40,7 +40,10 @@ ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
 ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
-ParamOp<"storeLen", string>
+ParamOp<"storeLen", string> |
+ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
+ParamOp<"updateOne", string> |
+ParamOp<"setNestedField", string[]>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -422,6 +425,63 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "storeLen", data})
+    },
+
+    createUpdateDoc: {
+        opDefinition: {
+            paramType: ["InterpreterType"],
+            rustOpHandler: `
+            ${pushStack("op_param.clone()")};
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "createUpdateDoc", data})
+    },
+
+    updateOne: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let update_doc =  ${popStack};
+            let query_doc = ${popStack};
+            ${pushStack(`storage::find_and_update_one(${getDb}, op_param, &query_doc, &update_doc).await`)};
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "updateOne", data})
+    },
+
+    setNestedField: {
+        opDefinition: {
+            paramType: ["Vec<String>"],
+            rustOpHandler: `
+            let data = ${popStack};
+            let mut target = ${lastStack};
+            let (last_field, earlier_fields) = op_param.split_last().unwrap();
+            for f in earlier_fields {
+                match target {
+                    InterpreterType::Object(inner) => {
+                        target = inner.get_mut(f).unwrap();
+                    },
+                    _ => panic!("Invalid field access")
+                }
+            }
+            
+            match target {
+                InterpreterType::Object(inner) => {
+                    inner.insert(last_field.to_string(), data);
+                    None
+                }
+                _ => panic!("Cannot set field on non object")
+            }
+            `
+        },
+        factoryMethod: (data) => {
+            if (data.length <= 1) {
+                throw Error(`nested field must be more than one level deep.`)
+            }
+            return {kind: "setNestedField", data}
+        }
     }
 
 }

@@ -109,3 +109,21 @@ pub(crate) async fn measure(db: &Database, storeName: &str) -> InterpreterType {
     };
     InterpreterType::int(d)
 }
+
+pub(crate) async fn find_and_update_one(db: &Database, storeName: &str, query_doc: &InterpreterType, update_doc: &InterpreterType) -> InterpreterType {
+    let collection = db.collection(&storeName);
+    
+    match collection.find_one_and_update(
+        bson::to_document(&query_doc).unwrap(), 
+        mongodb::options::UpdateModifications::Document(bson::to_document(&update_doc).unwrap()), 
+        None).await {
+            Ok(r) => match r {
+                Some(r) => bson::from_document(r).unwrap(),
+                None => InterpreterType::None
+            },
+            Err(e) => {
+                eprintln!("Failure updating: {}", e);
+                InterpreterType::None
+            }
+    }
+}
