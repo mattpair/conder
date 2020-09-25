@@ -67,31 +67,32 @@ pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> In
 
 static ADDRESS: &str = "__conduit_entity_id";
 
-fn suppression_into_mongo_projection(suppress: &Suppression) -> bson::Document {
+fn suppression_into_mongo_projection(suppress_doc: &HashMap<String, InterpreterType>) -> bson::Document {
     let mut result = doc! {};
 
-    if suppress.suppress.contains_key(ADDRESS) {
+    if suppress_doc.contains_key(ADDRESS) {
         result.insert("_id", false);
     }
-    for (k, v) in &suppress.suppress {
+    for (k, v) in suppress_doc {
         if k == ADDRESS {
             continue;
         }
         match v {
-            Some(sub) => result.insert(k, suppression_into_mongo_projection(sub)),
-            None => result.insert(k, false)
+            InterpreterType::Object(inner) => result.insert(k, suppression_into_mongo_projection(inner)),
+            InterpreterType::None => result.insert(k, false),
+            _ => panic!("Malformatted suppression doc")
         };
     }
 
     return result;
 }
 
-pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression) -> InterpreterType {
+pub(crate) async fn query(eng: &Engine, storeName: &str, suppress_doc: &HashMap<String, InterpreterType>) -> InterpreterType {
     match eng {
         Engine::Mongo{db} => {
             
             let collection = db.collection(&storeName);
-            let mongo_proj = suppression_into_mongo_projection(suppress);
+            let mongo_proj = suppression_into_mongo_projection(suppress_doc);
 
 
             let options = FindOptions::builder().projection(Some(mongo_proj)).build();
@@ -116,11 +117,11 @@ pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression)
     }
 }
 
-pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, suppress: &Suppression) -> InterpreterType {
+pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, suppress_doc: &HashMap<String, InterpreterType>) -> InterpreterType {
     let r = match eng {
         Engine::Mongo{db} => {
             let collection = db.collection(&storeName);
-            let mongo_proj = suppression_into_mongo_projection(suppress);
+            let mongo_proj = suppression_into_mongo_projection(suppress_doc);
             let options = FindOneOptions::builder().projection(Some(mongo_proj)).build();
 
             let res = match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
@@ -179,11 +180,4 @@ pub(crate) async fn measure(eng: &Engine, storeName: &str) -> InterpreterType {
 pub enum Engine {
     Panic,
     Mongo{db: mongodb::Database}
-}
-
-//If a field is present it means don't select.
-//Otherwise, include.
-#[derive(Deserialize, Clone)]
-pub(crate) struct Suppression {
-    suppress: HashMap<String, Option<Suppression>>
 }

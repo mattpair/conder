@@ -278,7 +278,7 @@ export const OpSpec: CompleteOpSpec = {
     },
     queryStore: {
         opDefinition: {
-            paramType: ["String", "storage::Suppression"],
+            paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
             let res = storage::query(eng, &param0, &param1).await;
             ${pushStack("res")};
@@ -292,7 +292,7 @@ export const OpSpec: CompleteOpSpec = {
     },
     findOneInStore: {
         opDefinition: {
-            paramType: ["String", "storage::Suppression"],
+            paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
             let res = storage::find_one(eng, param0, &${popStack}, param1).await;
             ${pushStack("res")};

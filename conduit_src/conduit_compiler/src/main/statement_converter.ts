@@ -256,7 +256,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
             }
             const refSchema = schemaFactory.Array(schemaFactory.Ref(store.name))
             
-            const suppression: Suppression = {suppress: {}}
+            const suppression: Suppression = {}
             for (const key in store.schema.data) {
                 suppression.suppress[key] = null
             }
@@ -364,7 +364,7 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
                         }
                         
                         currentType = schemaFactory.Optional(store.schema)
-                        const suppression: Suppression = {suppress: {}}
+                        const suppression: Suppression = {}
                         suppression.suppress[ADDRESS] = null
                         tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, suppression]))
                         break
