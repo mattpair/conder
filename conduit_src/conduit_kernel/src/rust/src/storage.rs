@@ -1,5 +1,5 @@
 
-use mongodb::{Database, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions}, bson, bson::{doc}, results, Client};
+use mongodb::{Database, options, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions, FindOneAndUpdateOptions}, bson, bson::{doc}, results, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::stream::StreamExt;
@@ -125,7 +125,7 @@ pub(crate) async fn find_and_update_one(db: &Database, storeName: &str, query_do
     match collection.find_one_and_update(
         bson::to_document(&query_doc).unwrap(), 
         mongodb::options::UpdateModifications::Document(bson::to_document(&update_doc).unwrap()), 
-        None).await {
+        Some(FindOneAndUpdateOptions::builder().return_document(Some(options::ReturnDocument::After)).build())).await {
             Ok(r) => match r {
                 Some(r) => bson::from_document(r).unwrap(),
                 None => InterpreterType::None
