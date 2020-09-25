@@ -6,153 +6,106 @@ use futures::stream::StreamExt;
 
 use crate::{InterpreterType, Schema};
 
-pub(crate) async fn append(eng: &Engine, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {
-    match eng {
-        Engine::Mongo{db} => {
-            
-            let collection = db.collection(&storeName);
-            let result: Option<String> = match instance { 
-                InterpreterType::Array(v) => {
-                    let bs: Vec<bson::Document> = v.into_iter().map(|i| bson::to_document(i).unwrap()).collect();
-                    match collection.insert_many(bs, None).await {
-                        Ok(r) => None,
-                        Err(e) => Some(format!("Failure inserting {}", e))
-                    }
-                },
-                _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
-                    Ok(r) => None,
-                    Err(e) => Some(format!("Failure inserting {}", e))
-                }
-            };
-
-            match result {
-                Some(e) => panic!(e),
-                None => return InterpreterType::None
-            };
-        },
-        Engine::Panic => {
-            panic!("invoking panic storage.")
-        }
-    }
-}
-pub(crate) async fn getAll(eng: &Engine, storeName: &str, schema: &Schema) -> InterpreterType {
-    match eng {
-        Engine::Mongo{db} => {
-            
-            let collection = db.collection(&storeName);
-            let options = FindOptions::builder().projection(Some(
-                doc! {"_id": false}
-
-            )).build();
-            let mut res = match collection.find(None, options).await {
-                Ok(c) => c,
-                Err(e) => panic!(e)
-            };
-
-            let mut ret = vec![];
-            while let Some(v) = res.next().await {
-                match v {
-                    Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
-                    Err(e) => panic!(e)
-                };
+pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {         
+    let collection = db.collection(&storeName);
+    let result: Option<String> = match instance { 
+        InterpreterType::Array(v) => {
+            let bs: Vec<bson::Document> = v.into_iter().map(|i| bson::to_document(i).unwrap()).collect();
+            match collection.insert_many(bs, None).await {
+                Ok(r) => None,
+                Err(e) => Some(format!("Failure inserting {}", e))
             }
-            
-            return InterpreterType::Array(ret)
         },
-        Engine::Panic => {
-            panic!("invoking panic storage.")
+        _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
+            Ok(r) => None,
+            Err(e) => Some(format!("Failure inserting {}", e))
+        }
+    };
+
+    match result {
+        Some(e) => panic!(e),
+        None => return InterpreterType::None
+    } 
+}
+pub(crate) async fn getAll(db: &Database, storeName: &str, schema: &Schema) -> InterpreterType {
+    let collection = db.collection(&storeName);
+    let options = FindOptions::builder().projection(Some(
+        doc! {"_id": false}
+
+    )).build();
+    let mut res = match collection.find(None, options).await {
+        Ok(c) => c,
+        Err(e) => panic!(e)
+    };
+
+    let mut ret = vec![];
+    while let Some(v) = res.next().await {
+        match v {
+            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
+            Err(e) => panic!(e)
+        };
+    }
+    
+    return InterpreterType::Array(ret)
+}
+
+pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+    let collection = db.collection(&storeName);
+
+    let options = FindOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
+    let mut res = match collection.find(None, options).await {
+        Ok(c) => c,
+        Err(e) => panic!(e)
+    };
+
+    let mut ret = vec![];
+    while let Some(v) = res.next().await {
+        match v {
+            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
+            Err(e) => panic!(e)
+        };
+    }
+    
+    return InterpreterType::Array(ret)
+}
+
+pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+    
+    let collection = db.collection(&storeName);
+    let options = FindOneOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
+
+    match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
+        Ok(r) => match r {
+            Some(o) => bson::from_document(o).unwrap(),
+            None => InterpreterType::None
+        },
+        Err(e) => {
+            eprintln!("Could not dereference pointer: {}", e);
+            InterpreterType::None
         }
     }
 }
 
-pub(crate) async fn query(eng: &Engine, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
-    match eng {
-        Engine::Mongo{db} => {
-            
-            let collection = db.collection(&storeName);
-
-            let options = FindOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
-            let mut res = match collection.find(None, options).await {
-                Ok(c) => c,
-                Err(e) => panic!(e)
-            };
-
-            let mut ret = vec![];
-            while let Some(v) = res.next().await {
-                match v {
-                    Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
-                    Err(e) => panic!(e)
-                };
-            }
-            
-            return InterpreterType::Array(ret)
-        },
-        Engine::Panic => {
-            panic!("invoking panic storage.")
+pub(crate) async fn delete_one(db: &Database, storeName: &str, query_doc: &InterpreterType) -> InterpreterType {
+    let collection = db.collection(&storeName);
+    let d = match collection.delete_one(bson::to_document(query_doc).unwrap(), None).await {
+        Ok(result) => result.deleted_count == 1,
+        Err(e) => {
+            eprintln!("Failure deleting: {}", e);
+            false
         }
-    }
-}
-
-pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
-    let r = match eng {
-        Engine::Mongo{db} => {
-            let collection = db.collection(&storeName);
-            let options = FindOneOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
-
-            let res = match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
-                Ok(r) => match r {
-                    Some(o) => bson::from_document(o).unwrap(),
-                    None => InterpreterType::None
-                },
-                Err(e) => {
-                    eprintln!("Could not dereference pointer: {}", e);
-                    InterpreterType::None
-                }
-            };
-            res
-        },
-        _ => panic!("Invalid derefence")
     };
-    return r;
+    InterpreterType::bool(d)
 }
 
-pub(crate) async fn delete_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType) -> InterpreterType {
-    let r = match eng {
-        Engine::Mongo{db} => {
-            let collection = db.collection(&storeName);
-            let d = match collection.delete_one(bson::to_document(query_doc).unwrap(), None).await {
-                Ok(result) => result.deleted_count == 1,
-                Err(e) => {
-                    eprintln!("Failure deleting: {}", e);
-                    false
-                }
-            };
-            InterpreterType::bool(d)
-        },
-        _ => panic!("invalid delete")
+pub(crate) async fn measure(db: &Database, storeName: &str) -> InterpreterType {
+    let collection = db.collection(&storeName);
+    let d = match collection.estimated_document_count(None).await {
+        Ok(count) => count,
+        Err(e) => {
+            eprintln!("Failure measuring: {}", e);
+            0
+        }
     };
-    return r
-}
-
-pub(crate) async fn measure(eng: &Engine, storeName: &str) -> InterpreterType {
-    let r = match eng {
-        Engine::Mongo{db} => {
-            let collection = db.collection(&storeName);
-            let d = match collection.estimated_document_count(None).await {
-                Ok(count) => count,
-                Err(e) => {
-                    eprintln!("Failure measuring: {}", e);
-                    0
-                }
-            };
-            InterpreterType::int(d)
-        },
-        _ => panic!("invalid delete")
-    };
-    return r
-}
-
-pub enum Engine {
-    Panic,
-    Mongo{db: mongodb::Database}
+    InterpreterType::int(d)
 }

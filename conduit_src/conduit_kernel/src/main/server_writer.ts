@@ -72,8 +72,8 @@ export function generateServer(): string {
             }`
         },
         {
-            name: "storageEngine",
-            type: "storage::Engine",
+            name: "db",
+            type: "Option<mongodb::Database>",
             initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
                 Ok(uri) => {
 
@@ -90,13 +90,11 @@ export function generateServer(): string {
                     for col in  cols{
                         println!("{}", col);
                     }
-                    storage::Engine::Mongo{
-                        db: client.database("conduit")
-                    }
+                    Some(client.database("conduit"))
                 },
                 Err(e) => {
                     eprintln!("No mongo location specified. Running without storage.");
-                    storage::Engine::Panic
+                    None
                 }
             }`
         }
@@ -157,15 +155,15 @@ export function generateServer(): string {
             let mut state = vec![];
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine, &data.stores),
+                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.db.as_ref(), &data.stores),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
                         state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas, &data.storageEngine, &data.stores)
+                        conduit_byte_code_interpreter(state, proc, &data.schemas, data.db.as_ref(), &data.stores)
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, &data.storageEngine, &data.stores)
+                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.db.as_ref(), &data.stores)
                     }
                 }
             }.await;

@@ -83,6 +83,8 @@ function raiseErrorWithMessage(s: string): string {
     return `Some("${s}".to_string())`
 }
 
+const getDb = `db.unwrap()`
+
 const popStack = `
     match stack.pop() {
         Some(v) => v,
@@ -237,7 +239,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize", "String"],
             rustOpHandler: `
             let schema = stores.get(param1).unwrap();
-            storage::append(eng, &param1, schema, &heap[*param0]).await;
+            storage::append(${getDb}, &param1, schema, &heap[*param0]).await;
             None
             `
         },
@@ -249,7 +251,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let schema = stores.get(op_param).unwrap();
-            storage::append(eng, op_param, schema, &stack[stack.len() -1]).await;
+            storage::append(${getDb}, op_param, schema, &stack[stack.len() -1]).await;
             None
             `
         },
@@ -260,7 +262,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::getAll(eng, op_param, stores.get(op_param).unwrap()).await;
+            let res = storage::getAll(${getDb}, op_param, stores.get(op_param).unwrap()).await;
             ${pushStack(`res`)};
             None
             `
@@ -279,7 +281,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(eng, &param0, &param1).await;
+            let res = storage::query(${getDb}, &param0, &param1).await;
             ${pushStack("res")};
             None
             `
@@ -293,7 +295,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::find_one(eng, param0, &${popStack}, param1).await;
+            let res = storage::find_one(${getDb}, param0, &${popStack}, param1).await;
             ${pushStack("res")};
             None
             `
@@ -304,7 +306,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(eng, op_param, &${popStack}).await;
+            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
             ${pushStack("res")};
             None
             `
@@ -415,7 +417,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            ${pushStack("storage::measure(eng, op_param).await")};
+            ${pushStack(`storage::measure(${getDb}, op_param).await`)};
             None
             `
         },
