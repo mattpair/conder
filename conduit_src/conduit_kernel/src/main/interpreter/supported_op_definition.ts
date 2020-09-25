@@ -294,9 +294,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "storage::Suppression"],
             rustOpHandler: `
-            let res = storage::find_one(eng, param0, &storage::FindOneQuery {
-                resembling: ${popStack}
-            }, param1).await;
+            let res = storage::find_one(eng, param0, &${popStack}, param1).await;
             ${pushStack("res")};
             None
             `
@@ -307,9 +305,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(eng, op_param, &storage::FindOneQuery {
-                resembling: ${popStack}                
-            }).await;
+            let res = storage::delete_one(eng, op_param, &${popStack}).await;
             ${pushStack("res")};
             None
             `

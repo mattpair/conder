@@ -116,14 +116,14 @@ pub(crate) async fn query(eng: &Engine, storeName: &str, suppress: &Suppression)
     }
 }
 
-pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery, suppress: &Suppression) -> InterpreterType {
+pub(crate) async fn find_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType, suppress: &Suppression) -> InterpreterType {
     let r = match eng {
         Engine::Mongo{db} => {
             let collection = db.collection(&storeName);
             let mongo_proj = suppression_into_mongo_projection(suppress);
             let options = FindOneOptions::builder().projection(Some(mongo_proj)).build();
 
-            let res = match collection.find_one(bson::to_document(&q.resembling).unwrap(), options).await {
+            let res = match collection.find_one(bson::to_document(&query_doc).unwrap(), options).await {
                 Ok(r) => match r {
                     Some(o) => bson::from_document(o).unwrap(),
                     None => InterpreterType::None
@@ -140,11 +140,11 @@ pub(crate) async fn find_one(eng: &Engine, storeName: &str, q: &FindOneQuery, su
     return r;
 }
 
-pub(crate) async fn delete_one(eng: &Engine, storeName: &str, q: &FindOneQuery) -> InterpreterType {
+pub(crate) async fn delete_one(eng: &Engine, storeName: &str, query_doc: &InterpreterType) -> InterpreterType {
     let r = match eng {
         Engine::Mongo{db} => {
             let collection = db.collection(&storeName);
-            let d = match collection.delete_one(bson::to_document(&q.resembling).unwrap(), None).await {
+            let d = match collection.delete_one(bson::to_document(query_doc).unwrap(), None).await {
                 Ok(result) => result.deleted_count == 1,
                 Err(e) => {
                     eprintln!("Failure deleting: {}", e);
@@ -186,8 +186,4 @@ pub enum Engine {
 #[derive(Deserialize, Clone)]
 pub(crate) struct Suppression {
     suppress: HashMap<String, Option<Suppression>>
-}
-
-pub(crate) struct FindOneQuery {
-    pub resembling: InterpreterType,
 }
