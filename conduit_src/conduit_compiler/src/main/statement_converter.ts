@@ -51,10 +51,10 @@ function toByteCode(f: CompiledTypes.Function, schemaLookup: Record<string, numb
         ops.push(opWriter.enforceSchemaOnHeap({heap_pos: 0, schema: schemaLookup[`__func__${f.name}`]}))
         varmap.add(f.parameter.name, f.parameter.schema)
     }
-    const targetType: AnyType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
+    const targetType: AnyType = f.returnType.kind === "VoidReturnType" ?  {kind: "any"} : f.returnType
     
     const summary = statementsToOps(f.body, targetType, {ops, varmap, manifest, opWriter}, {numberOfPrecedingOps: 0})
-    if (!summary.alwaysReturns && targetType.kind !== "none") {
+    if (!summary.alwaysReturns && targetType.kind !== "any") {
         throw Error(`Function fails to return a value for all paths`)
     }
 
@@ -111,13 +111,14 @@ class VarMap extends Map<string, HeapEntry> {
 }
 
 function typesAreEqual(l: AnyType, r: AnyType): boolean {
+    if (l.kind === "any" || r.kind === "any") {
+        return true
+    }
     if (l.kind !== r.kind) {
         return false
     }
     
     switch(l.kind) {
-        case "none": 
-            return true
 
         case "Ref":
             //@ts-ignore
@@ -161,7 +162,7 @@ enum ArrayMethods {
     len="len",
 }
 
-type AnyType = AnySchemaInstance | {kind: "none"} | {kind: "anonFunc"}
+type AnyType = AnySchemaInstance | {kind: "any"} | {kind: "anonFunc"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
     invocation: Parse.MethodInvocation,
@@ -183,13 +184,14 @@ type GlobalReferenceToOpsConverter = {
 
 const hierStoreMethodToOps: HierStoreMethods = {
     append: (store, invoc, target, tools) => {
-        if (target.kind === "none") {
+        const returnType = schemaFactory.Array(schemaFactory.Ref(store.name))
+        if (typesAreEqual(target, returnType)) {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
                 assignableToOps(asn, schemaFactory.Array(store.schema), tools)
                 tools.ops.push(tools.opWriter.insertFromStack(store.name))
             })
-            return {kind: "none"}
+            return returnType
         } else {
             throw Error(`Appending to a store does not return any data`)
         }
@@ -300,18 +302,12 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 default: Utilities.assertNever(m)
             }
             if (dots.length > 1) {
-                if (targetType.kind === "none" && currentType.kind !== "none") {
-                    throw Error(`There is no point in calling methods on global methods here because it does not product any side-effect.`)
-                }
-
                 dotsToOps(dots.slice(1), targetType, currentType, tools)
             } else if (!typesAreEqual(targetType, currentType)) {
                 throw Error(`Global access did not produce the expected type`)
             }
         } else {
-            if (targetType.kind === "none") {
-                throw Error(`Global reference return real data, not none`)
-            }
+
             if (targetType.kind !== "Array") {
                 throw Error(`Referencing ${store.name} returns an array of data.`)
             }
@@ -359,14 +355,88 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
                         if (method.name !== "deref") {
                             throw Error(`References only support the deref method`)
                         }
-                        if (method.children.Assignable.length > 0) {
-                            throw Error("deref takes no arguments")
+                        if (method.children.Assignable.length > 1) {
+                            throw Error("deref takes one optional argument")
+                        } else if (method.children.Assignable.length === 1) {
+                            const anon = method.children.Assignable[0].differentiate()
+                            if (anon.kind !== "AnonFunction") {
+                                throw Error(`Expected a AnonFunction but received a ${anon.kind}`)
+                            }
+                            const derefstmts = anon.part.Statements.children.Statement
+                            if (derefstmts.length !== 2) {
+                                throw Error(`Expected exactly two statements in deref arg`)
+                            }
+                            const one = derefstmts[0].differentiate()
+                            const two = derefstmts[1].differentiate()
+                            
+                            
+                            if (one.kind !== "VariableReference" || one.val !== anon.rowVarName || one.children.DotStatement.length === 0) {
+                                throw Error(`The first statement must do something to the row variable`)
+                            }
+                            if (two.kind !== "ReturnStatement" ) {
+                                throw Error(`You must return the row variable`)
+                            } else {
+                                const ret = two.part.Returnable.differentiate()
+                                if (ret.kind !== "Assignable") {
+                                    throw Error(`You must return the row variable`)
+                                }
+                                const  retass = ret.differentiate()
+                                if (retass.kind !== "VariableReference" || retass.children.DotStatement.length !== 0 || retass.val !== anon.rowVarName) {
+                                    throw Error(`You must return the row variable`)
+                                }
+                                const updateDoc: Parameters<CompleteOpWriter["createUpdateDoc"]>[0] = {"$push": {}}
+                                tools.ops.push(tools.opWriter.createUpdateDoc(updateDoc))
+                                if (one.children.DotStatement.length === 1) {
+                                    throw Error(`The only command supported on derefed variables is append`)
+                                }
+                                let currentSchema: AnySchemaInstance = store.schema as AnySchemaInstance
+                                const fieldAccess = one.children.DotStatement.slice(0, one.children.DotStatement.length - 1).map(d => d.differentiate())
+                                const fieldNames: string[] = []
+                                fieldAccess.forEach(dot => {
+
+                                    switch(dot.kind) {
+                                        case "MethodInvocation":
+                                            throw Error(`We only support append calls in derefs`)
+                                        case "FieldAccess":
+                                            if (currentSchema.kind !== "Object") {
+                                                throw Error(`Accessing a field on a non-object is not allowed`)
+                                            }
+                                            if (!(dot.name in currentSchema.data)) {
+                                                throw Error(`Field ${dot.name} does not exist on object`)
+                                            }
+                                            currentSchema = currentSchema.data[dot.name]
+                                            
+                                            fieldNames.push(dot.name)
+                                            break
+                                        default: Utilities.assertNever(dot)
+                                    }
+                                })
+                                const lastDot = one.children.DotStatement[one.children.DotStatement.length -1].differentiate()
+                                if (lastDot.kind !== "MethodInvocation" || lastDot.name !== "append"){
+                                    throw Error(`Currently only support append`)
+                                }
+                                if (lastDot.children.Assignable.length !== 1) {
+                                    throw Error(`Append only takes one arg`)
+                                }
+                                if (currentSchema.kind !== "Array") {
+                                    throw Error(`Append can only be called on arrays`)
+                                }
+                                assignableToOps(lastDot.children.Assignable[0], currentSchema, tools)
+
+                                tools.ops.push(
+                                    tools.opWriter.setNestedField(["$push", fieldNames.join(".")]),
+                                    tools.opWriter.updateOne(store.name)
+                                )
+                            }
+                        } else {
+                            const projection: Parameters<CompleteOpWriter["findOneInStore"]>[0][1] = {}
+                            projection._id = false
+                            tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, projection]))
                         }
                         
                         currentType = schemaFactory.Optional(store.schema)
-                        const projection: Parameters<CompleteOpWriter["findOneInStore"]>[0][1] = {}
-                        projection._id = false
-                        tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, projection]))
+                        
+                        
                         break
 
                     case "Array":
@@ -402,20 +472,10 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Any
     }
     const ref = tools.varmap.tryGet(assign.val)
     if (ref !== undefined) {
-        // It is actually possible for a variable reference to return none, if the method returns none,
-        // but for now we will assume it's impossible.
-        if (targetType.kind === "none") {
-            throw Error(`Returning a variable doesn't make sense when the expected result is none`)
-        }
+
         tools.ops.push(tools.opWriter.copyFromHeap(ref.id))
 
-        let currentType: AnySchemaInstance = ref.type
-
-        if (assign.children.DotStatement.length > 0) {
-            dotsToOps(assign.children.DotStatement, targetType, currentType, tools)
-        } else if (!typesAreEqual(targetType, currentType)) {
-            throw Error(`Types are not equal. Expected: ${JSON.stringify(targetType, null, 2)}\n\n Received: ${JSON.stringify(currentType, null, 2)}`)
-        }
+        dotsToOps(assign.children.DotStatement, targetType,  ref.type, tools)
         return
     } else {
         // Must be global then
@@ -507,7 +567,7 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: AnyType, tool
         }
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "none"}, tools)
+                variableReferenceToOps(stmt, {kind: "any"}, tools)
                 break
 
             
@@ -527,9 +587,10 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: AnyType, tool
                 alwaysReturns = true
                 switch (e.kind) {
                     case "Nothing":
-                        if (targetType.kind !== "none") {
+                        if (targetType.kind !== "any") {
                             throw Error(`Returning something when you need to return a real type`)
                         }
+                        tools.ops.push(tools.opWriter.instantiate(null), tools.opWriter.returnStackTop)
                         break
                     case "Assignable":
                         assignableToOps(e, targetType, tools)

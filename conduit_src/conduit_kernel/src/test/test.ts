@@ -633,7 +633,6 @@ describe("conduit kernel", () => {
         expect(first.a).toEqual([]);
         delete first.a;
         const res = await server.invoke("appendNested", first)
-        expect(res._id).toEqual(first._id);
         expect(res.a).toEqual([42])
         const second = await server.invoke("get");
         expect(second.a).toEqual([42]);

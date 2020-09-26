@@ -81,7 +81,7 @@ export namespace Parse {
                 const startColNumber = this.column
 
                 if(match.groups && match.groups.name && symbolRegex.test(match.groups.name)) {
-                    throw new Error(`Entities may not be named after reserved symbols: Line: ${startLineNumber}\n\n${match[0]}`)
+                    throw new Error(`Entities may not be named after reserved symbols: Line: ${startLineNumber}\n\n${match.groups.name}`)
 
                 }
                 const matchStr = match[0]
@@ -777,7 +777,7 @@ export namespace Parse {
         },
         Primitive: {
             kind: "leaf",
-            regex: new RegExp(`^\\s*(?<val>(${Primitives.join("|")}))`),
+            regex: new RegExp(`^\\s*(?<val>(${Primitives.join("|")}))(?!\\w)`),
             assemble(c, loc) {
                 return {
                     kind: "Primitive",
@@ -819,7 +819,7 @@ export namespace Parse {
                 Assignable: true
             },
             options: {
-                inBetweenAll: /^(\n|,)/
+                inBetweenAll: /^(\n|,)\s*/
             }
         },
         FieldLiteral: {
