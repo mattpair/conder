@@ -29,6 +29,7 @@
     "conduit_kernel": "file:../conduit_kernel",
     "conduit_parser": "file:../conduit_parser",
     "isomorphic-ws": "^4.0.1",
+    "minimist": "^1.2.5",
     "mongodb": "^3.6.2",
     "ws": "^7.3.1"
   },

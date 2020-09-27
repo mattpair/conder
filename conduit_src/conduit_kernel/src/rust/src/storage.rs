@@ -109,7 +109,7 @@ pub(crate) async fn delete_one(db: &Database, storeName: &str, query_doc: &Inter
 
 pub(crate) async fn measure(db: &Database, storeName: &str) -> InterpreterType {
     let collection = db.collection(&storeName);
-    let d = match collection.estimated_document_count(None).await {
+    let d = match collection.count_documents(None, None).await {
         Ok(count) => count,
         Err(e) => {
             eprintln!("Failure measuring: {}", e);

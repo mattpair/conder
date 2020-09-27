@@ -5,6 +5,8 @@ import * as child_process from 'child_process'
 import * as mongodb from 'mongodb'
 import {compileFiles, CompiledTypes, Utilities, ConduitBuildConfig} from 'conduit_parser'
 import {compile, generateClients} from 'conduit_compiler'
+const argv = require('minimist')(process.argv.slice(3));
+
 
 function conduitsToTypeResolved(conduits: string[], buildConf: ConduitBuildConfig): CompiledTypes.Manifest {
     const toCompile: Record<string, () => string> = {}
@@ -45,15 +47,35 @@ async function writeClientFile(clients: string, buildConf: ConduitBuildConfig) {
     return await Promise.all(p)
 }
 
-async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
+async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>, name: string, persist: boolean) {
     // child_process.execSync(`docker pull mongo:4.4`, {stdio: "pipe"});
     console.log("starting mongo")
-    child_process.execSync(`docker run --rm -d --mount type=tmpfs,destination=/data/db -p 27017:27017 --name mongodb mongo:4.4`);
-    const killList = ["mongodb"]
+    const mongoname = `mongodb-${name}`
+    const killActions: ({name: string, action: () => void})[] = []
+    let reusingMongo = false
+    if (persist && fs.existsSync(".state")) {
+        console.log("Reusing previous mongo")
+        child_process.execSync(`docker unpause ${mongoname}`)
+        reusingMongo = true
+    } else {
+        const startMongo = `docker run -d -p 27017:27017 --rm  ${!persist ? " --mount type=tmpfs,destination=/data/db " : `-v "$(pwd)"/.state/:/data/db`} --name ${mongoname} mongo:4.4`
+        child_process.execSync(startMongo);
+    }
+    
+    if (persist) {
+        killActions.push({name: "pausing mongo", action: () => child_process.execSync(`docker pause ${mongoname}`)})
+    } else {
+        killActions.push({name: "killing mongo", action: () => child_process.execSync(`docker kill ${mongoname}`)})
+    }
+    
     function kill() {
-        killList.forEach(m => {
-            console.log(`Exiting ${m}...`)
-            child_process.execSync(`docker kill ${m}`)
+        killActions.forEach(m => {
+            try {
+                console.log(`${m.name}...`)
+                m.action()
+            } catch(e) {
+                console.error(e)
+            }
         })
         
         process.exit(1)
@@ -61,14 +83,19 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
     process.on("SIGINT", kill)
     process.on("SIGTERM", kill)
 
-    const ipaddress = child_process.execSync(`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' mongodb`, {encoding: "utf-8"})
+    const ipaddress = child_process.execSync(`docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mongoname}`, {encoding: "utf-8"})
     
     const client = await mongodb.MongoClient.connect(
         "mongodb://localhost:27017",
         { useUnifiedTopology: true }
     ).catch((e) => {console.error(e); process.exit(1)});
+    
     const db = client.db("conduit");
-    Object.keys(env.STORES).forEach(storeName => db.createCollection(storeName))
+    
+    if (!reusingMongo) {
+        Object.keys(env.STORES).forEach(storeName => db.createCollection(storeName))
+    }
+
     await db.listCollections().toArray()
     const string_env: Partial<ServerEnv> = {
         MONGO_CONNECTION_URI: `mongodb://${ipaddress}`
@@ -78,13 +105,11 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>) {
         string_env[key] = typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
     }
     console.log("starting server")
-    // blocks until force quit.
-    //@ts-ignore
     
     child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run kernel-server`, {
     env: string_env,
     });
-    killList.push("conduit-run")
+    killActions.push({name: "tearing down conduit server", action: () => child_process.execSync("docker kill conduit-run")})
     console.log("server available at: http://localhost:7213")
 }
 
@@ -95,12 +120,19 @@ const commands: Record<string, () => Promise<void>> = {
     },
 
     async run() {
+        
         const conf = loadBuildConfig()
         const filenames = getConduitFileNames()
         const manifest = conduitsToTypeResolved(filenames, conf)
         const env: Pick<StrongServerEnv, RequiredEnv> = compile(manifest)
-        writeClientFile(generateClients("http://localhost:7213", manifest), conf)
-        await deployLocally(env)
+        await writeClientFile(generateClients("http://localhost:7213", manifest), conf)
+        if (argv.persist) {
+            console.log(`Local deployment will be peristed`)
+            await deployLocally(env, conf.project, true)
+        } else {
+            console.warn(`Data will not be persisted. To persist data, run with --persist`)
+            await deployLocally(env, conf.project, false)
+        }
     },
 
 }
@@ -112,5 +144,5 @@ export function execute() {
         console.error(`${command} is invalid.\n\nOptions are ${JSON.stringify(Object.values(commands))}`)
     }    
 
-    commands[command]().catch((e) => {console.error(e.message); console.log("killing", process.pid); process.exit(1);})
+    commands[command]().catch((e) => {console.error(e.message); process.exit(1);})
 }
