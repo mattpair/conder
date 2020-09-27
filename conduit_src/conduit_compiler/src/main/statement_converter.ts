@@ -497,6 +497,8 @@ function assignableToOps(a: Parse.Assignable, targetType: AnyType, tools: Compil
             return variableReferenceToOps(assign, targetType, tools)
 
         case "StringLiteral":
+            tools.ops.push(tools.opWriter.instantiate(interpeterTypeFactory.string(assign.val)))
+            break
         case "AnonFunction":
             throw Error(`Unexpected anon function`)
             
