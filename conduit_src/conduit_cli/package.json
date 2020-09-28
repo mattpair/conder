@@ -12,7 +12,7 @@
     "postversion": "export CONDUIT_VERSION=$(node -p \"require('./package.json').version\") && npm run release",
     "prerelease": "echo \"export const VERSION='$CONDUIT_VERSION'\" > src/main/VERSION.ts && npm run pkg:mac && git add . && git commit -m \"$CONDUIT_VERSION\" && git push",
     "release": "gh release create $CONDUIT_VERSION 'bin/SNAPSHOT_CONDUIT_COMPILER#conduit'",
-    "postrelease": "npm run pkg:mac && docker tag kernel-server:latest jermconder/conduit-kernel:$CONDUIT_VERSION && docker push jermconder/conduit-kernel:$CONDUIT_VERSION"
+    "postrelease": "docker tag kernel-server:latest jermconder/conduit-kernel:$CONDUIT_VERSION && docker push jermconder/conduit-kernel:$CONDUIT_VERSION"
   },
   "author": "Conder Systems",
   "license": "ISC",
