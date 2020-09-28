@@ -7,7 +7,8 @@
     "compile": "tsc -b",
     "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
-    "prepkg:mac": "cd ../conduit_kernel && npm run pkg"
+    "prepkg:mac": "cd ../conduit_kernel && npm run pkg",
+    "preversion": "./run_all_other_tests.sh && npm run test:integration"
   },
   "author": "Conder Systems",
   "license": "ISC",

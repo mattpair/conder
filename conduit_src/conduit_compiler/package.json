@@ -4,7 +4,7 @@
   "scripts": {
     "compile": "tsc -b",
     "pretest": "npm run compile",
-    "test": "jest"
+    "test": "jest --passWithNoTests"
   },
   "author": "Jeremy",
   "license": "ISC",
