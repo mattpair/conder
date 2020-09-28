@@ -1,6 +1,6 @@
 {
   "name": "@conder-systems/conduit",
-  "version": "0.0.0",
+  "version": "0.0.1-0",
   "scripts": {
     "pretest:integration": "npm run pkg:mac",
     "test:integration": "cd ../../integration_test && ./test_all.sh",
