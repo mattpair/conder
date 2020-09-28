@@ -193,7 +193,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
             })
             return returnType
         } else {
-            throw Error(`Appending to a store does not return any data`)
+            throw Error(`Appending to a store returns an array of refs to the store`)
         }
     },
 
