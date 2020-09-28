@@ -14,7 +14,6 @@ export type Struct = Readonly<{
     kind: "Struct"
 }>
 export type Enum = basic.Enum
-export type Python3Install = Readonly<{kind: "python3", reldir: string, file: string, name: string}>
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
     readonly size: number;
@@ -66,7 +65,7 @@ export type Function =  basic.NamedIntrafile<"Function", {
 }>
 
 
-export type Entity = Struct | Enum  | HierarchicalStore | Function | Python3Install
+export type Entity = Struct | Enum  | HierarchicalStore | Function
 export type ScopeMap = EntityMap<Entity>
 
 export type SchemaFactory = (t: Parse.CompleteType) => AnySchemaInstance
