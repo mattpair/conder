@@ -1,6 +1,6 @@
 
 import { Parse} from "./parse";
-import { Manifest, Python3Install, EntityMap } from "./entity/resolved";
+import { Manifest, EntityMap } from "./entity/resolved";
 import { ConduitBuildConfig } from "./entity/ConduitBuildConfig";
 import { toEntityMap, PartialEntityMap } from "./resolution/typeValidation";
 import { FileLocation } from "./utils";
@@ -12,8 +12,6 @@ export function compileFiles(files: Record<string, () => string>, build: Conduit
         conduits.push(Parse.extractAllFileEntities(files[file](), new FileLocation(file)))
     }
     const mapAndSchemaFactory = toEntityMap(conduits)
-    const map: PartialEntityMap<Python3Install>  = generateSystemObjects(mapAndSchemaFactory[0])
-    
-    
-    return {inScope: new EntityMap(map), schemaFactory: mapAndSchemaFactory[1]}
+        
+    return {inScope: new EntityMap(generateSystemObjects(mapAndSchemaFactory[0])), schemaFactory: mapAndSchemaFactory[1]}
 } 
