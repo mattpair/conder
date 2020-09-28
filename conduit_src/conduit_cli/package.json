@@ -1,6 +1,6 @@
 {
-  "name": "conduit_cli",
-  "version": "0.0.1",
+  "name": "@conder-systems/conduit",
+  "version": "0.0.0",
   "scripts": {
     "pretest:integration": "npm run pkg:mac",
     "test:integration": "cd ../../integration_test && ./test_all.sh",
@@ -9,7 +9,7 @@
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
     "prepkg:mac": "cd ../conduit_kernel && npm run pkg"
   },
-  "author": "Jeremy",
+  "author": "Conder Systems",
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^14.0.5",
