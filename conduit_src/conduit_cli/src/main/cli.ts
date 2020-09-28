@@ -1,3 +1,4 @@
+import { VERSION } from './VERSION';
 import { StrongServerEnv, RequiredEnv, ServerEnv } from 'conduit_kernel';
 import { loadBuildConfig } from './config/load';
 import * as fs from 'fs';
@@ -6,7 +7,6 @@ import * as mongodb from 'mongodb'
 import {compileFiles, CompiledTypes, Utilities, ConduitBuildConfig} from 'conduit_parser'
 import {compile, generateClients} from 'conduit_compiler'
 const argv = require('minimist')(process.argv.slice(3));
-
 
 function conduitsToTypeResolved(conduits: string[], buildConf: ConduitBuildConfig): CompiledTypes.Manifest {
     const toCompile: Record<string, () => string> = {}
@@ -106,7 +106,7 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>, name: stri
     }
     console.log("starting server")
     
-    child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run kernel-server`, {
+    child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run conduit-kernel:${VERSION}`, {
     env: string_env,
     });
     killActions.push({name: "tearing down conduit server", action: () => child_process.execSync("docker kill conduit-run")})
@@ -116,7 +116,7 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>, name: stri
 const commands: Record<string, () => Promise<void>> = {
     async init() {
         child_process.execSync(`docker pull mongo:4.4`);
-
+        child_process.execSync(`docker pull jermconder/conduit-kernel:${VERSION}`)
     },
 
     async run() {
