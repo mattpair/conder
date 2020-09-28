@@ -106,7 +106,7 @@ async function deployLocally(env: Pick<StrongServerEnv, RequiredEnv>, name: stri
     }
     console.log("starting server")
     
-    child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run conduit-kernel:${VERSION}`, {
+    child_process.execSync(`docker run --rm -d -t -p 7213:8080 ${Object.keys(string_env).map(k => `-e ${k}=$${k}`).join(' ')} --name conduit-run jermconder/conduit-kernel:${VERSION}`, {
     env: string_env,
     });
     killActions.push({name: "tearing down conduit server", action: () => child_process.execSync("docker kill conduit-run")})

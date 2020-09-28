@@ -1,20 +1,18 @@
 {
   "name": "@conder-systems/conduit",
-  "version": "0.0.1-0",
+  "version": "0.1.0",
   "scripts": {
-    "pretest:integration": "echo 'export const VERSION=\"snap\"' > src/main/VERSION.ts && npm run pkg:mac",
+    "pretest:integration": "echo 'export const VERSION=\"snap\"' > src/main/VERSION.ts && npm run pkg:mac && docker tag kernel-server:latest jermconder/conduit-kernel:snap ",
     "test:integration": "cd ../../integration_test && ./test_all.sh",
     "compile": "tsc -b",
     "pkg:mac": "npm run compile && npx pkg dist/conduit.js --target macos && mv conduit bin/SNAPSHOT_CONDUIT_COMPILER",
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
     "prepkg:mac": "cd ../conduit_kernel && npm run pkg",
-
     "preversion": "./run_all_other_tests.sh && npm run test:integration",
-    "postversion": "CONDUIT_VERSION=$(node -p \"require('./package.json').version\") && git add . && git commit -m $CONDUIT_VERSION && git push && npm run release",
-    "prerelease": "echo \"export const VERSION=\\\"$CONDUIT_VERSION\\\"' > src/main/VERSION.ts && npm run pkg:mac",
+    "postversion": "export CONDUIT_VERSION=$(node -p \"require('./package.json').version\") && npm run release",
+    "prerelease": "echo \"export const VERSION='$CONDUIT_VERSION'\" > src/main/VERSION.ts && npm run pkg:mac && git add . && git commit -m \"$CONDUIT_VERSION\" && git push",
     "release": "gh release create $CONDUIT_VERSION 'bin/SNAPSHOT_CONDUIT_COMPILER#conduit'",
     "postrelease": "npm run pkg:mac && docker tag kernel-server:latest jermconder/conduit-kernel:$CONDUIT_VERSION && docker push jermconder/conduit-kernel:$CONDUIT_VERSION"
-    
   },
   "author": "Conder Systems",
   "license": "ISC",
