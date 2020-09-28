@@ -9,8 +9,9 @@
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
     "prepkg:mac": "cd ../conduit_kernel && npm run pkg",
     "preversion": "./run_all_other_tests.sh && npm run test:integration",
-    "version": "git add .",
-    "postversion": "git push && gh release create $(node -p \"require('./package.json').version\") 'bin/SNAPSHOT_CONDUIT_COMPILER#conduit'"
+    "getversion": "node -p \"require('./package.json').version\"",
+    "release": "gh release create $(npm run getversion) 'bin/SNAPSHOT_CONDUIT_COMPILER#conduit'",
+    "postversion": "git add . && git commit -m \"release $(npm run getversion)\" && git push && npm run release"
   },
   "author": "Conder Systems",
   "license": "ISC",
