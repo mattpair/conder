@@ -1,6 +1,6 @@
 {
   "name": "@conder-systems/conduit",
-  "version": "0.0.1-0",
+  "version": "0.0.0",
   "scripts": {
     "pretest:integration": "npm run pkg:mac",
     "test:integration": "cd ../../integration_test && ./test_all.sh",
@@ -9,8 +9,8 @@
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
     "prepkg:mac": "cd ../conduit_kernel && npm run pkg",
     "preversion": "./run_all_other_tests.sh && npm run test:integration",
-    "version": "cp bin/SNAPSHOT_CONDUIT_COMPILER release/conduit && git add .",
-    "postversion": "git push && git push --tags"
+    "version": "git add .",
+    "postversion": "git push && gh release create $(node -p \"require('./package.json').version\") 'bin/SNAPSHOT_CONDUIT_COMPILER#conduit'"
   },
   "author": "Conder Systems",
   "license": "ISC",
