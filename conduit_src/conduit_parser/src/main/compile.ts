@@ -14,15 +14,6 @@ export function compileFiles(files: Record<string, () => string>, build: Conduit
     const mapAndSchemaFactory = toEntityMap(conduits)
     const map: PartialEntityMap<Python3Install>  = generateSystemObjects(mapAndSchemaFactory[0])
     
-    if (build.install) {
-        build.install.forEach(i => {
-            const g = map.get(i.name)
-            if(g) {
-                throw Error(`Install name ${i.name} collides with ${g.kind} ${g.name}`)
-            }
-            map.set(i.name, i)
-        })
-    }
     
     return {inScope: new EntityMap(map), schemaFactory: mapAndSchemaFactory[1]}
 } 
