@@ -208,7 +208,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: [`String`],
             rustOpHandler: `
-                    let res = match ${lastStack} {
+                    let res = match ${popStack} {
                         InterpreterType::Object(inside) => match inside.get(op_param) {
                             Some(o) =>  Ok(o.clone()),
                             _ => Err("Field does not exist")
