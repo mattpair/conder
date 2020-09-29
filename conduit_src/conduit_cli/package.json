@@ -1,6 +1,6 @@
 {
   "name": "@conder-systems/conduit",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
     "pretest:integration": "echo 'export const VERSION=\"snap\"' > src/main/VERSION.ts && npm run pkg:mac && docker tag kernel-server:latest jermconder/conduit-kernel:snap ",
     "test:integration": "cd ../../integration_test && ./test_all.sh",
