@@ -9,9 +9,9 @@
     "setup:mac": "mkdir bin && PWD=$(pwd) &&  PATH=$PATH:$PWD/bin/",
     "prepkg:mac": "cd ../conduit_kernel && npm run pkg",
     "preversion": "./run_all_other_tests.sh && npm run test:integration",
-    "postversion": "export CONDUIT_VERSION=$(node -p \"require('./package.json').version\") && npm run release",
+    "postversion": "export CONDUIT_VERSION=$(node -p \"require('./package.json').version\") && export DASH_CONDUIT=${CONDUIT_VERSION//./-} && npm run release",
     "prerelease": "echo \"export const VERSION='$CONDUIT_VERSION'\" > src/main/VERSION.ts && npm run pkg:mac && git add . && git commit -m \"$CONDUIT_VERSION\" && git push",
-    "release": "cd bin && zip v$CONDUIT_VERSION SNAPSHOT_CONDUIT_COMPILER && gsutil cp v$CONDUIT_VERSION.zip gs://zw477t3sbsikhy1vqsskpy7euj1tgkkb7s2rkzp1-releases/",
+    "release": "cd bin && zip v$DASH_CONDUIT SNAPSHOT_CONDUIT_COMPILER && gsutil cp v$DASH_CONDUIT.zip gs://zw477t3sbsikhy1vqsskpy7euj1tgkkb7s2rkzp1-releases/",
     "postrelease": "docker tag kernel-server:latest jermconder/conduit-kernel:$CONDUIT_VERSION && docker push jermconder/conduit-kernel:$CONDUIT_VERSION"
   },
   "author": "Conder Systems",
