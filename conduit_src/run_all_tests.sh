@@ -1,6 +1,6 @@
 #!/bin/zsh
-cd ..
-for dir in $(ls | grep -v "conduit_cli"); do
+
+for dir in */; do
     echo "Testing $dir"
     cd $dir
     if npm run test; then 
