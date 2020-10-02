@@ -6,8 +6,8 @@
     "compile": "tsc -b && npm run gen && cd src/rust && cargo build",
     "pretest": "npm run compile",
     "test": "jest --maxWorkers=50%",
-    "prepkg": "npm run compile",
-    "pkg": "node -e 'require(\"./dist/index.js\").containerize()'"
+    "prepush": "npm run compile",
+    "push": "node -e 'require(\"./dist/index.js\").containerize()'"
   },
   "author": "Jeremy",
   "license": "ISC",

@@ -13,7 +13,7 @@ module.exports.writeMain = writeMain
 module.exports.containerize = function () {
     writeMain()
     console.log("PWD", process.cwd())
-    child_process.execSync(`docker build -t kernel-server .`, {cwd: "./src/rust", stdio: "inherit"})
+    child_process.execSync(`docker build -t us.gcr.io/conder-systems-281115/kernel-server:latest . && docker push us.gcr.io/conder-systems-281115/kernel-server:latest`, {cwd: "./src/rust", stdio: "inherit"})
 }
 
 export function getOpWriter(): CompleteOpWriter {
