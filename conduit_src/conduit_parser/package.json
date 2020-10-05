@@ -23,7 +23,10 @@
       "**/test/**/*.[jt]s",
       "**/?(*.)+(spec|test).[tj]s"
     ],
-    "testPathIgnorePatterns": ["/node_modules/", "/dist/"]
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ]
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts"
