@@ -96,7 +96,7 @@ describe("conduit kernel", () => {
     test: (server: TestServer) => Promise<void>,
     envOverride: Partial<StrongServerEnv> = {}
   ) {
-    const env: StrongServerEnv = { PROCEDURES: {}, STORES: {}, SCHEMAS: [] };
+    const env: StrongServerEnv = { PROCEDURES: {}, STORES: {}, SCHEMAS: [], DEPLOYMENT_NAME: "testdeployment" };
     for (const key in envOverride) {
       //@ts-ignore
       env[key] = envOverride[key];
@@ -300,7 +300,7 @@ describe("conduit kernel", () => {
           `mongodb://localhost:${ret.port}`,
           { useUnifiedTopology: true }
         );
-        const db = client.db("conduit");
+        const db = client.db("statefultest");
         Object.keys(stores.STORES).forEach(
           async (k) => await db.createCollection(k)
         );
@@ -311,9 +311,6 @@ describe("conduit kernel", () => {
         child_process.execSync(`docker kill mongo${this.port}`);
       }
     }
-
-        // val.mongo.kill();
-        // val.server.kill();
 
     type Stores = Pick<StrongServerEnv, Var.STORES>;
 
@@ -332,6 +329,7 @@ describe("conduit kernel", () => {
                 MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
                 ...params,
                 SCHEMAS: [],
+                DEPLOYMENT_NAME: "statefultest"
               }).then(server => test(server).finally(() => server.kill()))
               .finally(() => mongo.kill())
             ),

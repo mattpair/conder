@@ -1,11 +1,11 @@
 import { compileFiles } from 'conduit_parser';
 
 import {compile} from './src/main/statement_converter'
-import {StrongServerEnv, RequiredEnv,} from 'conduit_kernel'
+import {StrongServerEnv, RequiredEnv, Var} from 'conduit_kernel'
 
 export {StrongServerEnv, RequiredEnv, Var, ServerEnv} from 'conduit_kernel'
 export type CompileResponse = {
-    kind: "success", env: Pick<StrongServerEnv, RequiredEnv>
+    kind: "success", env: Pick<StrongServerEnv, Exclude<RequiredEnv, Var.DEPLOYMENT_NAME>>
   } | 
   {
     kind: "error", reason: string

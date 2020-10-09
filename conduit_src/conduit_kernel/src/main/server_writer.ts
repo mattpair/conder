@@ -14,17 +14,18 @@ export enum Var {
     MONGO_CONNECTION_URI="MONGO_CONNECTION_URI",
     PROCEDURES="PROCEDURES",
     SCHEMAS="SCHEMAS",
-    STORES="STORES"
+    STORES="STORES",
+    DEPLOYMENT_NAME="DEPLOYMENT_NAME"
 }
 
 export type EnvVarType<E extends Var> = 
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
-E extends Var.MONGO_CONNECTION_URI ? string :
+E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME ? string :
 never
 
-export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES 
+export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES | Var.DEPLOYMENT_NAME
 
 // Strong refers to the fact that the type bounds are more specific.
 export type StrongServerEnv= {[E in Exclude<Var, RequiredEnv>]?: EnvVarType<E>} & {
@@ -76,21 +77,22 @@ export function generateServer(): string {
             type: "Option<mongodb::Database>",
             initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
                 Ok(uri) => {
-
-                    let client = match mongodb::Client::with_uri_str(&uri).await {
+                    println!("URI: {}", uri);
+                    let client = match mongodb::Client::with_options(mongodb::options::ClientOptions::parse(&uri).await.unwrap()) {
                         Ok(r) => r,
                         Err(e) => panic!("Failure connecting to mongo: {}", e)
                     };
+                    let deploymentname = env::var("${Var.DEPLOYMENT_NAME}").unwrap();
 
                     // List the names of the databases in that deployment.
-                    let cols = match client.database("conduit").list_collection_names(None).await {
+                    let cols = match client.database(&deploymentname).list_collection_names(None).await {
                         Ok(r) => r,
                         Err(e) => panic!("Failure connecting to mongo: {}", e)
                     };
                     for col in  cols{
                         println!("{}", col);
                     }
-                    Some(client.database("conduit"))
+                    Some(client.database(&deploymentname))
                 },
                 Err(e) => {
                     eprintln!("No mongo location specified. Running without storage.");
