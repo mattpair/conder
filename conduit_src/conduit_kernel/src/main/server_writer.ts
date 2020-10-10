@@ -77,8 +77,10 @@ export function generateServer(): string {
             type: "Option<mongodb::Database>",
             initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
                 Ok(uri) => {
-                    println!("URI: {}", uri);
-                    let client = match mongodb::Client::with_options(mongodb::options::ClientOptions::parse(&uri).await.unwrap()) {
+                    let mut options = mongodb::options::ClientOptions::parse(&uri).await.unwrap();
+                    options.write_concern = Some(mongodb::options::WriteConcern::builder().w(mongodb::options::Acknowledgment::Majority).build());
+                    options.read_concern = Some(mongodb::options::ReadConcern::majority());
+                    let client = match mongodb::Client::with_options(options) {
                         Ok(r) => r,
                         Err(e) => panic!("Failure connecting to mongo: {}", e)
                     };
