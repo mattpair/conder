@@ -9,7 +9,8 @@ const command: GluegunCommand = {
     const {
       parameters,
       print: { info, error },
-      filesystem
+      filesystem,
+      config
     } = toolbox
     const name = parameters.first
     if (name === undefined) {
@@ -17,7 +18,7 @@ const command: GluegunCommand = {
       process.exit(1)
     }
     info(`Deploying: ${name}`)
-
+    info(config.gateway_location)
     const code = filesystem.read("main.cdt")
     if (code === undefined) {
       error(`Could not find required file main.cdt`)

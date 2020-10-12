@@ -23,6 +23,6 @@
     "declaration": true,
     "declarationDir": "build/types"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "gateway_location.js"],
   "exclude": ["node_modules"]
 }
