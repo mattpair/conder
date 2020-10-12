@@ -10,11 +10,8 @@ async function run(argv) {
     .src(__dirname)
     .plugins('./node_modules', { matching: 'conder-*', hidden: true })
     .help() // provides default for help, h, --help, -h
-    .version() // provides default for version, v, --version, -v
     .create()
-  // enable the following method if you'd like to skip loading one of these core extensions
-  // this can improve performance if they're not necessary for your project:
-  // .exclude(['meta', 'strings', 'print', 'filesystem', 'semver', 'system', 'prompt', 'http', 'template', 'patching', 'package-manager'])
+    .exclude(['meta', 'strings', 'print', 'filesystem', 'system', 'prompt', 'http'])
   // and run it
   const toolbox = await cli.run(argv)
 
