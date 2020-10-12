@@ -8,11 +8,21 @@ const command: GluegunCommand = {
   run: async (toolbox: GluegunToolbox) => {
     const {
       parameters,
-      print: { info },
+      print: { info, error },
+      filesystem
     } = toolbox
-    info("Starting deployment")
-
     const name = parameters.first
+    if (name === undefined) {
+      error(`Expected a name to be provided as the first argument`)
+      process.exit(1)
+    }
+    info(`Deploying: ${name}`)
+
+    const code = filesystem.read("main.cdt")
+    if (code === undefined) {
+      error(`Could not find required file main.cdt`)
+      process.exit(1)
+    }
 
     
 
