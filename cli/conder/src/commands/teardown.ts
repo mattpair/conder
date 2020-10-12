@@ -23,8 +23,8 @@ const command: GluegunCommand = {
     const client = getClient(toolbox)
     const result = await client.delete<any>("/", 
       //TODO: eventually use the types in platform controller 
-      {deployment_name}
-    )
+     {}, 
+    {data: {deployment_name}})
     if (result.ok) {
       info(`Deleted successfully`)
     } else {

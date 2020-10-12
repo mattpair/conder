@@ -10,8 +10,8 @@ async function run(argv) {
     .src(__dirname)
     .plugins('./node_modules', { matching: 'conder-*', hidden: true })
     .help() // provides default for help, h, --help, -h
+    .exclude(['meta', 'strings', 'prompt', 'template', 'patching', 'package-manager'])
     .create()
-    .exclude(['meta', 'strings', 'print', 'filesystem', 'system', 'prompt', 'http'])
   // and run it
   const toolbox = await cli.run(argv)
 
