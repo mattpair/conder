@@ -24,7 +24,7 @@ const command: GluegunCommand = {
       error(`Could not find required file main.cdt`)
       process.exit(1)
     }
-    info(`Deploying: ${name}`)
+    info(`Deploying: ${deployment_name}`)
 
     const client = getClient(toolbox)
     const result = await client.post<any>("/", 
