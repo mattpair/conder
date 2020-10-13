@@ -1309,17 +1309,18 @@ Object {
           },
         },
         "returnType": Object {
-          "data": undefined,
-          "kind": "Ref",
-          "refType": Object {
-            "data": Object {
-              "s": Object {
-                "data": null,
-                "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "s": Object {
+                  "data": null,
+                  "kind": "string",
+                },
               },
+              "kind": "Object",
             },
-            "kind": "Object",
-          },
+          ],
+          "kind": "Ref",
         },
       },
       "mine" => Object {
@@ -1623,17 +1624,18 @@ Object {
           "kind": "WithParam",
           "name": "r",
           "schema": Object {
-            "data": undefined,
-            "kind": "Ref",
-            "refType": Object {
-              "data": Object {
-                "val": Object {
-                  "data": null,
-                  "kind": "string",
+            "data": Array [
+              Object {
+                "data": Object {
+                  "val": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
                 },
+                "kind": "Object",
               },
-              "kind": "Object",
-            },
+            ],
+            "kind": "Ref",
           },
         },
         "part": Object {
@@ -1664,17 +1666,18 @@ Object {
           },
         },
         "returnType": Object {
-          "data": undefined,
-          "kind": "Ref",
-          "refType": Object {
-            "data": Object {
-              "val": Object {
-                "data": null,
-                "kind": "string",
+          "data": Array [
+            Object {
+              "data": Object {
+                "val": Object {
+                  "data": null,
+                  "kind": "string",
+                },
               },
+              "kind": "Object",
             },
-            "kind": "Object",
-          },
+          ],
+          "kind": "Ref",
         },
       },
       "secondStore" => Object {

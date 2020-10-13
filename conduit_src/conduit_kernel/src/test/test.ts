@@ -446,14 +446,18 @@ describe("conduit kernel", () => {
     ];
 
     const deref = [
-      opWriter.copyFromHeap(0),
-      opWriter.findOneInStore([{ store: "test" }, { _id: false }]),
+      opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
+      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),
+      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
+      opWriter.findOneInStore({select: {_id: false}}),
       opWriter.returnStackTop,
     ];
 
     const del = [
-      opWriter.copyFromHeap(0),
-      opWriter.deleteOneInStore({ store: "test" }),
+      opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
+      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),      
+      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
+      opWriter.deleteOneInStore,
       opWriter.returnStackTop,
     ];
 
@@ -514,7 +518,7 @@ describe("conduit kernel", () => {
         );
         expect(res).toBeTruthy()
 
-        res = await server.invoke("deref", { _id: -1 });
+        res = await server.invoke("deref", {address: { _id: -1 }, parent: "test"});
 
         expect(res).toEqual(null);
       }
@@ -542,16 +546,17 @@ describe("conduit kernel", () => {
         expect(res.length).toBe(1);
 
         const _id = res[0]._id;
-        res = await server.invoke("deref", { _id });
+        const ptr = {address: { _id }, parent: "test"}
+        res = await server.invoke("deref", ptr);
         expect(res).toEqual({ data: "First object" });
 
-        res = await server.invoke("del", { _id });
+        res = await server.invoke("del", ptr);
         expect(res).toBe(true);
 
-        res = await server.invoke("deref", { _id });
+        res = await server.invoke("deref", ptr);
         expect(res).toEqual(null);
 
-        res = await server.invoke("del", { _id });
+        res = await server.invoke("del", ptr);
         expect(res).toBe(false);
       }
     );

@@ -21,7 +21,10 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
                     let mut ret = Vec::with_capacity(r.inserted_ids.len());
                     for k in ordered_keys {
                         let v = r.inserted_ids.remove(&k).unwrap();
-                        ret.push(bson::from_document(doc! {"_id": v}).unwrap())
+                        ret.push(bson::from_document(doc! {
+                            "parent": storeName,
+                            "address": {"_id": v}
+                        }).unwrap())
                     }
 
                     InterpreterType::Array(ret)
@@ -30,7 +33,7 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
             }
         },
         _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
-            Ok(r) => bson::from_document(doc! {"_id": r.inserted_id}).unwrap(),
+            Ok(r) => bson::from_document(doc! {"address": {"_id": r.inserted_id}, "parent": storeName}).unwrap(),
             Err(e) => panic!("Failure inserting {}", e)
         }
     }

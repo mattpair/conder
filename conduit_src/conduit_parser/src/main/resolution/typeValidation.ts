@@ -129,7 +129,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                         schemaWrapper = schemaFactory.Array
                         break
                     case Symbol.Ref:
-                        schemaWrapper = (a: AnySchemaInstance) => ({kind: "Ref", refType: a, data: undefined})
+                        schemaWrapper = (a: AnySchemaInstance) => ({kind: "Ref", data: [a]})
                         break
 
                     case Symbol.none:

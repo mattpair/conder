@@ -1,5 +1,6 @@
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 import * as mongodb from 'mongodb'
+import { AnySchemaInstance } from "conduit_parser"
 type OpDef<NAME> = {
     readonly rustOpHandler: string
     readonly paramType?: string[]
@@ -15,6 +16,9 @@ type OpClass = "static" | "param"
 type Op<KIND, C extends OpClass, P=undefined> = 
 {kind: KIND, class: C, paramType?: P}
 
+type MongoBaseTypes = boolean | string | number
+type ProjectionOptions = mongodb.SchemaMember<undefined,  MongoBaseTypes | MongoBaseTypes[] | mongodb.ProjectionOperators> 
+
 type Ops = 
 ParamOp<"returnVariable", number> |
 StaticOp<"returnStackTop"> |
@@ -26,13 +30,14 @@ StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
 ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
+ParamOp<"enforceSchemaInstanceOnHeap", {heap_pos: number, schema: AnySchemaInstance}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
-ParamOp<"queryStore", [string, mongodb.FindOneOptions<any>["projection"]]> |
-ParamOp<"findOneInStore", [{store: string}, mongodb.FindOneOptions<any>["projection"]]> |
-ParamOp<"deleteOneInStore", {store: string}> |
+ParamOp<"queryStore", [string, ProjectionOptions]> |
+ParamOp<"findOneInStore", {select: ProjectionOptions}> |
+StaticOp<"deleteOneInStore"> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
 StaticOp<"toBool"> |
@@ -43,7 +48,8 @@ StaticOp<"arrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", string> |
-ParamOp<"setNestedField", string[]>
+ParamOp<"setNestedField", string[]> |
+ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -94,6 +100,12 @@ const popStack = `
         _ => panic!("Attempting to access non existent value")
     }
     `
+
+const popToString = `
+    match ${popStack} {
+        InterpreterType::string(s) => s, 
+        _ => panic!("Stack variable is not a string")
+    }`
 const lastStack = `stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
@@ -297,25 +309,24 @@ export const OpSpec: CompleteOpSpec = {
     },
     findOneInStore: {
         opDefinition: {
-            paramType: ["String", "HashMap<String, InterpreterType>"],
+            paramType: ["HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::find_one(${getDb}, param0, &${popStack}, param1).await;
+            let storename = ${popToString};
+            let res = storage::find_one(${getDb}, &storename, &${popStack}, op_param).await;
             ${pushStack("res")};
             None
             `
         },
-        factoryMethod: (d) => ({kind: "findOneInStore", data: [d[0].store, d[1]]})
+        factoryMethod: (d) => ({kind: "findOneInStore", data: d.select})
     },
     deleteOneInStore: {
         opDefinition: {
-            paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
+            let res = storage::delete_one(${getDb}, &${popToString}, &${popStack}).await;
             ${pushStack("res")};
             None
             `
         },
-        factoryMethod: (d) => ({kind: "deleteOneInStore", data: d.store})
     },
 
     instantiate: {
@@ -483,6 +494,41 @@ export const OpSpec: CompleteOpSpec = {
             }
             return {kind: "setNestedField", data}
         }
+    },
+    copyFieldFromHeap: {
+        opDefinition: {
+            paramType: ["usize", "Vec<String>"],
+            rustOpHandler: `
+            let mut target: &InterpreterType = &heap[*param0];
+            for f in param1 {
+                target = match target {
+                    InterpreterType::Object(inner) => match inner.get(f) {
+                        Some(v) => v,
+                        None => panic!("Field does not exist: {}", f)
+                    }
+                    _ => panic!("Accessing field on non object")
+                };
+            }
+
+            ${pushStack("target.clone()")};
+            None
+            `
+        },
+        factoryMethod: (input) => ({kind: "copyFieldFromHeap", data: [input.heap_pos, input.fields]})
+    },
+
+    enforceSchemaInstanceOnHeap: {
+        opDefinition: {
+            paramType: ["usize", "Schema"],
+            rustOpHandler: `
+            if adheres_to_schema(&heap[*param0], param1) {
+                None
+            } else {
+                ${raiseErrorWithMessage("Variable does not match the schema")}
+            }
+            `
+        },
+        factoryMethod: (p) => ({kind: "enforceSchemaInstanceOnHeap", data: [p.heap_pos, p.schema]})
     }
 
 }

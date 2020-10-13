@@ -5,7 +5,6 @@ export type SchemaType = "Optional" | "Object" | "Array" | PrimitiveUnion | "Ref
 
 type SchemaFactory = Readonly<{
     [P in Exclude<SchemaType, PrimitiveUnion>]: 
-    P extends "Ref" ? (s: SchemaInstance<SchemaType>) => SchemaInstance<"Ref"> :
     P extends "Object" ? (r: Record<string, SchemaInstance<SchemaType>>) => SchemaInstance<P> : (i: SchemaInstance<SchemaType>) => SchemaInstance<P>;
 } & {
         [P in PrimitiveUnion]: SchemaInstance<P>;
@@ -20,7 +19,7 @@ export const schemaFactory: SchemaFactory = {
     bool: { kind: Symbol.bool, data: null},
     double: { kind: Symbol.double, data: null },
     int: { kind: Symbol.int, data: null },
-    Ref: (r) => ({kind: "Ref", refType: r, data: undefined})
+    Ref: (r) => ({kind: "Ref", data: [r]})
 };
 
 
@@ -28,7 +27,7 @@ export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion ? { 
 P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : 
 P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : 
 P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } :
-P extends "Ref" ? {kind: "Ref", refType: SchemaInstance<SchemaType>, data: undefined} : never;
+P extends "Ref" ? {kind: "Ref", data: [SchemaInstance<SchemaType>]} : never;
 
 export type AnySchemaInstance = SchemaInstance<SchemaType>
 export type Schemas = AnySchemaInstance[]
