@@ -1,7 +1,7 @@
 import { StrongServerEnv, RequiredEnv, Var, AnyOpInstance, getOpWriter, CompleteOpWriter, interpeterTypeFactory} from 'conduit_kernel';
 import { Utilities, CompiledTypes, Parse, Lexicon, AnySchemaInstance, schemaFactory } from "conduit_parser";
 
-export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, RequiredEnv> {
+export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv, Exclude<RequiredEnv, Var.DEPLOYMENT_NAME>> {
     const PROCEDURES: StrongServerEnv[Var.PROCEDURES] = {}
     const SCHEMAS: StrongServerEnv[Var.SCHEMAS] = []
     const STORES: StrongServerEnv[Var.STORES] = {}
@@ -18,7 +18,6 @@ export function compile(manifest: CompiledTypes.Manifest): Pick<StrongServerEnv,
                 structToSchemaNum[`__func__${val.name}`] = SCHEMAS.length - 1
             }
         }
-
 
         if (val.kind === "HierarchicalStore") {
             STORES[val.name] = val.schema

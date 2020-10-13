@@ -33,6 +33,10 @@ const command: GluegunCommand = {
     )
     if (result.ok && result.data.kind === "success") {
       info(`System is reachable at ${result.data.url}`)
+      if (parameters.options.typescript) {
+        info(`Writing typescript client to ${parameters.options.typescript}`)
+        filesystem.write(parameters.options.typescript, result.data.client.typescript)
+      } 
     } else if (result.data.kind === "error") {
       error(`Failed to deploy: ${result.data.reason}`)
       process.exit(1)
