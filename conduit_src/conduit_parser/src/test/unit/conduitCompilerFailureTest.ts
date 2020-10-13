@@ -67,13 +67,15 @@ struct Container {
 
 `)
 
-testFailsWhen("Refing a struct ", `
+testFailsWhen("Refing a instance ", `
 struct otherStruct {
     f: string
 }
 
+instances: Array<otherStruct> = []
+
 struct Container {
-    e: Ref<otherStruct>
+    e: &instances
 }
 
 `)

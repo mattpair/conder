@@ -50,17 +50,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                 if (ref === undefined) {
                     throw Error(`${t.name} does not refer to any known type`)
                 }
-
-                if (last !== undefined && last.kind === "modification" && last.mod === Symbol.Ref) {
-                    if (ref.kind === "StoreDefinition") {
-                        return schemaFactory.Ref(ref.name)
-                    } else {
-                        throw Error("Refs must refer to an array at the global level.")
-                    }                   
-                } 
-                
-                
-            
+                            
                 let newSchema: AnySchemaInstance = undefined
                  
                 if (!schemaLookup.has(t.name)) {
@@ -87,7 +77,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                             info.pop()
                             break
                         case "StoreDefinition":
-                            throw Error("Globals may only be referenced in types to define refs.")
+                            throw Error("Globals cannot be used in type definitions.")
                         default: assertNever(ref)
                     }
                     
@@ -104,7 +94,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                 
                 return schemaFactory[t.type]
             case "DetailedType":
-                let schemaWrapper = undefined
+                let schemaWrapper: (s: AnySchemaInstance) => AnySchemaInstance = undefined
                 switch (t.modification) {
                     case Symbol.Optional:
                         if (last !== undefined && last.kind === "modification") {
@@ -114,7 +104,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                                 case Symbol.Optional:
                                     throw Error(`Nesting optionals defeats the purpose of optionals`)
                                 case Symbol.Ref:
-                                    throw Error(`Holding a reference to an optional is not allowed`)
                                 case Symbol.none:
                                     break
                                 default: assertNever(last.mod)
@@ -132,7 +121,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                                 case Symbol.Optional:
                                     throw Error(`Instead of having an optional array, just store an empty array.`)
                                 case Symbol.Ref:
-                                    throw Error(`Holding a reference to an array is not allowed`)
                                 case Symbol.none:
                                     break
                                 default: assertNever(last.mod)
@@ -141,7 +129,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                         schemaWrapper = schemaFactory.Array
                         break
                     case Symbol.Ref:
-                        schemaWrapper = (a: AnySchemaInstance) => a
+                        schemaWrapper = (a: AnySchemaInstance) => ({kind: "Ref", refType: a, data: undefined})
                         break
 
                     case Symbol.none:

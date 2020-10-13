@@ -214,7 +214,7 @@ compileTest("references ", `
     
     secondStore: Array<stored> = []
 
-    public function refTest(r: Ref<secondStore>): Ref<secondStore> {
+    public function refTest(r: &stored): &stored {
         return r
     }
 `)
@@ -266,7 +266,7 @@ compileTest("may use synonym prefix symbol for references", `
 
     mine: Array<saved> = []
 
-    public function refer(): &mine {
+    public function refer(): &saved {
         return mine.select(r => {
             return r.ref()
         })

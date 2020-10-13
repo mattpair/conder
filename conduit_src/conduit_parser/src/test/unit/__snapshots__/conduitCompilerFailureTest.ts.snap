@@ -2,7 +2,7 @@
 
 exports[`Global with contents 1`] = `"Global arrays must be initialized empty"`;
 
-exports[`Refing a struct  1`] = `"Refs must refer to an array at the global level."`;
+exports[`Refing a instance  1`] = `"Globals cannot be used in type definitions."`;
 
 exports[`attempting to store enums 1`] = `"Global arrays must contain structs"`;
 

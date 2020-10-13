@@ -1293,9 +1293,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 36,
+              "endColNumber": 37,
               "endLineNumber": 7,
-              "startColNumber": 35,
+              "startColNumber": 36,
               "startLineNumber": 7,
             },
           },
@@ -1309,8 +1309,17 @@ Object {
           },
         },
         "returnType": Object {
-          "data": "mine",
+          "data": undefined,
           "kind": "Ref",
+          "refType": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
         },
       },
       "mine" => Object {
@@ -1614,8 +1623,17 @@ Object {
           "kind": "WithParam",
           "name": "r",
           "schema": Object {
-            "data": "secondStore",
+            "data": undefined,
             "kind": "Ref",
+            "refType": Object {
+              "data": Object {
+                "val": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
           },
         },
         "part": Object {
@@ -1630,9 +1648,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 68,
+              "endColNumber": 50,
               "endLineNumber": 7,
-              "startColNumber": 66,
+              "startColNumber": 49,
               "startLineNumber": 7,
             },
           },
@@ -1646,8 +1664,17 @@ Object {
           },
         },
         "returnType": Object {
-          "data": "secondStore",
+          "data": undefined,
           "kind": "Ref",
+          "refType": Object {
+            "data": Object {
+              "val": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
         },
       },
       "secondStore" => Object {
