@@ -66,7 +66,7 @@ testFailsWhen("Self referencing type", {
 
 testFailsWhen("function with unknown types", {
     "conduit_a.cdt": `
-    function letsGetFuncy(a: SomeType, b: Foreign.Type) {
+    public function letsGetFuncy(a: SomeType, b: Foreign.Type) {
 
     }
 
@@ -76,7 +76,7 @@ testFailsWhen("function with unknown types", {
 testFailsWhen("function with invalid return type", {
     "conduit_a.cdt": `
 
-    function funk() SomeType {
+    public function funk() SomeType {
     }
     `
 })
@@ -88,7 +88,7 @@ protoCompileTest("simple echo function", {
         m: string
     }
 
-    function echo(s: Shout) Shout {
+    public function echo(s: Shout) Shout {
         return s
     }
     `

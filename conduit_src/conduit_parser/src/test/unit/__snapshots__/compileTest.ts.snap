@@ -145,7 +145,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 35,
+          "endColNumber": 42,
           "endLineNumber": 12,
           "startColNumber": 5,
           "startLineNumber": 10,
@@ -187,9 +187,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 66,
+              "endColNumber": 73,
               "endLineNumber": 12,
-              "startColNumber": 64,
+              "startColNumber": 71,
               "startLineNumber": 12,
             },
           },
@@ -275,7 +275,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 35,
+          "endColNumber": 42,
           "endLineNumber": 7,
           "startColNumber": 35,
           "startLineNumber": 5,
@@ -285,9 +285,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 37,
+            "endColNumber": 44,
             "endLineNumber": 7,
-            "startColNumber": 35,
+            "startColNumber": 42,
             "startLineNumber": 7,
           },
         },
@@ -307,9 +307,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 54,
+              "endColNumber": 61,
               "endLineNumber": 7,
-              "startColNumber": 52,
+              "startColNumber": 59,
               "startLineNumber": 7,
             },
           },
@@ -350,7 +350,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 36,
+          "endColNumber": 43,
           "endLineNumber": 12,
           "startColNumber": 5,
           "startLineNumber": 10,
@@ -391,9 +391,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 71,
+              "endColNumber": 78,
               "endLineNumber": 12,
-              "startColNumber": 69,
+              "startColNumber": 76,
               "startLineNumber": 12,
             },
           },
@@ -681,7 +681,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 35,
+          "endColNumber": 42,
           "endLineNumber": 12,
           "startColNumber": 5,
           "startLineNumber": 10,
@@ -728,9 +728,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 62,
+              "endColNumber": 69,
               "endLineNumber": 12,
-              "startColNumber": 61,
+              "startColNumber": 68,
               "startLineNumber": 12,
             },
           },
@@ -806,7 +806,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 23,
+          "endColNumber": 30,
           "endLineNumber": 7,
           "startColNumber": 35,
           "startLineNumber": 5,
@@ -816,9 +816,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 25,
+            "endColNumber": 32,
             "endLineNumber": 7,
-            "startColNumber": 23,
+            "startColNumber": 30,
             "startLineNumber": 7,
           },
         },
@@ -834,9 +834,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 42,
+              "endColNumber": 49,
               "endLineNumber": 7,
-              "startColNumber": 40,
+              "startColNumber": 47,
               "startLineNumber": 7,
             },
           },
@@ -952,7 +952,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 23,
+          "endColNumber": 30,
           "endLineNumber": 7,
           "startColNumber": 35,
           "startLineNumber": 5,
@@ -962,9 +962,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 25,
+            "endColNumber": 32,
             "endLineNumber": 7,
-            "startColNumber": 23,
+            "startColNumber": 30,
             "startLineNumber": 7,
           },
         },
@@ -980,9 +980,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 41,
+              "endColNumber": 48,
               "endLineNumber": 7,
-              "startColNumber": 39,
+              "startColNumber": 46,
               "startLineNumber": 7,
             },
           },
@@ -1142,7 +1142,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 35,
+          "endColNumber": 42,
           "endLineNumber": 7,
           "startColNumber": 5,
           "startLineNumber": 5,
@@ -1186,9 +1186,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 62,
+              "endColNumber": 69,
               "endLineNumber": 7,
-              "startColNumber": 60,
+              "startColNumber": 67,
               "startLineNumber": 7,
             },
           },
@@ -1285,7 +1285,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 21,
+          "endColNumber": 28,
           "endLineNumber": 6,
           "startColNumber": 5,
           "startLineNumber": 4,
@@ -1295,9 +1295,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 23,
+            "endColNumber": 30,
             "endLineNumber": 6,
-            "startColNumber": 21,
+            "startColNumber": 28,
             "startLineNumber": 6,
           },
         },
@@ -1313,9 +1313,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 30,
+              "endColNumber": 37,
               "endLineNumber": 6,
-              "startColNumber": 28,
+              "startColNumber": 35,
               "startLineNumber": 6,
             },
           },
@@ -1351,7 +1351,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 21,
+          "endColNumber": 28,
           "endLineNumber": 13,
           "startColNumber": 5,
           "startLineNumber": 11,
@@ -1361,9 +1361,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 23,
+            "endColNumber": 30,
             "endLineNumber": 13,
-            "startColNumber": 21,
+            "startColNumber": 28,
             "startLineNumber": 13,
           },
         },
@@ -1379,9 +1379,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 30,
+              "endColNumber": 37,
               "endLineNumber": 13,
-              "startColNumber": 28,
+              "startColNumber": 35,
               "startLineNumber": 13,
             },
           },
@@ -1467,7 +1467,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 20,
+          "endColNumber": 27,
           "endLineNumber": 7,
           "startColNumber": 35,
           "startLineNumber": 5,
@@ -1494,9 +1494,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 61,
+              "endColNumber": 68,
               "endLineNumber": 7,
-              "startColNumber": 59,
+              "startColNumber": 66,
               "startLineNumber": 7,
             },
           },
@@ -1602,7 +1602,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 23,
+          "endColNumber": 30,
           "endLineNumber": 7,
           "startColNumber": 35,
           "startLineNumber": 4,
@@ -1612,9 +1612,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 25,
+            "endColNumber": 32,
             "endLineNumber": 7,
-            "startColNumber": 23,
+            "startColNumber": 30,
             "startLineNumber": 7,
           },
         },
@@ -1630,9 +1630,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 42,
+              "endColNumber": 49,
               "endLineNumber": 7,
-              "startColNumber": 40,
+              "startColNumber": 47,
               "startLineNumber": 7,
             },
           },
@@ -2534,7 +2534,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 15,
+          "endColNumber": 22,
           "endLineNumber": 4,
           "startColNumber": 5,
           "startLineNumber": 3,
@@ -2544,9 +2544,9 @@ Object {
         "parameter": Object {
           "kind": "NoParameter",
           "loc": Object {
-            "endColNumber": 17,
+            "endColNumber": 24,
             "endLineNumber": 4,
-            "startColNumber": 15,
+            "startColNumber": 22,
             "startLineNumber": 4,
           },
         },
@@ -2562,9 +2562,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 24,
+              "endColNumber": 31,
               "endLineNumber": 4,
-              "startColNumber": 22,
+              "startColNumber": 29,
               "startLineNumber": 4,
             },
           },

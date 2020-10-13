@@ -1,5 +1,5 @@
 import {compileFiles} from '../../main/compile'
-
+//TODO: rename this file and function.
 function compileTest(description: string, file: string) {
     test(description, () => {
         expect(compileFiles({"testFile.cdt": () => file}, {dependents: {}, project: "test"})).toMatchSnapshot()
@@ -102,7 +102,7 @@ compileTest("getting all data from store", `
 
     secondStore: Array<stored> = []
 
-    function getAllData() Array<stored> {
+    public function getAllData() Array<stored> {
         return secondStore
     }
 `)
@@ -114,7 +114,7 @@ compileTest("functions have flexible syntax", `
 
     secondStore: Array<stored> = []
 
-    function getAllData(): Array<stored> {
+    public function getAllData(): Array<stored> {
         return secondStore
     }
 `)
@@ -126,12 +126,12 @@ compileTest("May assign stores and inputs to variables", `
 
     secondStore: Array<stored> = []
 
-    function getAllDataIntermediate(): Array<stored> {
+    public function getAllDataIntermediate(): Array<stored> {
         result: Array<stored> = secondStore
         return result
     }
 
-    function returnInputIntermediate(i: Array<stored>): Array<stored> {
+    public function returnInputIntermediate(i: Array<stored>): Array<stored> {
         result: Array<stored> = i
         return result
     }
@@ -150,7 +150,7 @@ compileTest("Field referencing", `
         f: string
     }
 
-    function getAllDataIntermediate(input: Outermost): Innermost {
+    public function getAllDataIntermediate(input: Outermost): Innermost {
         return input.middle.inner
     }
 `)
@@ -167,7 +167,7 @@ compileTest("for in loop", `
         f: string
     }
 
-    function getAllDataIntermediate(input: Array<Outermost>) {
+    public function getAllDataIntermediate(input: Array<Outermost>) {
         for row in input {
             row.middle.inner
         }
@@ -183,7 +183,7 @@ compileTest("if statement", `
         right: string
     }
 
-    function getAllDataIntermediate(input: withbool): string {
+    public function getAllDataIntermediate(input: withbool): string {
         if input.returnLeft {
             return input.left
         }
@@ -199,7 +199,7 @@ compileTest("select method", `
     secondStore: Array<stored> = []
 
 
-    function getAllData(): Array<stored> {
+    public function getAllData(): Array<stored> {
         
         return secondStore.select(row => {
             return row
@@ -214,7 +214,7 @@ compileTest("references ", `
     
     secondStore: Array<stored> = []
 
-    function refTest(r: Ref<secondStore>): Ref<secondStore> {
+    public function refTest(r: Ref<secondStore>): Ref<secondStore> {
         return r
     }
 `)
@@ -225,14 +225,14 @@ compileTest("object literal ", `
         b: string
     }
     
-    function litTest1(): obj {
+    public function litTest1(): obj {
         return {
             a: c.genString()
             b: c.genString()
         }
     }
 
-    function litTest2(): obj {
+    public function litTest2(): obj {
         return {a:c.genString(),b:c.genString()}
     }
 `)
@@ -241,12 +241,12 @@ compileTest("string literal", `
     struct obj {
         a: string
     }
-    function t1(): obj {
+    public function t1(): obj {
         return {
             a: \`this is a single line string\`
         }
     }
-    function t2(): obj {
+    public function t2(): obj {
         return {
             a: \` this
             is 

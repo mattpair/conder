@@ -14,6 +14,11 @@ exports[`creating an optional array 1`] = `"Instead of having an optional array,
 
 exports[`creating an optional enum 1`] = `"Optional enum is unsupported."`;
 
+exports[`declaring a function as not private or public 1`] = `
+"Failed to parse file entirely: {\\"dir\\":\\"\\",\\"name\\":\\"badFile.cdt\\",\\"fullname\\":\\"badFile.cdt\\"}
+function echo(s: str"
+`;
+
 exports[`dependent struct is not in scope  1`] = `"M2 does not refer to any known type"`;
 
 exports[`naming an entity after a keyword  1`] = `

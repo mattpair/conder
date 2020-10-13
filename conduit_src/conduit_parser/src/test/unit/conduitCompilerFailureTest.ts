@@ -1,5 +1,5 @@
 import {compileFiles} from '../../main/compile'
-
+//TODO: rename this file
 function testFailsWhen(description: string, file: string) {
     test(description, () => {
         expect(() => compileFiles({"badFile.cdt": () => file}, {dependents: {}, project: "test"})).toThrowErrorMatchingSnapshot()
@@ -84,4 +84,10 @@ struct s {
 }
 
 ss: Array<s> = [{field: a.thing()}]
+`)
+
+testFailsWhen("declaring a function as not private or public", `
+function echo(s: string): string {
+    return s
+}
 `)

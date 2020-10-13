@@ -21,7 +21,9 @@ export enum Symbol {
     Optional="Optional",
     type="type",
     none="none",
-    Ref="Ref"
+    Ref="Ref",
+    public="public",
+    private="private"
 }
 
 export const Operators: [

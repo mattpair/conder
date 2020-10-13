@@ -439,9 +439,15 @@ export namespace Parse {
         },
         Function: {
             kind: "conglomerate",
-            startRegex: /^\s*function +(?<name>[a-zA-Z_]\w*)/,
+            startRegex: /^\s*(?<exposure>public|private)? +function +(?<name>[a-zA-Z_]\w*)/,
             endRegex: /^/,
             assemble(start, end, loc, part): Function | undefined {
+                if (start.groups.exposure === undefined) {
+                    throw Error(`Function ${start.groups.name} must be either public or private`)
+                } else if (start.groups.exposure === "private") {
+                    throw Error(`Private functions currently aren't supported`)
+                }
+
                 return {
                     kind: "Function",
                     loc,

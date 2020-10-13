@@ -152,7 +152,7 @@ Object {
         ],
         "kind": "Function",
         "loc": Object {
-          "endColNumber": 17,
+          "endColNumber": 24,
           "endLineNumber": 6,
           "startColNumber": 5,
           "startLineNumber": 4,
@@ -184,9 +184,9 @@ Object {
             },
             "kind": "FunctionBody",
             "loc": Object {
-              "endColNumber": 35,
+              "endColNumber": 42,
               "endLineNumber": 6,
-              "startColNumber": 33,
+              "startColNumber": 40,
               "startLineNumber": 6,
             },
           },
