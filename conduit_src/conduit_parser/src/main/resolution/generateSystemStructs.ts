@@ -8,7 +8,7 @@ import { Symbol } from '../lexicon';
 
 
 
-
+//TODO: delete this.
 export function generateSystemObjects(entityMapInternal: PartialEntityMap): PartialEntityMap {
 
     entityMapInternal.forEach(v => {

@@ -6,6 +6,7 @@ import { toEntityMap, PartialEntityMap } from "./resolution/typeValidation";
 import { FileLocation } from "./utils";
 import { generateSystemObjects,  } from "./resolution/generateSystemStructs";
 
+//TODO: rename this and simplify so it only takes one string.
 export function compileFiles(files: Record<string, () => string>, build: ConduitBuildConfig): Manifest {
     const conduits: Parse.File[] = []
     for (const file in files) {
