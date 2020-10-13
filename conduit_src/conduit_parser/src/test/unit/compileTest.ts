@@ -258,3 +258,18 @@ compileTest("string literal", `
     }
 
 `)
+
+compileTest("may use synonym prefix symbol for references", ` 
+    struct saved {
+        s: string
+    }
+
+    mine: Array<saved> = []
+
+    public function refer(): &mine {
+        return mine.select(r => {
+            return r.ref()
+        })
+    }
+
+`)

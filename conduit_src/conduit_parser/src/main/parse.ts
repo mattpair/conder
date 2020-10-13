@@ -1,4 +1,4 @@
-import { Symbol, Primitives, TypeModifiers, TypeModifierUnion } from './lexicon';
+import { Symbol, Primitives, TypeModifiers, TypeModifierUnion, TypeModifierPrefixSynonym } from './lexicon';
 import { assertNever } from './utils';
 import { FileLocation } from "./utils";
 import * as e from './entity/basic'
@@ -793,17 +793,36 @@ export namespace Parse {
         },
         DetailedType: {
             kind: "conglomerate",
-            startRegex: new RegExp(`^\\s*(?<val>(${TypeModifiers.join("|")}))\\s*<\\s*`),
-            endRegex: /^\s*>/,
+            startRegex: new RegExp(`^\\s*((?<val>(${TypeModifiers.join("|")}))\\s*<\\s*|(?<syn>${Object.keys(TypeModifierPrefixSynonym).join("|")}))`),
+            endRegex: /^\s*(?<close>>)?/,
             requiresOne: {
                 CompleteType: {order: 1}
             },
-            assemble: (start, end, loc, part) => ({
-                kind: "DetailedType",
-                loc,
-                part,
-                modification: start.groups.val as any
-            })
+            assemble: (start, end, loc, part) => {
+                let modification: TypeModifierUnion = Symbol.none
+                if (start.groups.val !== undefined) {
+                    if (end.groups.close === undefined) {
+                        throw Error(`You forgot a closing bracket on a generic type`)
+                    }
+                    //@ts-ignore
+                    modification = start.groups.val
+                } else {
+                    if (end.groups.close !== undefined) {
+                        throw Error(`Unnecessary close bracket`)
+                    }
+                    modification = TypeModifierPrefixSynonym[start.groups.syn]
+                    if (modification === undefined) {
+                        throw Error(`Unrecognized symbol ${start.groups.syn}`)
+                    }
+                }
+
+                return {
+                    kind: "DetailedType",
+                    loc,
+                    part,
+                    modification
+                }
+            }
         },
         TypeName: {
             kind: "leaf",

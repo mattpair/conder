@@ -91,3 +91,16 @@ function echo(s: string): string {
     return s
 }
 `)
+
+testFailsWhen("extra closing bracket", `
+struct s {
+    f: int
+}
+
+stored: Array<s> = []
+
+struct r {
+    f: &stored>
+}
+
+`)

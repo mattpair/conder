@@ -1213,6 +1213,142 @@ Object {
 }
 `;
 
+exports[`may use synonym prefix symbol for references 1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "saved" => Object {
+        "children": Object {
+          "Field": Array [
+            Object {
+              "kind": "Field",
+              "loc": Object {
+                "endColNumber": 11,
+                "endLineNumber": 2,
+                "startColNumber": 18,
+                "startLineNumber": 1,
+              },
+              "name": "s",
+              "part": Object {
+                "CompleteType": Object {
+                  "differentiate": [Function],
+                  "kind": "CompleteType",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "Struct",
+        "loc": Object {
+          "endColNumber": 18,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "name": "saved",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+      "refer" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 25,
+          "endLineNumber": 7,
+          "startColNumber": 27,
+          "startLineNumber": 5,
+        },
+        "method": "GET",
+        "name": "refer",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 7,
+            "startColNumber": 25,
+            "startLineNumber": 7,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 36,
+              "endLineNumber": 7,
+              "startColNumber": 35,
+              "startLineNumber": 7,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": "mine",
+          "kind": "Ref",
+        },
+      },
+      "mine" => Object {
+        "kind": "HierarchicalStore",
+        "name": "mine",
+        "schema": Object {
+          "data": Object {
+            "s": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "kind": "Object",
+        },
+        "specName": "querySpec_mine",
+        "typeName": "saved",
+      },
+      "querySpec_mine" => Object {
+        "isConduitGenerated": true,
+        "kind": "Struct",
+        "name": "querySpec_mine",
+        "schema": Object {
+          "data": Object {
+            "getAll": Object {
+              "data": null,
+              "kind": "bool",
+            },
+          },
+          "kind": "Object",
+        },
+      },
+    },
+    "size": 4,
+  },
+  "schemaFactory": [Function],
+}
+`;
+
 exports[`object literal  1`] = `
 Object {
   "inScope": EntityMap {
