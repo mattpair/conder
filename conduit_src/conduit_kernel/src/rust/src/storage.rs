@@ -73,7 +73,13 @@ pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<Stri
     let mut ret = vec![];
     while let Some(v) = res.next().await {
         match v {
-            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
+            Ok(mut doc) => {
+                if let Some(id) = doc.remove("_id") {
+                    doc.insert("parent", storeName);
+                    doc.insert("address", doc!{"_id": id});
+                } 
+                ret.push(bson::from_document(doc).unwrap())
+            },
             Err(e) => panic!(e)
         };
     }

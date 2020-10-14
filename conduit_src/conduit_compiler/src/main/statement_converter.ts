@@ -121,7 +121,7 @@ function typesAreEqual(l: AnyType, r: AnyType): boolean {
 
         case "Ref":
             //@ts-ignore
-            return l.data === r.data
+            return typesAreEqual(l.data[0], r.data[0])
         case "Array":
         case "Optional":
             //@ts-ignore
@@ -183,7 +183,7 @@ type GlobalReferenceToOpsConverter = {
 
 const hierStoreMethodToOps: HierStoreMethods = {
     append: (store, invoc, target, tools) => {
-        const returnType = schemaFactory.Array(schemaFactory.Ref(store.name))
+        const returnType = schemaFactory.Array(schemaFactory.Ref(store.schema))
         if (typesAreEqual(target, returnType)) {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
@@ -255,7 +255,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
             if (method.children.Assignable.length > 0) {
                 throw Error(`ref should not be called with any arguments`)
             }
-            const refSchema = schemaFactory.Array(schemaFactory.Ref(store.name))
+            const refSchema = schemaFactory.Array(schemaFactory.Ref(store.schema))
             
             const projection: Parameters<CompleteOpWriter["queryStore"]>[0][1] = {}
             for (const key in store.schema.data) {
@@ -301,9 +301,9 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
                 default: Utilities.assertNever(m)
             }
             if (dots.length > 1) {
-                dotsToOps(dots.slice(1), targetType, currentType, tools)
+                dotsToOpsOnLocal(dots.slice(1), targetType, currentType, tools)
             } else if (!typesAreEqual(targetType, currentType)) {
-                throw Error(`Global access did not produce the expected type`)
+                throw Error(`Global access did not produce the expected type: \n\n${JSON.stringify(targetType)}\n\n${JSON.stringify(currentType)}`)
             }
         } else {
 
@@ -321,7 +321,7 @@ const globalReferenceToOpsConverter: GlobalReferenceToOpsConverter = {
     }
 }
 
-function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType: AnyType, tools: CompilationTools): void {
+function dotsToOpsOnLocal(dots: Parse.DotStatement[], targetType: AnyType, currentType: AnyType, tools: CompilationTools): void {
     dots.forEach((dot, index) => {
         const method = dot.differentiate()
         switch(method.kind) {
@@ -340,19 +340,23 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
             case "MethodInvocation":
                 switch (currentType.kind) {
                     case "Ref":
-                        const store = tools.manifest.inScope.getEntityOfType(currentType.data, "HierarchicalStore")
+                        
 
                         if (method.name === "delete") {
                             if (method.children.Assignable.length > 0) {
                                 throw Error(`Deleting a pointer takes no args`)
                             }
                             currentType = schemaFactory.bool
-                            tools.ops.push(tools.opWriter.deleteOneInStore({store: store.name}))
+                            tools.ops.push(
+                                tools.opWriter.extractFields([["address"], ["parent"]]),
+                                tools.opWriter.deleteOneInStore
+                            )
+                            currentType = schemaFactory.bool
                             break
                         }
 
                         if (method.name !== "deref") {
-                            throw Error(`References only support the deref method`)
+                            throw Error(`Unrecognized method: ${method.name}`)
                         }
                         if (method.children.Assignable.length > 1) {
                             throw Error("deref takes one optional argument")
@@ -383,12 +387,11 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
                                 if (retass.kind !== "VariableReference" || retass.children.DotStatement.length !== 0 || retass.val !== anon.rowVarName) {
                                     throw Error(`You must return the row variable`)
                                 }
-                                const updateDoc: Parameters<CompleteOpWriter["createUpdateDoc"]>[0] = {"$push": {}}
-                                tools.ops.push(tools.opWriter.createUpdateDoc(updateDoc))
+                                
                                 if (one.children.DotStatement.length === 1) {
                                     throw Error(`The only command supported on derefed variables is append`)
                                 }
-                                let currentSchema: AnySchemaInstance = store.schema as AnySchemaInstance
+                                let currentSchema: AnySchemaInstance = currentType.data[0]
                                 const fieldAccess = one.children.DotStatement.slice(0, one.children.DotStatement.length - 1).map(d => d.differentiate())
                                 const fieldNames: string[] = []
                                 fieldAccess.forEach(dot => {
@@ -420,20 +423,32 @@ function dotsToOps(dots: Parse.DotStatement[], targetType: AnyType, currentType:
                                 if (currentSchema.kind !== "Array") {
                                     throw Error(`Append can only be called on arrays`)
                                 }
+                                // This is what the updateOne does. We need to create the stack in reverse.
+                                // let update_doc =  ${popStack};
+                                // let query_doc = ${popStack};
+                                // let store_name = ${popToString};
+                                tools.ops.push(
+                                    tools.opWriter.extractFields([["parent"], ["address"]])
+                                )
+                                const updateDoc: Parameters<CompleteOpWriter["createUpdateDoc"]>[0] = {"$push": {}}
+                                tools.ops.push(tools.opWriter.createUpdateDoc(updateDoc))
+                                // This puts the data to be appended at the top of the stack.
                                 assignableToOps(lastDot.children.Assignable[0], currentSchema, tools)
-
                                 tools.ops.push(
                                     tools.opWriter.setNestedField(["$push", fieldNames.join(".")]),
-                                    tools.opWriter.updateOne(store.name)
+                                    tools.opWriter.updateOne
                                 )
                             }
                         } else {
-                            const projection: Parameters<CompleteOpWriter["findOneInStore"]>[0][1] = {}
-                            projection._id = false
-                            tools.ops.push(tools.opWriter.findOneInStore([{store: store.name}, projection]))
+                            const select: Parameters<CompleteOpWriter["findOneInStore"]>[0]["select"] = {}
+                            select._id = false
+                            tools.ops.push(
+                                tools.opWriter.extractFields([["address"], ["parent"]]),
+                                tools.opWriter.findOneInStore({select})
+                            )
                         }
                         
-                        currentType = schemaFactory.Optional(store.schema)
+                        currentType = schemaFactory.Optional(currentType.data[0])
                         
                         
                         break
@@ -474,7 +489,7 @@ function variableReferenceToOps(assign: Parse.VariableReference, targetType: Any
 
         tools.ops.push(tools.opWriter.copyFromHeap(ref.id))
 
-        dotsToOps(assign.children.DotStatement, targetType,  ref.type, tools)
+        dotsToOpsOnLocal(assign.children.DotStatement, targetType,  ref.type, tools)
         return
     } else {
         // Must be global then

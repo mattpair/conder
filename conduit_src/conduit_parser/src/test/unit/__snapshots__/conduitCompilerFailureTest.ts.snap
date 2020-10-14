@@ -21,7 +21,12 @@ function echo(s: str"
 
 exports[`dependent struct is not in scope  1`] = `"M2 does not refer to any known type"`;
 
-exports[`extra closing bracket 1`] = `"Unnecessary close bracket"`;
+exports[`extra closing bracket 1`] = `
+"Unable to find end of entity for Field at >
+}
+
+"
+`;
 
 exports[`naming an entity after a keyword  1`] = `
 "Entities may not be named after reserved symbols: Line: 0

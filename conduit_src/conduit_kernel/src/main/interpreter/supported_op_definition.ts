@@ -1,14 +1,13 @@
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 import * as mongodb from 'mongodb'
 import { AnySchemaInstance } from "conduit_parser"
-type OpDef<NAME> = {
+interface OpDef<NAME>  {
     readonly rustOpHandler: string
-    readonly paramType?: string[]
 }
-type OpDefWithParameter<NAME> = OpDef<NAME> & {readonly paramType: string[]}
+interface OpDefWithParameter<NAME> extends OpDef<NAME>  {readonly paramType: string[]}
 export type AnyOpDef = OpDef<string> | OpDefWithParameter<string>
 
-type StaticOp<KIND> = Op<KIND, "static">
+type StaticOp<KIND> = Op<KIND, "static", never>
 
 type ParamOp<KIND, P> = {kind: KIND, class: "param", paramType: P}
 
@@ -47,9 +46,10 @@ ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
-ParamOp<"updateOne", string> |
+StaticOp<"updateOne"> |
 ParamOp<"setNestedField", string[]> |
-ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}>
+ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
+ParamOp<"extractFields", string[][]>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -452,15 +452,14 @@ export const OpSpec: CompleteOpSpec = {
 
     updateOne: {
         opDefinition: {
-            paramType: ["String"],
             rustOpHandler: `
             let update_doc =  ${popStack};
             let query_doc = ${popStack};
-            ${pushStack(`storage::find_and_update_one(${getDb}, op_param, &query_doc, &update_doc).await`)};
+            let store_name = ${popToString};
+            ${pushStack(`storage::find_and_update_one(${getDb}, &store_name, &query_doc, &update_doc).await`)};
             None
             `
-        },
-        factoryMethod: (data) => ({kind: "updateOne", data})
+        }
     },
 
     setNestedField: {
@@ -529,6 +528,31 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (p) => ({kind: "enforceSchemaInstanceOnHeap", data: [p.heap_pos, p.schema]})
+    },
+
+    extractFields: {
+        opDefinition: {
+            paramType: ["Vec<Vec<String>>"],
+            rustOpHandler: `
+            let mut original_object = match ${popStack} {
+                InterpreterType::Object(o) => o,
+                _ => panic!("Unexpected non object")
+            };
+            for selector in op_param {
+                let (first, rest) = selector.split_first().unwrap();
+                let mut obj = original_object.remove(first).unwrap();
+                for field in rest {
+                    obj = match obj {
+                        InterpreterType::Object(mut o) => o.remove(field).unwrap(),
+                        _ => panic!("Unexpected non object")
+                    };
+                }
+                ${pushStack("obj")};
+            }
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "extractFields", data})
     }
 
 }

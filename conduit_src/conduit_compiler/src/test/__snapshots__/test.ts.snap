@@ -1,0 +1,3794 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`main 1`] = `
+Object {
+  "env": Object {
+    "PROCEDURES": Object {
+      "addNest": Array [
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": Object {},
+          "kind": "instantiate",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": "arr",
+          "kind": "assignPreviousToField",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": "intInts",
+          "kind": "insertFromStack",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "addToInstance": Array [
+        Object {
+          "data": Array [
+            25,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": Array [
+            Array [
+              "parent",
+            ],
+            Array [
+              "address",
+            ],
+          ],
+          "kind": "extractFields",
+        },
+        Object {
+          "data": Object {
+            "$push": Object {},
+          },
+          "kind": "createUpdateDoc",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 1,
+          "kind": "instantiate",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": 2,
+          "kind": "instantiate",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": 3,
+          "kind": "instantiate",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": Array [
+            "$push",
+            "arr",
+          ],
+          "kind": "setNestedField",
+        },
+        Object {
+          "data": undefined,
+          "kind": "updateOne",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "chained_measure": Array [
+        Object {
+          "data": Object {},
+          "kind": "instantiate",
+        },
+        Object {
+          "data": "presents",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayLen",
+        },
+        Object {
+          "data": "length",
+          "kind": "assignPreviousToField",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "del": Array [
+        Object {
+          "data": Array [
+            22,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": Array [
+            Array [
+              "address",
+            ],
+            Array [
+              "parent",
+            ],
+          ],
+          "kind": "extractFields",
+        },
+        Object {
+          "data": undefined,
+          "kind": "deleteOneInStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "deref": Array [
+        Object {
+          "data": Array [
+            21,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": Array [
+            Array [
+              "address",
+            ],
+            Array [
+              "parent",
+            ],
+          ],
+          "kind": "extractFields",
+        },
+        Object {
+          "data": Object {
+            "_id": false,
+          },
+          "kind": "findOneInStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "doesNothing": Array [
+        Object {
+          "data": Array [
+            10,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+      ],
+      "echo": Array [
+        Object {
+          "data": Array [
+            9,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "getFolders": Array [
+        Object {
+          "data": "folders",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "getOptionals": Array [
+        Object {
+          "data": "WithOptionals",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "getRefs": Array [
+        Object {
+          "data": Array [
+            "presents",
+            Object {
+              "s": false,
+            },
+          ],
+          "kind": "queryStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "getSavedShouts": Array [
+        Object {
+          "data": "ShoutStore",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "insertPres": Array [
+        Object {
+          "data": Array [
+            20,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": "presents",
+          "kind": "insertFromStack",
+        },
+      ],
+      "intermediate": Array [
+        Object {
+          "data": "zoo",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "moveStackTopToHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "moveStackTopToHeap",
+        },
+        Object {
+          "data": 1,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "internalArrayLen": Array [
+        Object {
+          "data": Array [
+            15,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": "history",
+          "kind": "fieldAccess",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayLen",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "manyEcho": Array [
+        Object {
+          "data": Array [
+            14,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "measure": Array [
+        Object {
+          "data": Array [
+            24,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayLen",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "measureGlobal": Array [
+        Object {
+          "data": "presents",
+          "kind": "storeLen",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "objectify": Array [
+        Object {
+          "data": Array [
+            23,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": Object {},
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": "s",
+          "kind": "assignPreviousToField",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "other": Array [
+        Object {
+          "data": Array [
+            26,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "primitiveFunc": Array [
+        Object {
+          "data": Array [
+            19,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "protect": Array [
+        Object {
+          "data": Array [
+            17,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": "zoo",
+          "kind": "insertFromStack",
+        },
+      ],
+      "release": Array [
+        Object {
+          "data": "zoo",
+          "kind": "getAllFromStore",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "saveManyShouts": Array [
+        Object {
+          "data": Array [
+            16,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": "folders",
+          "kind": "insertFromStack",
+        },
+      ],
+      "saveShout": Array [
+        Object {
+          "data": Array [
+            13,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": "ShoutStore",
+          "kind": "insertFromStack",
+        },
+      ],
+      "storeOptionals": Array [
+        Object {
+          "data": Array [
+            12,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": Array [],
+          "kind": "instantiate",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "arrayPush",
+        },
+        Object {
+          "data": "WithOptionals",
+          "kind": "insertFromStack",
+        },
+      ],
+      "tryOptional": Array [
+        Object {
+          "data": Array [
+            11,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+      "unwrap": Array [
+        Object {
+          "data": Array [
+            18,
+            0,
+          ],
+          "kind": "enforceSchemaOnHeap",
+        },
+        Object {
+          "data": 0,
+          "kind": "copyFromHeap",
+        },
+        Object {
+          "data": "inside",
+          "kind": "fieldAccess",
+        },
+        Object {
+          "data": undefined,
+          "kind": "returnStackTop",
+        },
+      ],
+    },
+    "SCHEMAS": Array [
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+          "maybeNum": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Optional",
+          },
+          "maybeShout": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "history": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "kind": Object {
+            "data": null,
+            "kind": "int",
+          },
+          "name": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "s": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "inside": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "length": Object {
+            "data": null,
+            "kind": "int",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "arr": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "m": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+          "maybeNum": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Optional",
+          },
+          "maybeShout": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+          "maybeNum": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Optional",
+          },
+          "maybeShout": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        ],
+        "kind": "Array",
+      },
+      Object {
+        "data": Object {
+          "history": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "history": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "kind": Object {
+            "data": null,
+            "kind": "int",
+          },
+          "name": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "inside": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": null,
+            "kind": "int",
+          },
+        ],
+        "kind": "Array",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        ],
+        "kind": "Array",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        ],
+        "kind": "Ref",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        ],
+        "kind": "Ref",
+      },
+      Object {
+        "data": null,
+        "kind": "string",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": null,
+            "kind": "string",
+          },
+        ],
+        "kind": "Array",
+      },
+      Object {
+        "data": Array [
+          Object {
+            "data": Object {
+              "arr": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Array",
+              },
+            },
+            "kind": "Object",
+          },
+        ],
+        "kind": "Ref",
+      },
+      Object {
+        "data": Object {
+          "m": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+      Object {
+        "data": Object {
+          "getAll": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "kind": "Object",
+      },
+    ],
+    "STORES": Object {
+      "ShoutStore": Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      "WithOptionals": Object {
+        "data": Object {
+          "content": Object {
+            "data": null,
+            "kind": "string",
+          },
+          "maybeNum": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Optional",
+          },
+          "maybeShout": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "kind": "Object",
+      },
+      "folders": Object {
+        "data": Object {
+          "history": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      "intInts": Object {
+        "data": Object {
+          "arr": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "kind": "Object",
+      },
+      "presents": Object {
+        "data": Object {
+          "s": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+      "zoo": Object {
+        "data": Object {
+          "kind": Object {
+            "data": null,
+            "kind": "int",
+          },
+          "name": Object {
+            "data": null,
+            "kind": "string",
+          },
+        },
+        "kind": "Object",
+      },
+    },
+  },
+  "kind": "success",
+  "manifest": Object {
+    "inScope": EntityMap {
+      "map": Map {
+        "Shout" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 2,
+                  "startColNumber": 18,
+                  "startLineNumber": 1,
+                },
+                "name": "content",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 18,
+            "endLineNumber": 1,
+            "startColNumber": 0,
+            "startLineNumber": 0,
+          },
+          "name": "Shout",
+          "schema": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "WithOptional" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 14,
+                  "startColNumber": 25,
+                  "startLineNumber": 13,
+                },
+                "name": "content",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 18,
+                  "endLineNumber": 15,
+                  "startColNumber": 0,
+                  "startLineNumber": 15,
+                },
+                "name": "maybeNum",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 20,
+                  "endLineNumber": 16,
+                  "startColNumber": 0,
+                  "startLineNumber": 16,
+                },
+                "name": "maybeShout",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 13,
+            "startColNumber": 5,
+            "startLineNumber": 11,
+          },
+          "name": "WithOptional",
+          "schema": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+              "maybeNum": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Optional",
+              },
+              "maybeShout": Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "content": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Optional",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "ShoutFolder" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 17,
+                  "endLineNumber": 48,
+                  "startColNumber": 24,
+                  "startLineNumber": 47,
+                },
+                "name": "history",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 24,
+            "endLineNumber": 47,
+            "startColNumber": 5,
+            "startLineNumber": 45,
+          },
+          "name": "ShoutFolder",
+          "schema": Object {
+            "data": Object {
+              "history": Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "content": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Array",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "Animal" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 14,
+                  "endLineNumber": 73,
+                  "startColNumber": 19,
+                  "startLineNumber": 72,
+                },
+                "name": "name",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 14,
+                  "endLineNumber": 74,
+                  "startColNumber": 0,
+                  "startLineNumber": 74,
+                },
+                "name": "kind",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 19,
+            "endLineNumber": 72,
+            "startColNumber": 5,
+            "startLineNumber": 70,
+          },
+          "name": "Animal",
+          "schema": Object {
+            "data": Object {
+              "kind": Object {
+                "data": null,
+                "kind": "int",
+              },
+              "name": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "Present" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 11,
+                  "endLineNumber": 94,
+                  "startColNumber": 20,
+                  "startLineNumber": 93,
+                },
+                "name": "s",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 20,
+            "endLineNumber": 93,
+            "startColNumber": 5,
+            "startLineNumber": 91,
+          },
+          "name": "Present",
+          "schema": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "Gift" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 16,
+                  "endLineNumber": 98,
+                  "startColNumber": 17,
+                  "startLineNumber": 97,
+                },
+                "name": "inside",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 17,
+            "endLineNumber": 97,
+            "startColNumber": 5,
+            "startLineNumber": 95,
+          },
+          "name": "Gift",
+          "schema": Object {
+            "data": Object {
+              "inside": Object {
+                "data": Object {
+                  "s": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "measurement" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 16,
+                  "endLineNumber": 136,
+                  "startColNumber": 24,
+                  "startLineNumber": 135,
+                },
+                "name": "length",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 24,
+            "endLineNumber": 135,
+            "startColNumber": 5,
+            "startLineNumber": 133,
+          },
+          "name": "measurement",
+          "schema": Object {
+            "data": Object {
+              "length": Object {
+                "data": null,
+                "kind": "int",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "nestedInts" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 13,
+                  "endLineNumber": 156,
+                  "startColNumber": 23,
+                  "startLineNumber": 155,
+                },
+                "name": "arr",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 155,
+            "startColNumber": 5,
+            "startLineNumber": 153,
+          },
+          "name": "nestedInts",
+          "schema": Object {
+            "data": Object {
+              "arr": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Array",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "anotherMessage" => Object {
+          "children": Object {
+            "Field": Array [
+              Object {
+                "kind": "Field",
+                "loc": Object {
+                  "endColNumber": 11,
+                  "endLineNumber": 173,
+                  "startColNumber": 27,
+                  "startLineNumber": 172,
+                },
+                "name": "m",
+                "part": Object {
+                  "CompleteType": Object {
+                    "differentiate": [Function],
+                    "kind": "CompleteType",
+                  },
+                },
+              },
+            ],
+          },
+          "kind": "Struct",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 172,
+            "startColNumber": 5,
+            "startLineNumber": 170,
+          },
+          "name": "anotherMessage",
+          "schema": Object {
+            "data": Object {
+              "m": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "AnimalType" => Object {
+          "children": Object {
+            "EnumMember": Array [
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 18,
+                  "endLineNumber": 66,
+                  "startColNumber": 21,
+                  "startLineNumber": 65,
+                },
+                "name": "Amphibian",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 16,
+                  "endLineNumber": 67,
+                  "startColNumber": 18,
+                  "startLineNumber": 66,
+                },
+                "name": "Reptile",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 15,
+                  "endLineNumber": 68,
+                  "startColNumber": 16,
+                  "startLineNumber": 67,
+                },
+                "name": "Mammal",
+              },
+              Object {
+                "kind": "EnumMember",
+                "loc": Object {
+                  "endColNumber": 0,
+                  "endLineNumber": 70,
+                  "startColNumber": 15,
+                  "startLineNumber": 68,
+                },
+                "name": "Bird",
+              },
+            ],
+          },
+          "kind": "Enum",
+          "loc": Object {
+            "endColNumber": 21,
+            "endLineNumber": 65,
+            "startColNumber": 5,
+            "startLineNumber": 63,
+          },
+          "name": "AnimalType",
+        },
+        "echo" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 24,
+            "endLineNumber": 5,
+            "startColNumber": 5,
+            "startLineNumber": 3,
+          },
+          "method": "POST",
+          "name": "echo",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "s",
+            "schema": Object {
+              "data": Object {
+                "content": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 42,
+                "endLineNumber": 5,
+                "startColNumber": 40,
+                "startLineNumber": 5,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "doesNothing" => Object {
+          "body": Array [],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 31,
+            "endLineNumber": 9,
+            "startColNumber": 5,
+            "startLineNumber": 7,
+          },
+          "method": "POST",
+          "name": "doesNothing",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "s",
+            "schema": Object {
+              "data": Object {
+                "content": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 43,
+                "endLineNumber": 9,
+                "startColNumber": 42,
+                "startLineNumber": 9,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "tryOptional" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 31,
+            "endLineNumber": 21,
+            "startColNumber": 43,
+            "startLineNumber": 19,
+          },
+          "method": "POST",
+          "name": "tryOptional",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "m",
+            "schema": Object {
+              "data": Object {
+                "content": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+                "maybeNum": Object {
+                  "data": Array [
+                    Object {
+                      "data": null,
+                      "kind": "int",
+                    },
+                  ],
+                  "kind": "Optional",
+                },
+                "maybeShout": Object {
+                  "data": Array [
+                    Object {
+                      "data": Object {
+                        "content": Object {
+                          "data": null,
+                          "kind": "string",
+                        },
+                      },
+                      "kind": "Object",
+                    },
+                  ],
+                  "kind": "Optional",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 63,
+                "endLineNumber": 21,
+                "startColNumber": 61,
+                "startLineNumber": 21,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+              "maybeNum": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Optional",
+              },
+              "maybeShout": Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "content": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Optional",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "storeOptionals" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 34,
+            "endLineNumber": 25,
+            "startColNumber": 5,
+            "startLineNumber": 23,
+          },
+          "method": "POST",
+          "name": "storeOptionals",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "m",
+            "schema": Object {
+              "data": Object {
+                "content": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+                "maybeNum": Object {
+                  "data": Array [
+                    Object {
+                      "data": null,
+                      "kind": "int",
+                    },
+                  ],
+                  "kind": "Optional",
+                },
+                "maybeShout": Object {
+                  "data": Array [
+                    Object {
+                      "data": Object {
+                        "content": Object {
+                          "data": null,
+                          "kind": "string",
+                        },
+                      },
+                      "kind": "Object",
+                    },
+                  ],
+                  "kind": "Optional",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 53,
+                "endLineNumber": 25,
+                "startColNumber": 52,
+                "startLineNumber": 25,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "getOptionals" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 32,
+            "endLineNumber": 29,
+            "startColNumber": 5,
+            "startLineNumber": 27,
+          },
+          "method": "GET",
+          "name": "getOptionals",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 34,
+              "endLineNumber": 29,
+              "startColNumber": 32,
+              "startLineNumber": 29,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 56,
+                "endLineNumber": 29,
+                "startColNumber": 54,
+                "startLineNumber": 29,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                  "maybeNum": Object {
+                    "data": Array [
+                      Object {
+                        "data": null,
+                        "kind": "int",
+                      },
+                    ],
+                    "kind": "Optional",
+                  },
+                  "maybeShout": Object {
+                    "data": Array [
+                      Object {
+                        "data": Object {
+                          "content": Object {
+                            "data": null,
+                            "kind": "string",
+                          },
+                        },
+                        "kind": "Object",
+                      },
+                    ],
+                    "kind": "Optional",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "saveShout" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 29,
+            "endLineNumber": 35,
+            "startColNumber": 33,
+            "startLineNumber": 33,
+          },
+          "method": "POST",
+          "name": "saveShout",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "s",
+            "schema": Object {
+              "data": Object {
+                "content": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 41,
+                "endLineNumber": 35,
+                "startColNumber": 40,
+                "startLineNumber": 35,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "manyEcho" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 28,
+            "endLineNumber": 39,
+            "startColNumber": 5,
+            "startLineNumber": 37,
+          },
+          "method": "POST",
+          "name": "manyEcho",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "ss",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": Object {
+                    "content": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              ],
+              "kind": "Array",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 61,
+                "endLineNumber": 39,
+                "startColNumber": 59,
+                "startLineNumber": 39,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "getSavedShouts" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 34,
+            "endLineNumber": 43,
+            "startColNumber": 5,
+            "startLineNumber": 41,
+          },
+          "method": "GET",
+          "name": "getSavedShouts",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 36,
+              "endLineNumber": 43,
+              "startColNumber": 34,
+              "startLineNumber": 43,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 51,
+                "endLineNumber": 43,
+                "startColNumber": 49,
+                "startLineNumber": 43,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "content": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "internalArrayLen" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 36,
+            "endLineNumber": 53,
+            "startColNumber": 36,
+            "startLineNumber": 51,
+          },
+          "method": "POST",
+          "name": "internalArrayLen",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "i",
+            "schema": Object {
+              "data": Object {
+                "history": Object {
+                  "data": Array [
+                    Object {
+                      "data": Object {
+                        "content": Object {
+                          "data": null,
+                          "kind": "string",
+                        },
+                      },
+                      "kind": "Object",
+                    },
+                  ],
+                  "kind": "Array",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 59,
+                "endLineNumber": 53,
+                "startColNumber": 57,
+                "startLineNumber": 53,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": null,
+            "kind": "int",
+          },
+        },
+        "saveManyShouts" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 34,
+            "endLineNumber": 57,
+            "startColNumber": 5,
+            "startLineNumber": 55,
+          },
+          "method": "POST",
+          "name": "saveManyShouts",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "f",
+            "schema": Object {
+              "data": Object {
+                "history": Object {
+                  "data": Array [
+                    Object {
+                      "data": Object {
+                        "content": Object {
+                          "data": null,
+                          "kind": "string",
+                        },
+                      },
+                      "kind": "Object",
+                    },
+                  ],
+                  "kind": "Array",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 52,
+                "endLineNumber": 57,
+                "startColNumber": 51,
+                "startLineNumber": 57,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "getFolders" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 30,
+            "endLineNumber": 61,
+            "startColNumber": 5,
+            "startLineNumber": 59,
+          },
+          "method": "GET",
+          "name": "getFolders",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 32,
+              "endLineNumber": 61,
+              "startColNumber": 30,
+              "startLineNumber": 61,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 53,
+                "endLineNumber": 61,
+                "startColNumber": 51,
+                "startLineNumber": 61,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "history": Object {
+                    "data": Array [
+                      Object {
+                        "data": Object {
+                          "content": Object {
+                            "data": null,
+                            "kind": "string",
+                          },
+                        },
+                        "kind": "Object",
+                      },
+                    ],
+                    "kind": "Array",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "protect" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 79,
+            "startColNumber": 27,
+            "startLineNumber": 77,
+          },
+          "method": "POST",
+          "name": "protect",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "a",
+            "schema": Object {
+              "data": Object {
+                "kind": Object {
+                  "data": null,
+                  "kind": "int",
+                },
+                "name": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 40,
+                "endLineNumber": 79,
+                "startColNumber": 39,
+                "startLineNumber": 79,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "release" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 83,
+            "startColNumber": 5,
+            "startLineNumber": 81,
+          },
+          "method": "GET",
+          "name": "release",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 29,
+              "endLineNumber": 83,
+              "startColNumber": 27,
+              "startLineNumber": 83,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 45,
+                "endLineNumber": 83,
+                "startColNumber": 43,
+                "startLineNumber": 83,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "kind": Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                  "name": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "intermediate" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 32,
+            "endLineNumber": 87,
+            "startColNumber": 5,
+            "startLineNumber": 85,
+          },
+          "method": "GET",
+          "name": "intermediate",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 34,
+              "endLineNumber": 87,
+              "startColNumber": 32,
+              "startLineNumber": 87,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 51,
+                "endLineNumber": 87,
+                "startColNumber": 49,
+                "startLineNumber": 87,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "kind": Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                  "name": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "unwrap" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 26,
+            "endLineNumber": 101,
+            "startColNumber": 5,
+            "startLineNumber": 99,
+          },
+          "method": "POST",
+          "name": "unwrap",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "g",
+            "schema": Object {
+              "data": Object {
+                "inside": Object {
+                  "data": Object {
+                    "s": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 46,
+                "endLineNumber": 101,
+                "startColNumber": 44,
+                "startLineNumber": 101,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "primitiveFunc" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 33,
+            "endLineNumber": 105,
+            "startColNumber": 5,
+            "startLineNumber": 103,
+          },
+          "method": "POST",
+          "name": "primitiveFunc",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "i",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "int",
+                },
+              ],
+              "kind": "Array",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 62,
+                "endLineNumber": 105,
+                "startColNumber": 60,
+                "startLineNumber": 105,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": null,
+                "kind": "int",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "insertPres" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 30,
+            "endLineNumber": 111,
+            "startColNumber": 33,
+            "startLineNumber": 109,
+          },
+          "method": "POST",
+          "name": "insertPres",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "p",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": Object {
+                    "s": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              ],
+              "kind": "Array",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 51,
+                "endLineNumber": 111,
+                "startColNumber": 50,
+                "startLineNumber": 111,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "kind": "VoidReturnType",
+          },
+        },
+        "getRefs" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 115,
+            "startColNumber": 5,
+            "startLineNumber": 113,
+          },
+          "method": "GET",
+          "name": "getRefs",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 29,
+              "endLineNumber": 115,
+              "startColNumber": 27,
+              "startLineNumber": 115,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 48,
+                "endLineNumber": 115,
+                "startColNumber": 46,
+                "startLineNumber": 115,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "s": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Ref",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "deref" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 121,
+            "startColNumber": 5,
+            "startLineNumber": 119,
+          },
+          "method": "POST",
+          "name": "deref",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "r",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": Object {
+                    "s": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              ],
+              "kind": "Ref",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 59,
+                "endLineNumber": 121,
+                "startColNumber": 57,
+                "startLineNumber": 121,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "s": Object {
+                    "data": null,
+                    "kind": "string",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "del" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 23,
+            "endLineNumber": 125,
+            "startColNumber": 5,
+            "startLineNumber": 123,
+          },
+          "method": "POST",
+          "name": "del",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "r",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": Object {
+                    "s": Object {
+                      "data": null,
+                      "kind": "string",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              ],
+              "kind": "Ref",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 44,
+                "endLineNumber": 125,
+                "startColNumber": 42,
+                "startLineNumber": 125,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": null,
+            "kind": "bool",
+          },
+        },
+        "objectify" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 29,
+            "endLineNumber": 129,
+            "startColNumber": 5,
+            "startLineNumber": 127,
+          },
+          "method": "POST",
+          "name": "objectify",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "input",
+            "schema": Object {
+              "data": null,
+              "kind": "string",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 55,
+                "endLineNumber": 129,
+                "startColNumber": 53,
+                "startLineNumber": 129,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "chained_measure" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 35,
+            "endLineNumber": 139,
+            "startColNumber": 5,
+            "startLineNumber": 137,
+          },
+          "method": "GET",
+          "name": "chained_measure",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 37,
+              "endLineNumber": 139,
+              "startColNumber": 35,
+              "startLineNumber": 139,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 52,
+                "endLineNumber": 139,
+                "startColNumber": 50,
+                "startLineNumber": 139,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "length": Object {
+                "data": null,
+                "kind": "int",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "measure" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 147,
+            "startColNumber": 5,
+            "startLineNumber": 145,
+          },
+          "method": "POST",
+          "name": "measure",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "i",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              ],
+              "kind": "Array",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 52,
+                "endLineNumber": 147,
+                "startColNumber": 50,
+                "startLineNumber": 147,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": null,
+            "kind": "int",
+          },
+        },
+        "measureGlobal" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 33,
+            "endLineNumber": 151,
+            "startColNumber": 5,
+            "startLineNumber": 149,
+          },
+          "method": "GET",
+          "name": "measureGlobal",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 35,
+              "endLineNumber": 151,
+              "startColNumber": 33,
+              "startLineNumber": 151,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 42,
+                "endLineNumber": 151,
+                "startColNumber": 40,
+                "startLineNumber": 151,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": null,
+            "kind": "int",
+          },
+        },
+        "addNest" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 27,
+            "endLineNumber": 161,
+            "startColNumber": 35,
+            "startLineNumber": 159,
+          },
+          "method": "GET",
+          "name": "addNest",
+          "parameter": Object {
+            "kind": "NoParameter",
+            "loc": Object {
+              "endColNumber": 29,
+              "endLineNumber": 161,
+              "startColNumber": 27,
+              "startLineNumber": 161,
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 51,
+                "endLineNumber": 161,
+                "startColNumber": 49,
+                "startLineNumber": 161,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "arr": Object {
+                        "data": Array [
+                          Object {
+                            "data": null,
+                            "kind": "int",
+                          },
+                        ],
+                        "kind": "Array",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Ref",
+              },
+            ],
+            "kind": "Array",
+          },
+        },
+        "addToInstance" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 33,
+            "endLineNumber": 165,
+            "startColNumber": 5,
+            "startLineNumber": 163,
+          },
+          "method": "POST",
+          "name": "addToInstance",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "arg",
+            "schema": Object {
+              "data": Array [
+                Object {
+                  "data": Object {
+                    "arr": Object {
+                      "data": Array [
+                        Object {
+                          "data": null,
+                          "kind": "int",
+                        },
+                      ],
+                      "kind": "Array",
+                    },
+                  },
+                  "kind": "Object",
+                },
+              ],
+              "kind": "Ref",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 75,
+                "endLineNumber": 165,
+                "startColNumber": 73,
+                "startLineNumber": 165,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Array [
+              Object {
+                "data": Object {
+                  "arr": Object {
+                    "data": Array [
+                      Object {
+                        "data": null,
+                        "kind": "int",
+                      },
+                    ],
+                    "kind": "Array",
+                  },
+                },
+                "kind": "Object",
+              },
+            ],
+            "kind": "Optional",
+          },
+        },
+        "other" => Object {
+          "body": Array [
+            Object {
+              "differentiate": [Function],
+              "kind": "Statement",
+            },
+          ],
+          "kind": "Function",
+          "loc": Object {
+            "endColNumber": 25,
+            "endLineNumber": 176,
+            "startColNumber": 5,
+            "startLineNumber": 174,
+          },
+          "method": "POST",
+          "name": "other",
+          "parameter": Object {
+            "kind": "WithParam",
+            "name": "s",
+            "schema": Object {
+              "data": Object {
+                "m": Object {
+                  "data": null,
+                  "kind": "string",
+                },
+              },
+              "kind": "Object",
+            },
+          },
+          "part": Object {
+            "FunctionBody": Object {
+              "children": Object {
+                "Statement": Array [
+                  Object {
+                    "differentiate": [Function],
+                    "kind": "Statement",
+                  },
+                ],
+              },
+              "kind": "FunctionBody",
+              "loc": Object {
+                "endColNumber": 61,
+                "endLineNumber": 176,
+                "startColNumber": 59,
+                "startLineNumber": 176,
+              },
+            },
+            "Parameter": Object {
+              "differentiate": [Function],
+              "kind": "Parameter",
+            },
+            "ReturnTypeSpec": Object {
+              "differentiate": [Function],
+              "kind": "ReturnTypeSpec",
+            },
+          },
+          "returnType": Object {
+            "data": Object {
+              "m": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "WithOptionals" => Object {
+          "kind": "HierarchicalStore",
+          "name": "WithOptionals",
+          "schema": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+              "maybeNum": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Optional",
+              },
+              "maybeShout": Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "content": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Optional",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_WithOptionals",
+          "typeName": "WithOptional",
+        },
+        "ShoutStore" => Object {
+          "kind": "HierarchicalStore",
+          "name": "ShoutStore",
+          "schema": Object {
+            "data": Object {
+              "content": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_ShoutStore",
+          "typeName": "Shout",
+        },
+        "folders" => Object {
+          "kind": "HierarchicalStore",
+          "name": "folders",
+          "schema": Object {
+            "data": Object {
+              "history": Object {
+                "data": Array [
+                  Object {
+                    "data": Object {
+                      "content": Object {
+                        "data": null,
+                        "kind": "string",
+                      },
+                    },
+                    "kind": "Object",
+                  },
+                ],
+                "kind": "Array",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_folders",
+          "typeName": "ShoutFolder",
+        },
+        "zoo" => Object {
+          "kind": "HierarchicalStore",
+          "name": "zoo",
+          "schema": Object {
+            "data": Object {
+              "kind": Object {
+                "data": null,
+                "kind": "int",
+              },
+              "name": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_zoo",
+          "typeName": "Animal",
+        },
+        "presents" => Object {
+          "kind": "HierarchicalStore",
+          "name": "presents",
+          "schema": Object {
+            "data": Object {
+              "s": Object {
+                "data": null,
+                "kind": "string",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_presents",
+          "typeName": "Present",
+        },
+        "intInts" => Object {
+          "kind": "HierarchicalStore",
+          "name": "intInts",
+          "schema": Object {
+            "data": Object {
+              "arr": Object {
+                "data": Array [
+                  Object {
+                    "data": null,
+                    "kind": "int",
+                  },
+                ],
+                "kind": "Array",
+              },
+            },
+            "kind": "Object",
+          },
+          "specName": "querySpec_intInts",
+          "typeName": "nestedInts",
+        },
+        "querySpec_WithOptionals" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_WithOptionals",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "querySpec_ShoutStore" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_ShoutStore",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "querySpec_folders" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_folders",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "querySpec_zoo" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_zoo",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "querySpec_presents" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_presents",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+        "querySpec_intInts" => Object {
+          "isConduitGenerated": true,
+          "kind": "Struct",
+          "name": "querySpec_intInts",
+          "schema": Object {
+            "data": Object {
+              "getAll": Object {
+                "data": null,
+                "kind": "bool",
+              },
+            },
+            "kind": "Object",
+          },
+        },
+      },
+      "size": 49,
+    },
+    "schemaFactory": [Function],
+  },
+}
+`;

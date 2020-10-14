@@ -13,7 +13,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
             let err: Option<String> = match &ops[next_op_index] {
                 ${supportedOps.map(o => {
                     let header = o.name
-                    if (o.paramType) {
+                    if ("paramType" in o) {
                         header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
                     }
                     return `Op::${header} => {
@@ -121,7 +121,7 @@ export function writeOperationInterpreter(): string {
     #[serde(tag = "kind", content= "data")]
     enum Op {
         ${supportedOps.map(o => {
-            if (o.paramType) {
+            if ("paramType" in o) {
                 return `${o.name}(${o.paramType.join(", ")})`
             }
             return o.name

@@ -243,8 +243,20 @@ export namespace Parse {
                 return undefined
 
             case "conglomerate":
-                
-                const start = cursor.tryMatch(parser.startRegex)
+                let start: MatchResult = undefined
+                let matchKey: string = undefined
+                if (isSingleRegex(parser.startRegex)) {
+                    start = cursor.tryMatch(parser.startRegex) 
+                } else {
+                    for (const key in parser.startRegex) {
+                        start = cursor.tryMatch(parser.startRegex[key])
+                        if (start.hit) {
+                            matchKey = key
+                            break
+                        }
+                    }
+                }
+                                    
                 if (!start.hit) {
                     return undefined
                 }
@@ -261,6 +273,7 @@ export namespace Parse {
 
                     const depMatch = tryExtractEntity(cursor, req, parserSet)
                     if (depMatch === undefined) {
+                        //@ts-ignore
                         throw new Error(`Unable to parse required ${req} entity at ${JSON.stringify(start.loc)}\n\n ${cursor.getPositionHint()}`)
                     }
                     if (childdef.afterRegex !== undefined) {
@@ -271,7 +284,22 @@ export namespace Parse {
                     part[req] = depMatch
                 })
 
-                const end = cursor.tryMatch(parser.endRegex)
+                let end: MatchResult = undefined
+                if (isSingleRegex(parser.endRegex)) {
+                    end = cursor.tryMatch(parser.endRegex)
+                } else {
+                    if (matchKey !== undefined) {
+                        end = cursor.tryMatch(parser.endRegex[matchKey])
+                    } else {
+                        for (const key in parser.endRegex.regexes) {
+                            end = cursor.tryMatch(parser.endRegex[key])
+                            if (end.hit) {
+                                break
+                            }
+                        }
+                    }
+                }
+
                 if (!end.hit) {
                     throw new Error(`Unable to find end of entity for ${kind} at ${cursor.getPositionHint()}`)
                 }
@@ -330,11 +358,16 @@ export namespace Parse {
         afterRegex?: RegExp
         order: number
     }>
+    type RegexDef = RegExp | Record<string, RegExp>
+    function isSingleRegex(t: RegexDef): t is RegExp {
+        return typeof t.compile === "function"
+    }
+
     type ConglomerateParserV2<K extends WithDependentClause> = Readonly<{
         kind: "conglomerate"
-        startRegex: RegExp
+        startRegex: RegexDef
         assemble(start: RegExpExecArray, end: RegExpExecArray, loc: e.EntityLocation, part: K["part"]): K | undefined
-        endRegex: RegExp
+        endRegex: RegexDef
         requiresOne: Record<Extract<keyof CompleteParserV2, keyof K["part"]>, ConglomerateChildParseDefinition>
     }>
 
@@ -793,23 +826,23 @@ export namespace Parse {
         },
         DetailedType: {
             kind: "conglomerate",
-            startRegex: new RegExp(`^\\s*((?<val>(${TypeModifiers.join("|")}))\\s*<\\s*|(?<syn>${Object.keys(TypeModifierPrefixSynonym).join("|")}))`),
-            endRegex: /^\s*(?<close>>)?/,
+            startRegex: {
+                generic: new RegExp(`^\\s*(?<val>${TypeModifiers.join("|")})\\s*<\\s*`),
+                prefix: new RegExp(`^\\s*(?<syn>${Object.keys(TypeModifierPrefixSynonym).join("|")})\\s*`)
+            },
+            endRegex: {
+                generic: /^\s*>/,
+                prefix: /^/
+            },
             requiresOne: {
                 CompleteType: {order: 1}
             },
             assemble: (start, end, loc, part) => {
                 let modification: TypeModifierUnion = Symbol.none
                 if (start.groups.val !== undefined) {
-                    if (end.groups.close === undefined) {
-                        throw Error(`You forgot a closing bracket on a generic type`)
-                    }
                     //@ts-ignore
                     modification = start.groups.val
                 } else {
-                    if (end.groups.close !== undefined) {
-                        throw Error(`Unnecessary close bracket`)
-                    }
                     modification = TypeModifierPrefixSynonym[start.groups.syn]
                     if (modification === undefined) {
                         throw Error(`Unrecognized symbol ${start.groups.syn}`)

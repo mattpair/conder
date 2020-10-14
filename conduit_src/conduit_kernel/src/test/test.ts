@@ -125,6 +125,15 @@ describe("conduit kernel", () => {
       },
       { PROCEDURES: { customNoop: [opWriter.noop] } }
     );
+
+    kernelTest(
+      "destructuring an object",
+      async (server) => {
+        const res = await server.invoke("destructure")
+        expect(res).toEqual("target field")
+      },
+      {PROCEDURES: {destructure: [opWriter.instantiate({f: {o: {o: "target field"}}}), opWriter.extractFields([["f", "o", "o"]]), opWriter.returnStackTop]}}
+    )
   });
 
   describe("schema", () => {
@@ -622,10 +631,11 @@ describe("conduit kernel", () => {
           ],
           appendNested: [
             opWriter.copyFromHeap(0),
+            opWriter.extractFields([["parent"], ["address"]]),
             opWriter.createUpdateDoc({ $push: {} }),
             opWriter.instantiate(interpeterTypeFactory.int(42)),
             opWriter.setNestedField(["$push", "a"]),
-            opWriter.updateOne("nested"),
+            opWriter.updateOne,
             opWriter.returnStackTop,
           ],
         },
@@ -640,6 +650,41 @@ describe("conduit kernel", () => {
         const second = await server.invoke("get");
         expect(second.a).toEqual([42]);
         expect(first._id).toEqual(second._id);
+      }
+    );
+
+    storageTest(
+      "querying for an address",
+      {
+        STORES: {
+          objs: schemaFactory.Object({
+            a: schemaFactory.int,
+          }),
+        },
+        PROCEDURES: {
+          insert: [
+            opWriter.insertFromHeap({ heap_pos: 0, store: "objs" }),
+            opWriter.returnStackTop,
+          ],
+          get: [
+            opWriter.queryStore(["objs", {a: false}]),
+            opWriter.popArray,
+            opWriter.returnStackTop,
+          ],
+          deref: [
+            opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
+            opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),
+            opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
+            opWriter.findOneInStore({select: {_id: false}}),
+            opWriter.returnStackTop,
+          ],
+        },
+      },
+      async (server) => {
+        expect(await server.invoke("insert", { a: 42 })).toBeTruthy();
+        const ptr = await server.invoke("get");
+        const res = await server.invoke("deref", ptr)
+        expect(res).toEqual({a: 42})
       }
     );
   });

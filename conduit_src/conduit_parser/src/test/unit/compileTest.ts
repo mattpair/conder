@@ -271,5 +271,28 @@ compileTest("may use synonym prefix symbol for references", `
             return r.ref()
         })
     }
+`)
+
+compileTest("prefix within generic", `
+    struct test {
+        s: string
+    }
+
+    public function f(): Array<&test> {
+
+    }
+`)
+
+compileTest("struct with optionals", `
+struct Shout {
+    content: string 
+}
+
+
+struct WithOptional {
+    content: string 
+    maybeNum: Optional<int>
+    maybeShout: Optional<Shout>
+}
 
 `)
