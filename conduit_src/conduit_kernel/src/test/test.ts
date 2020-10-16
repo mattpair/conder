@@ -8,6 +8,7 @@ import {
   ServerEnv,
   Var,
   StrongServerEnv,
+  Test
 } from "../../index";
 import {
   Schemas,
@@ -18,82 +19,13 @@ import {
 } from "conduit_parser";
 import * as mongodb from "mongodb";
 
+
 describe("conduit kernel", () => {
   const opWriter = getOpWriter();
-  class TestServer {
-    private process: child_process.ChildProcess;
-    private readonly port: number;
-    private static next_port = 8080;
-    constructor(env: StrongServerEnv) {
-      this.port = TestServer.next_port++;
-      const string_env: Partial<ServerEnv> = {};
-      for (const key in env) {
-        //@ts-ignore
-        string_env[key] =
-        //@ts-ignore
-          typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
-      }
-
-      this.process = child_process.exec(`./app ${this.port}`, {
-        cwd: "./src/rust/target/debug",
-        env: string_env,
-      });
-      this.process.stdout.pipe(process.stdout);
-      this.process.stderr.pipe(process.stderr);
-    }
-
-    public static async start(env: StrongServerEnv): Promise<TestServer> {
-      // portAssignments.set(8080, this.process);
-      const ret = new TestServer(env);
-      let retry = true;
-      while (retry) {
-        try {
-          await ret.noopRequest();
-          retry = false;
-        } catch (e) {
-          retry = true;
-        }
-      }
-      return ret;
-    }
-
-    async noopRequest() {
-      const body = JSON.stringify({ kind: "Noop" });
-      const res = await fetch(`http://localhost:${this.port}`, {
-        method: "PUT",
-        body,
-        headers: {
-          "content-type": "application/json",
-          "content-length": `${body.length}`,
-        },
-      }).then((data) => data.json());
-
-      expect(res).toEqual(interpeterTypeFactory.None);
-    }
-
-    kill() {
-      this.process.kill("SIGTERM");
-    }
-
-    async invoke(
-      name: string,
-      arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None
-    ) {
-      const body = JSON.stringify({ kind: "Exec", data: { proc: name, arg } });
-      return fetch(`http://localhost:${this.port}/`, {
-        method: "PUT",
-        body,
-        headers: {
-          "content-type": "application/json",
-          "content-length": `${body.length}`,
-        },
-      }).then((data) => data.json());
-    }
-  }
-
+  
   function kernelTest(
     descr: string,
-    test: (server: TestServer) => Promise<void>,
+    test: (server: Test.Server) => Promise<void>,
     envOverride: Partial<StrongServerEnv> = {}
   ) {
     const env: StrongServerEnv = { PROCEDURES: {}, STORES: {}, SCHEMAS: [], DEPLOYMENT_NAME: "testdeployment" };
@@ -104,7 +36,7 @@ describe("conduit kernel", () => {
     it(
       descr,
       async () => {
-        const server = await TestServer.start(env);
+        const server = await Test.Server.start(env);
         await test(server);
         server.kill();
       },
@@ -291,50 +223,19 @@ describe("conduit kernel", () => {
     | { bsonType: "double" };
 
   describe("mongo storage layer", () => {
-    child_process.execSync(`docker pull mongo:4.4`);
-
-    class TestMongo {
-      readonly port: number;
-      private static next_port = 27017;
-      private constructor() {
-        this.port = TestMongo.next_port++;
-        child_process.execSync(
-          `docker run --rm --name mongo${this.port} -d  --mount type=tmpfs,destination=/data/db -p ${this.port}:27017 mongo:4.4 `
-        );
-      }
-
-      public static async start(stores: Stores): Promise<TestMongo> {
-        const ret = new TestMongo();
-        const client = await mongodb.MongoClient.connect(
-          `mongodb://localhost:${ret.port}`,
-          { useUnifiedTopology: true }
-        );
-        const db = client.db("statefultest");
-        Object.keys(stores.STORES).forEach(
-          async (k) => await db.createCollection(k)
-        );
-        await db.listCollections();
-        return ret;
-      }
-      public kill() {
-        child_process.execSync(`docker kill mongo${this.port}`);
-      }
-    }
-
-    type Stores = Pick<StrongServerEnv, Var.STORES>;
 
     function storageTest(
       descr: string,
       params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,
-      test: (server: TestServer) => Promise<void>,
+      test: (server: Test.Server) => Promise<void>,
       only=false
     ) {
       let tester = only ? it.only : it 
               
         tester(
           descr,
-          async () => TestMongo.start(params).then((mongo) =>
-              TestServer.start({
+          async () => Test.Mongo.start(params).then((mongo) =>
+              Test.Server.start({
                 MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
                 ...params,
                 SCHEMAS: [],
