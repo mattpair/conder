@@ -10,7 +10,9 @@
         "baseUrl": ".",
         "typeRoots": [ "node_modules/@types/", "src/" ],
         "types": [
-            "jest"
+            "jest",
+            "node",
+            "mongodb"
         ],
         "outDir": "dist",
         "composite": true

@@ -1,5 +1,4 @@
 import * as child_process from "child_process";
-import "isomorphic-fetch";
 import {
   getOpWriter,
   Procedures,
@@ -8,7 +7,6 @@ import {
   ServerEnv,
   Var,
   StrongServerEnv,
-  Test
 } from "../../index";
 import {
   Schemas,
@@ -18,6 +16,7 @@ import {
   Lexicon,
 } from "conduit_parser";
 import * as mongodb from "mongodb";
+import {Test} from '../main/local_run/utilities'
 
 
 describe("conduit kernel", () => {

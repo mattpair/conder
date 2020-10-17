@@ -4,11 +4,13 @@ import {compile} from './src/main/statement_converter'
 import {StrongServerEnv, RequiredEnv, Var} from 'conduit_kernel'
 
 export {StrongServerEnv, RequiredEnv, Var, ServerEnv} from 'conduit_kernel'
-export type CompileResponse = {
-    kind: "success", 
-    env: Pick<StrongServerEnv, Exclude<RequiredEnv, Var.DEPLOYMENT_NAME>>,
-    manifest: CompiledTypes.Manifest
-  } | 
+
+export type SuccessfulCompile = {
+  kind: "success", 
+  env: Pick<StrongServerEnv, Exclude<RequiredEnv, Var.DEPLOYMENT_NAME>>,
+  manifest: CompiledTypes.Manifest
+}
+export type CompileResponse = SuccessfulCompile | 
   {
     kind: "error", reason: string
   }
