@@ -46,5 +46,121 @@ describe("basic functionality", () => {
             expect(res).toEqual({m: "hello"})
         })
     )
+
+    it("can handle basic storage and functions", 
+        testHarness(
+            `struct Shout {
+                content: string 
+            }
+            
+            public function echo(s: Shout) Shout {
+                return s
+            }
+            
+            public function doesNothing(s: Shout) {
+                
+            }
+            
+            struct WithOptional {
+                content: string 
+                maybeNum: Optional<int>
+                maybeShout: Optional<Shout>
+            }
+            
+            WithOptionals: Array<WithOptional> = []
+            
+            public function tryOptional(m: WithOptional) WithOptional {
+                return m
+            }
+            
+            public function storeOptionals(m: WithOptional) {
+                WithOptionals.append([m])
+            }
+            
+            public function getOptionals() Array<WithOptional> {
+                return WithOptionals
+            }
+            
+            ShoutStore: Array<Shout> = []
+            
+            public function saveShout(s: Shout) {
+                ShoutStore.append([s])
+            }
+            
+            public function manyEcho(ss: Array<Shout>) Array<Shout> {
+                return ss
+            }
+            
+            public function getSavedShouts() Array<Shout> {
+                return ShoutStore
+            }
+            
+            struct ShoutFolder {
+                history: Array<Shout>
+            }
+            
+            folders: Array<ShoutFolder> = []
+            
+            public function internalArrayLen(i: ShoutFolder): int {
+                return i.history.len()
+            }
+            
+            public function saveManyShouts(f: ShoutFolder) {
+                folders.append([f])
+            }
+            
+            public function getFolders() Array<ShoutFolder> {
+                return folders
+            }
+            `,
+            async (server) => {
+                // Return input
+                const shout = {content: "this is my shout"}
+                const result = await server.invoke("echo", shout)
+                expect(result).toEqual(shout)
+
+                // Noop function
+                expect(await server.invoke("doesNothing", shout)).toBeNull()
+
+                // Saving in arrays 
+                expect(await server.invoke("saveShout", shout)).toBeNull()
+                expect(await server.invoke("getSavedShouts")).toEqual([shout])
+
+                //Optionals
+                const withOptional = {
+                    content: "the message contains a number",
+                    maybeNum: 32,
+                    maybeShout: null as any,
+                }
+                
+                const withoutOptional = {
+                    content: "the message doesn't contain a number",
+                    maybeNum: null as number,
+                    maybeShout: null as null,
+                };
+
+                expect(await server.invoke("tryOptional", withOptional)).toEqual(withOptional)
+                expect(await server.invoke("tryOptional", withoutOptional)).toEqual(withoutOptional)
+                const storedOpt = {
+                    content: "the message contains both",
+                    maybeNum: 32,
+                    maybeShout: { content: "blah" },
+                  }
+                expect(await server.invoke("storeOptionals", storedOpt)).toBeNull()
+                expect(await server.invoke("getOptionals")).toEqual([storedOpt])
+
+                const arr = [{ content: "shout 1" }, { content: "shout 2" }]
+                expect(await server.invoke("manyEcho", arr)).toEqual(arr)
+
+                const folder = {
+                    history: [{ content: "shout 1" }, { content: "shout 2" }],
+                }
+                
+                expect(await server.invoke("saveManyShouts", folder)).toBeNull()
+                expect(await server.invoke("getFolders")).toEqual([folder])
+                
+            }
+        )
+    )
 })
 
