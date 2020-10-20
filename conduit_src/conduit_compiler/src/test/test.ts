@@ -5,8 +5,10 @@ import { string_to_environment, SuccessfulCompile,  } from "../../index"
 describe("basic functionality", () => {
     function compile(str: string): SuccessfulCompile {
         const env = string_to_environment(str)
-        expect(env.kind).toEqual("success")
-        return env as SuccessfulCompile
+        if (env.kind === "error") {
+            throw Error(env.reason)
+        }
+        return env
     }
     
     
@@ -158,9 +160,65 @@ describe("basic functionality", () => {
                 
                 expect(await server.invoke("saveManyShouts", folder)).toBeNull()
                 expect(await server.invoke("getFolders")).toEqual([folder])
-                
+
             }
         )
+    )
+    // Comments aren't supported yet.
+    // it.skip("allows literals",
+    //     testHarness(`
+    //     struct nestedInts {
+    //         arr: Array<int>
+    //     }
+        
+    //     intInts: Array<nestedInts> = []
+    //     // Needs to be updated for no pointers
+    //     public function addNest(): Array<&nestedInts> {
+    //         return intInts.append([{arr: []}])
+    //     }
+    //     `, async (server) => {
+            
+    //     })
+    // )
+
+    it("allows measurement of arrays", 
+        testHarness(`
+
+        struct Present {
+            s: string
+        }
+
+        presents: Array<Present> = []
+
+        public function insertPres() {
+            presents.append([{s: \`foo\`}])
+        }
+
+        struct measurement {
+            length: int
+        }
+        
+        public function chained_measure(): measurement {
+            return {
+                length: presents.select(row => {
+                    return row
+                }).len()
+            }
+        }
+        
+        public function measure(i: Array<string>): int {
+            return i.len()
+        }
+        
+        public function measureGlobal(): int {
+            return presents.len()
+        }
+        `, async (server) => {
+            expect(await server.invoke("insertPres")).toBeNull()
+            expect(await server.invoke("chained_measure")).toEqual({length: 1})
+            expect(await server.invoke("measure", ["a", "b"])).toBe(2)
+            expect(await server.invoke("measureGlobal")).toBe(1)
+        })
     )
 })
 
