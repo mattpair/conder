@@ -1,4 +1,4 @@
-import { Symbol, Primitives, TypeModifiers, TypeModifierUnion, TypeModifierPrefixSynonym } from './lexicon';
+import { Symbol, Primitives, TypeModifiers, TypeModifierUnion } from './lexicon';
 import { assertNever } from './utils';
 import { FileLocation } from "./utils";
 import * as e from './entity/basic'
@@ -828,7 +828,6 @@ export namespace Parse {
             kind: "conglomerate",
             startRegex: {
                 generic: new RegExp(`^\\s*(?<val>${TypeModifiers.join("|")})\\s*<\\s*`),
-                prefix: new RegExp(`^\\s*(?<syn>${Object.keys(TypeModifierPrefixSynonym).join("|")})\\s*`)
             },
             endRegex: {
                 generic: /^\s*>/,
@@ -838,16 +837,9 @@ export namespace Parse {
                 CompleteType: {order: 1}
             },
             assemble: (start, end, loc, part) => {
-                let modification: TypeModifierUnion = Symbol.none
-                if (start.groups.val !== undefined) {
-                    //@ts-ignore
-                    modification = start.groups.val
-                } else {
-                    modification = TypeModifierPrefixSynonym[start.groups.syn]
-                    if (modification === undefined) {
-                        throw Error(`Unrecognized symbol ${start.groups.syn}`)
-                    }
-                }
+                //@ts-ignore
+                const modification: TypeModifierUnion = start.groups.val
+            
 
                 return {
                     kind: "DetailedType",

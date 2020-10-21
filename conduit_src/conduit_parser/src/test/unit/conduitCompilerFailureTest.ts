@@ -67,18 +67,6 @@ struct Container {
 
 `)
 
-testFailsWhen("Refing a instance ", `
-struct otherStruct {
-    f: string
-}
-
-instances: Array<otherStruct> = []
-
-struct Container {
-    e: &instances
-}
-
-`)
 
 testFailsWhen("Global with contents", `
 struct s {
@@ -92,17 +80,4 @@ testFailsWhen("declaring a function as not private or public", `
 function echo(s: string): string {
     return s
 }
-`)
-
-testFailsWhen("extra closing bracket", `
-struct s {
-    f: int
-}
-
-stored: Array<s> = []
-
-struct r {
-    f: &stored>
-}
-
 `)

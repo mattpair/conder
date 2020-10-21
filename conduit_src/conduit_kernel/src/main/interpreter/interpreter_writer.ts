@@ -42,7 +42,6 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnio
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
     Array: "Vec<Schema>",
-    Ref: "Vec<Schema>"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
@@ -150,10 +149,6 @@ export function writeOperationInterpreter(): string {
 
     fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {
         return match schema {
-            Schema::Ref(_) => match value {
-                InterpreterType::Object(internal_value) => internal_value.contains_key("parent") && internal_value.contains_key("address"),
-                _ => false
-            },
             
             Schema::Object(internal) => match value {
                 InterpreterType::Object(internal_value) => internal.iter().all(|(k, v)| match internal_value.get(k) {

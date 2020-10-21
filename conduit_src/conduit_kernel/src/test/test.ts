@@ -300,7 +300,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
-            opWriter.queryStore(["storeName", { right: false, _id: false }]),
+            opWriter.queryStore(["storeName", { right: false}]),
             opWriter.returnStackTop,
           ],
         },
@@ -332,7 +332,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
-            opWriter.queryStore(["storeName", { right: false, _id: false }]),
+            opWriter.queryStore(["storeName", { right: false}]),
             opWriter.returnStackTop,
           ],
         },
@@ -351,23 +351,6 @@ describe("conduit kernel", () => {
 
     const insert = [
       opWriter.insertFromHeap({ heap_pos: 0, store: "test" }),
-      opWriter.returnStackTop,
-    ];
-
-    const deref = [
-      opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
-      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),
-      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
-      opWriter.findOneInStore({select: {_id: false}}),
-      opWriter.returnStackTop,
-    ];
-
-    const del = [
-      opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
-      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),      
-      opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
-      opWriter.deleteOneInStore,
-      opWriter.returnStackTop,
     ];
 
     const len = [opWriter.storeLen("test"), opWriter.returnStackTop];
@@ -377,217 +360,19 @@ describe("conduit kernel", () => {
       }),
     };
 
-    storageTest(
-      "should be able to dereference a ref - exists",
-      {
-        STORES,
-        PROCEDURES: {
-          insert,
-          deref,
-        },
-      },
-      async (server) => {
-        let res = await server.invoke(
-          "insert",
-          interpeterTypeFactory.Array([
-            interpeterTypeFactory.Object({
-              data: "First object",
-            }),
-            interpeterTypeFactory.Object({
-              data: "Second object",
-            }),
-          ])
-        );
-        expect(res.length).toBe(2);
-        expect("data" in res[0]).toBe(false)
-        
-        res = await server.invoke("deref", res[0]);
-
-        expect(res).toEqual({ data: "First object" });
-      }
-    );
-
-    storageTest(
-      "should be able to dereference a ref - does not exist",
-      {
-        STORES,
-        PROCEDURES: {
-          insert,
-          deref,
-        },
-      },
-      async (server) => {
-        let res = await server.invoke(
-          "insert",
-          interpeterTypeFactory.Array([
-            interpeterTypeFactory.Object({
-              data: "First object",
-            }),
-          ])
-        );
-        expect(res).toBeTruthy()
-
-        res = await server.invoke("deref", {address: { _id: -1 }, parent: "test"});
-
-        expect(res).toEqual(null);
-      }
-    );
-
-    storageTest(
-      "should be able to delete a ref",
-      {
-        STORES,
-        PROCEDURES: {
-          insert,
-          deref,
-          del,
-        },
-      },
-      async (server) => {
-        let res = await server.invoke(
-          "insert",
-          interpeterTypeFactory.Array([
-            interpeterTypeFactory.Object({
-              data: "First object",
-            }),
-          ])
-        );
-        expect(res.length).toBe(1);
-
-        const _id = res[0]._id;
-        const ptr = {address: { _id }, parent: "test"}
-        res = await server.invoke("deref", ptr);
-        expect(res).toEqual({ data: "First object" });
-
-        res = await server.invoke("del", ptr);
-        expect(res).toBe(true);
-
-        res = await server.invoke("deref", ptr);
-        expect(res).toEqual(null);
-
-        res = await server.invoke("del", ptr);
-        expect(res).toBe(false);
-      }
-    );
-    storageTest(
-      "refs should be in the order that they are inserted",
-      {
-        STORES,
-        PROCEDURES: {
-          insert,
-          deref,
-        },
-      },
-      async (server) => {
-        const ptrs = await server.invoke(
-          "insert",
-          [
-            {
-              data: 0,
-            },
-            {
-              data: 1
-            }
-          ]
-        );
-        expect(ptrs.length).toBe(2);
-        
-        let res = await server.invoke("deref", ptrs[1]);
-        expect(res).toEqual({ data: 1 });
-
-        res = await server.invoke("deref", ptrs[0]);
-        expect(res).toEqual({data: 0});
-      }
-    );
 
     storageTest(
       "measure global store",
       { STORES, PROCEDURES: { len, insert } },
       async (server) => {
         expect(
-          (await server.invoke("insert", [{ data: "first" }, { data: "second" }])).length
-        ).toBe(2);
+          await server.invoke("insert", [{ data: "first" }, { data: "second" }])
+        ).toBeNull();
         expect(await server.invoke("len")).toBe(2);
       },
     );
-
-    storageTest(
-      "appending to nested array",
-      {
-        STORES: {
-          nested: schemaFactory.Object({
-            a: schemaFactory.Array(schemaFactory.int),
-          }),
-        },
-        PROCEDURES: {
-          insert: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: "nested" }),
-            opWriter.returnStackTop,
-          ],
-          get: [
-            opWriter.queryStore(["nested", {}]),
-            opWriter.popArray,
-            opWriter.returnStackTop,
-          ],
-          appendNested: [
-            opWriter.copyFromHeap(0),
-            opWriter.extractFields([["parent"], ["address"]]),
-            opWriter.createUpdateDoc({ $push: {} }),
-            opWriter.instantiate(interpeterTypeFactory.int(42)),
-            opWriter.setNestedField(["$push", "a"]),
-            opWriter.updateOne,
-            opWriter.returnStackTop,
-          ],
-        },
-      },
-      async (server) => {
-        expect(await server.invoke("insert", { a: [] })).toBeTruthy();
-        const first = await server.invoke("get");
-        expect(first.a).toEqual([]);
-        delete first.a;
-        const res = await server.invoke("appendNested", first)
-        expect(res.a).toEqual([42])
-        const second = await server.invoke("get");
-        expect(second.a).toEqual([42]);
-        expect(first._id).toEqual(second._id);
-      }
-    );
-
-    storageTest(
-      "querying for an address",
-      {
-        STORES: {
-          objs: schemaFactory.Object({
-            a: schemaFactory.int,
-          }),
-        },
-        PROCEDURES: {
-          insert: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: "objs" }),
-            opWriter.returnStackTop,
-          ],
-          get: [
-            opWriter.queryStore(["objs", {a: false}]),
-            opWriter.popArray,
-            opWriter.returnStackTop,
-          ],
-          deref: [
-            opWriter.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.Ref({kind: "Object", data: {}})}),
-            opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["address"]}),
-            opWriter.copyFieldFromHeap({heap_pos: 0, fields: ["parent"]}),
-            opWriter.findOneInStore({select: {_id: false}}),
-            opWriter.returnStackTop,
-          ],
-        },
-      },
-      async (server) => {
-        expect(await server.invoke("insert", { a: 42 })).toBeTruthy();
-        const ptr = await server.invoke("get");
-        const res = await server.invoke("deref", ptr)
-        expect(res).toEqual({a: 42})
-      }
-    );
   });
+
 
   describe("instructions", () => {
     kernelTest(
@@ -612,4 +397,4 @@ describe("conduit kernel", () => {
       }
     );
   });
-});
+})

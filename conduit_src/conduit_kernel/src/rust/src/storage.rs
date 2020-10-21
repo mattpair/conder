@@ -12,28 +12,12 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
         InterpreterType::Array(v) => {
             let bs: Vec<bson::Document> = v.into_iter().map(|i| bson::to_document(i).unwrap()).collect();
             match collection.insert_many(bs, None).await {
-                Ok(mut r) => {
-                    let mut ordered_keys: Vec<usize> = Vec::with_capacity(r.inserted_ids.len());
-                    for k in r.inserted_ids.keys() {
-                        ordered_keys.push(*k);
-                    }
-                    ordered_keys.sort();
-                    let mut ret = Vec::with_capacity(r.inserted_ids.len());
-                    for k in ordered_keys {
-                        let v = r.inserted_ids.remove(&k).unwrap();
-                        ret.push(bson::from_document(doc! {
-                            "parent": storeName,
-                            "address": {"_id": v}
-                        }).unwrap())
-                    }
-
-                    InterpreterType::Array(ret)
-                },
+                Ok(_) => InterpreterType::None,
                 Err(e) => panic!("Failure inserting {}", e)
             }
         },
         _ => match collection.insert_one(bson::to_document(instance).unwrap(), None).await {
-            Ok(r) => bson::from_document(doc! {"address": {"_id": r.inserted_id}, "parent": storeName}).unwrap(),
+            Ok(_) => InterpreterType::None,
             Err(e) => panic!("Failure inserting {}", e)
         }
     }
@@ -63,8 +47,9 @@ pub(crate) async fn getAll(db: &Database, storeName: &str, schema: &Schema) -> I
 
 pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
-
-    let options = FindOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
+    let mut projection = bson::to_document(project).unwrap();
+    projection.insert("_id", false);
+    let options = FindOptions::builder().projection(Some(projection)).build();
     let mut res = match collection.find(None, options).await {
         Ok(c) => c,
         Err(e) => panic!(e)
@@ -73,13 +58,7 @@ pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<Stri
     let mut ret = vec![];
     while let Some(v) = res.next().await {
         match v {
-            Ok(mut doc) => {
-                if let Some(id) = doc.remove("_id") {
-                    doc.insert("parent", storeName);
-                    doc.insert("address", doc!{"_id": id});
-                } 
-                ret.push(bson::from_document(doc).unwrap())
-            },
+            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
             Err(e) => panic!(e)
         };
     }
@@ -90,7 +69,9 @@ pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<Stri
 pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
     
     let collection = db.collection(&storeName);
-    let options = FindOneOptions::builder().projection(Some(bson::to_document(project).unwrap())).build();
+    let mut projection = bson::to_document(project).unwrap();
+    projection.insert("_id", false);
+    let options = FindOneOptions::builder().projection(Some(projection)).build();
 
     match collection.find_one(bson::to_document(query_doc).unwrap(), options).await {
         Ok(r) => match r {
@@ -98,7 +79,7 @@ pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &Interpr
             None => InterpreterType::None
         },
         Err(e) => {
-            eprintln!("Could not dereference pointer: {}", e);
+            eprintln!("Did not find matching doc with error: {}", e);
             InterpreterType::None
         }
     }

@@ -207,18 +207,6 @@ compileTest("select method", `
     }
 `)
 
-compileTest("references ", `
-    struct stored {
-        val: string,
-    }
-    
-    secondStore: Array<stored> = []
-
-    public function refTest(r: &stored): &stored {
-        return r
-    }
-`)
-
 compileTest("object literal ", `
     struct obj {
         a: string,
@@ -257,30 +245,6 @@ compileTest("string literal", `
         }
     }
 
-`)
-
-compileTest("may use synonym prefix symbol for references", ` 
-    struct saved {
-        s: string
-    }
-
-    mine: Array<saved> = []
-
-    public function refer(): &saved {
-        return mine.select(r => {
-            return r.ref()
-        })
-    }
-`)
-
-compileTest("prefix within generic", `
-    struct test {
-        s: string
-    }
-
-    public function f(): Array<&test> {
-
-    }
 `)
 
 compileTest("struct with optionals", `

@@ -1,7 +1,7 @@
 import { PrimitiveUnion, Symbol } from './lexicon';
 
 
-export type SchemaType = "Optional" | "Object" | "Array" | PrimitiveUnion | "Ref"
+export type SchemaType = "Optional" | "Object" | "Array" | PrimitiveUnion
 
 type SchemaFactory = Readonly<{
     [P in Exclude<SchemaType, PrimitiveUnion>]: 
@@ -19,7 +19,6 @@ export const schemaFactory: SchemaFactory = {
     bool: { kind: Symbol.bool, data: null},
     double: { kind: Symbol.double, data: null },
     int: { kind: Symbol.int, data: null },
-    Ref: (r) => ({kind: "Ref", data: [r]})
 };
 
 
@@ -27,7 +26,7 @@ export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion ? { 
 P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : 
 P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : 
 P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } :
-P extends "Ref" ? {kind: "Ref", data: [SchemaInstance<SchemaType>]} : never;
+never;
 
 export type AnySchemaInstance = SchemaInstance<SchemaType>
 export type Schemas = AnySchemaInstance[]

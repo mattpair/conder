@@ -2,8 +2,6 @@
 
 exports[`Global with contents 1`] = `"Global arrays must be initialized empty"`;
 
-exports[`Refing a instance  1`] = `"Globals cannot be used in type definitions."`;
-
 exports[`attempting to store enums 1`] = `"Global arrays must contain structs"`;
 
 exports[`attempting to store non-array 1`] = `"Only arrays may be global"`;
@@ -20,13 +18,6 @@ function echo(s: str"
 `;
 
 exports[`dependent struct is not in scope  1`] = `"M2 does not refer to any known type"`;
-
-exports[`extra closing bracket 1`] = `
-"Unable to find end of entity for Field at >
-}
-
-"
-`;
 
 exports[`naming an entity after a keyword  1`] = `
 "Entities may not be named after reserved symbols: Line: 0

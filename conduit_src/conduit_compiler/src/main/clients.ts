@@ -65,8 +65,6 @@ function schemaToTypedef(schema: AnySchemaInstance): string {
             }`
         case "Optional":
             return `${schemaToTypedef(schema.data[0])} | null`
-        case "Ref":
-            return 'any'
         case Lexicon.Symbol.bool:
             return 'boolean'
         case Lexicon.Symbol.double:

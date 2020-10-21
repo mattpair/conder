@@ -21,10 +21,8 @@ export enum Symbol {
     Optional="Optional",
     type="type",
     none="none",
-    Ref="Ref",
     public="public",
     private="private",
-    amp="&"
 }
 
 export const Operators: [
@@ -42,11 +40,8 @@ export const Operators: [
     Symbol.COMMA,
     Symbol.NEW_LINE
 ]
-export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none | Symbol.Ref
-export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none, Symbol.Ref]
-export const TypeModifierPrefixSynonym: Partial<Record<string, TypeModifierUnion>> = {
-    "&": Symbol.Ref
-}
+export type TypeModifierUnion = Symbol.Array | Symbol.Optional | Symbol.none
+export const TypeModifiers: TypeModifierUnion[] = [Symbol.Array, Symbol.Optional, Symbol.none]
 
 export type PrimitiveUnion = 
     Symbol.double |

@@ -254,8 +254,10 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize", "String"],
             rustOpHandler: `
             let schema = stores.get(param1).unwrap();
-            ${pushStack(`storage::append(${getDb}, &param1, schema, &heap[*param0]).await`)};
-            None
+            match storage::append(${getDb}, &param1, schema, &heap[*param0]).await {
+                InterpreterType::None => None,
+                _ => ${raiseErrorWithMessage("unexpected return result")}
+            }
             `
         },
         factoryMethod: (v) => ({kind: "insertFromHeap", data: [v.heap_pos, v.store]})
@@ -267,8 +269,10 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let schema = stores.get(op_param).unwrap();
             let insert_elt = ${popStack};
-            ${pushStack(`storage::append(${getDb}, op_param, schema, &insert_elt).await`)};
-            None
+            match storage::append(${getDb}, op_param, schema, &insert_elt).await {
+                InterpreterType::None => None,
+                _ => ${raiseErrorWithMessage("unexpected return result")}
+            }
             `
         },
         factoryMethod: (v) => ({kind: "insertFromStack", data: v})

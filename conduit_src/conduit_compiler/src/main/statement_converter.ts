@@ -50,10 +50,10 @@ function toByteCode(f: CompiledTypes.Function, schemaLookup: Record<string, numb
         ops.push(opWriter.enforceSchemaOnHeap({heap_pos: 0, schema: schemaLookup[`__func__${f.name}`]}))
         varmap.add(f.parameter.name, f.parameter.schema)
     }
-    const targetType: AnyType = f.returnType.kind === "VoidReturnType" ?  {kind: "any"} : f.returnType
+    const targetType: AnyType = f.returnType.kind === "VoidReturnType" ?  {kind: "none"} : f.returnType
     
     const summary = statementsToOps(f.body, targetType, {ops, varmap, manifest, opWriter}, {numberOfPrecedingOps: 0})
-    if (!summary.alwaysReturns && targetType.kind !== "any") {
+    if (!summary.alwaysReturns && targetType.kind !== "none") {
         throw Error(`Function fails to return a value for all paths`)
     }
 
@@ -110,6 +110,10 @@ class VarMap extends Map<string, HeapEntry> {
 }
 
 function typesAreEqual(l: AnyType, r: AnyType): boolean {
+    const arr = [l.kind, r.kind]
+    if (arr.some((k) => k === "none") && arr.some((k) => k !== "none")) {
+        return false
+    }
     if (l.kind === "any" || r.kind === "any") {
         return true
     }
@@ -119,9 +123,6 @@ function typesAreEqual(l: AnyType, r: AnyType): boolean {
     
     switch(l.kind) {
 
-        case "Ref":
-            //@ts-ignore
-            return typesAreEqual(l.data[0], r.data[0])
         case "Array":
         case "Optional":
             //@ts-ignore
@@ -140,7 +141,7 @@ function typesAreEqual(l: AnyType, r: AnyType): boolean {
             }
             
             return true
-    
+        
 
         default: {
             return true
@@ -161,7 +162,7 @@ enum ArrayMethods {
     len="len",
 }
 
-type AnyType = AnySchemaInstance | {kind: "any"} | {kind: "anonFunc"}
+type AnyType = AnySchemaInstance | {kind: "any"} | {kind: "anonFunc"} | {kind: "none"}
 type HierStoreMethodCompiler = (
     store: CompiledTypes.HierarchicalStore, 
     invocation: Parse.MethodInvocation,
@@ -183,16 +184,15 @@ type GlobalReferenceToOpsConverter = {
 
 const hierStoreMethodToOps: HierStoreMethods = {
     append: (store, invoc, target, tools) => {
-        const returnType = schemaFactory.Array(schemaFactory.Ref(store.schema))
-        if (typesAreEqual(target, returnType)) {
+        if (typesAreEqual(target, {kind: "none"})) {
             // TODO: Eventually optimize this to do a single insertion of all arguments.
             invoc.children.Assignable.forEach(asn => {
                 assignableToOps(asn, schemaFactory.Array(store.schema), tools)
                 tools.ops.push(tools.opWriter.insertFromStack(store.name))
             })
-            return returnType
+            return {kind: "none"}
         } else {
-            throw Error(`Appending to a store returns an array of refs to the store`)
+            throw Error(`Appending to a global array returns nothing`)
         }
     },
 
@@ -249,20 +249,7 @@ const hierStoreMethodToOps: HierStoreMethods = {
             if (assignable.val !== a.rowVarName || method.kind !== "MethodInvocation") {
                 throw Error(`Invalid select statement`)
             }
-            if (method.name !== "ref") {
-                throw Error(`Unknown method: ${method.name} called on row variable`)
-            }
-            if (method.children.Assignable.length > 0) {
-                throw Error(`ref should not be called with any arguments`)
-            }
-            const refSchema = schemaFactory.Array(schemaFactory.Ref(store.schema))
-            
-            const projection: Parameters<CompleteOpWriter["queryStore"]>[0][1] = {}
-            for (const key in store.schema.data) {
-                projection[key] = false
-            }
-            tools.ops.push(tools.opWriter.queryStore([store.name, projection]))
-            return refSchema
+            throw Error(`Unknown method: ${method.name} called on row variable`)
         }
 
         if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
@@ -339,120 +326,7 @@ function dotsToOpsOnLocal(dots: Parse.DotStatement[], targetType: AnyType, curre
 
             case "MethodInvocation":
                 switch (currentType.kind) {
-                    case "Ref":
-                        
-
-                        if (method.name === "delete") {
-                            if (method.children.Assignable.length > 0) {
-                                throw Error(`Deleting a pointer takes no args`)
-                            }
-                            currentType = schemaFactory.bool
-                            tools.ops.push(
-                                tools.opWriter.extractFields([["address"], ["parent"]]),
-                                tools.opWriter.deleteOneInStore
-                            )
-                            currentType = schemaFactory.bool
-                            break
-                        }
-
-                        if (method.name !== "deref") {
-                            throw Error(`Unrecognized method: ${method.name}`)
-                        }
-                        if (method.children.Assignable.length > 1) {
-                            throw Error("deref takes one optional argument")
-                        } else if (method.children.Assignable.length === 1) {
-                            const anon = method.children.Assignable[0].differentiate()
-                            if (anon.kind !== "AnonFunction") {
-                                throw Error(`Expected a AnonFunction but received a ${anon.kind}`)
-                            }
-                            const derefstmts = anon.part.Statements.children.Statement
-                            if (derefstmts.length !== 2) {
-                                throw Error(`Expected exactly two statements in deref arg`)
-                            }
-                            const one = derefstmts[0].differentiate()
-                            const two = derefstmts[1].differentiate()
-                            
-                            
-                            if (one.kind !== "VariableReference" || one.val !== anon.rowVarName || one.children.DotStatement.length === 0) {
-                                throw Error(`The first statement must do something to the row variable`)
-                            }
-                            if (two.kind !== "ReturnStatement" ) {
-                                throw Error(`You must return the row variable`)
-                            } else {
-                                const ret = two.part.Returnable.differentiate()
-                                if (ret.kind !== "Assignable") {
-                                    throw Error(`You must return the row variable`)
-                                }
-                                const  retass = ret.differentiate()
-                                if (retass.kind !== "VariableReference" || retass.children.DotStatement.length !== 0 || retass.val !== anon.rowVarName) {
-                                    throw Error(`You must return the row variable`)
-                                }
-                                
-                                if (one.children.DotStatement.length === 1) {
-                                    throw Error(`The only command supported on derefed variables is append`)
-                                }
-                                let currentSchema: AnySchemaInstance = currentType.data[0]
-                                const fieldAccess = one.children.DotStatement.slice(0, one.children.DotStatement.length - 1).map(d => d.differentiate())
-                                const fieldNames: string[] = []
-                                fieldAccess.forEach(dot => {
-
-                                    switch(dot.kind) {
-                                        case "MethodInvocation":
-                                            throw Error(`We only support append calls in derefs`)
-                                        case "FieldAccess":
-                                            if (currentSchema.kind !== "Object") {
-                                                throw Error(`Accessing a field on a non-object is not allowed`)
-                                            }
-                                            if (!(dot.name in currentSchema.data)) {
-                                                throw Error(`Field ${dot.name} does not exist on object`)
-                                            }
-                                            currentSchema = currentSchema.data[dot.name]
-                                            
-                                            fieldNames.push(dot.name)
-                                            break
-                                        default: Utilities.assertNever(dot)
-                                    }
-                                })
-                                const lastDot = one.children.DotStatement[one.children.DotStatement.length -1].differentiate()
-                                if (lastDot.kind !== "MethodInvocation" || lastDot.name !== "append"){
-                                    throw Error(`Currently only support append`)
-                                }
-                                if (lastDot.children.Assignable.length !== 1) {
-                                    throw Error(`Append only takes one arg`)
-                                }
-                                if (currentSchema.kind !== "Array") {
-                                    throw Error(`Append can only be called on arrays`)
-                                }
-                                // This is what the updateOne does. We need to create the stack in reverse.
-                                // let update_doc =  ${popStack};
-                                // let query_doc = ${popStack};
-                                // let store_name = ${popToString};
-                                tools.ops.push(
-                                    tools.opWriter.extractFields([["parent"], ["address"]])
-                                )
-                                const updateDoc: Parameters<CompleteOpWriter["createUpdateDoc"]>[0] = {"$push": {}}
-                                tools.ops.push(tools.opWriter.createUpdateDoc(updateDoc))
-                                // This puts the data to be appended at the top of the stack.
-                                assignableToOps(lastDot.children.Assignable[0], currentSchema, tools)
-                                tools.ops.push(
-                                    tools.opWriter.setNestedField(["$push", fieldNames.join(".")]),
-                                    tools.opWriter.updateOne
-                                )
-                            }
-                        } else {
-                            const select: Parameters<CompleteOpWriter["findOneInStore"]>[0]["select"] = {}
-                            select._id = false
-                            tools.ops.push(
-                                tools.opWriter.extractFields([["address"], ["parent"]]),
-                                tools.opWriter.findOneInStore({select})
-                            )
-                        }
-                        
-                        currentType = schemaFactory.Optional(currentType.data[0])
-                        
-                        
-                        break
-
+                    
                     case "Array":
                         if (method.name !== "len") {
                             throw Error(`Unrecognized method on a local array: ${method.name}`)
@@ -583,7 +457,7 @@ function statementsToOps(a: CompiledTypes.Statement[], targetType: AnyType, tool
         }
         switch(stmt.kind) {
             case "VariableReference":
-                variableReferenceToOps(stmt, {kind: "any"}, tools)
+                variableReferenceToOps(stmt, targetType, tools)
                 break
 
             

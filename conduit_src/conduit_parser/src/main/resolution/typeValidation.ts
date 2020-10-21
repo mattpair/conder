@@ -60,8 +60,7 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                                 switch (last.mod) {
                                     case Symbol.Optional: 
                                         throw Error(`Optional enum is unsupported.`)
-                                    case Symbol.Ref:
-                                        throw Error(`References can only be held for globals`)
+            
                                 }
                             }
                             return schemaFactory.int
@@ -86,13 +85,8 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                 return schemaLookup.get(t.name)
                 
             case "Primitive":
-                if (last !== undefined && last.kind === "modification") {
-                    if (last.mod === Symbol.Ref) {
-                        throw Error(`References may only be made to structs stored at the global level.`)
-                    }
-                }
-                
                 return schemaFactory[t.type]
+                
             case "DetailedType":
                 let schemaWrapper: (s: AnySchemaInstance) => AnySchemaInstance = undefined
                 switch (t.modification) {
@@ -103,7 +97,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                                     throw Error(`Don't create Arrays of optionals. Just don't add the undesired elements to the array.`)
                                 case Symbol.Optional:
                                     throw Error(`Nesting optionals defeats the purpose of optionals`)
-                                case Symbol.Ref:
                                 case Symbol.none:
                                     break
                                 default: assertNever(last.mod)
@@ -120,16 +113,12 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                                     throw Error(`Arrays in arrays aren't supported`)
                                 case Symbol.Optional:
                                     throw Error(`Instead of having an optional array, just store an empty array.`)
-                                case Symbol.Ref:
                                 case Symbol.none:
                                     break
                                 default: assertNever(last.mod)
                             }
                         }
                         schemaWrapper = schemaFactory.Array
-                        break
-                    case Symbol.Ref:
-                        schemaWrapper = (a: AnySchemaInstance) => ({kind: "Ref", data: [a]})
                         break
 
                     case Symbol.none:
