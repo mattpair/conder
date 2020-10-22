@@ -12,3 +12,14 @@ test("output with nothing", async () => {
   `);
 });
 
+test("help output", async () => {
+  expect(await cli("--help")).toMatchInlineSnapshot(`
+    "[0mconder version 0.0.1[0m
+
+    [90m [39m conder      [90m [39m -                         
+    [90m [39m version (v) [90m [39m Output the version number 
+    [90m [39m compile (c) [90m [39m -                         
+    [90m [39m help (h)    [90m [39m -                         
+    "
+  `);
+});
