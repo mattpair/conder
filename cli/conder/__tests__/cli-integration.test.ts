@@ -23,3 +23,23 @@ test("help output", async () => {
     "
   `);
 });
+
+test("compile test", async () => {
+  filesystem.write(
+    "main.cdt",
+    `
+  public function echo(s: string): string {
+    return s
+  }
+  
+  `
+  );
+
+  await cli("compile");
+
+  expect(filesystem.read("app.json")).toMatchInlineSnapshot(
+    `"{\\"PROCEDURES\\":{\\"echo\\":[{\\"kind\\":\\"enforceSchemaOnHeap\\",\\"data\\":[0,0]},{\\"kind\\":\\"copyFromHeap\\",\\"data\\":0},{\\"kind\\":\\"returnStackTop\\"}]},\\"SCHEMAS\\":[{\\"kind\\":\\"string\\",\\"data\\":null}],\\"STORES\\":{}}"`
+  );
+  filesystem.remove("app.json");
+  filesystem.remove("main.cdt")
+});
