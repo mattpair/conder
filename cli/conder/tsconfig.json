@@ -21,8 +21,15 @@
     "strict": false,
     "target": "es5",
     "declaration": true,
-    "declarationDir": "build/types"
+    "declarationDir": "build/types",
+    "types": ["jest", "node"],
+    "typeRoots": [
+      "node_modules/@types/", "src/",
+    ]
   },
-  "include": ["src/**/*", "gateway_location.js"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*", "__tests__/*"],
+  "exclude": ["node_modules"],
+  "references": [
+    {"path": "../../conduit_src/conduit_compiler/"}
+  ]
 }
