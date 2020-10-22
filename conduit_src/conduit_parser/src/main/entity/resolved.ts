@@ -13,7 +13,7 @@ export type Struct = Readonly<{
     schema: SchemaInstance<"Object">,
     kind: "Struct"
 }>
-export type Enum = basic.Enum
+
 export class EntityMap<ENTS extends {kind: basic.EntityKinds}> {
     private readonly map: Map<string, ENTS>
     readonly size: number;
@@ -65,7 +65,7 @@ export type Function =  basic.NamedIntrafile<"Function", {
 }>
 
 
-export type Entity = Struct | Enum  | HierarchicalStore | Function
+export type Entity = Struct | HierarchicalStore | Function
 export type ScopeMap = EntityMap<Entity>
 
 export type SchemaFactory = (t: Parse.CompleteType) => AnySchemaInstance

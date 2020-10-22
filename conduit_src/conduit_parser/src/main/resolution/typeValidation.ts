@@ -7,20 +7,20 @@ import { Struct, EntityMap, HierarchicalStore, Function, SchemaFactory } from '.
 import { assertNever } from '../utils';
 import  * as basic from '../entity/basic';
 import { Symbol } from '../lexicon';
-export type PartialEntityMap<T=undefined> = Map<string, Struct | basic.Enum | Function | HierarchicalStore | T>
+export type PartialEntityMap<T=undefined> = Map<string, Struct | Function | HierarchicalStore | T>
 
 
-type FirstPassEntity = (Parse.Struct | basic.Enum | Parse.StoreDefinition ) & {file: FileLocation}
+type FirstPassEntity = (Parse.Struct | Parse.StoreDefinition ) & {file: FileLocation}
 type ParentTypeInfo = Readonly<{kind: "type", name: string} | {kind: "modification", mod: TypeModifierUnion}>
 type SchemaLookup = Map<string, SchemaInstance<"Object">>
 
 export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, SchemaFactory] {
     const firstPassScope: Map<string, FirstPassEntity> = new Map()
-    const childType = ["Struct", "Enum", "StoreDefinition"]
+    const childType = ["Struct", "StoreDefinition"]
     unresolved.forEach(file => {
         childType.forEach((type) => {
             //@ts-ignore
-            file.children[type].forEach((ent: Parse.Struct | basic.Enum | Parse.StoreDefinition) => {
+            file.children[type].forEach((ent: Parse.Struct | Parse.StoreDefinition) => {
                 const existing = firstPassScope.get(ent.name)
                 if (existing !== undefined) {
                     throw new Error(`Entity name: ${ent.name} is defined multiple times in default namespace
@@ -55,15 +55,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                  
                 if (!schemaLookup.has(t.name)) {
                     switch (ref.kind) {
-                        case "Enum":
-                            if (last !== undefined && last.kind === "modification") {
-                                switch (last.mod) {
-                                    case Symbol.Optional: 
-                                        throw Error(`Optional enum is unsupported.`)
-            
-                                }
-                            }
-                            return schemaFactory.int
                             
                         case "Struct":
                             const schemaMap: SchemaInstance<"Object"> = {kind: "Object", data: {}}
@@ -152,7 +143,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
 
     firstPassScope.forEach(en => {
         switch(en.kind) {
-            case "Enum":
             case "Struct":
                 getSchema({kind: "CompleteType", differentiate: () => ({kind: "TypeName", name: en.name})}, [])
                 break
@@ -169,7 +159,6 @@ export function toEntityMap(unresolved: Parse.File[]): [PartialEntityMap, Schema
                 schema: schemaLookup.get(s.name)
             })
         })
-        file.children.Enum.forEach(e => partialEntityMap.set(e.name, e))
 
         file.children.Function.forEach(f => {
             const returnType = f.part.ReturnTypeSpec.differentiate()

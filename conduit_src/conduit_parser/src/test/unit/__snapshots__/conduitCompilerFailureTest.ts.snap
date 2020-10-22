@@ -2,15 +2,11 @@
 
 exports[`Global with contents 1`] = `"Global arrays must be initialized empty"`;
 
-exports[`attempting to store enums 1`] = `"Global arrays must contain structs"`;
-
 exports[`attempting to store non-array 1`] = `"Only arrays may be global"`;
 
 exports[`creating an array optional 1`] = `"Don't create Arrays of optionals. Just don't add the undesired elements to the array."`;
 
 exports[`creating an optional array 1`] = `"Instead of having an optional array, just store an empty array."`;
-
-exports[`creating an optional enum 1`] = `"Optional enum is unsupported."`;
 
 exports[`declaring a function as not private or public 1`] = `
 "Failed to parse file entirely: {\\"dir\\":\\"\\",\\"name\\":\\"badFile.cdt\\",\\"fullname\\":\\"badFile.cdt\\"}

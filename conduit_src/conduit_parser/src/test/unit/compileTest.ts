@@ -47,46 +47,6 @@ compileTest("should allow the specification of optional fields", `
     }
     `)
 
-compileTest("should allow enums",`
-    enum PurchaseCategory {
-        UNCATEGORIZED,
-        GAS,
-        DINING,
-        TRAVEL,
-        GROCERY,
-        ENTERTAINMENT,
-    }
-    `)
-
-compileTest("should allow enums separated by whitespace",`
-    enum PurchaseCategory {
-        UNCATEGORIZED
-        GAS
-        DINING
-        TRAVEL
-        GROCERY
-        ENTERTAINMENT
-    }
-    `)
-
-
-compileTest("should allow multiple enums separated by whitespace",`
-    enum PurchaseCategory {
-        UNCATEGORIZED
-        GAS
-        DINING
-        TRAVEL
-        GROCERY
-        ENTERTAINMENT
-    }
-    
-    enum OtherCategories {
-        A
-        B
-        C
-    }
-    `)
-
 compileTest("defining a store", `
     struct stored {
         s: string

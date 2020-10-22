@@ -18,15 +18,6 @@ struct function {
 }
 `)
 
-testFailsWhen("attempting to store enums", `
-enum AttemptToStore {
-    Yes,
-    No
-}
-
-myBadStore: Array<AttemptToStore> = []
-`)
-
 testFailsWhen("attempting to store non-array", `
 
 struct Singleton {
@@ -38,18 +29,6 @@ singletonStore: Singleton = []
 
 `)
 
-
-testFailsWhen("creating an optional enum", `
-
-enum MyEnum {
-    A,
-    B
-}
-struct Container {
-    e: Optional<MyEnum>
-}
-
-`)
 
 testFailsWhen("creating an optional array", `
 

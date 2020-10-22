@@ -1,8 +1,6 @@
 import { PrimitiveUnion as common } from '../lexicon';
 
 export type EntityKinds = 
-"EnumMember" |
-"Enum" |
 "Struct" |
 "Field" |
 "File" |
@@ -83,8 +81,6 @@ export type NamedIntrafile<KIND extends IntrafileEntityKinds, DATA extends any> 
     readonly name: string
 }> 
 
-export type EnumMember = NamedIntrafile<"EnumMember", {}>
-export type Enum = NamedIntrafile<"Enum", ParentOfMany<EnumMember>> 
 
 export type PrimitiveEntity = IntrafileEntity<"Primitive", {readonly type: common}>
 

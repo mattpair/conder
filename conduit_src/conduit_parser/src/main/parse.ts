@@ -9,7 +9,6 @@ export namespace Parse {
     export type File = 
     e.Entity<"File"> & 
     e.ParentOfMany<Struct> &  
-    e.ParentOfMany<e.Enum> & 
     e.ParentOfMany<Function> &
     e.ParentOfMany<StoreDefinition> &
     {readonly loc: FileLocation}
@@ -118,7 +117,7 @@ export namespace Parse {
         
     export function extractAllFileEntities(contents: string, location: FileLocation): File {
         const cursor = new FileCursor(contents, location)
-        const children = extractChildren<"File">(cursor, completeParserV2, {Enum: true, Struct: true, Function: true, StoreDefinition: true}, {})
+        const children = extractChildren<"File">(cursor, completeParserV2, {Struct: true, Function: true, StoreDefinition: true}, {})
         if (cursor.tryMatch(/^\s*/).hit && cursor.isDone()) {
             return {
                 kind: "File",
@@ -184,8 +183,6 @@ export namespace Parse {
         File | 
         Struct | 
         Field | 
-        e.Enum | 
-        e.EnumMember | 
         Function |
         FunctionBody |
         ReturnTypeSpec |
@@ -407,37 +404,7 @@ export namespace Parse {
     }
 
     const completeParserV2: CompleteParserV2 = {
-        Enum: {
-            kind: "aggregate",
-            startRegex: /^\s*enum +(?<name>[a-zA-Z_]\w*) *{/,
-            assemble(start, end, loc, children): e.Enum | undefined {
-                return {
-                    kind: "Enum",
-                    name: start.groups.name,
-                    loc,
-                    children
-                }
-            },
-            endRegex:/^\s*}/,
-            hasMany: {EnumMember: true},
-            options: {}
-        },
         
-        EnumMember: {
-            kind: "leaf",
-            regex: /^\s*(?<name>[a-zA-Z_]\w*)(,|\s)/,
-            assemble(c, loc): e.EnumMember | undefined {
-
-                return{
-                    kind: "EnumMember",
-                    name: c.groups.name,
-                    loc
-                }   
-            }
-        },
-
-
-
         Field: {
             kind: "conglomerate",
             startRegex: /^\s*(?<name>[_A-Za-z]+[\w]*): */,
