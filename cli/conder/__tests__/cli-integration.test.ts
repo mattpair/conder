@@ -1,5 +1,4 @@
-import { system, filesystem, http } from "gluegun";
-import * as child_process from 'child_process'
+import { system, filesystem } from "gluegun";
 const src = filesystem.path(__dirname, "..");
 
 const cli = async cmd =>
