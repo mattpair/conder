@@ -1,5 +1,5 @@
-import { system, filesystem } from "gluegun";
-
+import { system, filesystem, http } from "gluegun";
+import * as child_process from 'child_process'
 const src = filesystem.path(__dirname, "..");
 
 const cli = async cmd =>
@@ -19,6 +19,7 @@ test("help output", async () => {
     [90m [39m conder      [90m [39m -                         
     [90m [39m version (v) [90m [39m Output the version number 
     [90m [39m compile (c) [90m [39m -                         
+    [90m [39m run         [90m [39m -                         
     [90m [39m help (h)    [90m [39m -                         
     "
   `);
@@ -41,5 +42,6 @@ test("compile test", async () => {
     `"{\\"PROCEDURES\\":{\\"echo\\":[{\\"kind\\":\\"enforceSchemaOnHeap\\",\\"data\\":[0,0]},{\\"kind\\":\\"copyFromHeap\\",\\"data\\":0},{\\"kind\\":\\"returnStackTop\\"}]},\\"SCHEMAS\\":[{\\"kind\\":\\"string\\",\\"data\\":null}],\\"STORES\\":{}}"`
   );
   filesystem.remove("app.json");
-  filesystem.remove("main.cdt")
+  filesystem.remove("main.cdt");
 });
+
