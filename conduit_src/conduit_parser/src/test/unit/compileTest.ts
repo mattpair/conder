@@ -220,3 +220,13 @@ struct WithOptional {
 }
 
 `)
+
+compileTest("bool literal", `
+public function t1(): bool {
+    return false
+}
+
+public function t2(): bool {
+    return true
+}
+`)

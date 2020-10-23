@@ -200,9 +200,7 @@ describe("basic functionality", () => {
         
         public function chained_measure(): measurement {
             return {
-                length: presents.select(row => {
-                    return row
-                }).len()
+                length: presents.len()
             }
         }
         
@@ -218,6 +216,33 @@ describe("basic functionality", () => {
             expect(await server.invoke("chained_measure")).toEqual({length: 1})
             expect(await server.invoke("measure", ["a", "b"])).toBe(2)
             expect(await server.invoke("measureGlobal")).toBe(1)
+        })
+    )
+
+    it("filtering of arrays", 
+        testHarness(`
+
+        struct datum {
+            s: string
+        }
+
+        datas: Array<datum> = []
+
+        public function insertData() {
+            datas.append([{s: \`foo\`}])
+        }
+
+        public function getNone(): int {
+            return datas.filter(row => { return false }).len()
+        }
+
+        public function getAll(): int {
+            return datas.filter(row => { return true }).len()
+        }
+        `, async (server) => {
+            expect(await server.invoke("insertData")).toBeNull()
+            expect(await server.invoke("getNone")).toBe(0)
+            expect(await server.invoke("getAll")).toBe(1)
         })
     )
 })

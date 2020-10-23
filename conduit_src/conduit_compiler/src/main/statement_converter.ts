@@ -158,7 +158,7 @@ type CompilationTools = Readonly<{
 
 enum ArrayMethods {
     append="append",
-    select="select",
+    filter="filter",
     len="len",
 }
 
@@ -204,58 +204,41 @@ const hierStoreMethodToOps: HierStoreMethods = {
         return schemaFactory.int
     },
 
-    select: (store, invoc, target, tools) => {
+    filter: (store, invoc, target, tools) => {
         if (invoc.children.Assignable.length > 1) {
-            throw Error(`Select may only be called with one argument`)
+            throw Error(`Filter may only be called with one argument`)
         }
 
         const a = invoc.children.Assignable[0].differentiate()
         if (a.kind !== "AnonFunction") {
-            throw Error(`Select must be invoked with an anonymous function`)
+            throw Error(`Filter must be invoked with an anonymous function`)
         }
         const ss = a.part.Statements.children.Statement
         if (ss.length > 1) {
-            throw Error(`Select functions currently only support one statement`)
+            throw Error(`Filter functions currently only support one statement`)
         }
 
         const s = ss[0].differentiate()
         if (s.kind !== "ReturnStatement") {
-            throw Error(`It only makes sense to select from a store if you are going to return results`)
+            throw Error(`Filter functions must return a boolean`)
         }
         const r = s.part.Returnable.differentiate()
         if (r.kind !== "Assignable") {
-            throw Error(`It only makes sense to select from a store if you are going to return results`)
+            throw Error(`Filter functions must return a bool`)
         }
         const assignable = r.differentiate()
         switch (assignable.kind) {
-            case "AnonFunction":
-                throw Error(`It does not make sense to return an anonymous function from a select statement`)
-                
-            case "ArrayLiteral":
-                throw Error(`Returning an array literal from within a select is not supported`)
+            case "BoolLiteral":
+                break
 
-            case "ObjectLiteral":
-                throw Error("Returning an object literal from within a select is not supported")
-
-            case "NumberLiteral":
-                throw Error("Returning a number literal does not make sense")
-
-            case "StringLiteral":
-                throw Error("Returning a string literal does not make sense")
+            default: throw Error(`Expected a boolean expression, not a ${assignable.kind}`)
         }
 
-        if (assignable.children.DotStatement.length  === 1) {
-            const method = assignable.children.DotStatement[0].differentiate()
-            if (assignable.val !== a.rowVarName || method.kind !== "MethodInvocation") {
-                throw Error(`Invalid select statement`)
-            }
-            throw Error(`Unknown method: ${method.name} called on row variable`)
+        if (assignable.value) {
+            tools.ops.push(tools.opWriter.getAllFromStore(store.name))
+        } else {
+            tools.ops.push(tools.opWriter.instantiate([]))
         }
-
-        if (assignable.children.DotStatement.length > 0 || assignable.val !== a.rowVarName) {
-            throw Error(`Currently only support returning the entire row variable in select statements`)
-        }
-        tools.ops.push(tools.opWriter.getAllFromStore(store.name))
         return schemaFactory.Array(store.schema)
     }
 }
@@ -435,6 +418,12 @@ function assignableToOps(a: Parse.Assignable, targetType: AnyType, tools: Compil
             }
             break
 
+        case "BoolLiteral":
+            if (targetType.kind !== Lexicon.Symbol.bool) {
+                throw Error(`Expected ${targetType.kind} received bool`)
+            }
+            tools.ops.push(tools.opWriter.instantiate(assign.value))
+            break
         default: Utilities.assertNever(assign)
     }
     

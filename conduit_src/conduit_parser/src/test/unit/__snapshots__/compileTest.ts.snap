@@ -457,6 +457,131 @@ Object {
 }
 `;
 
+exports[`bool literal 1`] = `
+Object {
+  "inScope": EntityMap {
+    "map": Map {
+      "t1" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 18,
+          "endLineNumber": 1,
+          "startColNumber": 0,
+          "startLineNumber": 0,
+        },
+        "method": "GET",
+        "name": "t1",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 20,
+            "endLineNumber": 1,
+            "startColNumber": 18,
+            "startLineNumber": 1,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 28,
+              "endLineNumber": 1,
+              "startColNumber": 26,
+              "startLineNumber": 1,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": null,
+          "kind": "bool",
+        },
+      },
+      "t2" => Object {
+        "body": Array [
+          Object {
+            "differentiate": [Function],
+            "kind": "Statement",
+          },
+        ],
+        "kind": "Function",
+        "loc": Object {
+          "endColNumber": 18,
+          "endLineNumber": 5,
+          "startColNumber": 1,
+          "startLineNumber": 3,
+        },
+        "method": "GET",
+        "name": "t2",
+        "parameter": Object {
+          "kind": "NoParameter",
+          "loc": Object {
+            "endColNumber": 20,
+            "endLineNumber": 5,
+            "startColNumber": 18,
+            "startLineNumber": 5,
+          },
+        },
+        "part": Object {
+          "FunctionBody": Object {
+            "children": Object {
+              "Statement": Array [
+                Object {
+                  "differentiate": [Function],
+                  "kind": "Statement",
+                },
+              ],
+            },
+            "kind": "FunctionBody",
+            "loc": Object {
+              "endColNumber": 28,
+              "endLineNumber": 5,
+              "startColNumber": 26,
+              "startLineNumber": 5,
+            },
+          },
+          "Parameter": Object {
+            "differentiate": [Function],
+            "kind": "Parameter",
+          },
+          "ReturnTypeSpec": Object {
+            "differentiate": [Function],
+            "kind": "ReturnTypeSpec",
+          },
+        },
+        "returnType": Object {
+          "data": null,
+          "kind": "bool",
+        },
+      },
+    },
+    "size": 2,
+  },
+  "schemaFactory": [Function],
+}
+`;
+
 exports[`defining a store 1`] = `
 Object {
   "inScope": EntityMap {

@@ -29,7 +29,7 @@ export namespace Parse {
     export type Returnable = e.PolymorphicEntity<"Returnable", () => Nothing | Assignable>
     export type ReturnStatement = e.IntrafileEntity<"ReturnStatement", e.RequiresOne<Returnable>>
     export type ArrayLiteral = e.IntrafileEntity<"ArrayLiteral", e.ParentOfMany<Assignable>>
-    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral | NumberLiteral | StringLiteral>
+    export type Assignable = e.PolymorphicEntity<"Assignable", () => VariableReference | AnonFunction | ArrayLiteral | ObjectLiteral | NumberLiteral | StringLiteral | BoolLiteral>
     export type DotStatement = e.PolymorphicEntity<"DotStatement", () => FieldAccess | MethodInvocation>
     export type VariableCreation = e.NamedIntrafile<"VariableCreation", e.RequiresOne<CompleteType> & e.RequiresOne<Assignable>>
     export type Statement = e.BaseStatement<() => ReturnStatement | VariableReference | VariableCreation | ForIn | If>
@@ -48,6 +48,7 @@ export namespace Parse {
     export type ForIn = e.IntrafileEntity<"ForIn", {rowVarName: string} & e.RequiresOne<ForInBody> & e.RequiresOne<Assignable>>
     export type If = e.IntrafileEntity<"If", e.RequiresOne<Assignable> & e.RequiresOne<Statements>>
     export type AnonFunction = e.IntrafileEntity<"AnonFunction", e.RequiresOne<Statements> & {rowVarName: string}>
+    export type BoolLiteral = e.IntrafileEntity<"BoolLiteral", {value: boolean}>
 
     export type StoreDefinition = e.NamedIntrafile<"StoreDefinition", e.RequiresOne<CompleteType> & e.RequiresOne<ArrayLiteral>>
 
@@ -216,7 +217,8 @@ export namespace Parse {
         FieldLiteral |
         ObjectLiteral |
         NumberLiteral | 
-        StringLiteral
+        StringLiteral |
+        BoolLiteral
 
     type WithChildren = Extract<AnyEntity, {children: any}>
     type WithDependentClause= Extract<AnyEntity, {part: any}>
@@ -668,12 +670,13 @@ export namespace Parse {
         Assignable: {
             kind: "polymorph",
             priority: {
-                ArrayLiteral: 3,
-                NumberLiteral: 5,
-                ObjectLiteral: 4,
-                VariableReference: 2,
+                ArrayLiteral: 4,
+                NumberLiteral: 6,
+                ObjectLiteral: 5,
+                VariableReference: 3,
                 AnonFunction: 1,
-                StringLiteral: 6
+                StringLiteral: 7,
+                BoolLiteral: 2
             },
             groupKind: "Assignable"
         },
@@ -884,6 +887,11 @@ export namespace Parse {
             kind: "leaf",
             regex: /^\s*`(?<val>[\S\s]*(?<!\\))`/,
             assemble:(c, loc) => ({kind: "StringLiteral", loc, val: c.groups.val.replace("\`", "`")})
+        },
+        BoolLiteral: {
+            kind: "leaf",
+            regex: new RegExp(`^\\s*(?<val>${Symbol.true}|${Symbol.false})`),
+            assemble: (c, loc) => ({kind: "BoolLiteral", loc, value: c.groups.val === Symbol.true})
         }
     }
 }
