@@ -23,6 +23,8 @@ export enum Symbol {
     none="none",
     public="public",
     private="private",
+    true="true",
+    false="false"
 }
 
 export const Operators: [

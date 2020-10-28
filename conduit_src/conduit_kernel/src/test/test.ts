@@ -396,5 +396,54 @@ describe("conduit kernel", () => {
         },
       }
     );
+
+    kernelTest(
+      "comparisons",
+      async (server) => {
+        const less = await server.invoke(
+          "less",
+          [0, 1]
+        )
+
+        const notless = await server.invoke(
+          "less",
+          [0, 0]
+        )
+
+        const lessequal = await server.invoke(
+          "lesseq",
+          [0, 0]
+        )
+
+        const notlessequal = await server.invoke(
+          "lesseq",
+          [0.1, 0.01]
+        )
+        const equal = await server.invoke(
+          "equal",
+          ["abc", "abc"]
+        )
+
+        const notequal = await server.invoke(
+          "notequal",
+          ["abcd", "abc"]
+        )
+
+
+        expect(less).toBeTruthy()
+        expect(notless).toBeFalsy()
+        expect(lessequal).toBeTruthy()
+        expect(notlessequal).toBeFalsy()
+        expect(equal).toBeTruthy()
+        expect(notequal).toBeFalsy()
+      },
+      {
+        PROCEDURES: {
+          less: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.less, opWriter.returnStackTop],
+          lesseq: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.lesseq, opWriter.returnStackTop],
+          equal: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.equal, opWriter.returnStackTop]
+        }
+      }
+    )
   });
 })
