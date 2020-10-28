@@ -286,7 +286,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::getAll(${getDb}, op_param, stores.get(op_param).unwrap()).await;
+            let res = storage::query(${getDb}, op_param, &HashMap::new()).await;
             ${pushStack(`res`)};
             None
             `

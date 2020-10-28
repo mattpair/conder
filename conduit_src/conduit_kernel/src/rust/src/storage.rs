@@ -23,27 +23,6 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
     }
 
 }
-pub(crate) async fn getAll(db: &Database, storeName: &str, schema: &Schema) -> InterpreterType {
-    let collection = db.collection(&storeName);
-    let options = FindOptions::builder().projection(Some(
-        doc! {"_id": false}
-
-    )).build();
-    let mut res = match collection.find(None, options).await {
-        Ok(c) => c,
-        Err(e) => panic!(e)
-    };
-
-    let mut ret = vec![];
-    while let Some(v) = res.next().await {
-        match v {
-            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
-            Err(e) => panic!(e)
-        };
-    }
-    
-    return InterpreterType::Array(ret)
-}
 
 pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
