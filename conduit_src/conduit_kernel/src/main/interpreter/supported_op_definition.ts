@@ -49,7 +49,11 @@ ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 StaticOp<"updateOne"> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
-ParamOp<"extractFields", string[][]>
+ParamOp<"extractFields", string[][]> | 
+StaticOp<"equal"> |
+StaticOp<"lesseq"> |
+StaticOp<"less"> | 
+StaticOp<"flattenArray">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -360,6 +364,19 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
     },
+    flattenArray: {
+        opDefinition: {
+            rustOpHandler: `
+            let mut res = match ${popStack} {
+                InterpreterType::Array(inner) => inner,
+                _ => panic!("Cannot flatten non array")
+            };
+            res.reverse();
+            stack.append(&mut res);
+            None
+            `
+        }
+    },
     toBool: {
         opDefinition: {
             
@@ -557,6 +574,76 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "extractFields", data})
-    }
+    },
+    equal: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popStack};
+            let second = ${popStack};
+            ${pushStack(`InterpreterType::bool(match first {
+                InterpreterType::string(fs) => match second {
+                    InterpreterType::string(ss) => fs == ss,
+                    _ => false
+                },
+                InterpreterType::int(fi) => match second {
+                    InterpreterType::int(si) => fi == si,
+                    _ => false
+                },
 
+                InterpreterType::double(fd) => match second {
+                    InterpreterType::double(sd) => fd == sd,
+                    _ => false
+                },
+
+                _ => false
+            })`)};
+            None
+            `
+        }
+    },
+    less: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popStack};
+            let second = ${popStack};
+            ${pushStack(`InterpreterType::bool(match first {
+                InterpreterType::int(i1) => match second {
+                    InterpreterType::int(i2) => i1 < i2,
+                    _ => false
+                },
+
+                InterpreterType::double(d1) => match second {
+                    InterpreterType::double(d2) => d1 < d2,
+                    _ => false
+                },
+                _ => false
+            
+            })`)};
+            None
+            `
+        }
+    },
+    lesseq: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popStack};
+            let second = ${popStack};
+            ${pushStack(`InterpreterType::bool(match first {
+                InterpreterType::int(i1) => match second {
+                    InterpreterType::int(i2) => i1 <= i2,
+                    _ => false
+                },
+
+                InterpreterType::double(d1) => match second {
+                    InterpreterType::double(d2) => d1 <= d2,
+                    _ => false
+                },
+                _ => false
+            
+            })`)};
+            None
+            
+            `
+        }
+    }
 }
