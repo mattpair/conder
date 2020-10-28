@@ -286,7 +286,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, op_param, &HashMap::new()).await;
+            let res = storage::query(${getDb}, op_param, &HashMap::new(), &HashMap::new()).await;
             ${pushStack(`res`)};
             None
             `
@@ -305,7 +305,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, &param0, &param1).await;
+            let res = storage::query(${getDb}, &param0, &param1, &HashMap::new()).await;
             ${pushStack("res")};
             None
             `

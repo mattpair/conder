@@ -24,12 +24,13 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
 
 }
 
-pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
     let mut projection = bson::to_document(project).unwrap();
     projection.insert("_id", false);
     let options = FindOptions::builder().projection(Some(projection)).build();
-    let mut res = match collection.find(None, options).await {
+
+    let mut res = match collection.find(bson::to_document(filter).unwrap(), options).await {
         Ok(c) => c,
         Err(e) => panic!(e)
     };
