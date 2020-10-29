@@ -77,9 +77,9 @@ pub(crate) async fn delete_one(db: &Database, storeName: &str, query_doc: &Inter
     InterpreterType::bool(d)
 }
 
-pub(crate) async fn measure(db: &Database, storeName: &str) -> InterpreterType {
+pub(crate) async fn measure(db: &Database, storeName: &str, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
-    let d = match collection.count_documents(None, None).await {
+    let d = match collection.count_documents(bson::to_document(filter).unwrap(), None).await {
         Ok(count) => count,
         Err(e) => {
             eprintln!("Failure measuring: {}", e);

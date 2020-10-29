@@ -458,7 +458,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            ${pushStack(`storage::measure(${getDb}, op_param).await`)};
+            let filter = ${popToObject};
+            ${pushStack(`storage::measure(${getDb}, op_param, &filter).await`)};
             None
             `
         },

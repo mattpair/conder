@@ -435,7 +435,7 @@ describe("conduit kernel", () => {
       opWriter.insertFromHeap({ heap_pos: 0, store: "test" }),
     ];
 
-    const len = [opWriter.storeLen("test"), opWriter.returnStackTop];
+    const len = [opWriter.instantiate({}), opWriter.storeLen("test"), opWriter.returnStackTop];
     const STORES = {
       test: schemaFactory.Object({
         data: schemaFactory.string,
