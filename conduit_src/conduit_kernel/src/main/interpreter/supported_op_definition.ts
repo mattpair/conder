@@ -35,7 +35,7 @@ ParamOp<"getAllFromStore", string> |
 ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
 ParamOp<"queryStore", [string, ProjectionOptions]> |
-ParamOp<"findOneInStore", {select: ProjectionOptions}> |
+ParamOp<"findOneInStore", [string, ProjectionOptions]> |
 StaticOp<"deleteOneInStore"> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
@@ -110,6 +110,12 @@ const popToString = `
         InterpreterType::string(s) => s, 
         _ => panic!("Stack variable is not a string")
     }`
+const popToObject = `
+    match ${popStack} {
+        InterpreterType::Object(o) => o,
+        _ => panic!("stack variable is not an object")
+    }
+`
 const lastStack = `stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
@@ -286,7 +292,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::getAll(${getDb}, op_param, stores.get(op_param).unwrap()).await;
+            let res = storage::query(${getDb}, op_param, &HashMap::new(), &HashMap::new()).await;
             ${pushStack(`res`)};
             None
             `
@@ -305,7 +311,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, &param0, &param1).await;
+            let res = storage::query(${getDb}, &param0, &param1, &${popToObject}).await;
             ${pushStack("res")};
             None
             `
@@ -317,15 +323,14 @@ export const OpSpec: CompleteOpSpec = {
     },
     findOneInStore: {
         opDefinition: {
-            paramType: ["HashMap<String, InterpreterType>"],
+            paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let storename = ${popToString};
-            let res = storage::find_one(${getDb}, &storename, &${popStack}, op_param).await;
+            let res = storage::find_one(${getDb}, &param0, &param1, &${popToObject}).await;
             ${pushStack("res")};
             None
             `
         },
-        factoryMethod: (d) => ({kind: "findOneInStore", data: d.select})
+        factoryMethod: (d) => ({kind: "findOneInStore", data: d})
     },
     deleteOneInStore: {
         opDefinition: {
@@ -453,7 +458,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            ${pushStack(`storage::measure(${getDb}, op_param).await`)};
+            let filter = ${popToObject};
+            ${pushStack(`storage::measure(${getDb}, op_param, &filter).await`)};
             None
             `
         },

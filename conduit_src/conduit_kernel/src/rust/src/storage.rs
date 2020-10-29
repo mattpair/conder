@@ -23,34 +23,14 @@ pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, inst
     }
 
 }
-pub(crate) async fn getAll(db: &Database, storeName: &str, schema: &Schema) -> InterpreterType {
-    let collection = db.collection(&storeName);
-    let options = FindOptions::builder().projection(Some(
-        doc! {"_id": false}
 
-    )).build();
-    let mut res = match collection.find(None, options).await {
-        Ok(c) => c,
-        Err(e) => panic!(e)
-    };
-
-    let mut ret = vec![];
-    while let Some(v) = res.next().await {
-        match v {
-            Ok(doc) => ret.push(bson::from_document(doc).unwrap()),
-            Err(e) => panic!(e)
-        };
-    }
-    
-    return InterpreterType::Array(ret)
-}
-
-pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
     let mut projection = bson::to_document(project).unwrap();
     projection.insert("_id", false);
     let options = FindOptions::builder().projection(Some(projection)).build();
-    let mut res = match collection.find(None, options).await {
+
+    let mut res = match collection.find(bson::to_document(filter).unwrap(), options).await {
         Ok(c) => c,
         Err(e) => panic!(e)
     };
@@ -66,14 +46,14 @@ pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<Stri
     return InterpreterType::Array(ret)
 }
 
-pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn find_one(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     
     let collection = db.collection(&storeName);
     let mut projection = bson::to_document(project).unwrap();
     projection.insert("_id", false);
     let options = FindOneOptions::builder().projection(Some(projection)).build();
 
-    match collection.find_one(bson::to_document(query_doc).unwrap(), options).await {
+    match collection.find_one(bson::to_document(filter).unwrap(), options).await {
         Ok(r) => match r {
             Some(o) => bson::from_document(o).unwrap(),
             None => InterpreterType::None
@@ -97,9 +77,9 @@ pub(crate) async fn delete_one(db: &Database, storeName: &str, query_doc: &Inter
     InterpreterType::bool(d)
 }
 
-pub(crate) async fn measure(db: &Database, storeName: &str) -> InterpreterType {
+pub(crate) async fn measure(db: &Database, storeName: &str, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
-    let d = match collection.count_documents(None, None).await {
+    let d = match collection.count_documents(bson::to_document(filter).unwrap(), None).await {
         Ok(count) => count,
         Err(e) => {
             eprintln!("Failure measuring: {}", e);
