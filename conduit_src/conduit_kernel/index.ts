@@ -42,3 +42,4 @@ export type Procedures = Record<string, OpInstance[]>
 export { interpeterTypeFactory, InterpreterTypeInstanceMap, AnyInterpreterTypeInstance  } from './src/main/interpreter/interpreter_writer'
 export {ServerEnv, EnvVarType, Var, StrongServerEnv, RequiredEnv} from './src/main/server_writer'
 export * from './src/main/local_run/utilities'
+export * from './src/main/SchemaFactory'

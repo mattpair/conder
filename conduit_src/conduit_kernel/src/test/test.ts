@@ -7,14 +7,10 @@ import {
   ServerEnv,
   Var,
   StrongServerEnv,
-} from "../../index";
-import {
-  Schemas,
-  schemaFactory,
   AnySchemaInstance,
-  CompiledTypes,
-  Lexicon,
-} from "conduit_parser";
+  schemaFactory
+} from "../../index";
+
 import * as mongodb from "mongodb";
 import {Test} from '../main/local_run/utilities'
 

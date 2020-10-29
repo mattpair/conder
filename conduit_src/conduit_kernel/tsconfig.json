@@ -17,8 +17,5 @@
         "outDir": "dist",
         "composite": true
  
-    },
-    "references": [
-        {"path": "../conduit_parser/" },
-    ]
+    }
 }

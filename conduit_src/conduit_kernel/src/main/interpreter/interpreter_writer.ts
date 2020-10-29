@@ -1,4 +1,4 @@
-import { Lexicon, SchemaType } from 'conduit_parser';
+import { SchemaType, PrimitiveUnion, Primitives } from '../SchemaFactory';
 import { AnyOpDef, OpSpec } from './supported_op_definition';
 
 type DefAndName = AnyOpDef & {name: string}
@@ -35,7 +35,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnion>, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion>, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
@@ -44,14 +44,13 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, Lexicon.PrimitiveUnio
     Array: "Vec<Schema>",
 }
 
-type InterpreterType = "None" | "Object" | "Array" | Lexicon.PrimitiveUnion
+type InterpreterType = "None" | "Object" | "Array" | PrimitiveUnion
 
 
 export type InterpreterTypeInstanceMap = {
     [T in InterpreterType]: T extends "None" ? null : 
     T extends "Object" ? Record<string, any> : 
-    T extends Lexicon.Symbol.double ? number:
-    T extends Lexicon.Symbol.int ? number : 
+    T extends "double" | "int" ? number:
     T extends "bool" ? boolean :
     T extends "bytes" | "string" ? string :
     T extends "Array" ? any[] :
@@ -112,7 +111,7 @@ export function writeOperationInterpreter(): string {
         ${[
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
-            ...Lexicon.Primitives,
+            ...Primitives,
         ].join(",\n")}
     }
 
@@ -167,8 +166,8 @@ export function writeOperationInterpreter(): string {
                     _ => adheres_to_schema(value, &internal[0])
                 }
             },
-            ${Lexicon.Primitives.map(p => {
-                if (p === Lexicon.Symbol.double) {
+            ${Primitives.map(p => {
+                if (p === "double") {
                     return `Schema::double => match value {
                         InterpreterType::double(_) => true,
                         InterpreterType::int(_) => true,

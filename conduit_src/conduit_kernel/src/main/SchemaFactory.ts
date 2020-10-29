@@ -1,4 +1,3 @@
-import { PrimitiveUnion, Symbol } from './lexicon';
 
 
 export type SchemaType = "Optional" | "Object" | "Array" | PrimitiveUnion
@@ -15,11 +14,27 @@ export const schemaFactory: SchemaFactory = {
     Object: (r) => ({ kind: "Object", data: r }),
     Array: (r) => ({ kind: "Array", data: [r] }),
     Optional: (r) => ({ kind: "Optional", data: [r] }),
-    string: { kind: Symbol.string, data: null },
-    bool: { kind: Symbol.bool, data: null},
-    double: { kind: Symbol.double, data: null },
-    int: { kind: Symbol.int, data: null },
+    string: { kind: "string", data: null },
+    bool: { kind: "bool", data: null},
+    double: { kind: "double", data: null },
+    int: { kind: "int", data: null },
 };
+
+export type TypeModifierUnion = "array" | "optional" | "none"
+export const TypeModifiers: TypeModifierUnion[] = ["array", "none", "optional"]
+
+export type PrimitiveUnion = 
+    "double" |
+    "bool" |
+    "string" |
+    "int"
+
+export const Primitives: PrimitiveUnion[] = [
+    "double",
+    "int",
+    "string",
+    "bool"
+]
 
 
 export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion ? { kind: P; data: undefined} : 

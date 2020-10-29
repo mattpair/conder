@@ -21,7 +21,6 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "conduit_parser": "file:../conduit_parser",
     "isomorphic-fetch": "^2.2.1",
     "mongodb": "^3.6.2"
   },

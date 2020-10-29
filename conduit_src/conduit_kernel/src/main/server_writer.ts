@@ -1,4 +1,4 @@
-import { AnySchemaInstance } from 'conduit_parser';
+import { AnySchemaInstance } from './SchemaFactory';
 
 import { writeOperationInterpreter } from './interpreter/interpreter_writer';
 import { OpInstance, AnyOpInstance } from './interpreter/supported_op_definition';

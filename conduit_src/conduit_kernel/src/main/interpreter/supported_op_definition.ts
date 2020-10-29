@@ -1,6 +1,6 @@
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 import * as mongodb from 'mongodb'
-import { AnySchemaInstance } from "conduit_parser"
+import { AnySchemaInstance } from "../SchemaFactory"
 interface OpDef<NAME>  {
     readonly rustOpHandler: string
 }
