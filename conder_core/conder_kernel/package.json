@@ -1,5 +1,5 @@
 {
-  "name": "conduit_kernel",
+  "name": "conder_kernel",
   "version": "0.0.1",
   "scripts": {
     "gen": "node -e 'require(\"./dist/index.js\").writeMain()'",
