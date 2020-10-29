@@ -300,6 +300,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
+            opWriter.instantiate({}), // Filter for query
             opWriter.queryStore(["storeName", { right: false}]),
             opWriter.returnStackTop,
           ],
@@ -316,6 +317,33 @@ describe("conduit kernel", () => {
         expect(res).toEqual([{ left: -1 }]);
       }
     );
+    storageTest(
+      "should be able to filter strings in query",
+      {
+        STORES: {
+          strings: schemaFactory.Object({value: schemaFactory.string})
+        },
+        PROCEDURES: {
+          insert: [
+            opWriter.instantiate([{value: "a"}, {value: "b"}]),
+            opWriter.insertFromStack("strings"),
+            opWriter.instantiate(true),
+            opWriter.returnStackTop
+          ],
+          getBs: [
+            opWriter.instantiate({value: "b"}),
+            opWriter.queryStore(["strings", {}]),
+            opWriter.returnStackTop
+          ]
+        }
+      },
+      async (server) => {
+        expect(await server.invoke("insert")).toBeTruthy()
+        expect(await server.invoke("insert")).toBeTruthy()
+        expect(await server.invoke("getBs")).toEqual([{value: "b"}, {value: "b"}])
+      }
+
+    )
 
     storageTest(
       "should be able to suppress objects in a query",
@@ -332,6 +360,7 @@ describe("conduit kernel", () => {
         PROCEDURES: {
           testStore: [
             opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
+            opWriter.instantiate({}), //filter for query
             opWriter.queryStore(["storeName", { right: false}]),
             opWriter.returnStackTop,
           ],

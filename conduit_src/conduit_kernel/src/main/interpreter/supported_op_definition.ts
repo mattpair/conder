@@ -110,6 +110,12 @@ const popToString = `
         InterpreterType::string(s) => s, 
         _ => panic!("Stack variable is not a string")
     }`
+const popToObject = `
+    match ${popStack} {
+        InterpreterType::Object(o) => o,
+        _ => panic!("stack variable is not an object")
+    }
+`
 const lastStack = `stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
@@ -305,7 +311,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, &param0, &param1, &HashMap::new()).await;
+            let res = storage::query(${getDb}, &param0, &param1, &${popToObject}).await;
             ${pushStack("res")};
             None
             `
