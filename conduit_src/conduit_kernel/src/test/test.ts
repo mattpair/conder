@@ -342,7 +342,35 @@ describe("conduit kernel", () => {
         expect(await server.invoke("insert")).toBeTruthy()
         expect(await server.invoke("getBs")).toEqual([{value: "b"}, {value: "b"}])
       }
-
+    )
+    
+    storageTest(
+      "should be able to filter numbers in query",
+      {
+        STORES: {
+          nums: schemaFactory.Object({value: schemaFactory.int})
+        },
+        PROCEDURES: {
+          insert: [
+            opWriter.instantiate([{value: 1}, {value: 2}]),
+            opWriter.insertFromStack("nums"),
+            opWriter.instantiate(true),
+            opWriter.returnStackTop
+          ],
+          getLte: [
+            opWriter.instantiate({value: {"$lte": {}}}),
+            opWriter.copyFromHeap(0),
+            opWriter.setNestedField(["value", "$lte"]),
+            opWriter.queryStore(["nums", {}]),
+            opWriter.returnStackTop
+          ]
+        }
+      },
+      async (server) => {
+        expect(await server.invoke("insert")).toBeTruthy()
+        expect(await server.invoke("getLte", 2)).toEqual([{value: 1}, {value: 2}])
+        expect(await server.invoke("getLte", 1)).toEqual([{value: 1}])
+      }
     )
 
     storageTest(
