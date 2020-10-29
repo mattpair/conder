@@ -43,3 +43,4 @@ export { interpeterTypeFactory, InterpreterTypeInstanceMap, AnyInterpreterTypeIn
 export {ServerEnv, EnvVarType, Var, StrongServerEnv, RequiredEnv} from './src/main/server_writer'
 export * from './src/main/local_run/utilities'
 export * from './src/main/SchemaFactory'
+export * as Utils from './src/main/utils'
