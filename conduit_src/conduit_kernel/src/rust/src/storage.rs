@@ -46,14 +46,14 @@ pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<Stri
     return InterpreterType::Array(ret)
 }
 
-pub(crate) async fn find_one(db: &Database, storeName: &str, query_doc: &InterpreterType, project: &HashMap<String, InterpreterType>) -> InterpreterType {
+pub(crate) async fn find_one(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     
     let collection = db.collection(&storeName);
     let mut projection = bson::to_document(project).unwrap();
     projection.insert("_id", false);
     let options = FindOneOptions::builder().projection(Some(projection)).build();
 
-    match collection.find_one(bson::to_document(query_doc).unwrap(), options).await {
+    match collection.find_one(bson::to_document(filter).unwrap(), options).await {
         Ok(r) => match r {
             Some(o) => bson::from_document(o).unwrap(),
             None => InterpreterType::None

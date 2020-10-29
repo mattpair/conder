@@ -374,6 +374,31 @@ describe("conduit kernel", () => {
     )
 
     storageTest(
+      "find one",
+      {
+        STORES: {
+          users: schemaFactory.Object({email: schemaFactory.string, pwd: schemaFactory.string})
+        },
+        PROCEDURES: {
+          addUser: [opWriter.insertFromHeap({heap_pos: 0, store: "users"}), opWriter.returnVariable(0)],
+          getUser: [
+            opWriter.instantiate({}), 
+            opWriter.copyFromHeap(0), 
+            opWriter.assignPreviousToField("email"),
+            opWriter.findOneInStore(["users", {}]),
+            opWriter.returnStackTop
+          ]
+        }
+      },
+      async (server) => {
+        const user = {email: "a@gmail.com", pwd: "password"}
+        expect(await server.invoke("addUser", user)).toBeTruthy()
+        expect(await server.invoke("getUser", user.email)).toEqual(user)
+        expect(await server.invoke("getUser", "someoneelse")).toBeNull()
+      }
+    )
+
+    storageTest(
       "should be able to suppress objects in a query",
       {
         STORES: {
