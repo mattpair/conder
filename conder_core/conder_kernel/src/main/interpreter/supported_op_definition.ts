@@ -263,8 +263,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "String"],
             rustOpHandler: `
-            let schema = stores.get(param1).unwrap();
-            match storage::append(${getDb}, &param1, schema, &heap[*param0]).await {
+            match storage::append(${getDb}, &param1, &heap[*param0]).await {
                 InterpreterType::None => None,
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -277,9 +276,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let schema = stores.get(op_param).unwrap();
             let insert_elt = ${popStack};
-            match storage::append(${getDb}, op_param, schema, &insert_elt).await {
+            match storage::append(${getDb}, op_param, &insert_elt).await {
                 InterpreterType::None => None,
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }

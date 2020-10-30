@@ -5,8 +5,8 @@ import {Node, to_instruction} from '../../index'
 describe("basic functionality", () => {
     const TEST_STORE = "testStore"
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-
-    function testHarness(proc_nodes: Record<string,Node>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    type DagProcedures = Record<string,Node>
+    function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
             PROCEDURES[key] = to_instruction(proc_nodes[key])
@@ -37,18 +37,36 @@ describe("basic functionality", () => {
             )
         }
     }
-                
+    const select: DagProcedures = {
+        select:
+        {
+            kind: "select",
+            store: TEST_STORE,
+            next: {kind: "return"}
+        }
+    }
+
     it("allows selections", 
-        testHarness({select:
-            {
-                kind: "select",
-                store: TEST_STORE,
-                after: {kind: "return"}
-            }
-        },
+        testHarness(select,
         async (server) => {
             const res = await server.select()
             expect(res).toEqual([])
         })
+    )
+
+    it("allows insertion and selection",
+        testHarness({...select, insert: {
+            kind: "inst",
+            // Must store objects.
+            value: {field: 42},
+            next: {
+                kind: "append",
+                store: TEST_STORE
+            }
+        }}, async (server) => {
+            expect(await server.insert()).toBeNull()
+            expect(await server.select()).toEqual([{field: 42}])
+        })
+    
     )
 })

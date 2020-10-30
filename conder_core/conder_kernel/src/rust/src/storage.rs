@@ -6,7 +6,7 @@ use futures::stream::StreamExt;
 
 use crate::{InterpreterType, Schema};
 
-pub(crate) async fn append(db: &Database, storeName: &str, schema: &Schema, instance: &InterpreterType) -> InterpreterType {         
+pub(crate) async fn append(db: &Database, storeName: &str, instance: &InterpreterType) -> InterpreterType {         
     let collection = db.collection(&storeName);
     match instance { 
         InterpreterType::Array(v) => {
