@@ -1,11 +1,11 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {Node, to_instruction} from '../../index'
+import {AnyNode, to_instruction} from '../../index'
 
 describe("basic functionality", () => {
     const TEST_STORE = "testStore"
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string,Node>
+    type DagProcedures = Record<string,AnyNode>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
@@ -56,7 +56,7 @@ describe("basic functionality", () => {
 
     it("allows insertion and selection",
         testHarness({...select, insert: {
-            kind: "inst",
+            kind: "instance",
             // Must store objects.
             value: {field: 42},
             next: {
