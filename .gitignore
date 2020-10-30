@@ -3,3 +3,4 @@ gen/
 .python/
 target/
 node_modules/
+dist/
