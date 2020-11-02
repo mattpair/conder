@@ -335,7 +335,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(${getDb}, param_op, &${popStack}).await;
+            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
             ${pushStack("res")};
             None
             `
