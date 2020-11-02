@@ -19,9 +19,10 @@ export type NodeTypeDefs = {
     select: RequiresStoreName & RequiresNext<"return">
     append: RequiresStoreName
     instance: Value & RequiresNext<"return" | "append" | "staticFilter"> & MayBeRoot
-    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len" | "updateOne"> & MayBeRoot,
+    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len" | "updateOne" | "deleteOne"> & MayBeRoot,
     len: RequiresNext<"return"> & RequiresStoreName & MayBeRoot
     updateOne: CanHaveNext<"return"> & RequiresStoreName
+    deleteOne: CanHaveNext<"return"> & RequiresStoreName
 }
 type NodeInstanceDef = {
     [P in keyof NodeTypeDefs]: Node<P>
@@ -77,10 +78,11 @@ function child_node_to_instruction(node: AnyChildNode): AnyOpInstance[] {
             ]
 
         case "updateOne":
+        case "deleteOne":
+            const s = node.store
             return [
-                opWriter.updateOne(node.store),
+                node.kind === "deleteOne" ? opWriter.deleteOneInStore(s) : opWriter.updateOne(s),
                 ...node.next ? any_node_to_instruction(node.next) : [opWriter.popStack]
-
             ]
         default: Utils.assertNever(node)
     }
@@ -91,6 +93,7 @@ function any_node_to_instruction(node: AnyNode): AnyOpInstance[] {
         case "select": 
         case "append":
         case "updateOne":
+        case "deleteOne":
             return child_node_to_instruction(node)
         
         case "instance":

@@ -111,7 +111,7 @@ describe("basic functionality", () => {
         })
     )
 
-    it("allows updating one based on selection",
+    it("allows updating/deleting one based on selection",
         testHarness({
             INSERT_42,
             update: {
@@ -129,11 +129,22 @@ describe("basic functionality", () => {
                     }
                 }
             },
-            len: filteredStoreAction({added: 12}, "len")
+            len: filteredStoreAction({added: 12}, "len"),
+            delete: {
+                kind: "staticFilter",
+                filter: {added: 12},
+                next: {
+                    kind: "deleteOne",
+                    store: TEST_STORE,
+                    next: {kind: "return"}
+                }
+            }
         }, async (server) => {
             expect(await server.INSERT_42()).toBeNull()
             expect(await server.update()).toEqual({field: 42, added: 12})
             expect(await server.len()).toBe(1)
+            expect(await server.delete()).toBeTruthy()
+            expect(await server.len()).toBe(0)
         })
     )
 })
