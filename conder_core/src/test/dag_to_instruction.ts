@@ -1,15 +1,15 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode, to_instruction} from '../../index'
+import {AnyNode, AnyRootNode, root_node_to_instruction} from '../../index'
 
 describe("basic functionality", () => {
     const TEST_STORE = "testStore"
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string,AnyNode>
+    type DagProcedures = Record<string,AnyRootNode>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            PROCEDURES[key] = to_instruction(proc_nodes[key])
+            PROCEDURES[key] = root_node_to_instruction(proc_nodes[key])
         }
 
         const STORES = {TEST_STORE: schemaFactory.Object({})}
@@ -40,10 +40,15 @@ describe("basic functionality", () => {
     const select: DagProcedures = {
         select:
         {
-            kind: "select",
-            store: TEST_STORE,
-            next: {kind: "return"}
+            kind: "staticFilter",
+            filter: {}, // select all
+            next: {
+                kind: "select",
+                store: TEST_STORE,
+                next: {kind: "return"}
+            }
         }
+        
     }
 
     it("allows selections", 
@@ -67,6 +72,48 @@ describe("basic functionality", () => {
             expect(await server.insert()).toBeNull()
             expect(await server.select()).toEqual([{field: 42}])
         })
-    
+    )
+
+    it("allows filtering on selection selection",
+        testHarness({
+            select: {
+                kind: "staticFilter",
+                filter: {
+                    field: 42
+                },
+                next: {
+                    kind: "select",
+                    store: TEST_STORE,
+                    next: {
+                        kind: "return"
+                    }
+                }
+            }, 
+            selectNothing: {
+                kind: "staticFilter",
+                filter: {
+                    field: 41
+                },
+                next: {
+                    kind: "select",
+                    store: TEST_STORE,
+                    next: {
+                        kind: "return"
+                    }
+                }
+            },
+            insert: {
+                kind: "instance",
+                // Must store objects.
+                value: {field: 42},
+                next: {
+                    kind: "append",
+                    store: TEST_STORE
+                }
+        }}, async (server) => {
+            expect(await server.insert()).toBeNull()
+            expect(await server.select()).toEqual([{field: 42}])
+            expect(await server.selectNothing()).toEqual([])
+        })
     )
 })
