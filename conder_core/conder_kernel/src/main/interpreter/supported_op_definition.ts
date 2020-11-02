@@ -47,6 +47,7 @@ StaticOp<"arrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", string> |
+ParamOp<"replaceOne", string> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
 ParamOp<"extractFields", string[][]> | 
@@ -497,6 +498,19 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (p) => ({kind: "updateOne", data: p})
+    },
+
+    replaceOne: {
+        opDefinition: {
+            paramType: ["String", "bool"],
+            rustOpHandler: `
+            let query_doc = ${popToObject};
+            let update_doc =  ${popToObject};
+            ${pushStack(`InterpreterType::bool(storage::replace_one(${getDb}, param0, &query_doc, &update_doc, *param1).await)`)};
+            None
+            `
+        },
+        factoryMethod: (p) => ({kind: "replaceOne", data: p})
     },
 
     setNestedField: {

@@ -1,5 +1,5 @@
 
-use mongodb::{Database, options, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions, FindOneAndUpdateOptions}, bson, bson::{doc}, results, Client};
+use mongodb::{Database, options, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions, FindOneAndUpdateOptions, ReplaceOptions}, bson, bson::{doc}, results, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::stream::StreamExt;
@@ -23,6 +23,19 @@ pub(crate) async fn append(db: &Database, storeName: &str, instance: &Interprete
     }
 
 }
+
+pub(crate) async fn replace_one(db: &Database, storeName: &str, instance: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>, upsert: bool) -> bool {         
+    let collection = db.collection(&storeName);
+    match collection.replace_one(
+        bson::to_document(filter).unwrap(), 
+        bson::to_document(instance).unwrap(), 
+        Some(ReplaceOptions::builder().upsert(upsert).build())
+    ).await {
+        Ok(r) => r.modified_count > 0,
+        Err(e) => panic!("Failure inserting {}", e)
+    }
+}
+
 
 pub(crate) async fn query(db: &Database, storeName: &str, project: &HashMap<String, InterpreterType>, filter: &HashMap<String, InterpreterType>) -> InterpreterType {
     let collection = db.collection(&storeName);
