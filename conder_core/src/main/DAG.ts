@@ -18,7 +18,8 @@ export type NodeTypeDefs = {
     select: RequiresStoreName & RequiresNext<"return">
     append: RequiresStoreName
     instance: Value & RequiresNext<"return" | "append"> & MayBeRoot
-    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select"> & MayBeRoot
+    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len"> & MayBeRoot,
+    len: RequiresNext<"return"> & RequiresStoreName & MayBeRoot
 }
 type NodeInstanceDef = {
     [P in keyof NodeTypeDefs]: Node<P>
@@ -41,7 +42,7 @@ export function root_node_to_instruction(node: AnyRootNode): AnyOpInstance[] {
         case "staticFilter":
             return [
                 opWriter.instantiate(node.filter),
-                ...child_node_to_instruction(node.next)
+                ...any_node_to_instruction(node.next)
             ]
         case "instance":
             return [
@@ -49,6 +50,11 @@ export function root_node_to_instruction(node: AnyRootNode): AnyOpInstance[] {
                 ...child_node_to_instruction(node.next)
             ]
 
+        case "len": 
+            return [
+                opWriter.storeLen(node.store),
+                ...child_node_to_instruction(node.next)
+            ]
         default: Utils.assertNever(node)
     }
 }
@@ -77,8 +83,10 @@ function any_node_to_instruction(node: AnyNode): AnyOpInstance[] {
         case "select": 
         case "append":
             return child_node_to_instruction(node)
+        
         case "instance":
-        case "staticFilter": 
+        case "staticFilter":
+        case "len" :
             return root_node_to_instruction(node)
 
 

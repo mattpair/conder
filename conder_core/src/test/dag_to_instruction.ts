@@ -74,46 +74,43 @@ describe("basic functionality", () => {
         })
     )
 
-    it("allows filtering on selection selection",
+    const INSERT_42: AnyRootNode = {
+        kind: "instance",
+        // Must store objects.
+        value: {field: 42},
+        next: {
+            kind: "append",
+            store: TEST_STORE
+        }
+    }
+    type StaticFilter = Extract<AnyRootNode, {kind: "staticFilter"}>
+    function filteredStoreAction(filter: object, child: StaticFilter["next"]["kind"]): StaticFilter {
+        return {
+            kind: "staticFilter",
+            filter,
+            next: {
+                kind: child,
+                store: TEST_STORE,
+                next: {
+                    kind: "return"
+                }
+            }
+        }
+    }
+
+    it("allows filtering on selection and measurement",
         testHarness({
-            select: {
-                kind: "staticFilter",
-                filter: {
-                    field: 42
-                },
-                next: {
-                    kind: "select",
-                    store: TEST_STORE,
-                    next: {
-                        kind: "return"
-                    }
-                }
-            }, 
-            selectNothing: {
-                kind: "staticFilter",
-                filter: {
-                    field: 41
-                },
-                next: {
-                    kind: "select",
-                    store: TEST_STORE,
-                    next: {
-                        kind: "return"
-                    }
-                }
-            },
-            insert: {
-                kind: "instance",
-                // Must store objects.
-                value: {field: 42},
-                next: {
-                    kind: "append",
-                    store: TEST_STORE
-                }
-        }}, async (server) => {
-            expect(await server.insert()).toBeNull()
+            select: filteredStoreAction({field: 42}, "select"),
+            selectNothing: filteredStoreAction({field: 41}, "select"),
+            len: filteredStoreAction({field: {"$lt": 43}}, "len"),
+            emptyLen: filteredStoreAction({field: {"$lt": 41}}, "len"),
+            INSERT_42
+            }, async (server) => {
+            expect(await server.INSERT_42()).toBeNull()
             expect(await server.select()).toEqual([{field: 42}])
             expect(await server.selectNothing()).toEqual([])
+            expect(await server.len()).toBe(1)
+            expect(await server.emptyLen()).toBe(0)
         })
     )
 })
