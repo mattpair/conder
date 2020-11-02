@@ -36,7 +36,7 @@ ParamOp<"insertFromStack", string> |
 StaticOp<"moveStackTopToHeap"> |
 ParamOp<"queryStore", [string, ProjectionOptions]> |
 ParamOp<"findOneInStore", [string, ProjectionOptions]> |
-StaticOp<"deleteOneInStore"> |
+ParamOp<"deleteOneInStore", string> |
 ParamOp<"instantiate", AnyInterpreterTypeInstance> |
 StaticOp<"popArray"> |
 StaticOp<"toBool"> |
@@ -46,14 +46,15 @@ ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
-StaticOp<"updateOne"> |
+ParamOp<"updateOne", string> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
 ParamOp<"extractFields", string[][]> | 
 StaticOp<"equal"> |
 StaticOp<"lesseq"> |
 StaticOp<"less"> | 
-StaticOp<"flattenArray">
+StaticOp<"flattenArray"> |
+StaticOp<"popStack">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -263,8 +264,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "String"],
             rustOpHandler: `
-            let schema = stores.get(param1).unwrap();
-            match storage::append(${getDb}, &param1, schema, &heap[*param0]).await {
+            match storage::append(${getDb}, &param1, &heap[*param0]).await {
                 InterpreterType::None => None,
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -277,9 +277,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let schema = stores.get(op_param).unwrap();
             let insert_elt = ${popStack};
-            match storage::append(${getDb}, op_param, schema, &insert_elt).await {
+            match storage::append(${getDb}, op_param, &insert_elt).await {
                 InterpreterType::None => None,
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -334,12 +333,22 @@ export const OpSpec: CompleteOpSpec = {
     },
     deleteOneInStore: {
         opDefinition: {
+            paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(${getDb}, &${popToString}, &${popStack}).await;
+            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
             ${pushStack("res")};
             None
             `
         },
+        factoryMethod: (data) => ({kind: "deleteOneInStore", data})
+    },
+    popStack: {
+        opDefinition: {
+            rustOpHandler: `
+            ${popStack};
+            None
+            `
+        }
     },
 
     instantiate: {
@@ -479,14 +488,15 @@ export const OpSpec: CompleteOpSpec = {
 
     updateOne: {
         opDefinition: {
+            paramType: ["String"],
             rustOpHandler: `
-            let update_doc =  ${popStack};
             let query_doc = ${popStack};
-            let store_name = ${popToString};
-            ${pushStack(`storage::find_and_update_one(${getDb}, &store_name, &query_doc, &update_doc).await`)};
+            let update_doc =  ${popStack};
+            ${pushStack(`storage::find_and_update_one(${getDb}, op_param, &query_doc, &update_doc).await`)};
             None
             `
-        }
+        },
+        factoryMethod: (p) => ({kind: "updateOne", data: p})
     },
 
     setNestedField: {
