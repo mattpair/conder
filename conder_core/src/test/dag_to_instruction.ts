@@ -13,9 +13,7 @@ describe("basic functionality", () => {
         }
 
         const STORES = {TEST_STORE: schemaFactory.Object({})}
-        return (cb) => {
-        
-            Test.Mongo.start({STORES})
+        return (cb) => Test.Mongo.start({STORES})
             .then(mongo => Test.Server.start({
                     MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
                     SCHEMAS: [],
@@ -35,7 +33,6 @@ describe("basic functionality", () => {
                 })
                 .finally(() => mongo.kill())
             )
-        }
     }
     const select: DagProcedures = {
         select:
@@ -111,6 +108,32 @@ describe("basic functionality", () => {
             expect(await server.selectNothing()).toEqual([])
             expect(await server.len()).toBe(1)
             expect(await server.emptyLen()).toBe(0)
+        })
+    )
+
+    it("allows updating one based on selection",
+        testHarness({
+            INSERT_42,
+            update: {
+                kind: "instance",
+                value: {"$set": {added: 12}},
+                next: {
+                    kind: "staticFilter",
+                    filter: {field: 42},
+                    next: {
+                        kind: "updateOne",
+                        store: TEST_STORE,
+                        next: {
+                            kind: "return"
+                        }
+                    }
+                }
+            },
+            len: filteredStoreAction({added: 12}, "len")
+        }, async (server) => {
+            expect(await server.INSERT_42()).toBeNull()
+            expect(await server.update()).toEqual({field: 42, added: 12})
+            expect(await server.len()).toBe(1)
         })
     )
 })

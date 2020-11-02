@@ -10,6 +10,7 @@ type MongoFilter = mongodb.FilterQuery<any>
 type RequiresStoreName = {store: string}
 type Value<K extends string="value", V=AnyInterpreterTypeInstance> = {[k in K]: V}
 type RequiresNext<K extends keyof NodeInstanceDef> = {next: NodeInstanceDef[K]}
+type CanHaveNext<K extends keyof NodeInstanceDef> = {next?: NodeInstanceDef[K]}
 type Node<K extends keyof NodeTypeDefs> = Omit<{kind: K} & NodeTypeDefs[K], "_meta">
 type MayBeRoot = {_meta: {mayBeRoot: true}}
 
@@ -17,9 +18,10 @@ export type NodeTypeDefs = {
     return: {},
     select: RequiresStoreName & RequiresNext<"return">
     append: RequiresStoreName
-    instance: Value & RequiresNext<"return" | "append"> & MayBeRoot
-    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len"> & MayBeRoot,
+    instance: Value & RequiresNext<"return" | "append" | "staticFilter"> & MayBeRoot
+    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len" | "updateOne"> & MayBeRoot,
     len: RequiresNext<"return"> & RequiresStoreName & MayBeRoot
+    updateOne: CanHaveNext<"return"> & RequiresStoreName
 }
 type NodeInstanceDef = {
     [P in keyof NodeTypeDefs]: Node<P>
@@ -47,7 +49,7 @@ export function root_node_to_instruction(node: AnyRootNode): AnyOpInstance[] {
         case "instance":
             return [
                 opWriter.instantiate(node.value),
-                ...child_node_to_instruction(node.next)
+                ...any_node_to_instruction(node.next)
             ]
 
         case "len": 
@@ -74,6 +76,12 @@ function child_node_to_instruction(node: AnyChildNode): AnyOpInstance[] {
                 opWriter.insertFromStack(node.store)
             ]
 
+        case "updateOne":
+            return [
+                opWriter.updateOne(node.store),
+                ...node.next ? any_node_to_instruction(node.next) : [opWriter.popStack]
+
+            ]
         default: Utils.assertNever(node)
     }
 }
@@ -82,6 +90,7 @@ function any_node_to_instruction(node: AnyNode): AnyOpInstance[] {
         case "return":
         case "select": 
         case "append":
+        case "updateOne":
             return child_node_to_instruction(node)
         
         case "instance":

@@ -53,7 +53,8 @@ ParamOp<"extractFields", string[][]> |
 StaticOp<"equal"> |
 StaticOp<"lesseq"> |
 StaticOp<"less"> | 
-StaticOp<"flattenArray">
+StaticOp<"flattenArray"> |
+StaticOp<"popStack">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -339,6 +340,14 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
     },
+    popStack: {
+        opDefinition: {
+            rustOpHandler: `
+            ${popStack};
+            None
+            `
+        }
+    },
 
     instantiate: {
         opDefinition: {
@@ -479,8 +488,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let update_doc =  ${popStack};
             let query_doc = ${popStack};
+            let update_doc =  ${popStack};
             ${pushStack(`storage::find_and_update_one(${getDb}, op_param, &query_doc, &update_doc).await`)};
             None
             `
