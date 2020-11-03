@@ -23,8 +23,8 @@ ParamOp<"returnVariable", number> |
 StaticOp<"returnStackTop"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
-ParamOp<"gotoOp", number> |
-ParamOp<"conditionalGoto", number>  |
+ParamOp<"offsetOpCursor", number> |
+ParamOp<"conditionalOpOffset", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
@@ -156,28 +156,28 @@ export const OpSpec: CompleteOpSpec = {
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
     },
 
-    gotoOp: {
+    offsetOpCursor: {
         opDefinition: {
             // Set op_param to -1 because the op is always incremented at the end of each op execution.
-            rustOpHandler: safeGoto("*op_param"),
+            rustOpHandler: safeGoto("*op_param + next_op_index"),
             paramType: ["usize"]
         },
         //TODO: All param factory methods are the same. We should deduplicate.
         factoryMethod(p) {
             return {
-                kind: "gotoOp",
+                kind: "offsetOpCursor",
                 data: p
             }
         }
     },
 
-    conditionalGoto: {
+    conditionalOpOffset: {
         opDefinition: {
             rustOpHandler: `
                 match ${popStack} {
                     InterpreterType::bool(b) => {
                         if b {
-                            ${safeGoto("*op_param")}
+                            ${safeGoto("*op_param + next_op_index")}
                         } else {
                             None
                         }
@@ -187,7 +187,7 @@ export const OpSpec: CompleteOpSpec = {
             `,
             paramType: ["usize"]
         },
-        factoryMethod: (p) => ({kind: "conditionalGoto", data: p})
+        factoryMethod: (p) => ({kind: "conditionalOpOffset", data: p})
     },
 
 
