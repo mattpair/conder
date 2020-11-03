@@ -7,7 +7,7 @@ export type Node<K, DATA={}> = {
 
 
 export type AnyNode = 
-Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg">}> |
+Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int">}> |
 Node<"Bool", {value: boolean}> |
 Node<"Field", {name: string, value: PickNode<"Bool">}> |
 Node<"Object", {fields: PickNode<"Field">[]}> |
@@ -17,7 +17,15 @@ Node<"Comparison", {
     left: PickNode<"Int">
     right: PickNode<"Int">
 }> |
-Node<"BoolAlg", {sign: "and" | "or", left: PickNode<"Bool" | "Comparison">, right: PickNode<"Bool" | "Comparison">}>
+Node<"BoolAlg", {
+    sign: "and" | "or", 
+    left: PickNode<"Bool" | "Comparison">, 
+    right: PickNode<"Bool" | "Comparison">}> |
+Node<"If", {
+    cond: PickNode<"Bool" | "Comparison" | "BoolAlg">
+    ifTrue: AnyNode
+    finally?: AnyNode
+}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -76,6 +84,16 @@ export function compile(node: AnyNode): AnyOpInstance[] {
                 ...compile(node.left),
                 ...compile(node.right),
                 ...boolAlg[node.sign]
+            ]
+
+        case "If":
+            const ifTrue = compile(node.ifTrue)
+            return [
+                ...compile(node.cond),
+                ow.negatePrev,
+                ow.conditionalOpOffset(ifTrue.length + 1),
+                ...ifTrue,
+                ...node.finally ? compile(node.finally) : [ow.noop] // give the opOffset somewhere to land.
             ]
         default: Utils.assertNever(node)
     }

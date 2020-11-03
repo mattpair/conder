@@ -132,6 +132,31 @@ describe("basic functionality", () => {
             expect(await server.falseOtrue()).toBeTruthy()
             expect(await server.falseOfalse()).toBeFalsy()
         })
-    
+    )
+
+    it("allows if statements", 
+        testHarness({
+            ifTrue: {
+                kind: "If",
+                cond: {kind: "Bool", value: true},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+            },
+            ifFalseNoFinally: {
+                kind: "If",
+                cond: {kind: "Bool", value: false},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+            },
+            ifFalseFinally: {
+                kind: "If",
+                cond: {kind: "Bool", value: false},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}},
+                finally: {kind: "Return", value: {kind: "Int", value: 2}}
+            }
+        }, 
+            async server => {
+                expect(await server.ifTrue()).toBe(1)
+                expect(await server.ifFalseNoFinally()).toBeNull()
+                expect(await server.ifFalseFinally()).toBe(2)
+        })
     )
 })
