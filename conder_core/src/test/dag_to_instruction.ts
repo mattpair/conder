@@ -1,3 +1,4 @@
+import { NodeOfType } from './../main/DAG';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
 import {AnyNode, compile} from '../../index'
@@ -69,6 +70,35 @@ describe("basic functionality", () => {
             }
         }, async (server) => {
             expect(await server.r()).toEqual({some_field: false})
+        })
+    )
+
+    function nComp(sign: NodeOfType<"Comparison">["sign"]): AnyNode {
+        return {
+            kind: "Return",
+            value: {
+                kind: "Comparison",
+                sign,
+                left: {kind: "Int", value: 1},
+                right: {kind: "Int", value: 1}
+            }
+        }   
+    }
+    it("can compare numbers", 
+        testHarness({
+            geq: nComp(">="),
+            leq: nComp("<="),
+            l: nComp("<"),
+            g: nComp(">"),
+            e: nComp("=="),
+            ne: nComp("!="),
+        }, async server => {
+            expect(await server.leq()).toBeTruthy()
+            expect(await server.geq()).toBeTruthy()
+            expect(await server.l()).toBeFalsy()
+            expect(await server.g()).toBeFalsy()
+            expect(await server.e()).toBeTruthy()
+            expect(await server.ne()).toBeFalsy()
         })
     )
 })

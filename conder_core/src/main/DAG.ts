@@ -1,4 +1,4 @@
-import {AnyOpInstance, ow, Utils, AnyInterpreterTypeInstance} from 'conder_kernel'
+import {AnyOpInstance, ow, Utils, interpeterTypeFactory} from 'conder_kernel'
 
 export type Node<K, DATA={}> = {
     kind: K
@@ -7,12 +7,18 @@ export type Node<K, DATA={}> = {
 
 
 export type AnyNode = 
-Node<"Return", {value?: NodeOfType<"Bool" | "Object">}> |
+Node<"Return", {value?: NodeOfType<"Bool" | "Object" | "Comparison">}> |
 Node<"Bool", {value: boolean}> |
 Node<"Field", {name: string, value: NodeOfType<"Bool">}> |
-Node<"Object", {fields: NodeOfType<"Field">[]}> 
+Node<"Object", {fields: NodeOfType<"Field">[]}> |
+Node<"Int", {value: number}> |
+Node<"Comparison", {
+    sign: "==" | "!=" | "<" | ">" | "<=" | ">="
+    left: NodeOfType<"Int">
+    right: NodeOfType<"Int">
+}>
 
-type NodeOfType<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
+export type NodeOfType<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
 
 export function compile(node: AnyNode): AnyOpInstance[] {
@@ -36,6 +42,27 @@ export function compile(node: AnyNode): AnyOpInstance[] {
             return [
                 ...node.value ? compile(node.value) : [ow.instantiate(null)],
                 ow.returnStackTop
+            ]
+
+        case "Int":
+            return [
+                ow.instantiate(interpeterTypeFactory.int(node.value))
+            ]
+
+        case "Comparison":
+            const comparisonLookup: Record<NodeOfType<"Comparison">["sign"], AnyOpInstance[]> = {
+                "!=": [ow.equal, ow.negatePrev],
+                "==": [ow.equal],
+                "<": [ow.less],
+                ">": [ow.lesseq, ow.negatePrev],
+                ">=": [ow.less, ow.negatePrev],
+                "<=": [ow.lesseq]
+            }
+
+            return [
+                ...compile(node.left),
+                ...compile(node.right),
+                ...comparisonLookup[node.sign]
             ]
 
         default: Utils.assertNever(node)
