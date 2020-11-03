@@ -259,12 +259,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            if adheres_to_schema(&heap[*param1], &schemas[*param0]) {
-                None
-            } else {
-                ${raiseErrorWithMessage("Variable does not match the schema")}
-            }   
-            `,
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param1], &schemas[*param0]))")};
+            None`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
     },
@@ -578,11 +574,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Schema"],
             rustOpHandler: `
-            if adheres_to_schema(&heap[*param0], param1) {
-                None
-            } else {
-                ${raiseErrorWithMessage("Variable does not match the schema")}
-            }
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param0], param1))")};
+            None
             `
         },
         factoryMethod: (p) => ({kind: "enforceSchemaInstanceOnHeap", data: [p.heap_pos, p.schema]})
