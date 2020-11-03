@@ -7,18 +7,18 @@ export type Node<K, DATA={}> = {
 
 
 export type AnyNode = 
-Node<"Return", {value?: NodeOfType<"Bool" | "Object" | "Comparison">}> |
+Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison">}> |
 Node<"Bool", {value: boolean}> |
-Node<"Field", {name: string, value: NodeOfType<"Bool">}> |
-Node<"Object", {fields: NodeOfType<"Field">[]}> |
+Node<"Field", {name: string, value: PickNode<"Bool">}> |
+Node<"Object", {fields: PickNode<"Field">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
     sign: "==" | "!=" | "<" | ">" | "<=" | ">="
-    left: NodeOfType<"Int">
-    right: NodeOfType<"Int">
+    left: PickNode<"Int">
+    right: PickNode<"Int">
 }>
 
-export type NodeOfType<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
+export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
 
 export function compile(node: AnyNode): AnyOpInstance[] {
@@ -50,7 +50,7 @@ export function compile(node: AnyNode): AnyOpInstance[] {
             ]
 
         case "Comparison":
-            const comparisonLookup: Record<NodeOfType<"Comparison">["sign"], AnyOpInstance[]> = {
+            const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
                 "!=": [ow.equal, ow.negatePrev],
                 "==": [ow.equal],
                 "<": [ow.less],

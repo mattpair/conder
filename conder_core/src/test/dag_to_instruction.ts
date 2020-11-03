@@ -1,4 +1,4 @@
-import { NodeOfType } from './../main/DAG';
+import { PickNode } from './../main/DAG';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
 import {AnyNode, compile} from '../../index'
@@ -73,7 +73,7 @@ describe("basic functionality", () => {
         })
     )
 
-    function nComp(sign: NodeOfType<"Comparison">["sign"]): AnyNode {
+    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode {
         return {
             kind: "Return",
             value: {
