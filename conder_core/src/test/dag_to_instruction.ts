@@ -1,14 +1,15 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {Node, Return} from '../../index'
+import {AnyNode, compile} from '../../index'
 
 describe("basic functionality", () => {
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string, Node>
+    type DagProcedures = Record<string, AnyNode>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            PROCEDURES[key] = proc_nodes[key].compile
+            const comp = compile(proc_nodes[key])
+            PROCEDURES[key] = comp
         }
 
         const STORES = {TEST_STORE: schemaFactory.Object({})}
@@ -20,28 +21,54 @@ describe("basic functionality", () => {
                     PROCEDURES,
                     STORES
                 }, "./conder_kernel/")
-                .then(server => {
+                .then(async server => {
                     const testSurface: DagServer = {}
                     for (const key in PROCEDURES) {
                         testSurface[key] = () => server.invoke(key)
                     }
-                    return test(testSurface).finally(() => {
-                        cb()
+                    return test(testSurface).then(() => {
                         server.kill()
+                        mongo.kill()
+                        cb()
+                    }).catch((e) => {
+                        server.kill()
+                        mongo.kill()
+                        throw e
                     })
                 })
-                .finally(() => mongo.kill())
+                
             )
     }
 
 
     it("return node returns null", 
         testHarness({
-            r: new Return()
+            r: {kind: "Return"}
         },
         async (server) => {
             const res = await server.r()
             expect(res).toBeNull()
+        })
+    )
+
+    it("return node with value returns value",
+        testHarness({
+            r: {
+                kind: "Return", 
+                value: {
+                    kind: "Object", 
+                    fields: [{
+                        kind: "Field", 
+                        name: "some_field", 
+                        value: {
+                            kind: "Bool", 
+                            value: false
+                        }
+                    }
+                ]}
+            }
+        }, async (server) => {
+            expect(await server.r()).toEqual({some_field: false})
         })
     )
 })
