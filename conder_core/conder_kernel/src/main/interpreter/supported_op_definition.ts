@@ -156,7 +156,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            ${raiseErrorWithMessage("op_param")}
+            Some(op_param.to_string())
             `
         },
         factoryMethod: (data) => ({kind: 'raiseError', data})

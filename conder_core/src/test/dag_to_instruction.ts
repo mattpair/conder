@@ -1,48 +1,60 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode,PickNode, toOps } from '../../index'
+import {AnyNode,PickNode, toOps, FunctionDescription } from '../../index'
 
-describe("basic functionality", () => {
-    type DagServer = Record<string, () => Promise<any>>
-    type DagProcedures = Record<string, AnyNode[]>
-    function noInputHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
-        const PROCEDURES: Record<string, AnyOpInstance[]> = {}
-        for (const key in proc_nodes) {
-            const comp = toOps({
-                input: [],
-                computation: proc_nodes[key]
-            })
-            PROCEDURES[key] = comp
-        }
+type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 
-        const STORES = {TEST_STORE: schemaFactory.Object({})}
-        return (cb) => Test.Mongo.start({STORES})
-            .then(mongo => Test.Server.start({
-                    MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
-                    SCHEMAS: [],
-                    DEPLOYMENT_NAME: "statefultest",
-                    PROCEDURES,
-                    STORES
-                }, "./conder_kernel/")
-                .then(async server => {
-                    const testSurface: DagServer = {}
-                    for (const key in PROCEDURES) {
-                        testSurface[key] = () => server.invoke(key)
-                    }
-                    return test(testSurface).then(() => {
-                        server.kill()
-                        mongo.kill()
-                        cb()
-                    }).catch((e) => {
-                        server.kill()
-                        mongo.kill()
-                        throw e
-                    })
-                })
-                
-            )
+function withInputHarness(proc_nodes: Record<string, FunctionDescription>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    const PROCEDURES: Record<string, AnyOpInstance[]> = {}
+    for (const key in proc_nodes) {
+        const comp = toOps(proc_nodes[key])
+        PROCEDURES[key] = comp
     }
 
+    const STORES = {TEST_STORE: schemaFactory.Object({})}
+    return (cb) => Test.Mongo.start({STORES})
+        .then(mongo => Test.Server.start({
+                MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
+                SCHEMAS: [],
+                DEPLOYMENT_NAME: "statefultest",
+                PROCEDURES,
+                STORES
+            }, "./conder_kernel/")
+            .then(async server => {
+                const testSurface: DagServer = {}
+                for (const key in PROCEDURES) {
+                    testSurface[key] = (...args) => server.invoke(key, ...args)
+                }
+                return test(testSurface).then(() => {
+                    server.kill()
+                    mongo.kill()
+                    cb()
+                }).catch((e) => {
+                    server.kill()
+                    mongo.kill()
+                    throw e
+                })
+            })
+            
+        )
+}
+
+function noInputHarness(proc_nodes: Record<string, AnyNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    const PROCEDURES: Record<string, FunctionDescription> = {}
+    for (const key in proc_nodes) {
+        PROCEDURES[key] = {
+            input: [],
+            computation: proc_nodes[key]
+        }
+    }
+
+    return withInputHarness(PROCEDURES, test)
+}
+
+
+
+describe("basic functionality", () => {
+    
 
     it("return node returns null", 
         noInputHarness({
@@ -161,4 +173,28 @@ describe("basic functionality", () => {
                 expect(await server.ifFalseFinally()).toBe(2)
         })
     )
+})
+
+describe("with input", () => {
+    it("validates input", withInputHarness({
+        accepts3any: {
+            input: [
+                schemaFactory.Any,
+                schemaFactory.Any,
+                schemaFactory.Any
+            ],
+            computation: [{
+                kind: "Return",
+                value: {
+                    kind: "Input",
+                    index: 2
+                }
+            }]
+        }
+    }, async server => {
+        await expect(server.accepts3any("a", "b", "c", "d")).rejects.toThrowError()
+        await expect(server.accepts3any("a", "b",)).rejects.toThrowError()
+        expect(await server.accepts3any("a", "b", "c")).toEqual("c")
+    }))
+    
 })

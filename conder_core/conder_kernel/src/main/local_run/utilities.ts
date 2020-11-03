@@ -72,7 +72,12 @@ export namespace Test {
               "content-type": "application/json",
               "content-length": `${body.length}`,
             },
-          }).then((data) => data.json());
+          }).then((data) => {
+            if (data.ok){
+              return data.json()
+            }
+            throw Error(data.statusText)
+          });
         }
       }
       

@@ -2,7 +2,7 @@ import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
 import { AnyNode , compile} from "./DAG";
 
 
-type FunctionDescription = {
+export type FunctionDescription = {
     input: AnySchemaInstance[]
     computation: AnyNode[]
 }
@@ -14,7 +14,7 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
     func.input.forEach((schema, index) => {
         ops.push(
             ow.enforceSchemaInstanceOnHeap({heap_pos: index, schema}),
-            ow.conditionalOpOffset(1),
+            ow.conditionalOpOffset(2),
             ow.raiseError("invalid input")
         )
     })
