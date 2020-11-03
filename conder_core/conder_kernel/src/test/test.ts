@@ -76,7 +76,7 @@ describe("conduit kernel", () => {
           let failure = false;
           // No input
           if (allowsNone === "must exist") {
-            await server.invoke("validateSchema").catch(() => (failure = true));
+            await server.invoke("validateSchema", [null]).catch(() => (failure = true));
             expect(failure).toBe(true);
             failure = false;
           }

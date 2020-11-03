@@ -136,7 +136,7 @@ export function generateServer(): string {
         #[serde(tag = "kind", content= "data")]
         enum KernelRequest {
             Noop,
-            Exec {proc: String, arg: InterpreterType}
+            Exec {proc: String, arg: Vec<InterpreterType>}
         }
 
         ${writeOperationInterpreter()}
@@ -160,9 +160,9 @@ export function generateServer(): string {
             let req = input.into_inner();
             return match req {
                 KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.db.as_ref(), &data.stores),
-                KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
+                KernelRequest::Exec{proc, mut arg} => match data.procs.get(&proc) {
                     Some(proc) => {
-                        state.push(arg);
+                        state.append(&mut arg);
                         conduit_byte_code_interpreter(state, proc, &data.schemas, data.db.as_ref(), &data.stores)
                     },
                     None => {
