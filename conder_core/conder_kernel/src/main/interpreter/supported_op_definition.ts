@@ -58,7 +58,8 @@ StaticOp<"flattenArray"> |
 StaticOp<"popStack"> |
 StaticOp<"boolAnd"> |
 StaticOp<"boolOr"> |
-ParamOp<"raiseError", string>
+ParamOp<"raiseError", string> | 
+ParamOp<"assertHeapLen", number> 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -705,5 +706,18 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         }
+    },
+    assertHeapLen: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            if heap.len() != *op_param {
+                ${raiseErrorWithMessage("unexpected heap len")}
+            } else {
+                None
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "assertHeapLen", data})
     }
 }
