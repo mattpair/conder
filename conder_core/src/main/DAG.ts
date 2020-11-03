@@ -1,107 +1,100 @@
-import {AnyOpInstance, getOpWriter, Utils, AnyInterpreterTypeInstance} from 'conder_kernel'
-import * as mongodb from 'mongodb'
-type AnyObject = {[K in string]: AnyObject | number | string | boolean }
-type MongoFilter = mongodb.FilterQuery<any>
-// type Node<KIND, DATA={}> = {
-//     kind: KIND
-//     next?: AnyNode
-// } & DATA
+import {AnyOpInstance, ow, Utils, interpeterTypeFactory} from 'conder_kernel'
 
-type RequiresStoreName = {store: string}
-type Value<K extends string="value", V=AnyInterpreterTypeInstance> = {[k in K]: V}
-type RequiresNext<K extends keyof NodeInstanceDef> = {next: NodeInstanceDef[K]}
-type CanHaveNext<K extends keyof NodeInstanceDef> = {next?: NodeInstanceDef[K]}
-type Node<K extends keyof NodeTypeDefs> = Omit<{kind: K} & NodeTypeDefs[K], "_meta">
-type MayBeRoot = {_meta: {mayBeRoot: true}}
+export type Node<K, DATA={}> = {
+    kind: K
+ } & DATA
 
-export type NodeTypeDefs = {
-    return: {},
-    select: RequiresStoreName & RequiresNext<"return">
-    append: RequiresStoreName
-    instance: Value & RequiresNext<"return" | "append" | "staticFilter"> & MayBeRoot
-    staticFilter: Value<"filter", MongoFilter> & RequiresNext<"select" | "len" | "updateOne" | "deleteOne"> & MayBeRoot,
-    len: RequiresNext<"return"> & RequiresStoreName & MayBeRoot
-    updateOne: CanHaveNext<"return"> & RequiresStoreName
-    deleteOne: CanHaveNext<"return"> & RequiresStoreName
-}
-type NodeInstanceDef = {
-    [P in keyof NodeTypeDefs]: Node<P>
-}
-export type AnyNode = NodeInstanceDef[keyof NodeInstanceDef]
 
-type RootNodeKinds= Exclude<
-    {
-        [k in AnyNode["kind"]]: NodeTypeDefs[k] extends MayBeRoot ? k: never
-    }[AnyNode["kind"]], 
-    never
->
-export type AnyRootNode = Extract<AnyNode, {kind: RootNodeKinds}>
-export type AnyChildNode = Exclude<AnyNode, {kind: RootNodeKinds}>
 
-const opWriter = getOpWriter()
+export type AnyNode = 
+Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int">}> |
+Node<"Bool", {value: boolean}> |
+Node<"Field", {name: string, value: PickNode<"Bool">}> |
+Node<"Object", {fields: PickNode<"Field">[]}> |
+Node<"Int", {value: number}> |
+Node<"Comparison", {
+    sign: "==" | "!=" | "<" | ">" | "<=" | ">="
+    left: PickNode<"Int">
+    right: PickNode<"Int">
+}> |
+Node<"BoolAlg", {
+    sign: "and" | "or", 
+    left: PickNode<"Bool" | "Comparison">, 
+    right: PickNode<"Bool" | "Comparison">}> |
+Node<"If", {
+    cond: PickNode<"Bool" | "Comparison" | "BoolAlg">
+    ifTrue: AnyNode
+    finally?: AnyNode
+}>
 
-export function root_node_to_instruction(node: AnyRootNode): AnyOpInstance[] {
+export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
+
+
+export function compile(node: AnyNode): AnyOpInstance[] {
     switch (node.kind) {
-        case "staticFilter":
+        case "Bool":
+            return [ow.instantiate(node.value)]
+        case "Field":
             return [
-                opWriter.instantiate(node.filter),
-                ...any_node_to_instruction(node.next)
-            ]
-        case "instance":
-            return [
-                opWriter.instantiate(node.value),
-                ...any_node_to_instruction(node.next)
+                ...compile(node.value),
+                ow.assignPreviousToField(node.name)
             ]
 
-        case "len": 
+        case "Object":
+            const fields = node.fields.flatMap((compile))
             return [
-                opWriter.storeLen(node.store),
-                ...child_node_to_instruction(node.next)
-            ]
-        default: Utils.assertNever(node)
-    }
-}
-
-function child_node_to_instruction(node: AnyChildNode): AnyOpInstance[] {
-    switch (node.kind) {
-        case "return":
-            return [opWriter.returnStackTop]
-        case "select": 
-            return [
-                opWriter.queryStore([node.store, {}]),
-                ...any_node_to_instruction(node.next)
+                ow.instantiate({}),
+                ...fields
             ]
         
-        case "append":
+        case "Return":
             return [
-                opWriter.insertFromStack(node.store)
+                ...node.value ? compile(node.value) : [ow.instantiate(null)],
+                ow.returnStackTop
             ]
 
-        case "updateOne":
-        case "deleteOne":
-            const s = node.store
+        case "Int":
             return [
-                node.kind === "deleteOne" ? opWriter.deleteOneInStore(s) : opWriter.updateOne(s),
-                ...node.next ? any_node_to_instruction(node.next) : [opWriter.popStack]
+                ow.instantiate(interpeterTypeFactory.int(node.value))
             ]
-        default: Utils.assertNever(node)
-    }
-}
-function any_node_to_instruction(node: AnyNode): AnyOpInstance[] {
-    switch (node.kind) {
-        case "return":
-        case "select": 
-        case "append":
-        case "updateOne":
-        case "deleteOne":
-            return child_node_to_instruction(node)
-        
-        case "instance":
-        case "staticFilter":
-        case "len" :
-            return root_node_to_instruction(node)
 
+        case "Comparison":
+            const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
+                "!=": [ow.equal, ow.negatePrev],
+                "==": [ow.equal],
+                "<": [ow.less],
+                ">": [ow.lesseq, ow.negatePrev],
+                ">=": [ow.less, ow.negatePrev],
+                "<=": [ow.lesseq]
+            }
 
+            return [
+                ...compile(node.left),
+                ...compile(node.right),
+                ...comparisonLookup[node.sign]
+            ]
+
+        case "BoolAlg":
+            // TODO: optimize this for skiping the right branch
+            const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
+                "and": [ow.boolAnd],
+                "or": [ow.boolOr]
+            }             
+            return [
+                ...compile(node.left),
+                ...compile(node.right),
+                ...boolAlg[node.sign]
+            ]
+
+        case "If":
+            const ifTrue = compile(node.ifTrue)
+            return [
+                ...compile(node.cond),
+                ow.negatePrev,
+                ow.conditionalOpOffset(ifTrue.length + 1),
+                ...ifTrue,
+                ...node.finally ? compile(node.finally) : [ow.noop] // give the opOffset somewhere to land.
+            ]
         default: Utils.assertNever(node)
     }
 }

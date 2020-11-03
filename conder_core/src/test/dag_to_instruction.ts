@@ -1,15 +1,16 @@
+import { PickNode } from './../main/DAG';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode, AnyRootNode, root_node_to_instruction} from '../../index'
+import {AnyNode, compile} from '../../index'
 
 describe("basic functionality", () => {
-    const TEST_STORE = "testStore"
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string,AnyRootNode>
+    type DagProcedures = Record<string, AnyNode>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            PROCEDURES[key] = root_node_to_instruction(proc_nodes[key])
+            const comp = compile(proc_nodes[key])
+            PROCEDURES[key] = comp
         }
 
         const STORES = {TEST_STORE: schemaFactory.Object({})}
@@ -21,130 +22,141 @@ describe("basic functionality", () => {
                     PROCEDURES,
                     STORES
                 }, "./conder_kernel/")
-                .then(server => {
+                .then(async server => {
                     const testSurface: DagServer = {}
                     for (const key in PROCEDURES) {
                         testSurface[key] = () => server.invoke(key)
                     }
-                    return test(testSurface).finally(() => {
-                        cb()
+                    return test(testSurface).then(() => {
                         server.kill()
+                        mongo.kill()
+                        cb()
+                    }).catch((e) => {
+                        server.kill()
+                        mongo.kill()
+                        throw e
                     })
                 })
-                .finally(() => mongo.kill())
+                
             )
     }
-    const select: DagProcedures = {
-        select:
-        {
-            kind: "staticFilter",
-            filter: {}, // select all
-            next: {
-                kind: "select",
-                store: TEST_STORE,
-                next: {kind: "return"}
-            }
-        }
-        
-    }
 
-    it("allows selections", 
-        testHarness(select,
+
+    it("return node returns null", 
+        testHarness({
+            r: {kind: "Return"}
+        },
         async (server) => {
-            const res = await server.select()
-            expect(res).toEqual([])
+            const res = await server.r()
+            expect(res).toBeNull()
         })
     )
 
-    it("allows insertion and selection",
-        testHarness({...select, insert: {
-            kind: "instance",
-            // Must store objects.
-            value: {field: 42},
-            next: {
-                kind: "append",
-                store: TEST_STORE
-            }
-        }}, async (server) => {
-            expect(await server.insert()).toBeNull()
-            expect(await server.select()).toEqual([{field: 42}])
-        })
-    )
-
-    const INSERT_42: AnyRootNode = {
-        kind: "instance",
-        // Must store objects.
-        value: {field: 42},
-        next: {
-            kind: "append",
-            store: TEST_STORE
-        }
-    }
-    type StaticFilter = Extract<AnyRootNode, {kind: "staticFilter"}>
-    function filteredStoreAction(filter: object, child: StaticFilter["next"]["kind"]): StaticFilter {
-        return {
-            kind: "staticFilter",
-            filter,
-            next: {
-                kind: child,
-                store: TEST_STORE,
-                next: {
-                    kind: "return"
-                }
-            }
-        }
-    }
-
-    it("allows filtering on selection and measurement",
+    it("return node with value returns value",
         testHarness({
-            select: filteredStoreAction({field: 42}, "select"),
-            selectNothing: filteredStoreAction({field: 41}, "select"),
-            len: filteredStoreAction({field: {"$lt": 43}}, "len"),
-            emptyLen: filteredStoreAction({field: {"$lt": 41}}, "len"),
-            INSERT_42
-            }, async (server) => {
-            expect(await server.INSERT_42()).toBeNull()
-            expect(await server.select()).toEqual([{field: 42}])
-            expect(await server.selectNothing()).toEqual([])
-            expect(await server.len()).toBe(1)
-            expect(await server.emptyLen()).toBe(0)
-        })
-    )
-
-    it("allows updating/deleting one based on selection",
-        testHarness({
-            INSERT_42,
-            update: {
-                kind: "instance",
-                value: {"$set": {added: 12}},
-                next: {
-                    kind: "staticFilter",
-                    filter: {field: 42},
-                    next: {
-                        kind: "updateOne",
-                        store: TEST_STORE,
-                        next: {
-                            kind: "return"
+            r: {
+                kind: "Return", 
+                value: {
+                    kind: "Object", 
+                    fields: [{
+                        kind: "Field", 
+                        name: "some_field", 
+                        value: {
+                            kind: "Bool", 
+                            value: false
                         }
                     }
-                }
-            },
-            len: filteredStoreAction({added: 12}, "len"),
-            delete: {
-                kind: "staticFilter",
-                filter: {added: 12},
-                next: {
-                    kind: "deleteOne",
-                    store: TEST_STORE,
-                    next: {kind: "return"}
-                }
+                ]}
             }
         }, async (server) => {
-            expect(await server.INSERT_42()).toBeNull()
-            expect(await server.update()).toEqual({field: 42, added: 12})
-            expect(await server.len()).toBe(1)
-            expect(await server.delete()).toBeTruthy()
-            expect(await server.len()).toBe(0)
+            expect(await server.r()).toEqual({some_field: false})
+        })
+    )
+
+    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode {
+        return {
+            kind: "Return",
+            value: {
+                kind: "Comparison",
+                sign,
+                left: {kind: "Int", value: 1},
+                right: {kind: "Int", value: 1}
+            }
+        }   
+    }
+    it("can compare numbers", 
+        testHarness({
+            geq: nComp(">="),
+            leq: nComp("<="),
+            l: nComp("<"),
+            g: nComp(">"),
+            e: nComp("=="),
+            ne: nComp("!="),
+        }, async server => {
+            expect(await server.leq()).toBeTruthy()
+            expect(await server.geq()).toBeTruthy()
+            expect(await server.l()).toBeFalsy()
+            expect(await server.g()).toBeFalsy()
+            expect(await server.e()).toBeTruthy()
+            expect(await server.ne()).toBeFalsy()
+        })
+    )
+
+    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode {
+        return {
+            kind: "Return",
+            value: {
+                kind: "BoolAlg",
+                left,
+                right,
+                sign
+            }
+        }
+    }
+    it("can handle boolean algebra", 
+        testHarness({
+            trueNtrue: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
+            falseNtrue: boolAlgTest("and", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
+            trueNfalse: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
+            trueOtrue: boolAlgTest("or", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
+            falseOtrue: boolAlgTest("or", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
+            trueOfalse: boolAlgTest("or", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
+            falseOfalse: boolAlgTest("or", {kind: "Bool", value: false}, {kind: "Bool", value: false})
+
+        }, async server => {
+            expect(await server.trueNtrue()).toBeTruthy()
+            expect(await server.falseNtrue()).toBeFalsy()
+            expect(await server.trueNfalse()).toBeFalsy()
+            expect(await server.trueOtrue()).toBeTruthy()
+            expect(await server.trueOfalse()).toBeTruthy()
+            expect(await server.falseOtrue()).toBeTruthy()
+            expect(await server.falseOfalse()).toBeFalsy()
+        })
+    )
+
+    it("allows if statements", 
+        testHarness({
+            ifTrue: {
+                kind: "If",
+                cond: {kind: "Bool", value: true},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+            },
+            ifFalseNoFinally: {
+                kind: "If",
+                cond: {kind: "Bool", value: false},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+            },
+            ifFalseFinally: {
+                kind: "If",
+                cond: {kind: "Bool", value: false},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}},
+                finally: {kind: "Return", value: {kind: "Int", value: 2}}
+            }
+        }, 
+            async server => {
+                expect(await server.ifTrue()).toBe(1)
+                expect(await server.ifFalseNoFinally()).toBeNull()
+                expect(await server.ifFalseFinally()).toBe(2)
         })
     )
 })

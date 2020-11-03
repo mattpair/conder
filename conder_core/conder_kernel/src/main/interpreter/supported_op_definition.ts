@@ -55,7 +55,9 @@ StaticOp<"equal"> |
 StaticOp<"lesseq"> |
 StaticOp<"less"> | 
 StaticOp<"flattenArray"> |
-StaticOp<"popStack">
+StaticOp<"popStack"> |
+StaticOp<"boolAnd"> |
+StaticOp<"boolOr"> 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -106,6 +108,11 @@ const popStack = `
         _ => panic!("Attempting to access non existent value")
     }
     `
+const popToBool = `match ${popStack} {
+    InterpreterType::bool(s) => s, 
+    _ => panic!("Stack variable is not a bool")
+}
+`
 
 const popToString = `
     match ${popStack} {
@@ -673,6 +680,26 @@ export const OpSpec: CompleteOpSpec = {
             })`)};
             None
             
+            `
+        }
+    },
+    boolAnd: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popToBool};
+            let second = ${popToBool};
+            ${pushStack("InterpreterType::bool(first && second)")};
+            None
+            `
+        }
+    },
+    boolOr: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popToBool};
+            let second = ${popToBool};
+            ${pushStack("InterpreterType::bool(first || second)")};
+            None
             `
         }
     }
