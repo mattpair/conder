@@ -1,15 +1,14 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode, AnyRootNode, root_node_to_instruction} from '../../index'
+import {Node, Return} from '../../index'
 
 describe("basic functionality", () => {
-    const TEST_STORE = "testStore"
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string,AnyRootNode>
+    type DagProcedures = Record<string, Node>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            PROCEDURES[key] = root_node_to_instruction(proc_nodes[key])
+            PROCEDURES[key] = proc_nodes[key].compile
         }
 
         const STORES = {TEST_STORE: schemaFactory.Object({})}
@@ -34,117 +33,15 @@ describe("basic functionality", () => {
                 .finally(() => mongo.kill())
             )
     }
-    const select: DagProcedures = {
-        select:
-        {
-            kind: "staticFilter",
-            filter: {}, // select all
-            next: {
-                kind: "select",
-                store: TEST_STORE,
-                next: {kind: "return"}
-            }
-        }
-        
-    }
 
-    it("allows selections", 
-        testHarness(select,
+
+    it("return node returns null", 
+        testHarness({
+            r: new Return()
+        },
         async (server) => {
-            const res = await server.select()
-            expect(res).toEqual([])
-        })
-    )
-
-    it("allows insertion and selection",
-        testHarness({...select, insert: {
-            kind: "instance",
-            // Must store objects.
-            value: {field: 42},
-            next: {
-                kind: "append",
-                store: TEST_STORE
-            }
-        }}, async (server) => {
-            expect(await server.insert()).toBeNull()
-            expect(await server.select()).toEqual([{field: 42}])
-        })
-    )
-
-    const INSERT_42: AnyRootNode = {
-        kind: "instance",
-        // Must store objects.
-        value: {field: 42},
-        next: {
-            kind: "append",
-            store: TEST_STORE
-        }
-    }
-    type StaticFilter = Extract<AnyRootNode, {kind: "staticFilter"}>
-    function filteredStoreAction(filter: object, child: StaticFilter["next"]["kind"]): StaticFilter {
-        return {
-            kind: "staticFilter",
-            filter,
-            next: {
-                kind: child,
-                store: TEST_STORE,
-                next: {
-                    kind: "return"
-                }
-            }
-        }
-    }
-
-    it("allows filtering on selection and measurement",
-        testHarness({
-            select: filteredStoreAction({field: 42}, "select"),
-            selectNothing: filteredStoreAction({field: 41}, "select"),
-            len: filteredStoreAction({field: {"$lt": 43}}, "len"),
-            emptyLen: filteredStoreAction({field: {"$lt": 41}}, "len"),
-            INSERT_42
-            }, async (server) => {
-            expect(await server.INSERT_42()).toBeNull()
-            expect(await server.select()).toEqual([{field: 42}])
-            expect(await server.selectNothing()).toEqual([])
-            expect(await server.len()).toBe(1)
-            expect(await server.emptyLen()).toBe(0)
-        })
-    )
-
-    it("allows updating/deleting one based on selection",
-        testHarness({
-            INSERT_42,
-            update: {
-                kind: "instance",
-                value: {"$set": {added: 12}},
-                next: {
-                    kind: "staticFilter",
-                    filter: {field: 42},
-                    next: {
-                        kind: "updateOne",
-                        store: TEST_STORE,
-                        next: {
-                            kind: "return"
-                        }
-                    }
-                }
-            },
-            len: filteredStoreAction({added: 12}, "len"),
-            delete: {
-                kind: "staticFilter",
-                filter: {added: 12},
-                next: {
-                    kind: "deleteOne",
-                    store: TEST_STORE,
-                    next: {kind: "return"}
-                }
-            }
-        }, async (server) => {
-            expect(await server.INSERT_42()).toBeNull()
-            expect(await server.update()).toEqual({field: 42, added: 12})
-            expect(await server.len()).toBe(1)
-            expect(await server.delete()).toBeTruthy()
-            expect(await server.len()).toBe(0)
+            const res = await server.r()
+            expect(res).toBeNull()
         })
     )
 })

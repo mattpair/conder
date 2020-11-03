@@ -1,6 +1,6 @@
 import * as child_process from "child_process";
 import {
-  getOpWriter,
+  ow,
   Procedures,
   interpeterTypeFactory,
   AnyInterpreterTypeInstance,
@@ -16,7 +16,6 @@ import {Test} from '../main/local_run/utilities'
 
 
 describe("conduit kernel", () => {
-  const opWriter = getOpWriter();
   
   function kernelTest(
     descr: string,
@@ -50,7 +49,7 @@ describe("conduit kernel", () => {
         const res = await server.invoke("customNoop");
         expect(res).toEqual(interpeterTypeFactory.None);
       },
-      { PROCEDURES: { customNoop: [opWriter.noop] } }
+      { PROCEDURES: { customNoop: [ow.noop] } }
     );
 
     kernelTest(
@@ -59,7 +58,7 @@ describe("conduit kernel", () => {
         const res = await server.invoke("destructure")
         expect(res).toEqual("target field")
       },
-      {PROCEDURES: {destructure: [opWriter.instantiate({f: {o: {o: "target field"}}}), opWriter.extractFields([["f", "o", "o"]]), opWriter.returnStackTop]}}
+      {PROCEDURES: {destructure: [ow.instantiate({f: {o: {o: "target field"}}}), ow.extractFields([["f", "o", "o"]]), ow.returnStackTop]}}
     )
   });
 
@@ -93,8 +92,8 @@ describe("conduit kernel", () => {
         {
           PROCEDURES: {
             validateSchema: [
-              opWriter.enforceSchemaOnHeap({ schema: 0, heap_pos: 0 }),
-              opWriter.returnVariable(0),
+              ow.enforceSchemaOnHeap({ schema: 0, heap_pos: 0 }),
+              ow.returnVariable(0),
             ],
           },
           SCHEMAS: [schema],
@@ -259,9 +258,9 @@ describe("conduit kernel", () => {
         },
         PROCEDURES: {
           testStore: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
-            opWriter.getAllFromStore("storeName"),
-            opWriter.returnStackTop,
+            ow.insertFromHeap({ heap_pos: 0, store: "storeName" }),
+            ow.getAllFromStore("storeName"),
+            ow.returnStackTop,
           ],
         },
       },
@@ -295,10 +294,10 @@ describe("conduit kernel", () => {
         },
         PROCEDURES: {
           testStore: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
-            opWriter.instantiate({}), // Filter for query
-            opWriter.queryStore(["storeName", { right: false}]),
-            opWriter.returnStackTop,
+            ow.insertFromHeap({ heap_pos: 0, store: "storeName" }),
+            ow.instantiate({}), // Filter for query
+            ow.queryStore(["storeName", { right: false}]),
+            ow.returnStackTop,
           ],
         },
       },
@@ -321,15 +320,15 @@ describe("conduit kernel", () => {
         },
         PROCEDURES: {
           insert: [
-            opWriter.instantiate([{value: "a"}, {value: "b"}]),
-            opWriter.insertFromStack("strings"),
-            opWriter.instantiate(true),
-            opWriter.returnStackTop
+            ow.instantiate([{value: "a"}, {value: "b"}]),
+            ow.insertFromStack("strings"),
+            ow.instantiate(true),
+            ow.returnStackTop
           ],
           getBs: [
-            opWriter.instantiate({value: "b"}),
-            opWriter.queryStore(["strings", {}]),
-            opWriter.returnStackTop
+            ow.instantiate({value: "b"}),
+            ow.queryStore(["strings", {}]),
+            ow.returnStackTop
           ]
         }
       },
@@ -348,17 +347,17 @@ describe("conduit kernel", () => {
         },
         PROCEDURES: {
           insert: [
-            opWriter.instantiate([{value: 1}, {value: 2}]),
-            opWriter.insertFromStack("nums"),
-            opWriter.instantiate(true),
-            opWriter.returnStackTop
+            ow.instantiate([{value: 1}, {value: 2}]),
+            ow.insertFromStack("nums"),
+            ow.instantiate(true),
+            ow.returnStackTop
           ],
           getLte: [
-            opWriter.instantiate({value: {"$lte": {}}}),
-            opWriter.copyFromHeap(0),
-            opWriter.setNestedField(["value", "$lte"]),
-            opWriter.queryStore(["nums", {}]),
-            opWriter.returnStackTop
+            ow.instantiate({value: {"$lte": {}}}),
+            ow.copyFromHeap(0),
+            ow.setNestedField(["value", "$lte"]),
+            ow.queryStore(["nums", {}]),
+            ow.returnStackTop
           ]
         }
       },
@@ -376,13 +375,13 @@ describe("conduit kernel", () => {
           users: schemaFactory.Object({email: schemaFactory.string, pwd: schemaFactory.string})
         },
         PROCEDURES: {
-          addUser: [opWriter.insertFromHeap({heap_pos: 0, store: "users"}), opWriter.returnVariable(0)],
+          addUser: [ow.insertFromHeap({heap_pos: 0, store: "users"}), ow.returnVariable(0)],
           getUser: [
-            opWriter.instantiate({}), 
-            opWriter.copyFromHeap(0), 
-            opWriter.assignPreviousToField("email"),
-            opWriter.findOneInStore(["users", {}]),
-            opWriter.returnStackTop
+            ow.instantiate({}), 
+            ow.copyFromHeap(0), 
+            ow.assignPreviousToField("email"),
+            ow.findOneInStore(["users", {}]),
+            ow.returnStackTop
           ]
         }
       },
@@ -408,10 +407,10 @@ describe("conduit kernel", () => {
         },
         PROCEDURES: {
           testStore: [
-            opWriter.insertFromHeap({ heap_pos: 0, store: "storeName" }),
-            opWriter.instantiate({}), //filter for query
-            opWriter.queryStore(["storeName", { right: false}]),
-            opWriter.returnStackTop,
+            ow.insertFromHeap({ heap_pos: 0, store: "storeName" }),
+            ow.instantiate({}), //filter for query
+            ow.queryStore(["storeName", { right: false}]),
+            ow.returnStackTop,
           ],
         },
       },
@@ -428,10 +427,10 @@ describe("conduit kernel", () => {
     );
 
     const insert = [
-      opWriter.insertFromHeap({ heap_pos: 0, store: "test" }),
+      ow.insertFromHeap({ heap_pos: 0, store: "test" }),
     ];
 
-    const len = [opWriter.instantiate({}), opWriter.storeLen("test"), opWriter.returnStackTop];
+    const len = [ow.instantiate({}), ow.storeLen("test"), ow.returnStackTop];
     const STORES = {
       test: schemaFactory.Object({
         data: schemaFactory.string,
@@ -467,9 +466,9 @@ describe("conduit kernel", () => {
       {
         PROCEDURES: {
           measure: [
-            opWriter.copyFromHeap(0),
-            opWriter.arrayLen,
-            opWriter.returnStackTop,
+            ow.copyFromHeap(0),
+            ow.arrayLen,
+            ow.returnStackTop,
           ],
         },
       }
@@ -517,9 +516,9 @@ describe("conduit kernel", () => {
       },
       {
         PROCEDURES: {
-          less: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.less, opWriter.returnStackTop],
-          lesseq: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.lesseq, opWriter.returnStackTop],
-          equal: [opWriter.copyFromHeap(0), opWriter.flattenArray, opWriter.equal, opWriter.returnStackTop]
+          less: [ow.copyFromHeap(0), ow.flattenArray, ow.less, ow.returnStackTop],
+          lesseq: [ow.copyFromHeap(0), ow.flattenArray, ow.lesseq, ow.returnStackTop],
+          equal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.returnStackTop]
         }
       }
     )
