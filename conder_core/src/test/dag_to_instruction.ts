@@ -5,11 +5,11 @@ import {AnyNode, compile} from '../../index'
 
 describe("basic functionality", () => {
     type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string, AnyNode>
+    type DagProcedures = Record<string, AnyNode[]>
     function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            const comp = compile(proc_nodes[key])
+            const comp = compile(...proc_nodes[key])
             PROCEDURES[key] = comp
         }
 
@@ -44,7 +44,7 @@ describe("basic functionality", () => {
 
     it("return node returns null", 
         testHarness({
-            r: {kind: "Return"}
+            r: [{kind: "Return"}]
         },
         async (server) => {
             const res = await server.r()
@@ -54,7 +54,7 @@ describe("basic functionality", () => {
 
     it("return node with value returns value",
         testHarness({
-            r: {
+            r: [{
                 kind: "Return", 
                 value: {
                     kind: "Object", 
@@ -67,14 +67,14 @@ describe("basic functionality", () => {
                         }
                     }
                 ]}
-            }
+            }]
         }, async (server) => {
             expect(await server.r()).toEqual({some_field: false})
         })
     )
 
-    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode {
-        return {
+    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode[] {
+        return [{
             kind: "Return",
             value: {
                 kind: "Comparison",
@@ -82,7 +82,7 @@ describe("basic functionality", () => {
                 left: {kind: "Int", value: 1},
                 right: {kind: "Int", value: 1}
             }
-        }   
+        }]
     }
     it("can compare numbers", 
         testHarness({
@@ -102,8 +102,8 @@ describe("basic functionality", () => {
         })
     )
 
-    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode {
-        return {
+    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode[] {
+        return [{
             kind: "Return",
             value: {
                 kind: "BoolAlg",
@@ -111,7 +111,7 @@ describe("basic functionality", () => {
                 right,
                 sign
             }
-        }
+        }]
     }
     it("can handle boolean algebra", 
         testHarness({
@@ -136,22 +136,22 @@ describe("basic functionality", () => {
 
     it("allows if statements", 
         testHarness({
-            ifTrue: {
+            ifTrue: [{
                 kind: "If",
                 cond: {kind: "Bool", value: true},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
-            },
-            ifFalseNoFinally: {
+            }],
+            ifFalseNoFinally: [{
                 kind: "If",
                 cond: {kind: "Bool", value: false},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
-            },
-            ifFalseFinally: {
+            }],
+            ifFalseFinally: [{
                 kind: "If",
                 cond: {kind: "Bool", value: false},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}},
                 finally: {kind: "Return", value: {kind: "Int", value: 2}}
-            }
+            }]
         }, 
             async server => {
                 expect(await server.ifTrue()).toBe(1)
