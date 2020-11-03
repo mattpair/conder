@@ -101,4 +101,37 @@ describe("basic functionality", () => {
             expect(await server.ne()).toBeFalsy()
         })
     )
+
+    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode {
+        return {
+            kind: "Return",
+            value: {
+                kind: "BoolAlg",
+                left,
+                right,
+                sign
+            }
+        }
+    }
+    it("can handle boolean algebra", 
+        testHarness({
+            trueNtrue: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
+            falseNtrue: boolAlgTest("and", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
+            trueNfalse: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
+            trueOtrue: boolAlgTest("or", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
+            falseOtrue: boolAlgTest("or", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
+            trueOfalse: boolAlgTest("or", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
+            falseOfalse: boolAlgTest("or", {kind: "Bool", value: false}, {kind: "Bool", value: false})
+
+        }, async server => {
+            expect(await server.trueNtrue()).toBeTruthy()
+            expect(await server.falseNtrue()).toBeFalsy()
+            expect(await server.trueNfalse()).toBeFalsy()
+            expect(await server.trueOtrue()).toBeTruthy()
+            expect(await server.trueOfalse()).toBeTruthy()
+            expect(await server.falseOtrue()).toBeTruthy()
+            expect(await server.falseOfalse()).toBeFalsy()
+        })
+    
+    )
 })

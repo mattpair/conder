@@ -7,7 +7,7 @@ export type Node<K, DATA={}> = {
 
 
 export type AnyNode = 
-Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison">}> |
+Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg">}> |
 Node<"Bool", {value: boolean}> |
 Node<"Field", {name: string, value: PickNode<"Bool">}> |
 Node<"Object", {fields: PickNode<"Field">[]}> |
@@ -16,7 +16,8 @@ Node<"Comparison", {
     sign: "==" | "!=" | "<" | ">" | "<=" | ">="
     left: PickNode<"Int">
     right: PickNode<"Int">
-}>
+}> |
+Node<"BoolAlg", {sign: "and" | "or", left: PickNode<"Bool" | "Comparison">, right: PickNode<"Bool" | "Comparison">}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -65,6 +66,17 @@ export function compile(node: AnyNode): AnyOpInstance[] {
                 ...comparisonLookup[node.sign]
             ]
 
+        case "BoolAlg":
+            // TODO: optimize this for skiping the right branch
+            const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
+                "and": [ow.boolAnd],
+                "or": [ow.boolOr]
+            }             
+            return [
+                ...compile(node.left),
+                ...compile(node.right),
+                ...boolAlg[node.sign]
+            ]
         default: Utils.assertNever(node)
     }
 }
