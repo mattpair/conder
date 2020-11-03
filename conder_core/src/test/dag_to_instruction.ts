@@ -1,15 +1,17 @@
-import { PickNode } from './../main/DAG';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode, compile} from '../../index'
+import {AnyNode,PickNode, toOps } from '../../index'
 
 describe("basic functionality", () => {
-    type DagServer = Record<string, (...arg: any[]) => Promise<any>>
+    type DagServer = Record<string, () => Promise<any>>
     type DagProcedures = Record<string, AnyNode[]>
-    function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    function noInputHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            const comp = compile(...proc_nodes[key])
+            const comp = toOps({
+                input: [],
+                computation: proc_nodes[key]
+            })
             PROCEDURES[key] = comp
         }
 
@@ -43,7 +45,7 @@ describe("basic functionality", () => {
 
 
     it("return node returns null", 
-        testHarness({
+        noInputHarness({
             r: [{kind: "Return"}]
         },
         async (server) => {
@@ -53,7 +55,7 @@ describe("basic functionality", () => {
     )
 
     it("return node with value returns value",
-        testHarness({
+        noInputHarness({
             r: [{
                 kind: "Return", 
                 value: {
@@ -85,7 +87,7 @@ describe("basic functionality", () => {
         }]
     }
     it("can compare numbers", 
-        testHarness({
+        noInputHarness({
             geq: nComp(">="),
             leq: nComp("<="),
             l: nComp("<"),
@@ -114,7 +116,7 @@ describe("basic functionality", () => {
         }]
     }
     it("can handle boolean algebra", 
-        testHarness({
+        noInputHarness({
             trueNtrue: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
             falseNtrue: boolAlgTest("and", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
             trueNfalse: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
@@ -135,7 +137,7 @@ describe("basic functionality", () => {
     )
 
     it("allows if statements", 
-        testHarness({
+        noInputHarness({
             ifTrue: [{
                 kind: "If",
                 cond: {kind: "Bool", value: true},
