@@ -10,7 +10,7 @@ export type AnyNode =
 Node<"Return", {value?: NodeOfType<"Bool" | "Object">}> |
 Node<"Bool", {value: boolean}> |
 Node<"Field", {name: string, value: NodeOfType<"Bool">}> |
-Node<"Object", {fields: NodeOfType<"Field">[]}>
+Node<"Object", {fields: NodeOfType<"Field">[]}> 
 
 type NodeOfType<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 

@@ -512,13 +512,14 @@ describe("conduit kernel", () => {
         expect(lessequal).toBeTruthy()
         expect(notlessequal).toBeFalsy()
         expect(equal).toBeTruthy()
-        expect(notequal).toBeFalsy()
+        expect(notequal).toBeTruthy()
       },
       {
         PROCEDURES: {
           less: [ow.copyFromHeap(0), ow.flattenArray, ow.less, ow.returnStackTop],
           lesseq: [ow.copyFromHeap(0), ow.flattenArray, ow.lesseq, ow.returnStackTop],
-          equal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.returnStackTop]
+          equal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.returnStackTop],
+          notequal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.negatePrev, ow.returnStackTop]
         }
       }
     )
