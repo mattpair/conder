@@ -96,14 +96,16 @@ describe("conduit kernel", () => {
     kernelTest(
       "input args test", 
       async server => {
-        expect(await server.invoke("test", true, 42)).toBeTruthy()
-        expect(await server.invoke("test", 42, false)).toBeFalsy()
+        expect(await server.invoke("test", true, 42, 12)).toBeTruthy()
+        expect(await server.invoke("test", 42, false, "abc")).toBeFalsy()
       },
       {
         PROCEDURES: {
           test: [
             ow.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.bool}),
             ow.enforceSchemaInstanceOnHeap({heap_pos: 1, schema: schemaFactory.int}),
+            ow.enforceSchemaInstanceOnHeap({heap_pos: 2, schema: schemaFactory.Any}),
+            ow.boolAnd,
             ow.boolAnd,
             ow.returnStackTop
           ]

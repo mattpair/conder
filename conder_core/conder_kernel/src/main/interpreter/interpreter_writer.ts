@@ -35,7 +35,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion>, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any">, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
@@ -112,6 +112,7 @@ export function writeOperationInterpreter(): string {
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
             ...Primitives,
+            "Any"
         ].join(",\n")}
     }
 
@@ -166,6 +167,8 @@ export function writeOperationInterpreter(): string {
                     _ => adheres_to_schema(value, &internal[0])
                 }
             },
+
+            Schema::Any => true,
             ${Primitives.map(p => {
                 if (p === "double") {
                     return `Schema::double => match value {
