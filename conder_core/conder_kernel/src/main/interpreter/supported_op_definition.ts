@@ -57,7 +57,8 @@ StaticOp<"less"> |
 StaticOp<"flattenArray"> |
 StaticOp<"popStack"> |
 StaticOp<"boolAnd"> |
-StaticOp<"boolOr"> 
+StaticOp<"boolOr"> |
+ParamOp<"raiseError", string>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -149,6 +150,15 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
+    },
+    raiseError: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            ${raiseErrorWithMessage("op_param")}
+            `
+        },
+        factoryMethod: (data) => ({kind: 'raiseError', data})
     },
     noop: {
         opDefinition: {
