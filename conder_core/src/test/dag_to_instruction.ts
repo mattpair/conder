@@ -186,7 +186,7 @@ describe("with input", () => {
             computation: [{
                 kind: "Return",
                 value: {
-                    kind: "Input",
+                    kind: "Saved",
                     index: 2
                 }
             }]

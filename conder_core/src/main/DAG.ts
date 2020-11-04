@@ -7,26 +7,26 @@ export type Node<K, DATA={}> = {
 
 
 export type AnyNode = 
-Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int" | "Input">}> |
+Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int" | "Saved">}> |
 Node<"Bool", {value: boolean}> |
-Node<"Field", {name: string, value: PickNode<"Bool" | "Input">}> |
+Node<"Field", {name: string, value: PickNode<"Bool" | "Saved">}> |
 Node<"Object", {fields: PickNode<"Field">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
     sign: "==" | "!=" | "<" | ">" | "<=" | ">="
-    left: PickNode<"Int" | "Input">
-    right: PickNode<"Int" | "Input">
+    left: PickNode<"Int" | "Saved">
+    right: PickNode<"Int" | "Saved">
 }> |
 Node<"BoolAlg", {
     sign: "and" | "or", 
-    left: PickNode<"Bool" | "Comparison" | "Input">, 
-    right: PickNode<"Bool" | "Comparison"| "Input">}> |
+    left: PickNode<"Bool" | "Comparison" | "Saved">, 
+    right: PickNode<"Bool" | "Comparison"| "Saved">}> |
 Node<"If", {
-    cond: PickNode<"Bool" | "Comparison" | "BoolAlg" | "Input">
+    cond: PickNode<"Bool" | "Comparison" | "BoolAlg" | "Saved">
     ifTrue: AnyNode
     finally?: AnyNode
 }> | 
-Node<"Input", {index: number}>
+Node<"Saved", {index: number}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -98,7 +98,7 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                     ...node.finally ? compile(node.finally) : [ow.noop] // give the opOffset somewhere to land.
                 ]
     
-            case "Input":
+            case "Saved":
                 return [
                     ow.copyFromHeap(node.index)
                 ]
