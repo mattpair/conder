@@ -74,7 +74,7 @@ describe("basic functionality", () => {
                     kind: "Object", 
                     fields: [{
                         kind: "SetField", 
-                        name: "some_field", 
+                        name: {kind: "String", value: "some_field"}, 
                         value: {
                             kind: "Bool", 
                             value: false

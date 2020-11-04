@@ -9,7 +9,7 @@ type ValueNode = PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int" |
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
-Node<"SetField", {name: string, value: ValueNode}> |
+Node<"SetField", {name: PickNode<"String" | "Saved">, value: ValueNode}> |
 Node<"Object", {fields: PickNode<"SetField">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
@@ -39,8 +39,9 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                 return [ow.instantiate(node.value)]
             case "SetField":
                 return [
+                    ...compile(node.name),
                     ...compile(node.value),
-                    ow.assignPreviousToField(node.name)
+                    ow.setField
                 ]
     
             case "Object":
