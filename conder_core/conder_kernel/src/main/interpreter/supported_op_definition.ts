@@ -59,7 +59,8 @@ StaticOp<"popStack"> |
 StaticOp<"boolAnd"> |
 StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
-ParamOp<"assertHeapLen", number> 
+ParamOp<"assertHeapLen", number> |
+StaticOp<"setField">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -166,6 +167,23 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: ` None`
         },
     },
+
+    setField: {
+        opDefinition: {
+            rustOpHandler: `
+            let setTo = ${popStack};
+            let field = ${popToString};
+            match ${lastStack} {
+                InterpreterType::Object(inner) => {
+                    inner.insert(field, setTo);
+                    None
+                },
+                _ => ${raiseErrorWithMessage("setting a field on a not object")}
+            }
+            `
+        }
+    },
+
     truncateHeap: {
         opDefinition: {
             rustOpHandler: `heap.truncate(heap.len() - *op_param);  None`,
