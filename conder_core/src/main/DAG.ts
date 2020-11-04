@@ -18,7 +18,7 @@ type ValueNode = PickNode<
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
-Node<"SetField", {name: PickNode<"String" | "Saved">, value: ValueNode}> |
+Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: ValueNode}> |
 Node<"Object", {fields: PickNode<"SetField">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
@@ -37,7 +37,12 @@ Node<"If", {
 }> | 
 Node<"Saved", {index: number}> | 
 Node<"String", {value: string}> | 
-Node<"FieldExists", {value: ValueNode, field: ValueNode}>
+Node<"FieldExists", {value: ValueNode, field: ValueNode}> |
+Node<"Save", {index: number, value: ValueNode}> |
+Node<"Update", {
+    index: number, 
+    operation: PickNode<"SetField"> | ValueNode,
+}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -49,17 +54,20 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                 return [ow.instantiate(node.value)]
             case "SetField":
                 return [
-                    ...compile(node.name),
+                    ...compile(...node.field_name),
                     ...compile(node.value),
-                    ow.setField
+                    ow.setField({field_depth: node.field_name.length})
                 ]
     
             case "Object":
-                const fields = compile(...node.fields)
+
+                const afterInstance = node.fields.length > 0 ? compile(node.fields[0]) : []
+                //Set field instructions assume the object the field is being set on is at the top of the stack.
                 return [
                     ow.instantiate({}),
-                    ...fields
+                    ...afterInstance
                 ]
+                
             
             case "Return":
                 return [
@@ -126,6 +134,27 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                     ...compile(node.field),
                     ow.fieldExists
                 ]
+
+            case "Save":
+                return [
+                    ...compile(node.value),
+                    ow.moveStackTopToHeap
+                ]
+            case "Update":
+                switch (node.operation.kind) {
+                    case "SetField":
+                        return [
+                            // TODO: optimize this so the whole object doesn't need to be copied
+                            ow.copyFromHeap(node.index), 
+                            ...compile(node.operation),
+                            ow.overwriteHeap(node.index)
+                        ]
+                    default: 
+                        return [
+                            ...compile(node.operation),
+                            ow.overwriteHeap(node.index)
+                        ]
+                }
 
             default: Utils.assertNever(node)
         }

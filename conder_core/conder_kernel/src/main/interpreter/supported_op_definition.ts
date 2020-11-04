@@ -60,8 +60,9 @@ StaticOp<"boolAnd"> |
 StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
 ParamOp<"assertHeapLen", number> |
-StaticOp<"setField"> | 
-StaticOp<"fieldExists">
+ParamOp<"setField", {field_depth: number}> | 
+StaticOp<"fieldExists"> | 
+ParamOp<"overwriteHeap", number>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -154,6 +155,16 @@ export const OpSpec: CompleteOpSpec = {
             }`
         },
     },
+    overwriteHeap: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            heap[*op_param] = ${popStack};
+            None
+            `
+        },
+        factoryMethod: (data) => ({kind: "overwriteHeap", data})
+    },
     raiseError: {
         opDefinition: {
             paramType: ["String"],
@@ -171,18 +182,28 @@ export const OpSpec: CompleteOpSpec = {
 
     setField: {
         opDefinition: {
+            paramType: ["usize"],
             rustOpHandler: `
             let setTo = ${popStack};
-            let field = ${popToString};
-            match ${lastStack} {
-                InterpreterType::Object(inner) => {
-                    inner.insert(field, setTo);
-                    None
-                },
-                _ => ${raiseErrorWithMessage("setting a field on a not object")}
+            let mut fields = Vec::with_capacity(*op_param);
+            for n in 1..=*op_param {
+                fields.push(${popToString});
             }
+            let mut original = ${popToObject};
+
+            let mut target = &mut original;
+            while fields.len() > 1 {
+                target = match target.get_mut(&fields.pop().unwrap()).unwrap() {
+                    InterpreterType::Object(obj) => obj,
+                    _ => panic!("not an object")
+                };
+            }
+            target.insert(fields.pop().unwrap(), setTo);
+            ${pushStack("InterpreterType::Object(original)")};
+            None
             `
-        }
+        },
+        factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
     },
 
     fieldExists: {

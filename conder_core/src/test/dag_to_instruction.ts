@@ -47,7 +47,7 @@ function noInputHarness(proc_nodes: Record<string, AnyNode[]>, test: (server: Da
             computation: proc_nodes[key]
         }
     }
-
+    
     return withInputHarness(PROCEDURES, test)
 }
 
@@ -74,7 +74,7 @@ describe("basic functionality", () => {
                     kind: "Object", 
                     fields: [{
                         kind: "SetField", 
-                        name: {kind: "String", value: "some_field"}, 
+                        field_name: [{kind: "String", value: "some_field"}], 
                         value: {
                             kind: "Bool", 
                             value: false
@@ -84,6 +84,39 @@ describe("basic functionality", () => {
             }]
         }, async (server) => {
             expect(await server.r()).toEqual({some_field: false})
+        })
+    )
+
+    it("can set double nested field",
+        noInputHarness({
+            r: [{
+                    kind: "Save", 
+                    index: 0,
+                    value: {
+                        kind: "Object", 
+                        fields: [{
+                            kind: "SetField", 
+                            field_name: [{kind: "String", value: "nested"}], 
+                            value: {
+                                kind: "Object", 
+                                fields: []
+                            }
+                        }]
+                    }
+                },
+                {
+                    kind: "Update",
+                    index: 0,
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "nested"}, {kind: "String", value: "inside"}],
+                        value: { kind: "String", value: "hello world"}
+                    }
+                },
+                {kind: "Return", value: {kind: "Saved", index: 0}}
+            ]
+        }, async (server) => {
+            expect(await server.r()).toEqual({nested: {inside: "hello world"}})
         })
     )
 
