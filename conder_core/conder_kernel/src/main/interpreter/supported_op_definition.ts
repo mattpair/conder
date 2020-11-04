@@ -60,7 +60,8 @@ StaticOp<"boolAnd"> |
 StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
 ParamOp<"assertHeapLen", number> |
-StaticOp<"setField">
+StaticOp<"setField"> | 
+StaticOp<"fieldExists">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -180,6 +181,23 @@ export const OpSpec: CompleteOpSpec = {
                 },
                 _ => ${raiseErrorWithMessage("setting a field on a not object")}
             }
+            `
+        }
+    },
+
+    fieldExists: {
+        opDefinition: {
+            rustOpHandler: `
+            let field = ${popToString};
+            let obj = ${popToObject};
+            ${pushStack(`InterpreterType::bool(match obj.get(&field) {
+                Some(d) => match d {
+                    InterpreterType::None => false,
+                    _ => true
+                },
+                None => false
+            })`)};
+            None
             `
         }
     },
