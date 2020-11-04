@@ -93,7 +93,7 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                 return [
                     ...compile(node.cond),
                     ow.negatePrev,
-                    ow.conditionalOpOffset(ifTrue.length + 1),
+                    ow.conditonallySkipXops(ifTrue.length),
                     ...ifTrue,
                     ...node.finally ? compile(node.finally) : [ow.noop] // give the opOffset somewhere to land.
                 ]
@@ -102,7 +102,7 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
                 return [
                     ow.copyFromHeap(node.index)
                 ]
-                
+
             default: Utils.assertNever(node)
         }
     })

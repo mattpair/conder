@@ -24,7 +24,7 @@ StaticOp<"returnStackTop"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
 ParamOp<"offsetOpCursor", number> |
-ParamOp<"conditionalOpOffset", number>  |
+ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
@@ -134,7 +134,7 @@ function safeGoto(varname: string): string {
     if ${varname} >= ops.len() {
         panic!("Setting op index out of bounds");
     }
-    next_op_index = ${varname} - 1;
+    next_op_index = ${varname};
     None
     `
 }
@@ -176,20 +176,19 @@ export const OpSpec: CompleteOpSpec = {
 
     offsetOpCursor: {
         opDefinition: {
-            // Set op_param to -1 because the op is always incremented at the end of each op execution.
+            
             rustOpHandler: safeGoto("*op_param + next_op_index"),
             paramType: ["usize"]
         },
-        //TODO: All param factory methods are the same. We should deduplicate.
-        factoryMethod(p) {
-            return {
-                kind: "offsetOpCursor",
-                data: p
-            }
-        }
+        // here if p == -2    
+        // here if p == -1
+        // start <--- this op, the offset.
+        // here if p == 0
+        // here if p == 1
+        factoryMethod: (p) => ({kind: "offsetOpCursor", data: p < 0 ? p - 1 : p})
     },
 
-    conditionalOpOffset: {
+    conditonallySkipXops: {
         opDefinition: {
             rustOpHandler: `
                 match ${popStack} {
@@ -205,7 +204,12 @@ export const OpSpec: CompleteOpSpec = {
             `,
             paramType: ["usize"]
         },
-        factoryMethod: (p) => ({kind: "conditionalOpOffset", data: p})
+        // here if p == -2    
+        // here if p == -1
+        // start <--- this op, the conditional skip.
+        // here if p == 0
+        // here if p == 1
+        factoryMethod: (p) => ({kind: "conditonallySkipXops", data: p < 0 ? p - 1 : p})
     },
 
 

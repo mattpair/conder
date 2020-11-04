@@ -14,7 +14,7 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
     func.input.forEach((schema, index) => {
         ops.push(
             ow.enforceSchemaInstanceOnHeap({heap_pos: index, schema}),
-            ow.conditionalOpOffset(2),
+            ow.conditonallySkipXops(1),
             ow.raiseError("invalid input")
         )
     })
