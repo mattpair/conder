@@ -5,12 +5,21 @@ export type Node<K, DATA={}> = {
  } & DATA
 
 
-
+type ValueNode = PickNode<
+    "Bool" | 
+    "Object" | 
+    "Comparison" | 
+    "BoolAlg" | 
+    "Int" | 
+    "Saved" | 
+    "String" |
+    "FieldExists"
+    >
 export type AnyNode = 
-Node<"Return", {value?: PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int" | "Saved">}> |
+Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
-Node<"Field", {name: string, value: PickNode<"Bool" | "Saved">}> |
-Node<"Object", {fields: PickNode<"Field">[]}> |
+Node<"SetField", {name: PickNode<"String" | "Saved">, value: ValueNode}> |
+Node<"Object", {fields: PickNode<"SetField">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
     sign: "==" | "!=" | "<" | ">" | "<=" | ">="
@@ -26,7 +35,9 @@ Node<"If", {
     ifTrue: AnyNode
     finally?: AnyNode
 }> | 
-Node<"Saved", {index: number}>
+Node<"Saved", {index: number}> | 
+Node<"String", {value: string}> | 
+Node<"FieldExists", {value: ValueNode, field: ValueNode}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -36,10 +47,11 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
         switch (node.kind) {
             case "Bool":
                 return [ow.instantiate(node.value)]
-            case "Field":
+            case "SetField":
                 return [
+                    ...compile(node.name),
                     ...compile(node.value),
-                    ow.assignPreviousToField(node.name)
+                    ow.setField
                 ]
     
             case "Object":
@@ -101,6 +113,18 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
             case "Saved":
                 return [
                     ow.copyFromHeap(node.index)
+                ]
+
+            case "String":
+                return [
+                    ow.instantiate(node.value)
+                ]
+
+            case "FieldExists":
+                return [
+                    ...compile(node.value),
+                    ...compile(node.field),
+                    ow.fieldExists
                 ]
 
             default: Utils.assertNever(node)
