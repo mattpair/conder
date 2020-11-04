@@ -196,5 +196,25 @@ describe("with input", () => {
         await expect(server.accepts3any("a", "b",)).rejects.toThrowError()
         expect(await server.accepts3any("a", "b", "c")).toEqual("c")
     }))
+
+    it("check if field exists", withInputHarness({
+        checksField: {
+            input: [
+                schemaFactory.Any
+            ],
+            computation: [{
+                kind: "Return",
+                value: {
+                    kind: "FieldExists",
+                    field: {kind: "String", value: "test"},
+                    value: {kind: "Saved", index: 0}
+                }
+            }]
+        }
+    }, async server => {
+        expect(await server.checksField({test: "some"})).toBeTruthy()
+        expect(await server.checksField({test: null})).toBeFalsy()
+        expect(await server.checksField({t: "a"})).toBeFalsy()
+    }))
     
 })

@@ -5,7 +5,16 @@ export type Node<K, DATA={}> = {
  } & DATA
 
 
-type ValueNode = PickNode<"Bool" | "Object" | "Comparison" | "BoolAlg" | "Int" | "Saved" | "String">
+type ValueNode = PickNode<
+    "Bool" | 
+    "Object" | 
+    "Comparison" | 
+    "BoolAlg" | 
+    "Int" | 
+    "Saved" | 
+    "String" |
+    "FieldExists"
+    >
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
@@ -27,7 +36,8 @@ Node<"If", {
     finally?: AnyNode
 }> | 
 Node<"Saved", {index: number}> | 
-Node<"String", {value: string}>
+Node<"String", {value: string}> | 
+Node<"FieldExists", {value: ValueNode, field: ValueNode}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
@@ -108,6 +118,13 @@ export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
             case "String":
                 return [
                     ow.instantiate(node.value)
+                ]
+
+            case "FieldExists":
+                return [
+                    ...compile(node.value),
+                    ...compile(node.field),
+                    ow.fieldExists
                 ]
 
             default: Utils.assertNever(node)
