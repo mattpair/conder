@@ -73,33 +73,45 @@ describe("conduit kernel", () => {
       kernelTest(
         `schema test: ${descr}`,
         async (server) => {
-          let failure = false;
-          // No input
           if (allowsNone === "must exist") {
-            await server.invoke("validateSchema").catch(() => (failure = true));
-            expect(failure).toBe(true);
-            failure = false;
+            expect(await server.invoke("validateSchema", [null])).toBeFalsy();
           }
 
-          await server
-            .invoke("validateSchema", invalidInput)
-            .catch(() => (failure = true));
-          expect(failure).toBe(true);
-
-          const res = await server.invoke("validateSchema", validInput);
-          expect(res).toEqual(validInput);
+          expect(await server
+            .invoke("validateSchema", invalidInput)).toBeFalsy()
+          expect(await server.invoke("validateSchema", validInput)).toBeTruthy()
         },
         {
           PROCEDURES: {
             validateSchema: [
               ow.enforceSchemaOnHeap({ schema: 0, heap_pos: 0 }),
-              ow.returnVariable(0),
+              ow.returnStackTop,
             ],
           },
           SCHEMAS: [schema],
         }
       );
     }
+
+    kernelTest(
+      "input args test", 
+      async server => {
+        expect(await server.invoke("test", true, 42, 12)).toBeTruthy()
+        expect(await server.invoke("test", 42, false, "abc")).toBeFalsy()
+      },
+      {
+        PROCEDURES: {
+          test: [
+            ow.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.bool}),
+            ow.enforceSchemaInstanceOnHeap({heap_pos: 1, schema: schemaFactory.int}),
+            ow.enforceSchemaInstanceOnHeap({heap_pos: 2, schema: schemaFactory.Any}),
+            ow.boolAnd,
+            ow.boolAnd,
+            ow.returnStackTop
+          ]
+        }
+      },
+    )
 
     schemaTest(
       "boolean",

@@ -136,7 +136,7 @@ export function generateServer(): string {
         #[serde(tag = "kind", content= "data")]
         enum KernelRequest {
             Noop,
-            Exec {proc: String, arg: InterpreterType}
+            Exec {proc: String, arg: Vec<InterpreterType>}
         }
 
         ${writeOperationInterpreter()}
@@ -156,18 +156,17 @@ export function generateServer(): string {
         }
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
-            let mut state = vec![];
+    
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.db.as_ref(), &data.stores),
+                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(proc) => {
-                        state.push(arg);
-                        conduit_byte_code_interpreter(state, proc, &data.schemas, data.db.as_ref(), &data.stores)
+                        conduit_byte_code_interpreter(arg, proc, &data.schemas, data.db.as_ref(), &data.stores)
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(state, &data.noop, &data.schemas, data.db.as_ref(), &data.stores)
+                        conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores)
                     }
                 }
             }.await;

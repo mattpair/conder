@@ -24,7 +24,7 @@ StaticOp<"returnStackTop"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
 ParamOp<"offsetOpCursor", number> |
-ParamOp<"conditionalOpOffset", number>  |
+ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
@@ -57,7 +57,9 @@ StaticOp<"less"> |
 StaticOp<"flattenArray"> |
 StaticOp<"popStack"> |
 StaticOp<"boolAnd"> |
-StaticOp<"boolOr"> 
+StaticOp<"boolOr"> |
+ParamOp<"raiseError", string> | 
+ParamOp<"assertHeapLen", number> 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -132,7 +134,7 @@ function safeGoto(varname: string): string {
     if ${varname} >= ops.len() {
         panic!("Setting op index out of bounds");
     }
-    next_op_index = ${varname} - 1;
+    next_op_index = ${varname};
     None
     `
 }
@@ -150,6 +152,15 @@ export const OpSpec: CompleteOpSpec = {
             }`
         },
     },
+    raiseError: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            Some(op_param.to_string())
+            `
+        },
+        factoryMethod: (data) => ({kind: 'raiseError', data})
+    },
     noop: {
         opDefinition: {
             rustOpHandler: ` None`
@@ -165,20 +176,19 @@ export const OpSpec: CompleteOpSpec = {
 
     offsetOpCursor: {
         opDefinition: {
-            // Set op_param to -1 because the op is always incremented at the end of each op execution.
+            
             rustOpHandler: safeGoto("*op_param + next_op_index"),
             paramType: ["usize"]
         },
-        //TODO: All param factory methods are the same. We should deduplicate.
-        factoryMethod(p) {
-            return {
-                kind: "offsetOpCursor",
-                data: p
-            }
-        }
+        // here if p == -2    
+        // here if p == -1
+        // start <--- this op, the offset.
+        // here if p == 0
+        // here if p == 1
+        factoryMethod: (p) => ({kind: "offsetOpCursor", data: p < 0 ? p - 1 : p})
     },
 
-    conditionalOpOffset: {
+    conditonallySkipXops: {
         opDefinition: {
             rustOpHandler: `
                 match ${popStack} {
@@ -194,7 +204,12 @@ export const OpSpec: CompleteOpSpec = {
             `,
             paramType: ["usize"]
         },
-        factoryMethod: (p) => ({kind: "conditionalOpOffset", data: p})
+        // here if p == -2    
+        // here if p == -1
+        // start <--- this op, the conditional skip.
+        // here if p == 0
+        // here if p == 1
+        factoryMethod: (p) => ({kind: "conditonallySkipXops", data: p < 0 ? p - 1 : p})
     },
 
 
@@ -259,12 +274,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            if adheres_to_schema(&heap[*param1], &schemas[*param0]) {
-                None
-            } else {
-                ${raiseErrorWithMessage("Variable does not match the schema")}
-            }   
-            `,
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param1], &schemas[*param0]))")};
+            None`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
     },
@@ -578,11 +589,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Schema"],
             rustOpHandler: `
-            if adheres_to_schema(&heap[*param0], param1) {
-                None
-            } else {
-                ${raiseErrorWithMessage("Variable does not match the schema")}
-            }
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param0], param1))")};
+            None
             `
         },
         factoryMethod: (p) => ({kind: "enforceSchemaInstanceOnHeap", data: [p.heap_pos, p.schema]})
@@ -702,5 +710,18 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         }
+    },
+    assertHeapLen: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            if heap.len() != *op_param {
+                ${raiseErrorWithMessage("unexpected heap len")}
+            } else {
+                None
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "assertHeapLen", data})
     }
 }

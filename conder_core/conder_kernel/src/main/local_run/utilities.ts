@@ -62,7 +62,7 @@ export namespace Test {
       
         async invoke(
           name: string,
-          arg: AnyInterpreterTypeInstance = interpeterTypeFactory.None
+          ...arg: AnyInterpreterTypeInstance[]
         ) {
           const body = JSON.stringify({ kind: "Exec", data: { proc: name, arg } });
           return fetch(`http://localhost:${this.port}/`, {
@@ -72,7 +72,12 @@ export namespace Test {
               "content-type": "application/json",
               "content-length": `${body.length}`,
             },
-          }).then((data) => data.json());
+          }).then((data) => {
+            if (data.ok){
+              return data.json()
+            }
+            throw Error(data.statusText)
+          });
         }
       }
       

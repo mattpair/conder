@@ -1,50 +1,64 @@
-import { PickNode } from './../main/DAG';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import {AnyNode, compile} from '../../index'
+import {AnyNode,PickNode, toOps, FunctionDescription } from '../../index'
 
-describe("basic functionality", () => {
-    type DagServer = Record<string, (...arg: any[]) => Promise<any>>
-    type DagProcedures = Record<string, AnyNode>
-    function testHarness(proc_nodes: DagProcedures, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
-        const PROCEDURES: Record<string, AnyOpInstance[]> = {}
-        for (const key in proc_nodes) {
-            const comp = compile(proc_nodes[key])
-            PROCEDURES[key] = comp
-        }
+type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 
-        const STORES = {TEST_STORE: schemaFactory.Object({})}
-        return (cb) => Test.Mongo.start({STORES})
-            .then(mongo => Test.Server.start({
-                    MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
-                    SCHEMAS: [],
-                    DEPLOYMENT_NAME: "statefultest",
-                    PROCEDURES,
-                    STORES
-                }, "./conder_kernel/")
-                .then(async server => {
-                    const testSurface: DagServer = {}
-                    for (const key in PROCEDURES) {
-                        testSurface[key] = () => server.invoke(key)
-                    }
-                    return test(testSurface).then(() => {
-                        server.kill()
-                        mongo.kill()
-                        cb()
-                    }).catch((e) => {
-                        server.kill()
-                        mongo.kill()
-                        throw e
-                    })
-                })
-                
-            )
+function withInputHarness(proc_nodes: Record<string, FunctionDescription>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    const PROCEDURES: Record<string, AnyOpInstance[]> = {}
+    for (const key in proc_nodes) {
+        const comp = toOps(proc_nodes[key])
+        PROCEDURES[key] = comp
     }
 
+    const STORES = {TEST_STORE: schemaFactory.Object({})}
+    return (cb) => Test.Mongo.start({STORES})
+        .then(mongo => Test.Server.start({
+                MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
+                SCHEMAS: [],
+                DEPLOYMENT_NAME: "statefultest",
+                PROCEDURES,
+                STORES
+            }, "./conder_kernel/")
+            .then(async server => {
+                const testSurface: DagServer = {}
+                for (const key in PROCEDURES) {
+                    testSurface[key] = (...args) => server.invoke(key, ...args)
+                }
+                return test(testSurface).then(() => {
+                    server.kill()
+                    mongo.kill()
+                    cb()
+                }).catch((e) => {
+                    server.kill()
+                    mongo.kill()
+                    throw e
+                })
+            })
+            
+        )
+}
+
+function noInputHarness(proc_nodes: Record<string, AnyNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    const PROCEDURES: Record<string, FunctionDescription> = {}
+    for (const key in proc_nodes) {
+        PROCEDURES[key] = {
+            input: [],
+            computation: proc_nodes[key]
+        }
+    }
+
+    return withInputHarness(PROCEDURES, test)
+}
+
+
+
+describe("basic functionality", () => {
+    
 
     it("return node returns null", 
-        testHarness({
-            r: {kind: "Return"}
+        noInputHarness({
+            r: [{kind: "Return"}]
         },
         async (server) => {
             const res = await server.r()
@@ -53,8 +67,8 @@ describe("basic functionality", () => {
     )
 
     it("return node with value returns value",
-        testHarness({
-            r: {
+        noInputHarness({
+            r: [{
                 kind: "Return", 
                 value: {
                     kind: "Object", 
@@ -67,14 +81,14 @@ describe("basic functionality", () => {
                         }
                     }
                 ]}
-            }
+            }]
         }, async (server) => {
             expect(await server.r()).toEqual({some_field: false})
         })
     )
 
-    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode {
-        return {
+    function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode[] {
+        return [{
             kind: "Return",
             value: {
                 kind: "Comparison",
@@ -82,10 +96,10 @@ describe("basic functionality", () => {
                 left: {kind: "Int", value: 1},
                 right: {kind: "Int", value: 1}
             }
-        }   
+        }]
     }
     it("can compare numbers", 
-        testHarness({
+        noInputHarness({
             geq: nComp(">="),
             leq: nComp("<="),
             l: nComp("<"),
@@ -102,8 +116,8 @@ describe("basic functionality", () => {
         })
     )
 
-    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode {
-        return {
+    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode[] {
+        return [{
             kind: "Return",
             value: {
                 kind: "BoolAlg",
@@ -111,10 +125,10 @@ describe("basic functionality", () => {
                 right,
                 sign
             }
-        }
+        }]
     }
     it("can handle boolean algebra", 
-        testHarness({
+        noInputHarness({
             trueNtrue: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: true}),
             falseNtrue: boolAlgTest("and", {kind: "Bool", value: false}, {kind: "Bool", value: true}),
             trueNfalse: boolAlgTest("and", {kind: "Bool", value: true}, {kind: "Bool", value: false}),
@@ -135,23 +149,23 @@ describe("basic functionality", () => {
     )
 
     it("allows if statements", 
-        testHarness({
-            ifTrue: {
+        noInputHarness({
+            ifTrue: [{
                 kind: "If",
                 cond: {kind: "Bool", value: true},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
-            },
-            ifFalseNoFinally: {
+            }],
+            ifFalseNoFinally: [{
                 kind: "If",
                 cond: {kind: "Bool", value: false},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
-            },
-            ifFalseFinally: {
+            }],
+            ifFalseFinally: [{
                 kind: "If",
                 cond: {kind: "Bool", value: false},
                 ifTrue: {kind: "Return", value: {kind: "Int", value: 1}},
                 finally: {kind: "Return", value: {kind: "Int", value: 2}}
-            }
+            }]
         }, 
             async server => {
                 expect(await server.ifTrue()).toBe(1)
@@ -159,4 +173,28 @@ describe("basic functionality", () => {
                 expect(await server.ifFalseFinally()).toBe(2)
         })
     )
+})
+
+describe("with input", () => {
+    it("validates input", withInputHarness({
+        accepts3any: {
+            input: [
+                schemaFactory.Any,
+                schemaFactory.Any,
+                schemaFactory.Any
+            ],
+            computation: [{
+                kind: "Return",
+                value: {
+                    kind: "Saved",
+                    index: 2
+                }
+            }]
+        }
+    }, async server => {
+        await expect(server.accepts3any("a", "b", "c", "d")).rejects.toThrowError()
+        await expect(server.accepts3any("a", "b",)).rejects.toThrowError()
+        expect(await server.accepts3any("a", "b", "c")).toEqual("c")
+    }))
+    
 })
