@@ -73,7 +73,7 @@ describe("basic functionality", () => {
                 value: {
                     kind: "Object", 
                     fields: [{
-                        kind: "Field", 
+                        kind: "SetField", 
                         name: "some_field", 
                         value: {
                             kind: "Bool", 
