@@ -32,6 +32,12 @@ const IR_TO_INSTRUCTION: IRCompiler = {
         ...to_instr(n.value),
         ow.setField({field_depth: n.field_name.length})
     ],
+    GetField: n => [
+        ...to_instr(n.value),
+        ...n.field_name.flatMap(to_instr),
+        ow.getField({field_depth: n.field_name.length})
+    ],
+
     String: n => [ow.instantiate(n.value)],
 
     FieldExists: n => [

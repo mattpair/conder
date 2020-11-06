@@ -61,6 +61,7 @@ StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
 ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
+ParamOp<"getField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number>
 
@@ -204,6 +205,33 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
+    },
+
+    getField: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            let mut fields = Vec::with_capacity(*op_param);
+            for n in 1..=*op_param {
+                fields.push(${popToString});
+            }
+            let mut object = ${popToObject};
+
+            while fields.len() > 1 {
+                object = match object.remove(&fields.pop().unwrap()).unwrap() {
+                    InterpreterType::Object(obj) => obj,
+                    _ => panic!("not an object")
+                };
+            }
+
+            ${pushStack(`match object.remove(&fields.pop().unwrap()) {
+                Some(o) => o,
+                None => InterpreterType::None
+            }`)};
+            None
+            `
+        },
+        factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
     },
 
     fieldExists: {

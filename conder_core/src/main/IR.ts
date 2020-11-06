@@ -12,12 +12,14 @@ type ValueNode = PickNode<
     "Int" | 
     "Saved" | 
     "String" |
-    "FieldExists"
+    "FieldExists" |
+    "GetField"
     >
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
 Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: ValueNode}> |
+Node<"GetField", {field_name: PickNode<"String" | "Saved">[], value: ValueNode}> |
 Node<"Object", {fields: PickNode<"SetField">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {

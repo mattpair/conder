@@ -120,6 +120,43 @@ describe("basic functionality", () => {
         })
     )
 
+    it("can get nested field",
+        noInputHarness({
+            r: [{
+                    kind: "Save", 
+                    index: 0,
+                    value: {
+                        kind: "Object", 
+                        fields: [{
+                            kind: "SetField", 
+                            field_name: [{kind: "String", value: "l1"}], 
+                            value: {
+                                kind: "Object", 
+                                fields: []
+                            }
+                        }]
+                    }
+                },
+                {
+                    kind: "Update",
+                    index: 0,
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: { kind: "String", value: "hello world"}
+                    }
+                },
+                {kind: "Return", value: {
+                    kind: "GetField", 
+                    field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                    value: {kind: "Saved", index: 0}
+                }}
+            ]
+        }, async (server) => {
+            expect(await server.r()).toEqual("hello world")
+        })
+    )
+
     function nComp(sign: PickNode<"Comparison">["sign"]): AnyNode[] {
         return [{
             kind: "Return",
