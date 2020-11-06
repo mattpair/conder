@@ -91,14 +91,14 @@ const IR_TO_INSTRUCTION: IRCompiler = {
             case "SetField":
                 return [
                     // TODO: optimize this so the whole object doesn't need to be copied
-                    ow.copyFromHeap(n.index), 
+                    ow.copyFromHeap(n.target.index), 
                     ...to_instr(n.operation),
-                    ow.overwriteHeap(n.index)
+                    ow.overwriteHeap(n.target.index)
                 ]
             default: 
                 return [
                     ...to_instr(n.operation),
-                    ow.overwriteHeap(n.index)
+                    ow.overwriteHeap(n.target.index)
                 ]
         }
 

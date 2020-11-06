@@ -133,7 +133,7 @@ describe("basic functionality", () => {
                 },
                 {
                     kind: "Update",
-                    index: 0,
+                    target: {kind: "Saved", index: 0},
                     operation: {
                         kind: "SetField",
                         field_name: [{kind: "String", value: "nested"}, {kind: "String", value: "inside"}],
@@ -166,7 +166,7 @@ describe("basic functionality", () => {
                 },
                 {
                     kind: "Update",
-                    index: 0,
+                    target: {kind: "Saved", index: 0},
                     operation: {
                         kind: "SetField",
                         field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],

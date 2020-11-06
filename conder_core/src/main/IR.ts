@@ -44,7 +44,7 @@ Node<"String", {value: string}> |
 Node<"FieldExists", {value: ValueNode, field: ValueNode}> |
 Node<"Save", {index: number, value: ValueNode}> |
 Node<"Update", {
-    index: number, 
+    target: PickNode<"Saved" | "Global">, 
     operation: PickNode<"SetField"> | ValueNode,
 }> |
 Node<"Global", {name: string}>
