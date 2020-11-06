@@ -13,8 +13,11 @@ type ValueNode = PickNode<
     "Saved" | 
     "String" |
     "FieldExists" |
-    "GetField"
+    "GetField" |
+    "Global"
     >
+
+export type CompilableNode = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"Global">>, PickNode<"Global">>
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
@@ -43,15 +46,14 @@ Node<"Save", {index: number, value: ValueNode}> |
 Node<"Update", {
     index: number, 
     operation: PickNode<"SetField"> | ValueNode,
-}>
+}> |
+Node<"Global", {name: string}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
-type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
+export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
     // Exclude<PickNode<"GetField">, PickNode<"String">>
     // Works for non arrays
     //
-    [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Exclude<N[F][0], X> : Exclude<N[F], X>
+    [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
 }
-
-type ObjectWithoutSetfield = NodeWithNoXChildren<PickNode<"Object">, PickNode<"SetField">>
