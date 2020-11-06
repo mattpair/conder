@@ -47,3 +47,11 @@ Node<"Update", {
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
+type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
+    // Exclude<PickNode<"GetField">, PickNode<"String">>
+    // Works for non arrays
+    //
+    [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Exclude<N[F][0], X> : Exclude<N[F], X>
+}
+
+type ObjectWithoutSetfield = NodeWithNoXChildren<PickNode<"Object">, PickNode<"SetField">>
