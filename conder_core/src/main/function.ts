@@ -1,6 +1,6 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
-import { AnyNode , compile} from "./DAG";
-
+import { compile } from "./ir_to_instruction";
+import { AnyNode } from "./IR";
 
 export type FunctionDescription = {
     input: AnySchemaInstance[]

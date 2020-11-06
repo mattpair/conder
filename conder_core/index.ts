@@ -1,2 +1,2 @@
-export * from './src/main/DAG'
+export * from './src/main/IR'
 export * from './src/main/function'
