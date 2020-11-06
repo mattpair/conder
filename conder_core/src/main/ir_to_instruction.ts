@@ -2,7 +2,7 @@ import { AnyNode, PickNode, CompilableNode, NodeWithNoXChildren } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
 type IRCompiler = Readonly<{
-    [K in Exclude<AnyNode["kind"], "Global">]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"Global">>) => AnyOpInstance[]
+    [K in CompilableNode["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"Global">>) => AnyOpInstance[]
 }>
 
 
