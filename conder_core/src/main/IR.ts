@@ -17,7 +17,7 @@ type ValueNode = PickNode<
     "Global"
     >
 
-export type CompilableNode = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"Global">>, PickNode<"Global">>
+export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"Global">>, PickNode<"Global">>
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |

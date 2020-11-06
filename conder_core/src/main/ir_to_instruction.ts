@@ -1,12 +1,12 @@
-import { AnyNode, PickNode, CompilableNode, NodeWithNoXChildren } from './IR';
+import { AnyNode, PickNode, LocalNodes, NodeWithNoXChildren } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
 type IRCompiler = Readonly<{
-    [K in CompilableNode["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"Global">>) => AnyOpInstance[]
+    [K in LocalNodes["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"Global">>) => AnyOpInstance[]
 }>
 
 
-export function to_instr<N extends CompilableNode["kind"]>(node: PickNode<N>): AnyOpInstance[] {
+export function to_instr<N extends LocalNodes["kind"]>(node: PickNode<N>): AnyOpInstance[] {
     //@ts-ignore
     return IR_TO_INSTRUCTION[node.kind](node)
 }

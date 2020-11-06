@@ -1,6 +1,6 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import { CompilableNode } from 'src/main/IR'
+import { LocalNodes } from 'src/main/IR'
 import {AnyNode,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
@@ -184,7 +184,7 @@ describe("basic functionality", () => {
         })
     )
 
-    function nComp(sign: PickNode<"Comparison">["sign"]): CompilableNode[] {
+    function nComp(sign: PickNode<"Comparison">["sign"]): LocalNodes[] {
         return [{
             kind: "Return",
             value: {
