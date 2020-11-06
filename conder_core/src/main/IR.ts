@@ -16,7 +16,7 @@ type ValueNode = PickNode<
     "GetField" |
     "Global"
     >
-
+export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"Global">>, PickNode<"Global">>
 export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"Global">>, PickNode<"Global">>
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
