@@ -1,5 +1,5 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
-import { compile } from "./ir_to_instruction";
+import { to_instr } from "./ir_to_instruction";
 import { AnyNode } from "./IR";
 
 export type FunctionDescription = {
@@ -18,6 +18,6 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
             ow.raiseError("invalid input")
         )
     })
-    ops.push(...compile(...func.computation))
+    ops.push(...func.computation.flatMap(to_instr))
     return ops
 }

@@ -1,117 +1,100 @@
 import { AnyNode, PickNode } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory} from 'conder_kernel'
 
-export function compile(...nodes: AnyNode[]): AnyOpInstance[] {
-    return nodes.flatMap(node => {
-        switch (node.kind) {
-            case "Bool":
-                return [ow.instantiate(node.value)]
+type IRCompiler = Readonly<{
+    [K in AnyNode["kind"]]: (node: PickNode<K>) => AnyOpInstance[]
+}>
+
+
+export function to_instr<N extends AnyNode["kind"]>(node: PickNode<N>): AnyOpInstance[] {
+    //@ts-ignore
+    return IR_TO_INSTRUCTION[node.kind](node)
+}
+
+const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
+    "!=": [ow.equal, ow.negatePrev],
+    "==": [ow.equal],
+    "<": [ow.less],
+    ">": [ow.lesseq, ow.negatePrev],
+    ">=": [ow.less, ow.negatePrev],
+    "<=": [ow.lesseq]
+}
+
+const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
+    "and": [ow.boolAnd],
+    "or": [ow.boolOr]
+}
+
+const IR_TO_INSTRUCTION: IRCompiler = {
+    Bool: (n) => [ow.instantiate(n.value)],
+    SetField: (n) => [
+        ...n.field_name.flatMap(to_instr),
+        ...to_instr(n.value),
+        ow.setField({field_depth: n.field_name.length})
+    ],
+    String: n => [ow.instantiate(n.value)],
+
+    FieldExists: n => [
+        ...to_instr(n.value),
+        ...to_instr(n.field),
+        ow.fieldExists
+    ],
+
+    Object: (n) => [
+        ow.instantiate({}),
+        ...n.fields.flatMap(to_instr)
+    ],
+
+    Return: (n) => [
+        ...n.value ?  to_instr(n.value) : [ow.instantiate(null)],
+        ow.returnStackTop
+    ],
+
+    Int: (n) => [ow.instantiate(interpeterTypeFactory.int(n.value))],
+
+    Comparison: (n) => [
+        ...to_instr(n.left),
+        ...to_instr(n.right),
+        ...comparisonLookup[n.sign]
+    ],
+
+    BoolAlg: (n) => [
+        ...to_instr(n.left),
+        ...to_instr(n.right),
+        ...boolAlg[n.sign]
+    ],
+
+    If: (n) => {
+        const ifTrue = to_instr(n.ifTrue)
+
+        return [
+            ...to_instr(n.cond),
+            ow.negatePrev,
+            ow.conditonallySkipXops(ifTrue.length),
+            ...ifTrue,
+            ...n.finally ? to_instr(n.finally) : [ow.noop] // give the opOffset somewhere to land.
+        ]
+    },
+
+    Saved: n => [ow.copyFromHeap(n.index)],
+
+    Save: n => [...to_instr(n.value), ow.moveStackTopToHeap],
+
+    Update: n => {
+        switch (n.operation.kind) {
             case "SetField":
                 return [
-                    ...compile(...node.field_name),
-                    ...compile(node.value),
-                    ow.setField({field_depth: node.field_name.length})
+                    // TODO: optimize this so the whole object doesn't need to be copied
+                    ow.copyFromHeap(n.index), 
+                    ...to_instr(n.operation),
+                    ow.overwriteHeap(n.index)
                 ]
-    
-            case "Object":
-
-                const afterInstance = node.fields.length > 0 ? compile(node.fields[0]) : []
-                //Set field instructions assume the object the field is being set on is at the top of the stack.
+            default: 
                 return [
-                    ow.instantiate({}),
-                    ...afterInstance
+                    ...to_instr(n.operation),
+                    ow.overwriteHeap(n.index)
                 ]
-                
-            
-            case "Return":
-                return [
-                    ...node.value ? compile(node.value) : [ow.instantiate(null)],
-                    ow.returnStackTop
-                ]
-    
-            case "Int":
-                return [
-                    ow.instantiate(interpeterTypeFactory.int(node.value))
-                ]
-    
-            case "Comparison":
-                const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
-                    "!=": [ow.equal, ow.negatePrev],
-                    "==": [ow.equal],
-                    "<": [ow.less],
-                    ">": [ow.lesseq, ow.negatePrev],
-                    ">=": [ow.less, ow.negatePrev],
-                    "<=": [ow.lesseq]
-                }
-    
-                return [
-                    ...compile(node.left),
-                    ...compile(node.right),
-                    ...comparisonLookup[node.sign]
-                ]
-    
-            case "BoolAlg":
-                // TODO: optimize this for skiping the right branch
-                const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
-                    "and": [ow.boolAnd],
-                    "or": [ow.boolOr]
-                }             
-                return [
-                    ...compile(node.left),
-                    ...compile(node.right),
-                    ...boolAlg[node.sign]
-                ]
-    
-            case "If":
-                const ifTrue = compile(node.ifTrue)
-                return [
-                    ...compile(node.cond),
-                    ow.negatePrev,
-                    ow.conditonallySkipXops(ifTrue.length),
-                    ...ifTrue,
-                    ...node.finally ? compile(node.finally) : [ow.noop] // give the opOffset somewhere to land.
-                ]
-    
-            case "Saved":
-                return [
-                    ow.copyFromHeap(node.index)
-                ]
-
-            case "String":
-                return [
-                    ow.instantiate(node.value)
-                ]
-
-            case "FieldExists":
-                return [
-                    ...compile(node.value),
-                    ...compile(node.field),
-                    ow.fieldExists
-                ]
-
-            case "Save":
-                return [
-                    ...compile(node.value),
-                    ow.moveStackTopToHeap
-                ]
-            case "Update":
-                switch (node.operation.kind) {
-                    case "SetField":
-                        return [
-                            // TODO: optimize this so the whole object doesn't need to be copied
-                            ow.copyFromHeap(node.index), 
-                            ...compile(node.operation),
-                            ow.overwriteHeap(node.index)
-                        ]
-                    default: 
-                        return [
-                            ...compile(node.operation),
-                            ow.overwriteHeap(node.index)
-                        ]
-                }
-
-            default: Utils.assertNever(node)
         }
-    })
-    
+
+    }
 }
