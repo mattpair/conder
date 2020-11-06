@@ -1,6 +1,7 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
 import { to_instr } from "./ir_to_instruction";
 import { AnyNode } from "./IR";
+import { global_elaboration } from "./storage/mongo";
 
 export type FunctionDescription = {
     input: AnySchemaInstance[]
@@ -18,6 +19,8 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
             ow.raiseError("invalid input")
         )
     })
-    ops.push(...func.computation.flatMap(to_instr))
+
+    const compile_ready = global_elaboration(...func.computation)
+    ops.push(...compile_ready.flatMap(n => to_instr(n)))
     return ops
 }
