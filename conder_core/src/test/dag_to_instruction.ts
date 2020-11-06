@@ -4,10 +4,11 @@ import { LocalNodes } from 'src/main/IR'
 import {AnyNode,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
+const TEST_STORE = "test"
 
 function withInputHarness(
     maybeStorage: "requires storage" | "no storage",
-    proc_nodes: Record<string, FunctionDescription>, 
+    proc_nodes: Record<string, FunctionDescription>,
     test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const PROCEDURES: Record<string, AnyOpInstance[]> = {}
     for (const key in proc_nodes) {
@@ -176,7 +177,7 @@ describe("basic functionality", () => {
                 {kind: "Return", value: {
                     kind: "GetField", 
                     field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
-                    value: {kind: "Saved", index: 0}
+                    target: {kind: "Saved", index: 0}
                 }}
             ]
         }, async (server) => {
@@ -314,4 +315,39 @@ describe("with input", () => {
         expect(await server.checksField({t: "a"})).toBeFalsy()
     }))
     
+})
+
+describe.skip("globals", () => {
+    it("allows getting and setting keys", noInputHarness({
+        get: [
+            {
+                kind: "Return", 
+                value: {
+                    kind: "GetField", 
+                    target: {
+                        kind: "GlobalObject", 
+                        name: TEST_STORE
+                    },
+                    field_name: [{
+                        kind: "String",
+                        value: "test_key"
+                    }]
+                }
+            }
+        ],
+
+        set: [{
+            kind: "Update",
+            target: {kind: "GlobalObject", name: TEST_STORE},
+            operation: {
+                kind: "SetField",
+                field_name: [{kind: "String", value: "test_key"}],
+                value: {kind: "String", value: "test_value"}
+            }
+        }]
+    }, async server => {
+        expect(await server.get()).toBeNull()
+        expect(await server.set()).toBeNull()
+        expect(await server.get()).toEqual("test_value")
+    }))
 })

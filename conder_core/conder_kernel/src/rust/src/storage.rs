@@ -102,11 +102,12 @@ pub(crate) async fn measure(db: &Database, storeName: &str, filter: &HashMap<Str
     InterpreterType::int(d)
 }
 
-pub(crate) async fn find_and_update_one(db: &Database, storeName: &str, query_doc: &InterpreterType, update_doc: &InterpreterType) -> InterpreterType {
+pub(crate) async fn find_and_update_one(db: &Database, storeName: &str, upsert: bool, query_doc: &InterpreterType, update_doc: &InterpreterType) -> InterpreterType {
     let collection = db.collection(&storeName);
     let options = FindOneAndUpdateOptions::builder()
         .return_document(Some(options::ReturnDocument::After))
         .projection(Some(doc! {"_id": false}))
+        .upsert(Some(upsert))
         .build();
     match collection.find_one_and_update(
         bson::to_document(&query_doc).unwrap(), 

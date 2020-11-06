@@ -14,15 +14,15 @@ type ValueNode = PickNode<
     "String" |
     "FieldExists" |
     "GetField" |
-    "Global"
+    "GlobalObject"
     >
-export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"Global">>, PickNode<"Global">>
-export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"Global">>, PickNode<"Global">>
+export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
+export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
 export type AnyNode = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
-Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: ValueNode}> |
-Node<"GetField", {field_name: PickNode<"String" | "Saved">[], value: ValueNode}> |
+Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: LocalValue}> |
+Node<"GetField", {field_name: PickNode<"String" | "Saved">[], target: PickNode<"Saved" | "GlobalObject">}> |
 Node<"Object", {fields: PickNode<"SetField">[]}> |
 Node<"Int", {value: number}> |
 Node<"Comparison", {
@@ -44,16 +44,29 @@ Node<"String", {value: string}> |
 Node<"FieldExists", {value: ValueNode, field: ValueNode}> |
 Node<"Save", {index: number, value: ValueNode}> |
 Node<"Update", {
-    target: PickNode<"Saved" | "Global">, 
-    operation: PickNode<"SetField"> | ValueNode,
+    target: PickNode<"Saved" | "GlobalObject">, 
+    operation: PickNode<"SetField"> | LocalValue,
 }> |
-Node<"Global", {name: string}>
+Node<"GlobalObject", {name: string}>
 
 export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
 
 export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
-    // Exclude<PickNode<"GetField">, PickNode<"String">>
-    // Works for non arrays
-    //
     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
 }
+
+
+
+// type ValueContainsGlobal<N extends AnyNode, X extends AnyNode=PickNode<"GlobalObject">> = {
+//     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Extract<N[F][0], X> : Extract<N[F], X> extends never ? never : "yes"
+// }
+
+// type ContainsAGlobal<K extends AnyNode["kind"]> = ValueContainsGlobal<PickNode<K>>[keyof PickNode<K>]
+
+// // type qqq = ContainsAGlobal<"Saved">
+
+// type ContainsAGlobalLookup = {
+//     [K in AnyNode["kind"]]: ContainsAGlobal<K> extends never  ? true : false
+// }
+
+// type aa = ContainsAGlobalLookup["Update"]

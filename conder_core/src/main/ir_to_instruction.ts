@@ -1,14 +1,19 @@
-import { AnyNode, PickNode, LocalNodes, NodeWithNoXChildren } from './IR';
+import { AnyNode, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
-type IRCompiler = Readonly<{
-    [K in LocalNodes["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"Global">>) => AnyOpInstance[]
+export type LocalCompiler = Readonly<{
+    [K in LocalNodes["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"GlobalObject">>) => AnyOpInstance[]
 }>
 
 
 export function to_instr<N extends LocalNodes["kind"]>(node: PickNode<N>): AnyOpInstance[] {
-    //@ts-ignore
-    return IR_TO_INSTRUCTION[node.kind](node)
+    try {
+        //@ts-ignore
+        return IR_TO_INSTRUCTION[node.kind](node)
+    } catch (e) {
+        console.error(node.kind, e)
+        throw e
+    }
 }
 
 const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
@@ -25,7 +30,7 @@ const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "or": [ow.boolOr]
 }
 
-const IR_TO_INSTRUCTION: IRCompiler = {
+export const IR_TO_INSTRUCTION: LocalCompiler = {
     Bool: (n) => [ow.instantiate(n.value)],
     SetField: (n) => [
         ...n.field_name.flatMap(to_instr),
@@ -33,7 +38,7 @@ const IR_TO_INSTRUCTION: IRCompiler = {
         ow.setField({field_depth: n.field_name.length})
     ],
     GetField: n => [
-        ...to_instr(n.value),
+        ...to_instr(n.target),
         ...n.field_name.flatMap(to_instr),
         ow.getField({field_depth: n.field_name.length})
     ],
@@ -103,4 +108,19 @@ const IR_TO_INSTRUCTION: IRCompiler = {
         }
 
     }
+}
+
+export type CompileReady = LocalNodes //| StorageNode
+
+// type StorageNode = 
+//     Node<"ReplaceKey", {global: string, key: LocalValue, value: LocalValue}> |
+//     Node<"GetKey", {global: string, key: LocalValue}>
+
+export function global_elaboration(node: AnyNode): CompileReady[] {
+    //@ts-ignore
+    return [node]
+}
+
+export const complete_compiler = {
+    ...IR_TO_INSTRUCTION
 }
