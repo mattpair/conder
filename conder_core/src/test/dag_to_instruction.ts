@@ -4,7 +4,10 @@ import {AnyNode,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 
-function withInputHarness(proc_nodes: Record<string, FunctionDescription>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+function withInputHarness(
+    maybeStorage: "requires storage" | "no storage",
+    proc_nodes: Record<string, FunctionDescription>, 
+    test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const PROCEDURES: Record<string, AnyOpInstance[]> = {}
     for (const key in proc_nodes) {
         const comp = toOps(proc_nodes[key])
@@ -12,6 +15,30 @@ function withInputHarness(proc_nodes: Record<string, FunctionDescription>, test:
     }
 
     const STORES = {TEST_STORE: schemaFactory.Object({})}
+
+    if (maybeStorage === "no storage") {
+        return (cb) => Test.Server.start({
+                SCHEMAS: [],
+                DEPLOYMENT_NAME: "statefultest",
+                PROCEDURES,
+                STORES
+            }, "./conder_kernel/")
+            .then(async server => {
+                const testSurface: DagServer = {}
+                for (const key in PROCEDURES) {
+                    testSurface[key] = (...args) => server.invoke(key, ...args)
+                }
+                return test(testSurface).then(() => {
+                    server.kill()
+                    cb()
+                }).catch((e) => {
+                    server.kill()
+
+                    throw e
+                })
+            })
+    }
+
     return (cb) => Test.Mongo.start({STORES})
         .then(mongo => Test.Server.start({
                 MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
@@ -48,7 +75,7 @@ function noInputHarness(proc_nodes: Record<string, AnyNode[]>, test: (server: Da
         }
     }
     
-    return withInputHarness(PROCEDURES, test)
+    return withInputHarness("no storage",PROCEDURES, test)
 }
 
 
@@ -246,7 +273,7 @@ describe("basic functionality", () => {
 })
 
 describe("with input", () => {
-    it("validates input", withInputHarness({
+    it("validates input", withInputHarness("no storage",{
         accepts3any: {
             input: [
                 schemaFactory.Any,
@@ -267,7 +294,7 @@ describe("with input", () => {
         expect(await server.accepts3any("a", "b", "c")).toEqual("c")
     }))
 
-    it("check if field exists", withInputHarness({
+    it("check if field exists", withInputHarness("no storage",{
         checksField: {
             input: [
                 schemaFactory.Any
