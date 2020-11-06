@@ -33,7 +33,6 @@ function withInputHarness(
                     cb()
                 }).catch((e) => {
                     server.kill()
-
                     throw e
                 })
             })
