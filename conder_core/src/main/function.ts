@@ -1,6 +1,6 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
 import { AnyNode, RootNode } from "./IR";
-import {complete_compiler} from './ir_to_instruction'
+import {local_to_instruction} from './ir_to_instruction'
 
 export type FunctionDescription = {
     input: AnySchemaInstance[]
@@ -21,6 +21,6 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
 
     ops.push(...func.computation.flatMap(n => 
         //@ts-ignore
-        complete_compiler[n.kind](n)))
+        local_to_instruction[n.kind](n)))
     return ops
 }

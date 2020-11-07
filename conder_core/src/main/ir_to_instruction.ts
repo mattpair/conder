@@ -1,11 +1,8 @@
-import { BaseNodeDefs, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node, RootNode } from './IR';
+import { BaseNodeDefs, PickNode, LocalNodeUnion, NodeWithNoXChildren, LocalValue, Node, RootNode, CompleteCompiler, LocalNodeSet } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
-export type LocalCompiler = Readonly<{
-    [K in LocalNodes["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"GlobalObject">>) => AnyOpInstance[]
-}>
 
-export function to_instr<N extends LocalNodes["kind"]>(node: PickNode<N>): AnyOpInstance[] {
+export function to_instr<N extends LocalNodeUnion["kind"]>(node: PickNode<N>): AnyOpInstance[] {
     try {
         //@ts-ignore
         return local_to_instruction[node.kind](node)
@@ -29,7 +26,7 @@ const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "or": [ow.boolOr]
 }
 
-export const local_to_instruction: LocalCompiler = {
+export const local_to_instruction: CompleteCompiler<LocalNodeSet> = {
     Bool: (n) => [ow.instantiate(n.value)],
     SetField: (n) => [
         ...n.field_name.flatMap(to_instr),
@@ -106,10 +103,4 @@ export const local_to_instruction: LocalCompiler = {
                 ]
         }
     }
-}
-
-export type CompileReady = LocalNodes
-
-export const complete_compiler = {
-    ...local_to_instruction
 }

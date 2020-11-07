@@ -1,3 +1,4 @@
+import { AnyOpInstance } from 'conder_kernel';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
 type ValueNode = PickNode<
@@ -14,7 +15,10 @@ type ValueNode = PickNode<
     >
 
 export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
-export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
+export type LocalNodeUnion = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
+export type LocalNodeSet = {
+    [K in LocalNodeUnion["kind"]]: Extract<LocalNodeUnion, {kind: K}> & {_meta: BaseNodeDefs[K]["_meta"]}
+}
 
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
@@ -51,9 +55,10 @@ export type BaseNodeDefs = {
     GlobalObject: Node<{name: string}>
 }
 
-type NodeSet= {[K in string]: Node<{}, "not root" | "root">}
+type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 
+type NodeInstance<S extends NodeSet, K extends keyof S> = Omit<S[K], "_meta"> & {kind: K}
 export type AnyNodeFromSet<S extends NodeSet> = {
-    [K in keyof S]: Omit<S[K], "_meta"> & {kind: K}
+    [K in keyof S]: NodeInstance<S, K>
 }[keyof S]
 
 export type AnyNode = AnyNodeFromSet<BaseNodeDefs>
@@ -67,3 +72,10 @@ export type PickNode<K extends keyof BaseNodeDefs> = Extract<AnyNode, {kind: K}>
 export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
 }
+
+export type PickNodeFromSet<S extends NodeSet, K extends keyof S> = Extract<AnyNodeFromSet<S>, {kind: K}>
+
+export type CompleteCompiler<T extends NodeSet> = {
+    [K in keyof T]: (n: NodeInstance<T, K>) => AnyOpInstance[]
+}
+
