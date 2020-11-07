@@ -1,4 +1,4 @@
-import { NodeDefs, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node } from './IR';
+import { NodeDefs, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node, RootNode } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
 export type LocalCompiler = Readonly<{
@@ -116,7 +116,7 @@ export type CompileReady = LocalNodes //| StorageNode
 //     Node<"ReplaceKey", {global: string, key: LocalValue, value: LocalValue}> |
 //     Node<"GetKey", {global: string, key: LocalValue}>
 
-export function global_elaboration(node: NodeDefs): CompileReady[] {
+export function global_elaboration(node: RootNode): CompileReady[] {
     //@ts-ignore
     return [node]
 }

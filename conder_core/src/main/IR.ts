@@ -18,7 +18,7 @@ type ValueNode = PickNode<
 export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
 export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
 export type NodeDefs = 
-Node<"Return", {value?: ValueNode}> |
+Node<"Return", {value?: ValueNode}, "root"> |
 Node<"Bool", {value: boolean}> |
 Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: LocalValue}> |
 Node<"GetField", {field_name: PickNode<"String" | "Saved">[], target: PickNode<"Saved" | "GlobalObject">}> |
@@ -35,17 +35,17 @@ Node<"BoolAlg", {
     right: PickNode<"Bool" | "Comparison"| "Saved">}> |
 Node<"If", {
     cond: PickNode<"Bool" | "Comparison" | "BoolAlg" | "Saved">
-    ifTrue: AnyNode
-    finally?: AnyNode
-}> | 
+    ifTrue: RootNode
+    finally?: RootNode
+}, "root"> | 
 Node<"Saved", {index: number}> | 
 Node<"String", {value: string}> | 
 Node<"FieldExists", {value: ValueNode, field: ValueNode}> |
-Node<"Save", {index: number, value: ValueNode}> |
+Node<"Save", {index: number, value: ValueNode}, "root"> |
 Node<"Update", {
     target: PickNode<"Saved" | "GlobalObject">, 
     operation: PickNode<"SetField"> | LocalValue,
-}> |
+}, "root"> |
 Node<"GlobalObject", {name: string}>
 
 
@@ -53,7 +53,7 @@ export type AnyNode = {
     [K in NodeDefs["kind"]]: Omit<Extract<NodeDefs, {kind: K}>, "_meta">
 }[NodeDefs["kind"]]
 
-
+export type RootNode = PickNode<Extract<NodeDefs, {_meta: "root"}>["kind"]>
 export type PickNode<K extends NodeDefs["kind"]> = Extract<AnyNode, {kind: K}>
 
 export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {

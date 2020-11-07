@@ -1,7 +1,6 @@
-import { AnyNode } from './../main/IR';
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import { LocalNodes } from 'src/main/IR'
+import { LocalNodes, RootNode } from 'src/main/IR'
 import {NodeDefs,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
@@ -68,7 +67,7 @@ function withInputHarness(
         )
 }
 
-function noInputHarness(proc_nodes: Record<string, AnyNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+function noInputHarness(proc_nodes: Record<string, RootNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const PROCEDURES: Record<string, FunctionDescription> = {}
     for (const key in proc_nodes) {
         PROCEDURES[key] = {
@@ -186,7 +185,7 @@ describe("basic functionality", () => {
         })
     )
 
-    function nComp(sign: PickNode<"Comparison">["sign"]): LocalNodes[] {
+    function nComp(sign: PickNode<"Comparison">["sign"]): RootNode[] {
         return [{
             kind: "Return",
             value: {
@@ -215,7 +214,7 @@ describe("basic functionality", () => {
         })
     )
 
-    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): AnyNode[] {
+    function boolAlgTest(sign: PickNode<"BoolAlg">["sign"], left: PickNode<"BoolAlg">["left"], right: PickNode<"BoolAlg">["right"]): RootNode[] {
         return [{
             kind: "Return",
             value: {

@@ -1,10 +1,10 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
-import { AnyNode } from "./IR";
+import { AnyNode, RootNode } from "./IR";
 import {global_elaboration, complete_compiler} from './ir_to_instruction'
 
 export type FunctionDescription = {
     input: AnySchemaInstance[]
-    computation: AnyNode[]
+    computation: RootNode[]
 }
 
 export function toOps(func: FunctionDescription): AnyOpInstance[] {
