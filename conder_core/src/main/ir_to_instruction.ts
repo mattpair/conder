@@ -5,7 +5,6 @@ export type LocalCompiler = Readonly<{
     [K in LocalNodes["kind"]]: (node: NodeWithNoXChildren<PickNode<K>, PickNode<"GlobalObject">>) => AnyOpInstance[]
 }>
 
-
 export function to_instr<N extends LocalNodes["kind"]>(node: PickNode<N>): AnyOpInstance[] {
     try {
         //@ts-ignore
