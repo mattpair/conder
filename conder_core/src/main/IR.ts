@@ -1,9 +1,7 @@
 
-export type Node<K, DATA={}> = {
+export type Node<K, DATA={}, META extends "root" | "not root"="not root"> = {
     kind: K
- } & DATA
-
-
+} & DATA & {_meta: META}
 type ValueNode = PickNode<
     "Bool" | 
     "Object" | 
@@ -16,9 +14,10 @@ type ValueNode = PickNode<
     "GetField" |
     "GlobalObject"
     >
+
 export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
 export type LocalNodes = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
-export type AnyNode = 
+export type NodeDefs = 
 Node<"Return", {value?: ValueNode}> |
 Node<"Bool", {value: boolean}> |
 Node<"SetField", {field_name: PickNode<"String" | "Saved">[], value: LocalValue}> |
@@ -49,7 +48,13 @@ Node<"Update", {
 }> |
 Node<"GlobalObject", {name: string}>
 
-export type PickNode<K extends AnyNode["kind"]> = Extract<AnyNode, {kind: K}>
+
+export type AnyNode = {
+    [K in NodeDefs["kind"]]: Omit<Extract<NodeDefs, {kind: K}>, "_meta">
+}[NodeDefs["kind"]]
+
+
+export type PickNode<K extends NodeDefs["kind"]> = Extract<AnyNode, {kind: K}>
 
 export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
