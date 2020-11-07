@@ -62,16 +62,15 @@ export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
 
 
 
-// type ValueContainsGlobal<N extends AnyNode, X extends AnyNode=PickNode<"GlobalObject">> = {
-//     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Extract<N[F][0], X> : Extract<N[F], X> extends never ? never : "yes"
-// }
+type ValueContainsGlobal<N extends AnyNode, X extends AnyNode=PickNode<"GlobalObject">> = {
+    [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Extract<N[F][0], X> : Extract<N[F], X> extends never ? never : "yes"
+}
+type ContainsAGlobal<K extends AnyNode["kind"]> = ValueContainsGlobal<PickNode<K>>[keyof PickNode<K>]
 
-// type ContainsAGlobal<K extends AnyNode["kind"]> = ValueContainsGlobal<PickNode<K>>[keyof PickNode<K>]
+type qqq = ContainsAGlobal<"Return">
 
-// // type qqq = ContainsAGlobal<"Saved">
+type ContainsAGlobalLookup = {
+    [K in AnyNode["kind"]]: ContainsAGlobal<K>
+}
 
-// type ContainsAGlobalLookup = {
-//     [K in AnyNode["kind"]]: ContainsAGlobal<K> extends never  ? true : false
-// }
-
-// type aa = ContainsAGlobalLookup["Update"]
+type aa = ContainsAGlobalLookup["Update"]

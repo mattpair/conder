@@ -9,7 +9,7 @@ export type LocalCompiler = Readonly<{
 export function to_instr<N extends LocalNodes["kind"]>(node: PickNode<N>): AnyOpInstance[] {
     try {
         //@ts-ignore
-        return IR_TO_INSTRUCTION[node.kind](node)
+        return local_to_instruction[node.kind](node)
     } catch (e) {
         console.error(node.kind, e)
         throw e
@@ -30,7 +30,7 @@ const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "or": [ow.boolOr]
 }
 
-export const IR_TO_INSTRUCTION: LocalCompiler = {
+export const local_to_instruction: LocalCompiler = {
     Bool: (n) => [ow.instantiate(n.value)],
     SetField: (n) => [
         ...n.field_name.flatMap(to_instr),
@@ -106,21 +106,11 @@ export const IR_TO_INSTRUCTION: LocalCompiler = {
                     ow.overwriteHeap(n.target.index)
                 ]
         }
-
     }
 }
 
-export type CompileReady = LocalNodes //| StorageNode
-
-// type StorageNode = 
-//     Node<"ReplaceKey", {global: string, key: LocalValue, value: LocalValue}> |
-//     Node<"GetKey", {global: string, key: LocalValue}>
-
-export function global_elaboration(node: RootNode): CompileReady[] {
-    //@ts-ignore
-    return [node]
-}
+export type CompileReady = LocalNodes
 
 export const complete_compiler = {
-    ...IR_TO_INSTRUCTION
+    ...local_to_instruction
 }
