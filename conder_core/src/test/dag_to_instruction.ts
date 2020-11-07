@@ -1,7 +1,7 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
 import { LocalNodes, RootNode } from 'src/main/IR'
-import {NodeDefs,PickNode, toOps, FunctionDescription } from '../../index'
+import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"

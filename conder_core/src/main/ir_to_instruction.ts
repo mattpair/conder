@@ -1,4 +1,4 @@
-import { NodeDefs, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node, RootNode } from './IR';
+import { BaseNodeDefs, PickNode, LocalNodes, NodeWithNoXChildren, LocalValue, Node, RootNode } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
 export type LocalCompiler = Readonly<{
