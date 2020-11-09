@@ -14,8 +14,10 @@ type ValueNode = PickNode<
     "GlobalObject"
     >
 
-export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
-export type LocalNodeUnion = Exclude<NodeWithNoXChildren<AnyNode, PickNode<"GlobalObject">>, PickNode<"GlobalObject">>
+
+type AbstractNodes = PickNode<"GlobalObject">
+export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, AbstractNodes>, AbstractNodes>
+export type LocalNodeUnion = Exclude<NodeWithNoXChildren<AnyNode, AbstractNodes>, AbstractNodes>
 export type LocalNodeSet = {
     [K in LocalNodeUnion["kind"]]: Extract<LocalNodeUnion, {kind: K}> & {_meta: BaseNodeDefs[K]["_meta"]}
 }
@@ -73,9 +75,18 @@ export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
 }
 
+type NodeWithXChildrenReplaced<N extends AnyNode, X extends AnyNode, REPLACE> = {
+    [F in keyof N]: N[F] extends ArrayLike<AnyNode> 
+        ? N[F][0] extends X ? Array<Exclude<N[F][0], X> | REPLACE> : N[F]
+        : N[F] extends X ? Exclude<N[F], X> | REPLACE : N[F]
+}
+
 export type PickNodeFromSet<S extends NodeSet, K extends keyof S> = Extract<AnyNodeFromSet<S>, {kind: K}>
 
 export type CompleteCompiler<T extends NodeSet> = {
     [K in keyof T]: (n: NodeInstance<T, K>) => AnyOpInstance[]
 }
 
+type TargetNodeSet<Replacement extends NodeSet> = (NodeWithXChildrenReplaced<AnyNode, AbstractNodes, Replacement> | AnyRootNodeFromSet<Replacement>)
+export type AbstractRemovalCompiler<Replacement extends NodeSet> = (roots: RootNode[]) => 
+    TargetNodeSet<Replacement>[]
