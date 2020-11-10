@@ -16,16 +16,11 @@ type ValueNode = PickNode<
 
 
 type AbstractNodes = PickNode<"GlobalObject">
-export type LocalValue = Exclude<NodeWithNoXChildren<ValueNode, AbstractNodes>, AbstractNodes>
-export type LocalNodeUnion = Exclude<NodeWithNoXChildren<AnyNode, AbstractNodes>, AbstractNodes>
-export type LocalNodeSet = {
-    [K in LocalNodeUnion["kind"]]: Extract<LocalNodeUnion, {kind: K}> & {_meta: BaseNodeDefs[K]["_meta"]}
-}
 
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
     Bool: Node<{value: boolean}>
-    SetField: Node<{field_name: PickNode<"String" | "Saved">[], value: LocalValue}>
+    SetField: Node<{field_name: PickNode<"String" | "Saved">[], value: ValueNode}>
     GetField: Node<{field_name: PickNode<"String" | "Saved">[], target: PickNode<"Saved" | "GlobalObject">}>
     Object: Node<{fields: PickNode<"SetField">[]}>
     Int: Node<{value: number}> 
@@ -52,7 +47,7 @@ export type BaseNodeDefs = {
     Save: Node<{index: number, value: ValueNode}, "root">
     Update: Node<{
         target: PickNode<"Saved" | "GlobalObject">, 
-        operation: PickNode<"SetField"> | LocalValue,
+        operation: PickNode<"SetField"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
 }

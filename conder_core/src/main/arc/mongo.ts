@@ -3,7 +3,7 @@ import {Node, PickNode, PickTargetNode, RequiredReplacer} from '../IR'
 
 
 type Mongo = {
-    // GetWholeObject: Node<{name: string}>
+    GetWholeObject: Node<{name: string}>
 }
 
 export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
@@ -36,7 +36,9 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     },
 
     SetField(n, r): PickTargetNode<Mongo, "SetField"> {
-        
+        if (n.value.kind === "GlobalObject") {
+            throw Error("cannot set values from global objects")
+        }
         return {
             kind: "SetField",
             field_name: n.field_name.map(r),
@@ -67,6 +69,9 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     Update(n, r): PickTargetNode<Mongo, "Update"> {
         if (n.target.kind === "GlobalObject") {
             throw Error("cannot update global objects")
+        }
+        if (n.operation.kind === "GlobalObject") {
+            throw Error("cannot set value from global object")
         }
         
         return {

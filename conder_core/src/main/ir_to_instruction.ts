@@ -1,8 +1,8 @@
-import { BaseNodeDefs, PickNode, LocalNodeUnion, NodeWithNoXChildren, LocalValue, Node, RootNode, CompleteCompiler, LocalNodeSet } from './IR';
+import { BaseNodeDefs, PickNode, Node, RootNode, CompleteCompiler, AnyNode } from './IR';
 import {AnyOpInstance, ow, Utils, interpeterTypeFactory, } from 'conder_kernel'
 
 
-export function to_instr<N extends LocalNodeUnion["kind"]>(node: PickNode<N>): AnyOpInstance[] {
+export function to_instr<N extends AnyNode["kind"]>(node: PickNode<N>): AnyOpInstance[] {
     try {
         //@ts-ignore
         return local_to_instruction[node.kind](node)
@@ -26,7 +26,7 @@ const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "or": [ow.boolOr]
 }
 
-export const local_to_instruction: CompleteCompiler<LocalNodeSet> = {
+export const local_to_instruction: CompleteCompiler<Omit<BaseNodeDefs, "GlobalObject">> = {
     Bool: (n) => [ow.instantiate(n.value)],
     SetField: (n) => [
         ...n.field_name.flatMap(to_instr),
@@ -88,8 +88,12 @@ export const local_to_instruction: CompleteCompiler<LocalNodeSet> = {
     Save: n => [...to_instr(n.value), ow.moveStackTopToHeap],
 
     Update: n => {
+        if (n.target.kind === "GlobalObject") {
+            throw Error("Cannot update global objects")
+        }
         switch (n.operation.kind) {
             case "SetField":
+                
                 return [
                     // TODO: optimize this so the whole object doesn't need to be copied
                     ow.copyFromHeap(n.target.index), 
