@@ -1,4 +1,4 @@
-import { AnyOpInstance } from 'conder_kernel';
+import { AnyOpInstance, Utils } from 'conder_kernel';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
 type ValueNode = PickNode<
@@ -48,7 +48,7 @@ export type BaseNodeDefs = {
 
     Saved: Node<{index: number}> 
     String: Node<{value: string}>
-    FieldExists: Node<{value: ValueNode, field: ValueNode}>
+    FieldExists: Node<{value: ValueNode, field: PickNode<"String">}>
     Save: Node<{index: number, value: ValueNode}, "root">
     Update: Node<{
         target: PickNode<"Saved" | "GlobalObject">, 
@@ -75,11 +75,16 @@ export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
     [F in keyof N]: N[F] extends ArrayLike<AnyNode> ? Array<Exclude<N[F][0], X>> : Exclude<N[F], X>
 }
 
-type NodeWithXChildrenReplaced<N extends AnyNode, X extends AnyNode, REPLACE> = {
-    [F in keyof N]: N[F] extends ArrayLike<AnyNode> 
-        ? N[F][0] extends X ? Array<Exclude<N[F][0], X> | REPLACE> : N[F]
-        : N[F] extends X ? Exclude<N[F], X> | REPLACE : N[F]
+
+type ReplaceIfAbstract<Nodes, Replace extends NodeSet> = Extract<Nodes, AbstractNodes> extends never ? Nodes : Exclude<Nodes, AbstractNodes> | AnyNodeFromSet<Replace>
+type TargetNode<SomeNode, REPLACE extends NodeSet> = {
+    [F in keyof SomeNode]: 
+    SomeNode[F] extends ArrayLike<SomeNode> 
+        ? Array<FullyImplementedNode<ReplaceIfAbstract<SomeNode[F][0], REPLACE>, REPLACE>>
+        : SomeNode[F] extends AnyNode ? FullyImplementedNode<ReplaceIfAbstract<SomeNode[F], REPLACE>, REPLACE> : SomeNode[F]
 }
+
+type FullyImplementedNode<Nodes, REPLACE extends NodeSet> = Exclude<TargetNode<Nodes, REPLACE>, AbstractNodes>
 
 export type PickNodeFromSet<S extends NodeSet, K extends keyof S> = Extract<AnyNodeFromSet<S>, {kind: K}>
 
@@ -87,6 +92,60 @@ export type CompleteCompiler<T extends NodeSet> = {
     [K in keyof T]: (n: NodeInstance<T, K>) => AnyOpInstance[]
 }
 
-type TargetNodeSet<Replacement extends NodeSet> = (NodeWithXChildrenReplaced<AnyNode, AbstractNodes, Replacement> | AnyRootNodeFromSet<Replacement>)
+export type TargetNodeSet<Replacement extends NodeSet> = (FullyImplementedNode<AnyNode, Replacement> | AnyNodeFromSet<Replacement>)
 export type AbstractRemovalCompiler<Replacement extends NodeSet> = (roots: RootNode[]) => 
     TargetNodeSet<Replacement>[]
+
+type AnyBaseNonAbstractKey =Exclude<keyof BaseNodeDefs, AbstractNodes["kind"]>
+type AbstractNodeReplacerPairs<R extends NodeSet> = {
+    // If the types of the node's fields change,
+    // Then we know it needs a replacer.
+    [K in AnyBaseNonAbstractKey]: Extract<
+        {
+            [F in keyof PickNode<K>]: PickNode<K>[F] extends Extract<TargetNodeSet<{}>, {kind: K}>[F] ? "same": "changed"
+        }[keyof PickNode<K>],
+        "changed"> extends never ? never : {
+            kind: K
+            map: (original: PickNode<K>) => Extract<TargetNodeSet<R>, {kind: K}>
+        }
+}[AnyBaseNonAbstractKey]
+
+
+type AbstractNodeReplacementMap<R extends NodeSet> = {
+    [K in AbstractNodeReplacerPairs<R>["kind"]]: Extract<AbstractNodeReplacerPairs<R>, {kind: K}>["map"]
+}
+
+export type PickTargetNode<R extends NodeSet, K extends keyof R | AnyBaseNonAbstractKey> = Extract<TargetNodeSet<R>, {kind: K}>
+
+type GenericReplacer<R extends NodeSet> = <K extends AnyBaseNonAbstractKey>(n: PickNode<K>) => PickTargetNode<R, K>
+type ReplacerFunction<K extends AnyBaseNonAbstractKey, R extends NodeSet> = (n: PickNode<K>, r: GenericReplacer<R>) => PickTargetNode<R, K>
+export type RequiredReplacer<R extends NodeSet> =  {
+    [K in AbstractNodeReplacerPairs<R>["kind"]]: ReplacerFunction<K, R>
+}
+type PassThroughReplacer = {
+    [K in Exclude<AnyBaseNonAbstractKey, keyof AbstractNodeReplacementMap<{}>>]: ReplacerFunction<K, {}>
+}
+
+
+const PASS_THROUGH_REPLACER: PassThroughReplacer = {
+    Bool: n => n,
+    Object: n => n,
+    Int: n => n,
+    BoolAlg: n => n,
+    Comparison: n => n,
+    Saved: n => n,
+    String: n => n
+}
+
+export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
+    const requiresSelf = {...PASS_THROUGH_REPLACER, ...repl}
+    const complete: any = {}
+    //@ts-ignore
+    const generic: GenericReplacer<R> = (n) => complete[n.kind](n)
+
+    for (const key in requiresSelf) {
+        //@ts-ignore
+        complete[key] = (n) => requiresSelf[key](n, generic)
+    }
+    return generic
+}
