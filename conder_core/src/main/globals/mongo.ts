@@ -1,4 +1,3 @@
-import { Utils } from 'conder_kernel'
 import {Node, PickNode, PickTargetNode, RequiredReplacer} from '../IR'
 
 
@@ -80,8 +79,4 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
             operation: r(n.operation)
         }
     },
-
 }
-
-
-type cccc = PickTargetNode<Mongo, "Update">["operation"]["kind"]
