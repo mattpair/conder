@@ -74,7 +74,7 @@ export type NodeWithNoXChildren<N extends AnyNode, X extends AnyNode> = {
 type ReplaceIfAbstract<Nodes, Replace extends NodeSet> = Extract<Nodes, AbstractNodes> extends never ? Nodes : Exclude<Nodes, AbstractNodes> | AnyNodeFromSet<Replace>
 type TargetNode<SomeNode, REPLACE extends NodeSet> = {
     [F in keyof SomeNode]: 
-    SomeNode[F] extends ArrayLike<SomeNode> 
+    SomeNode[F] extends ArrayLike<{kind: any}> 
         ? Array<FullyImplementedNode<ReplaceIfAbstract<SomeNode[F][0], REPLACE>, REPLACE>>
         : SomeNode[F] extends AnyNode ? FullyImplementedNode<ReplaceIfAbstract<SomeNode[F], REPLACE>, REPLACE> : SomeNode[F]
 }
@@ -124,7 +124,6 @@ type PassThroughReplacer = {
 
 const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     Bool: n => n,
-    Object: n => n,
     Int: n => n,
     BoolAlg: n => n,
     Comparison: n => n,
@@ -133,14 +132,12 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
-    const requiresSelf = {...PASS_THROUGH_REPLACER, ...repl}
-    const complete: any = {}
-    //@ts-ignore
-    const generic: GenericReplacer<R> = (n) => complete[n.kind](n)
-
-    for (const key in requiresSelf) {
-        //@ts-ignore
-        complete[key] = (n) => requiresSelf[key](n, generic)
+    const requiresGeneric = {...PASS_THROUGH_REPLACER, ...repl}
+    const generic: GenericReplacer<R> = (n) => {
+        if (n === undefined) {
+            return n
+        }
+        return requiresGeneric[n.kind](n as any, generic) as any 
     }
     return generic
 }

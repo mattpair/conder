@@ -1,6 +1,6 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
 import { AnyNode, RootNode } from "./IR";
-import {local_to_instruction} from './ir_to_instruction'
+import {MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL} from './globals/mongo'
 
 export type FunctionDescription = {
     input: AnySchemaInstance[]
@@ -18,9 +18,8 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
             ow.raiseError("invalid input")
         )
     })
+    const compiler = MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
 
-    ops.push(...func.computation.flatMap(n => 
-        //@ts-ignore
-        local_to_instruction[n.kind](n)))
+    ops.push(...func.computation.flatMap(c => compiler.run(c)))
     return ops
 }

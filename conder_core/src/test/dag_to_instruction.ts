@@ -10,47 +10,29 @@ function withInputHarness(
     maybeStorage: "requires storage" | "no storage",
     proc_nodes: Record<string, FunctionDescription>,
     test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
-    const PROCEDURES: Record<string, AnyOpInstance[]> = {}
-    for (const key in proc_nodes) {
-        const comp = toOps(proc_nodes[key])
-        PROCEDURES[key] = comp
+    const getStoresAndProcedures = () => {
+        const PROCEDURES: Record<string, AnyOpInstance[]> = {}
+        for (const key in proc_nodes) {
+            const comp = toOps(proc_nodes[key])
+            PROCEDURES[key] = comp
+        }
+
+        const STORES = {TEST_STORE: schemaFactory.Object({})}
+        return {PROCEDURES, STORES}
     }
-
-    const STORES = {TEST_STORE: schemaFactory.Object({})}
-
-    if (maybeStorage === "no storage") {
-        return (cb) => Test.Server.start({
-                SCHEMAS: [],
-                DEPLOYMENT_NAME: "statefultest",
-                PROCEDURES,
-                STORES
-            }, "./conder_kernel/")
-            .then(async server => {
-                const testSurface: DagServer = {}
-                for (const key in PROCEDURES) {
-                    testSurface[key] = (...args) => server.invoke(key, ...args)
-                }
-                return test(testSurface).then(() => {
-                    server.kill()
-                    cb()
-                }).catch((e) => {
-                    server.kill()
-                    throw e
-                })
-            })
-    }
-
-    return (cb) => Test.Mongo.start({STORES})
-        .then(mongo => Test.Server.start({
+    if (maybeStorage === "requires storage") {
+        return (cb) => {
+            const spec = getStoresAndProcedures()
+            return Test.Mongo.start({STORES: spec.STORES})
+            .then(mongo => Test.Server.start({
                 MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
                 SCHEMAS: [],
                 DEPLOYMENT_NAME: "statefultest",
-                PROCEDURES,
-                STORES
+                ...spec
             }, "./conder_kernel/")
             .then(async server => {
                 const testSurface: DagServer = {}
-                for (const key in PROCEDURES) {
+                for (const key in spec.PROCEDURES) {
                     testSurface[key] = (...args) => server.invoke(key, ...args)
                 }
                 return test(testSurface).then(() => {
@@ -65,7 +47,33 @@ function withInputHarness(
             })
             
         )
+        }
+    }
+    return (cb) => {
+                            
+        const spec = getStoresAndProcedures()
+        return Test.Server.start({
+            SCHEMAS: [],
+            DEPLOYMENT_NAME: "statefultest",
+            ...spec
+        }, "./conder_kernel/")
+        .then(async server => {
+            const testSurface: DagServer = {}
+            for (const key in spec.PROCEDURES) {
+                testSurface[key] = (...args) => server.invoke(key, ...args)
+            }
+            return test(testSurface).then(() => {
+                server.kill()
+                cb()
+            }).catch((e) => {
+                server.kill()
+                throw e
+            })
+        })
+    }
 }
+
+    
 
 function noInputHarness(proc_nodes: Record<string, RootNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const PROCEDURES: Record<string, FunctionDescription> = {}
