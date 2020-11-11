@@ -75,7 +75,11 @@ function withInputHarness(
 
     
 
-function noInputHarness(proc_nodes: Record<string, RootNode[]>, test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+function noInputHarness(
+    proc_nodes: Record<string, RootNode[]>, 
+    test: (server: DagServer) => Promise<void>,
+    maybeStorage: Parameters<typeof withInputHarness>[0]="no storage"
+    ): jest.ProvidesCallback {
     const PROCEDURES: Record<string, FunctionDescription> = {}
     for (const key in proc_nodes) {
         PROCEDURES[key] = {
@@ -84,7 +88,7 @@ function noInputHarness(proc_nodes: Record<string, RootNode[]>, test: (server: D
         }
     }
     
-    return withInputHarness("no storage",PROCEDURES, test)
+    return withInputHarness(maybeStorage,PROCEDURES, test)
 }
 
 
@@ -325,8 +329,8 @@ describe("with input", () => {
     
 })
 
-describe.skip("globals", () => {
-    it("allows getting and setting keys", noInputHarness({
+describe.only("globals", () => {
+    it("getting a non existent key returns null", noInputHarness({
         get: [
             {
                 kind: "Return", 
@@ -344,18 +348,16 @@ describe.skip("globals", () => {
             }
         ],
 
-        set: [{
-            kind: "Update",
-            target: {kind: "GlobalObject", name: TEST_STORE},
-            operation: {
-                kind: "SetField",
-                field_name: [{kind: "String", value: "test_key"}],
-                value: {kind: "String", value: "test_value"}
-            }
-        }]
+        // set: [{
+        //     kind: "Update",
+        //     target: {kind: "GlobalObject", name: TEST_STORE},
+        //     operation: {
+        //         kind: "SetField",
+        //         field_name: [{kind: "String", value: "test_key"}],
+        //         value: {kind: "String", value: "test_value"}
+        //     }
+        // }]
     }, async server => {
         expect(await server.get()).toBeNull()
-        expect(await server.set()).toBeNull()
-        expect(await server.get()).toEqual("test_value")
-    }))
+    }, "requires storage"))
 })

@@ -1,4 +1,4 @@
-import { AnyOpInstance } from 'conder_kernel';
+import { AnyOpInstance, ow } from 'conder_kernel';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from './../compilers';
 
@@ -137,7 +137,18 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
         
         
         case "GetKeyFromObject":
-            break
+
+            return [
+                // Create the query doc
+                ow.instantiate({_key: {}}),
+                // Search for key equal to compile function
+                ow.instantiate("_key"),
+                ...base_compiler(n.key[0], compile_function),
+                ow.setField({field_depth: 1}),
+                ow.findOneInStore([n.obj, {}]),
+            ]
+
+            
         
 
         case "SetKeyOnObject":
