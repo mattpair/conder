@@ -52,7 +52,7 @@ export type BaseNodeDefs = {
     GlobalObject: Node<{name: string}>
 }
 
-type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 
+export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 
 type NodeInstance<S extends NodeSet, K extends keyof S> = Omit<S[K], "_meta"> & {kind: K}
 export type AnyNodeFromSet<S extends NodeSet> = {
     [K in keyof S]: NodeInstance<S, K>
@@ -109,6 +109,7 @@ type AbstractNodeReplacerPairs<R extends NodeSet> = {
 type AbstractNodeReplacementMap<R extends NodeSet> = {
     [K in AbstractNodeReplacerPairs<R>["kind"]]: Extract<AbstractNodeReplacerPairs<R>, {kind: K}>["map"]
 }
+export type BaseNodesFromTargetSet<TS extends NodeSet> = TargetNode<PickNode<AnyBaseNonAbstractKey>, TS> //TargetNode<Nodes, REPLACE>
 
 export type PickTargetNode<R extends NodeSet, K extends keyof R | AnyBaseNonAbstractKey> = Extract<TargetNodeSet<R>, {kind: K}>
 
