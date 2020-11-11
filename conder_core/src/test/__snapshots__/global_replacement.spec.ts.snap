@@ -1,5 +1,16 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`mongo can replace existence checking 1`] = `
+Object {
+  "key": Object {
+    "kind": "String",
+    "value": "maybe",
+  },
+  "kind": "keyExists",
+  "obj": "glob",
+}
+`;
+
 exports[`mongo get field with mongo specific op 1`] = `
 Object {
   "key": Array [

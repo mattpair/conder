@@ -11,4 +11,12 @@ describe("mongo", () => {
             field_name: [{kind: "String", value: "field"}]
         })).toMatchSnapshot()
     })
+
+    it("can replace existence checking", () => {
+        expect(replace({
+            kind: "FieldExists",
+            value: {kind: "GlobalObject", name: "glob"},
+            field: {kind: "String", value: "maybe"}
+        })).toMatchSnapshot()
+    })
 })

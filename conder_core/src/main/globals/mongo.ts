@@ -3,10 +3,10 @@ import {Node, PickNode, PickTargetNode, RequiredReplacer} from '../IR'
 type Mongo = {
     GetWholeObject: Node<{name: string}>,
     GetKeyFromObject: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">[]}>
+    keyExists: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">}>
 }
 
 
-type aaa = ReturnType<RequiredReplacer<Mongo>["GetField"]>
 export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     If(n, r) {
         return {
@@ -64,8 +64,14 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     
     },
     FieldExists(n, r) {
-        if (n.value.kind === "GlobalObject") {
-            throw Error(`Cannot check if globals exist`)
+
+        switch (n.value.kind) {
+            case "GlobalObject":
+                return {
+                    kind: "keyExists",
+                    obj: n.value.name,
+                    key: n.field
+                }
         }
         
         return {
