@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`mongo get field with mongo specific op 1`] = `
+Object {
+  "key": Array [
+    Object {
+      "kind": "String",
+      "value": "field",
+    },
+  ],
+  "kind": "GetKeyFromObject",
+  "obj": "global",
+}
+`;

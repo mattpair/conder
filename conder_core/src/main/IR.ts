@@ -113,7 +113,7 @@ type AbstractNodeReplacementMap<R extends NodeSet> = {
 export type PickTargetNode<R extends NodeSet, K extends keyof R | AnyBaseNonAbstractKey> = Extract<TargetNodeSet<R>, {kind: K}>
 
 type GenericReplacer<R extends NodeSet> = <K extends AnyBaseNonAbstractKey>(n: PickNode<K>) => PickTargetNode<R, K>
-type ReplacerFunction<K extends AnyBaseNonAbstractKey, R extends NodeSet> = (n: PickNode<K>, r: GenericReplacer<R>) => PickTargetNode<R, K>
+type ReplacerFunction<K extends AnyBaseNonAbstractKey, R extends NodeSet> = (n: PickNode<K>, r: GenericReplacer<R>) => (PickTargetNode<R, K> | AnyNodeFromSet<R>)
 export type RequiredReplacer<R extends NodeSet> =  {
     [K in AbstractNodeReplacerPairs<R>["kind"]]: ReplacerFunction<K, R>
 }

@@ -1,10 +1,12 @@
 import {Node, PickNode, PickTargetNode, RequiredReplacer} from '../IR'
 
-
 type Mongo = {
-    GetWholeObject: Node<{name: string}>
+    GetWholeObject: Node<{name: string}>,
+    GetKeyFromObject: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">[]}>
 }
 
+
+type aaa = ReturnType<RequiredReplacer<Mongo>["GetField"]>
 export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     If(n, r) {
         return {
@@ -45,14 +47,21 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
         }
     },
     GetField(n, r) {
-        if (n.target.kind === "GlobalObject") {
-            throw Error(`Cannot get field off global`)
+        switch (n.target.kind) {
+            case "GlobalObject":
+                return {
+                    kind: "GetKeyFromObject",
+                    obj: n.target.name,
+                    key: n.field_name.map(r)
+                }
+            case "Saved":
+                return {
+                    kind: "GetField",
+                    target: n.target,
+                    field_name: n.field_name.map(r)
+                }
         }
-        return {
-            kind: "GetField",
-            target: n.target,
-            field_name: n.field_name
-        }
+    
     },
     FieldExists(n, r) {
         if (n.value.kind === "GlobalObject") {
