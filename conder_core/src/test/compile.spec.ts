@@ -1,6 +1,6 @@
 
 import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import { RootNode } from 'src/main/IR'
+import { AnyNode, RootNode } from 'src/main/IR'
 import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
@@ -329,35 +329,62 @@ describe("with input", () => {
     
 })
 
-describe.only("globals", () => {
-    it("getting a non existent key returns null", noInputHarness({
-        get: [
-            {
-                kind: "Return", 
-                value: {
-                    kind: "GetField", 
-                    target: {
-                        kind: "GlobalObject", 
-                        name: TEST_STORE
-                    },
-                    field_name: [{
-                        kind: "String",
-                        value: "test_key"
-                    }]
-                }
-            }
-        ],
+describe("globals", () => {
 
-        // set: [{
-        //     kind: "Update",
-        //     target: {kind: "GlobalObject", name: TEST_STORE},
-        //     operation: {
-        //         kind: "SetField",
-        //         field_name: [{kind: "String", value: "test_key"}],
-        //         value: {kind: "String", value: "test_value"}
-        //     }
-        // }]
-    }, async server => {
-        expect(await server.get()).toBeNull()
-    }, "requires storage"))
+    const get: RootNode[] = [
+        {
+            kind: "Return", 
+            value: {
+                kind: "GetField", 
+                target: {
+                    kind: "GlobalObject", 
+                    name: TEST_STORE
+                },
+                field_name: [{
+                    kind: "String",
+                    value: "test_key"
+                }]
+            }
+        }
+    ]
+    it("getting a non existent key returns null", 
+        noInputHarness({
+            get,
+        }, 
+        async server => {
+            expect(await server.get()).toBeNull()
+        }, 
+        "requires storage")
+    )
+
+    it("getting a key returns the value",
+        noInputHarness({
+            get,
+            set: [{
+                kind: "Update",
+                target: {kind: "GlobalObject", name: TEST_STORE},
+                operation: {
+                    kind: "SetField",
+                    field_name: [{kind: "String", value: "test_key"}],
+                    value: {kind: "Object", fields: [
+                        {
+                            kind: "SetField", 
+                            value: {
+                                kind: "Int", value: 42
+                            },
+                            field_name: [{kind: "String", value: "answer"}]
+                        }
+                    ]}
+                }
+            }]
+        },
+        async server => {
+            expect(await server.set()).toBeNull()
+            expect(await server.get()).toEqual({answer: 42})
+
+        },
+        "requires storage"
+        )
+    
+    )
 })

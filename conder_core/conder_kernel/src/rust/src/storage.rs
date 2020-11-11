@@ -119,6 +119,7 @@ pub(crate) async fn find_and_update_one(db: &Database, storeName: &str, upsert: 
             },
             Err(e) => {
                 eprintln!("Failure updating: {}", e);
+                eprintln!("{:?}", update_doc);
                 InterpreterType::None
             }
     }

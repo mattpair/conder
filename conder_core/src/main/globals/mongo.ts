@@ -135,24 +135,43 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
         case "GetWholeObject":
             throw Error("can't actually compile")
         
-        
+        // Assume key depth is one
         case "GetKeyFromObject":
 
             return [
                 // Create the query doc
                 ow.instantiate({_key: {}}),
-                // Search for key equal to compile function
+                // Search for key
                 ow.instantiate("_key"),
                 ...base_compiler(n.key[0], compile_function),
                 ow.setField({field_depth: 1}),
                 ow.findOneInStore([n.obj, {}]),
+                ow.isLastNone,
+                ow.conditonallySkipXops(2),
+                ow.tryGetField("_val"),
+                ow.offsetOpCursor(1),
+                ow.instantiate(null)
             ]
 
             
-        
-
         case "SetKeyOnObject":
-            break
+            return [
+                // Update document
+                ow.instantiate({"$set": {_val: {}}}),
+                ow.instantiate("$set"),
+                ow.instantiate("_val"),
+                ...compile_function(n.value),
+                ow.setField({field_depth: 2}),
+                // Create the query doc
+                ow.instantiate({_key: {}}),
+                ow.instantiate("_key"),
+                ...base_compiler(n.key[0], compile_function),
+                ow.setField({field_depth: 1}),
+                // update or insert key
+                ow.updateOne({store: n.obj, upsert: true}),
+
+                
+            ]
         
      
         case "keyExists":

@@ -63,7 +63,9 @@ ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
 ParamOp<"getField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
-ParamOp<"overwriteHeap", number>
+ParamOp<"overwriteHeap", number> |
+ParamOp<"tryGetField", string> | 
+StaticOp<"isLastNone">
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -155,6 +157,40 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
+    },
+
+    isLastNone: {
+        opDefinition: {
+            rustOpHandler: `
+            let res = match ${lastStack} {
+                InterpreterType::None => true,
+                _ => false
+            };
+            ${pushStack("InterpreterType::bool(res)")};
+            None
+            `
+        }
+    },
+    tryGetField: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            match ${popStack} {
+                InterpreterType::Object(mut o) => match o.remove(op_param) {
+                    Some(f) => {
+                        ${pushStack("f")};
+                        None
+                    },
+                    None => {
+                        ${pushStack("InterpreterType::None")};
+                        None
+                    }
+                },
+                _ =>${raiseErrorWithMessage("Not an object")}
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "tryGetField", data})
     },
     overwriteHeap: {
         opDefinition: {
@@ -600,7 +636,7 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: (p) => ({kind: "updateOne", data: p})
+        factoryMethod: (p) => ({kind: "updateOne", data: [p.store, p.upsert]})
     },
 
     replaceOne: {
