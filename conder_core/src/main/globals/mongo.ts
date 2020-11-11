@@ -1,4 +1,5 @@
-import {Node, PickNode, PickTargetNode, RequiredReplacer, TargetNodeSet} from '../IR'
+import { Transformer,Transform } from './../compilers';
+import {AnyNode, make_replacer, Node, PickNode, PickTargetNode, RequiredReplacer, TargetNodeSet} from '../IR'
 
 type Mongo = {
     GetWholeObject: Node<{name: string}>,
@@ -8,7 +9,7 @@ type Mongo = {
 }
 
 
-export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
+const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     If(n, r) {
         return {
             kind: "If",
@@ -111,3 +112,5 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
         }
     },
 }
+
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode, TargetNodeSet<Mongo>> = new Transformer(make_replacer(MONGO_REPLACER))

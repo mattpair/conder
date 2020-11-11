@@ -1,12 +1,11 @@
-import { make_replacer, MONGO_REPLACER, AnyNode, AbstractNodes } from "../../index"
+import { make_replacer, MONGO_GLOBAL_ABSTRACTION_REMOVAL, AnyNode, AbstractNodes } from "../../index"
 
 
 describe("mongo", () => {
-    const replace = make_replacer(MONGO_REPLACER)
 
     function replaceTest(original: Exclude<AnyNode, AbstractNodes>): jest.ProvidesCallback {
         return (cb) => {
-            expect(replace(original)).toMatchSnapshot()
+            expect(MONGO_GLOBAL_ABSTRACTION_REMOVAL.run(original)).toMatchSnapshot()
             cb()
         }
     }
