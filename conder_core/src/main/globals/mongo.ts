@@ -1,9 +1,10 @@
-import {Node, PickNode, PickTargetNode, RequiredReplacer} from '../IR'
+import {Node, PickNode, PickTargetNode, RequiredReplacer, TargetNodeSet} from '../IR'
 
 type Mongo = {
     GetWholeObject: Node<{name: string}>,
     GetKeyFromObject: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">[]}>
     keyExists: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">}>
+    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"], value: PickTargetNode<Mongo, "SetField">["value"]}>
 }
 
 
@@ -80,9 +81,24 @@ export const MONGO_REPLACER: RequiredReplacer<Mongo> = {
             field: r(n.field)
         }
     },
-    Update(n, r): PickTargetNode<Mongo, "Update"> {
-        if (n.target.kind === "GlobalObject") {
-            throw Error("cannot update global objects")
+    Update(n, r) {
+
+        switch (n.target.kind) {
+            case "GlobalObject":
+                switch (n.operation.kind) {
+                    case "SetField":
+                        if (n.operation.value.kind === "GlobalObject") {
+                            throw Error(`Cannot set key to a global object`)
+                        }
+                        return {
+                            kind: "SetKeyOnObject",
+                            obj: n.target.name,
+                            key: n.operation.field_name,
+                            value: r(n.operation.value)
+                        }
+                }
+
+                throw Error(`Could not fulfill global object update`)
         }
         if (n.operation.kind === "GlobalObject") {
             throw Error("cannot set value from global object")

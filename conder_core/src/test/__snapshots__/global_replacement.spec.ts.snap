@@ -1,5 +1,22 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`mongo can replace SetField updates 1`] = `
+Object {
+  "key": Array [
+    Object {
+      "index": 12,
+      "kind": "Saved",
+    },
+  ],
+  "kind": "SetKeyOnObject",
+  "obj": "gg",
+  "value": Object {
+    "kind": "String",
+    "value": "some val",
+  },
+}
+`;
+
 exports[`mongo can replace existence checking 1`] = `
 Object {
   "key": Object {
