@@ -15,7 +15,7 @@ type ValueNode = PickNode<
     >
 
 
-type AbstractNodes = PickNode<"GlobalObject">
+export type AbstractNodes = PickNode<"GlobalObject">
 
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
