@@ -46,7 +46,7 @@ ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
-ParamOp<"updateOne", string> |
+ParamOp<"updateOne", {store: string, upsert: boolean}> |
 ParamOp<"replaceOne", string> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
@@ -63,7 +63,10 @@ ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
 ParamOp<"getField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
-ParamOp<"overwriteHeap", number>
+ParamOp<"overwriteHeap", number> |
+ParamOp<"tryGetField", string> | 
+StaticOp<"isLastNone"> |
+ParamOp<"stringConcat", {nStrings: number, joiner: string}>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -156,6 +159,40 @@ export const OpSpec: CompleteOpSpec = {
             }`
         },
     },
+
+    isLastNone: {
+        opDefinition: {
+            rustOpHandler: `
+            let res = match ${lastStack} {
+                InterpreterType::None => true,
+                _ => false
+            };
+            ${pushStack("InterpreterType::bool(res)")};
+            None
+            `
+        }
+    },
+    tryGetField: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            match ${popStack} {
+                InterpreterType::Object(mut o) => match o.remove(op_param) {
+                    Some(f) => {
+                        ${pushStack("f")};
+                        None
+                    },
+                    None => {
+                        ${pushStack("InterpreterType::None")};
+                        None
+                    }
+                },
+                _ =>${raiseErrorWithMessage("Not an object")}
+            }
+            `
+        },
+        factoryMethod: (data) => ({kind: "tryGetField", data})
+    },
     overwriteHeap: {
         opDefinition: {
             paramType: ["usize"],
@@ -205,6 +242,22 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
+    },
+
+    stringConcat: {
+        opDefinition: {
+            paramType: ["usize", "String"],
+            rustOpHandler: `
+            let mut strings = Vec::with_capacity(*param0);
+            for n in 1..=*param0 {
+                strings.push(${popToString});
+            }
+            strings.reverse();
+            ${pushStack("InterpreterType::string(strings.join(param1))")};
+            None
+            `
+        },
+        factoryMethod: (p) => ({kind: "stringConcat", data: [p.nStrings, p.joiner]})
     },
 
     getField: {
@@ -592,15 +645,15 @@ export const OpSpec: CompleteOpSpec = {
 
     updateOne: {
         opDefinition: {
-            paramType: ["String"],
+            paramType: ["String", "bool"],
             rustOpHandler: `
             let query_doc = ${popStack};
             let update_doc =  ${popStack};
-            ${pushStack(`storage::find_and_update_one(${getDb}, op_param, &query_doc, &update_doc).await`)};
+            ${pushStack(`storage::find_and_update_one(${getDb}, param0, *param1, &query_doc, &update_doc).await`)};
             None
             `
         },
-        factoryMethod: (p) => ({kind: "updateOne", data: p})
+        factoryMethod: (p) => ({kind: "updateOne", data: [p.store, p.upsert]})
     },
 
     replaceOne: {
