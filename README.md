@@ -1,28 +1,17 @@
-Democratizing cloud-scale development.
+Conder Core
 
-# Goal
+# Abstract
 
-Building cloud-scale systems today is labor intensive and error-prone. Conder intends to solve this by creating 
-**a high-level programming language that just deploys, scales, and works**.
+This is a set of libraries and containers that can be used to build horizontally scalable, fault-tolerant, and portable systems. At the moment, we only have stored procedure servers. However, there will be more in the future.
 
-## Concept Selection
+## Intermediate Representation (IR)
 
-We must select the concepts for the language deliberately. The guiding principles for concept selection are:
+The IR is the simplest way to describe some computation that can be executed on a stored procedure sever. It's basically 1:1 with functionality a simple programming language could offer with the syntax boiled off and operations untangled.
 
-- High-level: Users should only have to work on things that are unique to their business. The rest should be abstracted away.
-- Familiar: The purpose of the language is not to make the language designers feel smart. It's for other people.
+The IR representation is compiled to executable ops. However, the IR can have any number of compile steps which could in theory optimize or ensure correctness.
 
 
-## Writers' Assumptions
+## Ops
 
-All language is ambiguous. Ambiguity is resolved with assumptions of intent. Writers of conduit code may assume
-their deployments are:
-
-- Infinitely scalable
-- As fast as possible
-- Cost efficient
-- Fault Tolerant
-
-
-
+Ops are what is actually executed by the stored procedure server. If one is crazy enough, they could build something that works with the op writing interface directly. However, you open yourself up to a host of runtime errors, so you better know what you're doing.
 
