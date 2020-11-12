@@ -329,7 +329,7 @@ describe("with input", () => {
     
 })
 
-describe("mongo global objects", () => {
+describe("global objects", () => {
 
     const get: RootNode[] = [
         {
