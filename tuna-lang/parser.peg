@@ -3,5 +3,8 @@ initializeConst := 'const' ws+ name=name ws+ equals ws+ value=literal
 name := name='[a-zA-Z]+\w*'
 equals := '='
 ws := '\s'
-obj := '\{' ws* '\}'
+obj := '\{' ws* fields=fields ws* '\}'
 literal := obj
+newLineOrComma := '\n' | ','
+field := name=name ws* ':' value=literal newLineOrComma?
+fields := value=field*

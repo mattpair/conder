@@ -9,6 +9,10 @@ ParseResult {
       "name": "obj",
     },
     "value": Object {
+      "fields": Object {
+        "kind": "fields",
+        "value": Array [],
+      },
       "kind": "obj",
     },
   },

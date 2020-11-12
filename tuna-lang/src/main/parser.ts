@@ -4,8 +4,11 @@
 * name := name='[a-zA-Z]+\w*'
 * equals := '='
 * ws := '\s'
-* obj := '\{' ws* '\}'
+* obj := '\{' ws* fields=fields ws* '\}'
 * literal := obj
+* newLineOrComma := '\n' | ','
+* field := name=name ws* ':' value=literal newLineOrComma?
+* fields := value=field*
 */
 type Nullable<T> = T | null;
 type $$RuleType<T> = (log?: (msg: string) => void) => Nullable<T>;
@@ -22,6 +25,10 @@ export enum ASTKinds {
     ws = "ws",
     obj = "obj",
     literal = "literal",
+    newLineOrComma_1 = "newLineOrComma_1",
+    newLineOrComma_2 = "newLineOrComma_2",
+    field = "field",
+    fields = "fields",
 }
 export interface initializeConst {
     kind: ASTKinds.initializeConst;
@@ -36,8 +43,21 @@ export type equals = string;
 export type ws = string;
 export interface obj {
     kind: ASTKinds.obj;
+    fields: fields;
 }
 export type literal = obj;
+export type newLineOrComma = newLineOrComma_1 | newLineOrComma_2;
+export type newLineOrComma_1 = string;
+export type newLineOrComma_2 = string;
+export interface field {
+    kind: ASTKinds.field;
+    name: name;
+    value: literal;
+}
+export interface fields {
+    kind: ASTKinds.fields;
+    value: field[];
+}
 export class Parser {
     private readonly input: string;
     private pos: PosInfo;
@@ -103,19 +123,71 @@ export class Parser {
                 if (log) {
                     log("obj");
                 }
+                let $scope$fields: Nullable<fields>;
                 let $$res: Nullable<obj> = null;
                 if (true
                     && this.regexAccept(String.raw`(?:\{)`, $$dpth + 1, $$cr) !== null
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && ($scope$fields = this.matchfields($$dpth + 1, $$cr)) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
                     && this.regexAccept(String.raw`(?:\})`, $$dpth + 1, $$cr) !== null
                 ) {
-                    $$res = {kind: ASTKinds.obj, };
+                    $$res = {kind: ASTKinds.obj, fields: $scope$fields};
                 }
                 return $$res;
             }, $$cr)();
     }
     public matchliteral($$dpth: number, $$cr?: ContextRecorder): Nullable<literal> {
         return this.matchobj($$dpth + 1, $$cr);
+    }
+    public matchnewLineOrComma($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma> {
+        return this.choice<newLineOrComma>([
+            () => this.matchnewLineOrComma_1($$dpth + 1, $$cr),
+            () => this.matchnewLineOrComma_2($$dpth + 1, $$cr),
+        ]);
+    }
+    public matchnewLineOrComma_1($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma_1> {
+        return this.regexAccept(String.raw`(?:\n)`, $$dpth + 1, $$cr);
+    }
+    public matchnewLineOrComma_2($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma_2> {
+        return this.regexAccept(String.raw`(?:,)`, $$dpth + 1, $$cr);
+    }
+    public matchfield($$dpth: number, $$cr?: ContextRecorder): Nullable<field> {
+        return this.runner<field>($$dpth,
+            (log) => {
+                if (log) {
+                    log("field");
+                }
+                let $scope$name: Nullable<name>;
+                let $scope$value: Nullable<literal>;
+                let $$res: Nullable<field> = null;
+                if (true
+                    && ($scope$name = this.matchname($$dpth + 1, $$cr)) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && this.regexAccept(String.raw`(?::)`, $$dpth + 1, $$cr) !== null
+                    && ($scope$value = this.matchliteral($$dpth + 1, $$cr)) !== null
+                    && ((this.matchnewLineOrComma($$dpth + 1, $$cr)) || true)
+                ) {
+                    $$res = {kind: ASTKinds.field, name: $scope$name, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchfields($$dpth: number, $$cr?: ContextRecorder): Nullable<fields> {
+        return this.runner<fields>($$dpth,
+            (log) => {
+                if (log) {
+                    log("fields");
+                }
+                let $scope$value: Nullable<field[]>;
+                let $$res: Nullable<fields> = null;
+                if (true
+                    && ($scope$value = this.loop<field>(() => this.matchfield($$dpth + 1, $$cr), true)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.fields, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
     }
     public test(): boolean {
         const mrk = this.mark();
