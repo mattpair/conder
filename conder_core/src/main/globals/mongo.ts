@@ -210,6 +210,7 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
                 ow.instantiate("_key"),
                 ...base_compiler(n.key, compile_function),
                 ow.setField({field_depth: 1}),
+                // We don't need the value, so just suppress it.
                 ow.findOneInStore([n.obj, {_val: false}]),
                 ow.isLastNone,
                 ow.conditonallySkipXops(3),
