@@ -457,6 +457,28 @@ describe("global objects", () => {
             },
             "requires storage"
         )
-    
+    )
+
+    const checkL1: RootNode[] = [{
+        kind: "Return",
+        value: {
+            kind: "FieldExists",
+            value: {kind: "GlobalObject", name: TEST_STORE},
+            field: {kind: "String", value: "l1"}
+        }
+    }]
+    it("can check existence of keys",
+        noInputHarness(
+            {
+                set,
+                checkL1
+            },
+            async server => {
+                expect(await server.checkL1()).toBe(false)
+                expect(await server.set()).toBeNull()
+                expect(await server.checkL1()).toBe(true)
+            },
+            "requires storage"
+        )
     )
 })

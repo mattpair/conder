@@ -204,7 +204,21 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
         
      
         case "keyExists":
-            break
+            return [
+                ow.instantiate({_key: {}}),
+                // Search for key
+                ow.instantiate("_key"),
+                ...base_compiler(n.key, compile_function),
+                ow.setField({field_depth: 1}),
+                ow.findOneInStore([n.obj, {_val: false}]),
+                ow.isLastNone,
+                ow.conditonallySkipXops(3),
+                ow.popStack,
+                ow.instantiate(true),
+                ow.offsetOpCursor(2),
+                ow.popStack,
+                ow.instantiate(false)
+            ]
         
         default: return base_compiler(n, compile_function)
     }
