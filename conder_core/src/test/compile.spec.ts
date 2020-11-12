@@ -410,7 +410,7 @@ describe("globals", () => {
         )
     )
 
-    it.only("setting a nested key on a non existent object throws an error",
+    it("setting a nested key on a non existent object throws an error",
         noInputHarness(
             {
                 set: [{
