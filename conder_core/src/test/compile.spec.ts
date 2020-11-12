@@ -329,7 +329,7 @@ describe("with input", () => {
     
 })
 
-describe("globals", () => {
+describe("mongo global objects", () => {
 
     const get: RootNode[] = [
         {
@@ -357,26 +357,28 @@ describe("globals", () => {
         "requires storage")
     )
 
+    const set: RootNode[] = [{
+        kind: "Update",
+        target: {kind: "GlobalObject", name: TEST_STORE},
+        operation: {
+            kind: "SetField",
+            field_name: [{kind: "String", value: "l1"}],
+            value: {kind: "Object", fields: [
+                {
+                    kind: "SetField", 
+                    value: {
+                        kind: "Int", value: 42
+                    },
+                    field_name: [{kind: "String", value: "l2"}]
+                }
+            ]}
+        }
+    }]
+
     it("getting a key returns the value",
         noInputHarness({
             get,
-            set: [{
-                kind: "Update",
-                target: {kind: "GlobalObject", name: TEST_STORE},
-                operation: {
-                    kind: "SetField",
-                    field_name: [{kind: "String", value: "l1"}],
-                    value: {kind: "Object", fields: [
-                        {
-                            kind: "SetField", 
-                            value: {
-                                kind: "Int", value: 42
-                            },
-                            field_name: [{kind: "String", value: "l2"}]
-                        }
-                    ]}
-                }
-            }]
+            set
         },
         async server => {
             expect(await server.set()).toBeNull()
@@ -410,27 +412,48 @@ describe("globals", () => {
         )
     )
 
+    const setNested: RootNode[] = [{
+        kind: "Update",
+        target: {kind: "GlobalObject", name: TEST_STORE},
+        operation: {
+            kind: "SetField",
+            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+            value: {
+                kind: "Int", value: 41
+            }             
+        }
+    }]
     it("setting a nested key on a non existent object throws an error",
         noInputHarness(
             {
-                set: [{
-                    kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
-                    operation: {
-                        kind: "SetField",
-                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
-                        value: {
-                            kind: "Int", value: 41
-                        }             
-                    }
-                }],
+                setNested,
                 get,
                 getNested
             },
             async server => {
-                await expect(server.set()).rejects.toThrowError()
+                await expect(server.setNested()).rejects.toThrowError()
                 await expect(server.getNested()).rejects.toThrowError()
                 expect(await server.get()).toBeNull()
+            },
+            "requires storage"
+        )
+    )
+
+    it("setting a nested key on an existing object",
+        noInputHarness(
+            {
+                setNested,
+                set,
+                get,
+                getNested
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setNested()).toBeNull()
+                expect(await server.getNested()).toEqual(41)
+                expect(await server.get()).toEqual({l2: 41})
+                expect(await server.set()).toBeNull()
+                expect(await server.getNested()).toEqual(42)
             },
             "requires storage"
         )
