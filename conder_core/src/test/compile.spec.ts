@@ -342,7 +342,7 @@ describe("globals", () => {
                 },
                 field_name: [{
                     kind: "String",
-                    value: "test_key"
+                    value: "l1"
                 }]
             }
         }
@@ -365,14 +365,14 @@ describe("globals", () => {
                 target: {kind: "GlobalObject", name: TEST_STORE},
                 operation: {
                     kind: "SetField",
-                    field_name: [{kind: "String", value: "test_key"}],
+                    field_name: [{kind: "String", value: "l1"}],
                     value: {kind: "Object", fields: [
                         {
                             kind: "SetField", 
                             value: {
                                 kind: "Int", value: 42
                             },
-                            field_name: [{kind: "String", value: "answer"}]
+                            field_name: [{kind: "String", value: "l2"}]
                         }
                     ]}
                 }
@@ -380,10 +380,59 @@ describe("globals", () => {
         },
         async server => {
             expect(await server.set()).toBeNull()
-            expect(await server.get()).toEqual({answer: 42})
+            expect(await server.get()).toEqual({l2: 42})
 
         },
         "requires storage"
+        )
+    )
+
+    const getNested: RootNode[] = [
+        {
+            kind: "Return", 
+            value: {
+                kind: "GetField", 
+                target: {
+                    kind: "GlobalObject", 
+                    name: TEST_STORE
+                },
+                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+            }
+        }
+    ]
+  
+    it("getting a non existent nested field throws an error",
+        noInputHarness({getNested},
+        async server => {
+            await expect(server.getNested()).rejects.toThrowError()
+        },
+        "requires storage"
+        )
+    )
+
+    it.only("setting a nested key on a non existent object throws an error",
+        noInputHarness(
+            {
+                set: [{
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Int", value: 41
+                        }             
+                    }
+                }],
+                get,
+                getNested
+            },
+            async server => {
+                await expect(server.set()).rejects.toThrowError()
+                await expect(server.getNested()).rejects.toThrowError()
+                expect(await server.get()).toBeNull()
+            },
+            "requires storage"
         )
     
     )

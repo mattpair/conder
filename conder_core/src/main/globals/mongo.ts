@@ -137,7 +137,16 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
         
         // Assume key depth is one
         case "GetKeyFromObject":
+            const manyKeySuccess: AnyOpInstance[] = []
+            const manyKeyFail: AnyOpInstance[] = []
+            if (n.key.length > 1) {
+                manyKeySuccess.push(
+                    ...n.key.slice(1).flatMap(compile_function),
+                    ow.getField({field_depth: n.key.length - 1})
+                )
 
+                manyKeyFail.push(ow.raiseError("Key does not exist on global"))
+            }
             return [
                 // Create the query doc
                 ow.instantiate({_key: {}}),
@@ -147,30 +156,50 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
                 ow.setField({field_depth: 1}),
                 ow.findOneInStore([n.obj, {}]),
                 ow.isLastNone,
-                ow.conditonallySkipXops(2),
+                ow.conditonallySkipXops(1 + manyKeySuccess.length + 1),
                 ow.tryGetField("_val"),
-                ow.offsetOpCursor(1),
+                ...manyKeySuccess,
+                ow.offsetOpCursor(manyKeyFail.length + 1),
+                ...manyKeyFail,
                 ow.instantiate(null)
             ]
 
             
         case "SetKeyOnObject":
+            const updateDocumentCreation: AnyOpInstance[] = []
+            if (n.key.length > 1) {
+                updateDocumentCreation.push(
+                    ow.instantiate({"$set": {}}),
+                    ow.instantiate("$set"),
+                    ow.instantiate("_val"),
+                    ...n.key.slice(1).flatMap(compile_function),
+                    ow.stringConcat({nStrings: n.key.length, joiner: "."}),
+                    ...compile_function(n.value),
+                    ow.setField({field_depth: 2})
+                )
+            } else {
+                updateDocumentCreation.push( 
+                    ow.instantiate({"$set": {_val: {}}}),
+                    ow.instantiate("$set"),
+                    ow.instantiate("_val"),
+                    ...compile_function(n.value),
+                    ow.setField({field_depth: 2}),
+                )
+            }
             return [
-                // Update document
-                ow.instantiate({"$set": {_val: {}}}),
-                ow.instantiate("$set"),
-                ow.instantiate("_val"),
-                ...compile_function(n.value),
-                ow.setField({field_depth: 2}),
+                ...updateDocumentCreation,
                 // Create the query doc
                 ow.instantiate({_key: {}}),
                 ow.instantiate("_key"),
                 ...base_compiler(n.key[0], compile_function),
                 ow.setField({field_depth: 1}),
                 // update or insert key
-                ow.updateOne({store: n.obj, upsert: true}),
-
-                
+                ow.updateOne({store: n.obj, upsert: n.key.length === 1}),
+                ow.isLastNone,
+                ow.conditonallySkipXops(2),
+                ow.popStack,
+                ow.offsetOpCursor(1),
+                ow.raiseError("Nested key does not exist"),
             ]
         
      

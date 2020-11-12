@@ -65,7 +65,8 @@ ParamOp<"getField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
-StaticOp<"isLastNone">
+StaticOp<"isLastNone"> |
+ParamOp<"stringConcat", {nStrings: number, joiner: string}>
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -241,6 +242,22 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
+    },
+
+    stringConcat: {
+        opDefinition: {
+            paramType: ["usize", "String"],
+            rustOpHandler: `
+            let mut strings = Vec::with_capacity(*param0);
+            for n in 1..=*param0 {
+                strings.push(${popToString});
+            }
+            strings.reverse();
+            ${pushStack("InterpreterType::string(strings.join(param1))")};
+            None
+            `
+        },
+        factoryMethod: (p) => ({kind: "stringConcat", data: [p.nStrings, p.joiner]})
     },
 
     getField: {
