@@ -1,3 +1,7 @@
-hello := 'Hello '
-helloWorld := hello 'World'
-helloChoice := hello 'Mars' | helloWorld
+
+initializeConst := 'const' ws+ name=name ws+ equals ws+ value=literal
+name := name='[a-zA-Z]+\w*'
+equals := '='
+ws := '\s'
+obj := '\{' ws* '\}'
+literal := obj

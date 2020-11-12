@@ -1,0 +1,17 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`parser should parse a global object 1`] = `
+ParseResult {
+  "ast": Object {
+    "kind": "initializeConst",
+    "name": Object {
+      "kind": "name",
+      "name": "obj",
+    },
+    "value": Object {
+      "kind": "obj",
+    },
+  },
+  "err": null,
+}
+`;
