@@ -2,7 +2,7 @@
   "name": "tuna-lang",
   "version": "0.0.1",
   "scripts": {
-    "compile": "tsc -b",
+    "compile": "tsc -b && tspeg parser.peg src/main/parser.ts",
     "pretest": "npm run compile",
     "test": "jest --maxWorkers=50%"
   },
@@ -13,6 +13,7 @@
     "jest": "^26.2.2",
     "prettier": "^2.0.5",
     "ts-jest": "^26.1.4",
+    "tspeg": "^2.1.0",
     "typescript": "^4.0.0"
   },
   "dependencies": {
