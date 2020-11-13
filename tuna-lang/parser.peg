@@ -14,10 +14,11 @@ fields := value=field*
 space := ' '
 
 executable := ws* value={value={ret | assignment | expression } ws+ }*
-expression := value={name | str}
+expression := value={name | literal }
+
 parameterIndex := '\[' space* value={name | expression} space* '\]'
 literalIndex := '\.' value={name}
-objectIndex := obj=name index={parameterIndex | literalIndex}
+objectIndex := obj=expression index={parameterIndex | literalIndex}
 select := value={objectIndex | name}
 ret := 'return'
 func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'

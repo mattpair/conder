@@ -13,10 +13,10 @@
 * fields := value=field*
 * space := ' '
 * executable := ws* value={value={ret | assignment | expression } ws+ }*
-* expression := value={name | str}
+* expression := value={name | literal }
 * parameterIndex := '\[' space* value={name | expression} space* '\]'
 * literalIndex := '\.' value={name}
-* objectIndex := obj=name index={parameterIndex | literalIndex}
+* objectIndex := obj=expression index={parameterIndex | literalIndex}
 * select := value={objectIndex | name}
 * ret := 'return'
 * func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
@@ -138,7 +138,7 @@ export interface expression {
 }
 export type expression_$0 = expression_$0_1 | expression_$0_2;
 export type expression_$0_1 = name;
-export type expression_$0_2 = str;
+export type expression_$0_2 = literal;
 export interface parameterIndex {
     kind: ASTKinds.parameterIndex;
     value: parameterIndex_$0;
@@ -153,7 +153,7 @@ export interface literalIndex {
 export type literalIndex_$0 = name;
 export interface objectIndex {
     kind: ASTKinds.objectIndex;
-    obj: name;
+    obj: expression;
     index: objectIndex_$0;
 }
 export type objectIndex_$0 = objectIndex_$0_1 | objectIndex_$0_2;
@@ -461,7 +461,7 @@ export class Parser {
         return this.matchname($$dpth + 1, $$cr);
     }
     public matchexpression_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$0_2> {
-        return this.matchstr($$dpth + 1, $$cr);
+        return this.matchliteral($$dpth + 1, $$cr);
     }
     public matchparameterIndex($$dpth: number, $$cr?: ContextRecorder): Nullable<parameterIndex> {
         return this.runner<parameterIndex>($$dpth,
@@ -521,11 +521,11 @@ export class Parser {
                 if (log) {
                     log("objectIndex");
                 }
-                let $scope$obj: Nullable<name>;
+                let $scope$obj: Nullable<expression>;
                 let $scope$index: Nullable<objectIndex_$0>;
                 let $$res: Nullable<objectIndex> = null;
                 if (true
-                    && ($scope$obj = this.matchname($$dpth + 1, $$cr)) !== null
+                    && ($scope$obj = this.matchexpression($$dpth + 1, $$cr)) !== null
                     && ($scope$index = this.matchobjectIndex_$0($$dpth + 1, $$cr)) !== null
                 ) {
                     $$res = {kind: ASTKinds.objectIndex, obj: $scope$obj, index: $scope$index};
