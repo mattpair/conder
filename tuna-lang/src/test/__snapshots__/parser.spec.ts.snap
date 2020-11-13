@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`parser should parse a global object 1`] = `
+exports[`language should allow a global object 1`] = `
 ParseResult {
   "ast": Array [
     Object {
@@ -25,7 +25,7 @@ ParseResult {
 }
 `;
 
-exports[`parser should parse many global objects 1`] = `
+exports[`language should allow many global objects 1`] = `
 ParseResult {
   "ast": Array [
     Object {

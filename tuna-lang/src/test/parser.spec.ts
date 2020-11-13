@@ -1,20 +1,26 @@
 import { Parser } from '../main/parser';
 
 
-describe("parser", () => {
-    it("should parse a global object", () => {
-        const p = new Parser(`const obj = {}`)
-        const r = p.parse()
-        expect(r).toMatchSnapshot()
-    })
+describe("language", () => {
 
-    it("should parse many global objects", () => {
-        const p = new Parser(
-        `
+    function tunaTest(maybeSucceed: "succeed" | "fail", code: string): jest.ProvidesCallback {
+        return (cb) => {
+            if (maybeSucceed === "succeed") {
+                const p = new Parser(code)
+                const r = p.parse()
+                expect(r).toMatchSnapshot()
+            }
+            cb()
+        }
+    }
+
+    it("should allow a global object", tunaTest("succeed", `const obj = {}`))
+        
+
+    it("should allow many global objects",
+        tunaTest("succeed", `
         const obj1 = {}
         const obj2 = {}
         `)
-        const r = p.parse()
-        expect(r).toMatchSnapshot()
-    })
+    )
 })
