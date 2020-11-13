@@ -24,5 +24,12 @@ describe("language", () => {
         `)
     )
 
-    it("should allow empty public functions", tunaTest("succeed", `public function doSomething() {}`))
+    it("should allow empty public functions", 
+    tunaTest("succeed", `public function doSomething() {}`))
+
+    it("should allow a fixed number of args in functions",
+    tunaTest("succeed", `public function argy(a, b, c) {
+        
+    }`)
+    )
 })

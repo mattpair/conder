@@ -7,8 +7,11 @@ equals := '='
 ws := '\s'
 obj := '\{' ws* fields=fields ws* '\}'
 literal := obj
-newLineOrComma := '\n' | ','
+newLineOrComma := '\n|,'
 field := name=name ws* ':' value=literal newLineOrComma?
 fields := value=field*
 space := ' '
-func := ws* 'public' space+ 'function' space+ name=name space* '\(\)' ws* '\{' ws* '\}'
+
+
+func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' ws* '\}'
+args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'

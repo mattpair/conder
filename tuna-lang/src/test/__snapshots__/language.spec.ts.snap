@@ -1,5 +1,46 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`language should allow a fixed number of args in functions 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": Object {
+            "kind": "name",
+            "name": "c",
+          },
+          "leadingArgs": Array [
+            Object {
+              "kind": "args_$0",
+              "name": Object {
+                "kind": "name",
+                "name": "a",
+              },
+            },
+            Object {
+              "kind": "args_$0",
+              "name": Object {
+                "kind": "name",
+                "name": "b",
+              },
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "argy",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
 exports[`language should allow a global object 1`] = `
 ParseResult {
   "ast": Array [
@@ -31,6 +72,11 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": null,
+          "leadingArgs": Array [],
+        },
         "kind": "func",
         "name": Object {
           "kind": "name",

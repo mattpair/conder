@@ -7,11 +7,12 @@
 * ws := '\s'
 * obj := '\{' ws* fields=fields ws* '\}'
 * literal := obj
-* newLineOrComma := '\n' | ','
+* newLineOrComma := '\n|,'
 * field := name=name ws* ':' value=literal newLineOrComma?
 * fields := value=field*
 * space := ' '
-* func := ws* 'public' space+ 'function' space+ name=name space* '\(\)' ws* '\{' ws* '\}'
+* func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' ws* '\}'
+* args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
 */
 type Nullable<T> = T | null;
 type $$RuleType<T> = (log?: (msg: string) => void) => Nullable<T>;
@@ -34,12 +35,14 @@ export enum ASTKinds {
     ws = "ws",
     obj = "obj",
     literal = "literal",
-    newLineOrComma_1 = "newLineOrComma_1",
-    newLineOrComma_2 = "newLineOrComma_2",
+    newLineOrComma = "newLineOrComma",
     field = "field",
     fields = "fields",
     space = "space",
     func = "func",
+    args = "args",
+    args_$0 = "args_$0",
+    args_$1 = "args_$1",
 }
 export type globals = globals_$0[];
 export interface globals_$0 {
@@ -68,9 +71,7 @@ export interface obj {
     fields: fields;
 }
 export type literal = obj;
-export type newLineOrComma = newLineOrComma_1 | newLineOrComma_2;
-export type newLineOrComma_1 = string;
-export type newLineOrComma_2 = string;
+export type newLineOrComma = string;
 export interface field {
     kind: ASTKinds.field;
     name: name;
@@ -84,7 +85,18 @@ export type space = string;
 export interface func {
     kind: ASTKinds.func;
     name: name;
+    args: args;
 }
+export interface args {
+    kind: ASTKinds.args;
+    leadingArgs: args_$0[];
+    lastArg: Nullable<args_$1>;
+}
+export interface args_$0 {
+    kind: ASTKinds.args_$0;
+    name: name;
+}
+export type args_$1 = name;
 export class Parser {
     private readonly input: string;
     private pos: PosInfo;
@@ -213,16 +225,7 @@ export class Parser {
         return this.matchobj($$dpth + 1, $$cr);
     }
     public matchnewLineOrComma($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma> {
-        return this.choice<newLineOrComma>([
-            () => this.matchnewLineOrComma_1($$dpth + 1, $$cr),
-            () => this.matchnewLineOrComma_2($$dpth + 1, $$cr),
-        ]);
-    }
-    public matchnewLineOrComma_1($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma_1> {
-        return this.regexAccept(String.raw`(?:\n)`, $$dpth + 1, $$cr);
-    }
-    public matchnewLineOrComma_2($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma_2> {
-        return this.regexAccept(String.raw`(?:,)`, $$dpth + 1, $$cr);
+        return this.regexAccept(String.raw`(?:\n|,)`, $$dpth + 1, $$cr);
     }
     public matchfield($$dpth: number, $$cr?: ContextRecorder): Nullable<field> {
         return this.runner<field>($$dpth,
@@ -271,6 +274,7 @@ export class Parser {
                     log("func");
                 }
                 let $scope$name: Nullable<name>;
+                let $scope$args: Nullable<args>;
                 let $$res: Nullable<func> = null;
                 if (true
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
@@ -280,16 +284,60 @@ export class Parser {
                     && this.loop<space>(() => this.matchspace($$dpth + 1, $$cr), false) !== null
                     && ($scope$name = this.matchname($$dpth + 1, $$cr)) !== null
                     && this.loop<space>(() => this.matchspace($$dpth + 1, $$cr), true) !== null
-                    && this.regexAccept(String.raw`(?:\(\))`, $$dpth + 1, $$cr) !== null
+                    && ($scope$args = this.matchargs($$dpth + 1, $$cr)) !== null
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
                     && this.regexAccept(String.raw`(?:\{)`, $$dpth + 1, $$cr) !== null
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
                     && this.regexAccept(String.raw`(?:\})`, $$dpth + 1, $$cr) !== null
                 ) {
-                    $$res = {kind: ASTKinds.func, name: $scope$name};
+                    $$res = {kind: ASTKinds.func, name: $scope$name, args: $scope$args};
                 }
                 return $$res;
             }, $$cr)();
+    }
+    public matchargs($$dpth: number, $$cr?: ContextRecorder): Nullable<args> {
+        return this.runner<args>($$dpth,
+            (log) => {
+                if (log) {
+                    log("args");
+                }
+                let $scope$leadingArgs: Nullable<args_$0[]>;
+                let $scope$lastArg: Nullable<Nullable<args_$1>>;
+                let $$res: Nullable<args> = null;
+                if (true
+                    && this.regexAccept(String.raw`(?:\()`, $$dpth + 1, $$cr) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && ($scope$leadingArgs = this.loop<args_$0>(() => this.matchargs_$0($$dpth + 1, $$cr), true)) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && (($scope$lastArg = this.matchargs_$1($$dpth + 1, $$cr)) || true)
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && this.regexAccept(String.raw`(?:\))`, $$dpth + 1, $$cr) !== null
+                ) {
+                    $$res = {kind: ASTKinds.args, leadingArgs: $scope$leadingArgs, lastArg: $scope$lastArg};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchargs_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<args_$0> {
+        return this.runner<args_$0>($$dpth,
+            (log) => {
+                if (log) {
+                    log("args_$0");
+                }
+                let $scope$name: Nullable<name>;
+                let $$res: Nullable<args_$0> = null;
+                if (true
+                    && ($scope$name = this.matchname($$dpth + 1, $$cr)) !== null
+                    && this.matchnewLineOrComma($$dpth + 1, $$cr) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                ) {
+                    $$res = {kind: ASTKinds.args_$0, name: $scope$name};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchargs_$1($$dpth: number, $$cr?: ContextRecorder): Nullable<args_$1> {
+        return this.matchname($$dpth + 1, $$cr);
     }
     public test(): boolean {
         const mrk = this.mark();
