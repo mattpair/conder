@@ -74,4 +74,14 @@ describe("language", () => {
     }
     
     `))
+
+    it('can declare temp variables', tunaTest("succeed", `
+    
+    public function fff(a) {
+        const b = true
+        let c = false
+        const d = a[b]
+    }
+    
+    `))
 })

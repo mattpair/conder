@@ -1,5 +1,150 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`language can declare temp variables 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": Object {
+            "kind": "name",
+            "name": "a",
+          },
+          "leadingArgs": Array [],
+        },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "name",
+                  "name": "const",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "b",
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "bool",
+                    "value": "true",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "name",
+                  "name": "let",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "c",
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "bool",
+                    "value": "false",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "name",
+                  "name": "const",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "d",
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "methods": Array [
+                    Object {
+                      "kind": "method",
+                      "method": Object {
+                        "kind": "parameterIndex",
+                        "value": Object {
+                          "kind": "expression",
+                          "methods": Array [],
+                          "root": Object {
+                            "kind": "name",
+                            "name": "b",
+                          },
+                        },
+                      },
+                    },
+                  ],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "fff",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
 exports[`language should allow a fixed number of args in functions 1`] = `
 ParseResult {
   "ast": Array [
