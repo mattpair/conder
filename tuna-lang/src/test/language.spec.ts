@@ -1,3 +1,4 @@
+import { compile } from '../main/compile';
 import { Parser } from '../main/parser';
 
 
@@ -8,7 +9,11 @@ describe("language", () => {
             if (maybeSucceed === "succeed") {
                 const p = new Parser(code)
                 const r = p.parse()
-                expect(r).toMatchSnapshot()
+                expect(compile(r)).toMatchSnapshot()
+            } else {
+                const p = new Parser(code)
+                const r = p.parse()
+                expect(() => compile(r)).toThrowErrorMatchingSnapshot()
             }
             cb()
         }
@@ -83,5 +88,9 @@ describe("language", () => {
         const d = a[b]
     }
     
+    `))
+    
+    it('only allows global constants', tunaTest("fail", `    
+    let someVar = {}
     `))
 })
