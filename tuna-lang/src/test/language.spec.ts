@@ -29,7 +29,12 @@ describe("language", () => {
 
     it("should allow a fixed number of args in functions",
     tunaTest("succeed", `public function argy(a, b, c) {
-        
+
     }`)
     )
+
+    it("should allow return statements within functions",
+    tunaTest("succeed", `public function returny() {
+        return
+    }`))
 })

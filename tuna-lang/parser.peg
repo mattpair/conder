@@ -12,6 +12,7 @@ field := name=name ws* ':' value=literal newLineOrComma?
 fields := value=field*
 space := ' '
 
-
-func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' ws* '\}'
+executable := ws* value={value={ret} ws+ }*
+ret := 'return'
+func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'

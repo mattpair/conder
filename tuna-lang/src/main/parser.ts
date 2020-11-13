@@ -11,7 +11,9 @@
 * field := name=name ws* ':' value=literal newLineOrComma?
 * fields := value=field*
 * space := ' '
-* func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' ws* '\}'
+* executable := ws* value={value={ret} ws+ }*
+* ret := 'return'
+* func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 * args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
 */
 type Nullable<T> = T | null;
@@ -39,6 +41,10 @@ export enum ASTKinds {
     field = "field",
     fields = "fields",
     space = "space",
+    executable = "executable",
+    executable_$0 = "executable_$0",
+    executable_$0_$0 = "executable_$0_$0",
+    ret = "ret",
     func = "func",
     args = "args",
     args_$0 = "args_$0",
@@ -82,10 +88,21 @@ export interface fields {
     value: field[];
 }
 export type space = string;
+export interface executable {
+    kind: ASTKinds.executable;
+    value: executable_$0[];
+}
+export interface executable_$0 {
+    kind: ASTKinds.executable_$0;
+    value: executable_$0_$0;
+}
+export type executable_$0_$0 = ret;
+export type ret = string;
 export interface func {
     kind: ASTKinds.func;
     name: name;
     args: args;
+    body: executable;
 }
 export interface args {
     kind: ASTKinds.args;
@@ -267,6 +284,46 @@ export class Parser {
     public matchspace($$dpth: number, $$cr?: ContextRecorder): Nullable<space> {
         return this.regexAccept(String.raw`(?: )`, $$dpth + 1, $$cr);
     }
+    public matchexecutable($$dpth: number, $$cr?: ContextRecorder): Nullable<executable> {
+        return this.runner<executable>($$dpth,
+            (log) => {
+                if (log) {
+                    log("executable");
+                }
+                let $scope$value: Nullable<executable_$0[]>;
+                let $$res: Nullable<executable> = null;
+                if (true
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && ($scope$value = this.loop<executable_$0>(() => this.matchexecutable_$0($$dpth + 1, $$cr), true)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.executable, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchexecutable_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0> {
+        return this.runner<executable_$0>($$dpth,
+            (log) => {
+                if (log) {
+                    log("executable_$0");
+                }
+                let $scope$value: Nullable<executable_$0_$0>;
+                let $$res: Nullable<executable_$0> = null;
+                if (true
+                    && ($scope$value = this.matchexecutable_$0_$0($$dpth + 1, $$cr)) !== null
+                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), false) !== null
+                ) {
+                    $$res = {kind: ASTKinds.executable_$0, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchexecutable_$0_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0_$0> {
+        return this.matchret($$dpth + 1, $$cr);
+    }
+    public matchret($$dpth: number, $$cr?: ContextRecorder): Nullable<ret> {
+        return this.regexAccept(String.raw`(?:return)`, $$dpth + 1, $$cr);
+    }
     public matchfunc($$dpth: number, $$cr?: ContextRecorder): Nullable<func> {
         return this.runner<func>($$dpth,
             (log) => {
@@ -275,6 +332,7 @@ export class Parser {
                 }
                 let $scope$name: Nullable<name>;
                 let $scope$args: Nullable<args>;
+                let $scope$body: Nullable<executable>;
                 let $$res: Nullable<func> = null;
                 if (true
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
@@ -287,10 +345,10 @@ export class Parser {
                     && ($scope$args = this.matchargs($$dpth + 1, $$cr)) !== null
                     && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
                     && this.regexAccept(String.raw`(?:\{)`, $$dpth + 1, $$cr) !== null
-                    && this.loop<ws>(() => this.matchws($$dpth + 1, $$cr), true) !== null
+                    && ($scope$body = this.matchexecutable($$dpth + 1, $$cr)) !== null
                     && this.regexAccept(String.raw`(?:\})`, $$dpth + 1, $$cr) !== null
                 ) {
-                    $$res = {kind: ASTKinds.func, name: $scope$name, args: $scope$args};
+                    $$res = {kind: ASTKinds.func, name: $scope$name, args: $scope$args, body: $scope$body};
                 }
                 return $$res;
             }, $$cr)();

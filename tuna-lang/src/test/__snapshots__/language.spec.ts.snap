@@ -29,6 +29,10 @@ ParseResult {
             },
           ],
         },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [],
+        },
         "kind": "func",
         "name": Object {
           "kind": "name",
@@ -77,6 +81,10 @@ ParseResult {
           "lastArg": null,
           "leadingArgs": Array [],
         },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [],
+        },
         "kind": "func",
         "name": Object {
           "kind": "name",
@@ -123,6 +131,38 @@ ParseResult {
             "value": Array [],
           },
           "kind": "obj",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
+exports[`language should allow return statements within functions 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": null,
+          "leadingArgs": Array [],
+        },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [
+            Object {
+              "kind": "executable_$0",
+              "value": "return",
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "returny",
         },
       },
     },
