@@ -57,11 +57,15 @@ ParseResult {
           "name": "obj",
         },
         "value": Object {
-          "fields": Object {
-            "kind": "fields",
-            "value": Array [],
+          "kind": "expression",
+          "methods": Array [],
+          "root": Object {
+            "fields": Object {
+              "kind": "fields",
+              "value": Array [],
+            },
+            "kind": "obj",
           },
-          "kind": "obj",
         },
       },
     },
@@ -209,11 +213,15 @@ ParseResult {
           "name": "gg",
         },
         "value": Object {
-          "fields": Object {
-            "kind": "fields",
-            "value": Array [],
+          "kind": "expression",
+          "methods": Array [],
+          "root": Object {
+            "fields": Object {
+              "kind": "fields",
+              "value": Array [],
+            },
+            "kind": "obj",
           },
-          "kind": "obj",
         },
       },
     },
@@ -297,11 +305,15 @@ ParseResult {
           "name": "obj1",
         },
         "value": Object {
-          "fields": Object {
-            "kind": "fields",
-            "value": Array [],
+          "kind": "expression",
+          "methods": Array [],
+          "root": Object {
+            "fields": Object {
+              "kind": "fields",
+              "value": Array [],
+            },
+            "kind": "obj",
           },
-          "kind": "obj",
         },
       },
     },
@@ -314,11 +326,15 @@ ParseResult {
           "name": "obj2",
         },
         "value": Object {
-          "fields": Object {
-            "kind": "fields",
-            "value": Array [],
+          "kind": "expression",
+          "methods": Array [],
+          "root": Object {
+            "fields": Object {
+              "kind": "fields",
+              "value": Array [],
+            },
+            "kind": "obj",
           },
-          "kind": "obj",
         },
       },
     },
@@ -371,11 +387,15 @@ ParseResult {
           "name": "gg",
         },
         "value": Object {
-          "fields": Object {
-            "kind": "fields",
-            "value": Array [],
+          "kind": "expression",
+          "methods": Array [],
+          "root": Object {
+            "fields": Object {
+              "kind": "fields",
+              "value": Array [],
+            },
+            "kind": "obj",
           },
-          "kind": "obj",
         },
       },
     },

@@ -1,7 +1,7 @@
 globals := {value={constant | func} {ws+ | '$'}}*
 
 
-constant := ws* 'const' ws+ name=name ws* equals ws* value=literal
+constant := ws* 'const' ws+ name=name ws* equals ws* value=expression
 name := name='[a-zA-Z]+\w*'
 equals := '='
 ws := '\s'
