@@ -8,7 +8,25 @@ export type Manifest = {
     funcs: Map<string, FunctionDescription>
 }
 
-type ScopeMap = Map<string, "func" | "global" | {kind: "const" | "mut", index: number}>
+type ScopeMapEntry= "func" | "global" | {kind: "const" | "mut", index: number}
+class ScopeMap extends Map<string, ScopeMapEntry>  {
+    nextVar: number = 0
+    
+    public get nextVariableIndex(): number {
+        return this.nextVar
+    }
+
+    set(k: string, v: ScopeMapEntry): this {
+        if (v !== "global" && v !== "func") {
+            this.nextVar++
+        }
+        super.set(k, v)
+        return this
+    }
+
+
+}
+
 
 function excluding<EX extends AnyNode["kind"]>(node: AnyNode, ...not: EX[]): Exclude<AnyNode, {kind: EX}> {
     //@ts-ignore
@@ -87,7 +105,7 @@ function method_to_node(input: AnyNode, methods: expression["methods"], scope: S
 }
 
 type Target = {root: PickNode<"Update">["target"], field: PickNode<"SetField">["field_name"]}
-function expression_to_target(exp: expression, scope: ScopeMap): Target {
+function expression_to_update_target(exp: expression, scope: ScopeMap): Target {
 
     switch (exp.root.kind) {
         case ASTKinds.name:
@@ -97,8 +115,14 @@ function expression_to_target(exp: expression, scope: ScopeMap): Target {
             }
             if (name === "func") {
                 throw Error(`Invalid function reference ${exp.root.name}`)
-            } 
-            const root: Target["root"] = name === "global"? {kind: "GlobalObject", name: exp.root.name} : {kind: "Saved", index: name.index}
+            }
+            if (name !== "global" && name.kind === "const") {
+                throw Error(`Attempting to overwrite constant variable ${exp.root.name}`)
+            }
+            
+            const root: Target["root"] = name === "global" ? 
+                {kind: "GlobalObject", name: exp.root.name} 
+                : {kind: "Saved", index: name.index}
             
             const field: Target["field"] = exp.methods.map(m => {
                 switch (m.method.kind) {
@@ -117,7 +141,7 @@ function expression_to_target(exp: expression, scope: ScopeMap): Target {
             return {root, field}
 
 
-        default: throw Error(`Invalid assignment`)
+        default: throw Error(`Invalid assignment to ${exp.root.kind}`)
     }
 }
 
@@ -162,7 +186,7 @@ function to_computation(ex: executable, scope: ScopeMap): FunctionDescription["c
             
 
             case ASTKinds.assignment: {
-                const target: Target = expression_to_target(e.value.value, scope)
+                const target: Target = expression_to_update_target(e.value.target, scope)
                 const value: PickNode<"Update">["operation"] = excluding(expression_to_node(e.value.value, scope), "Update", "Return", "If", "Save", "SetField")
                 
                 ret.push({
@@ -176,6 +200,20 @@ function to_computation(ex: executable, scope: ScopeMap): FunctionDescription["c
                 ret.push(only(expression_to_node(e.value, scope), "Return", "If", "Save", "Update"))
                 break
             }
+
+            case ASTKinds.varDecl: 
+                const value = excluding(expression_to_node(e.value.value, scope), "Return", "If", "Update", "Save", "SetField")
+                const index = scope.nextVariableIndex
+                if (scope.has(e.value.name.name)) {
+                    throw Error(`The symbol ${e.value.name.name} is already in use`)
+                }
+                scope.set(e.value.name.name, {kind: e.value.mutability === "const" ? "const" : "mut", index})
+                ret.push({
+                    kind: "Save",
+                    value,
+                    index
+                })
+                break
             default: 
                 const n: never = e.value
         }
@@ -216,7 +254,7 @@ export function semantify(p: ParseResult): Manifest {
         throw Error(`Failure parsing: line ${p.err.pos.line} col ${p.err.pos.offset}: ${p.err.toString()}`)
     }
 
-    const globalScope: ScopeMap = new Map()
+    const globalScope = new ScopeMap()
     const aFunc: func[] = []
 
     const funcs: Map<string, FunctionDescription> = new Map()

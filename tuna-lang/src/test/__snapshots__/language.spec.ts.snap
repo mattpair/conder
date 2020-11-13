@@ -1,142 +1,98 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`language can declare temp variables 1`] = `
-Array [
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": Object {
-        "kind": "name",
-        "name": "a",
-      },
-      "leadingArgs": Array [],
-    },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [
+Object {
+  "funcs": Map {
+    "fff" => Object {
+      "computation": Array [
         Object {
-          "kind": "executable_$0",
+          "index": 1,
+          "kind": "Save",
           "value": Object {
-            "kind": "expression",
-            "methods": Array [],
-            "root": Object {
-              "kind": "name",
-              "name": "const",
-            },
+            "kind": "Bool",
+            "value": true,
           },
         },
         Object {
-          "kind": "executable_$0",
+          "index": 2,
+          "kind": "Save",
           "value": Object {
-            "kind": "assignment",
+            "kind": "Bool",
+            "value": false,
+          },
+        },
+        Object {
+          "index": 3,
+          "kind": "Save",
+          "value": Object {
+            "field_name": Array [
+              Object {
+                "index": 1,
+                "kind": "Saved",
+              },
+            ],
+            "kind": "GetField",
             "target": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "b",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "bool",
-                "value": "true",
-              },
-            },
-          },
-        },
-        Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "expression",
-            "methods": Array [],
-            "root": Object {
-              "kind": "name",
-              "name": "let",
-            },
-          },
-        },
-        Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "assignment",
-            "target": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "c",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "bool",
-                "value": "false",
-              },
-            },
-          },
-        },
-        Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "expression",
-            "methods": Array [],
-            "root": Object {
-              "kind": "name",
-              "name": "const",
-            },
-          },
-        },
-        Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "assignment",
-            "target": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "d",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [
-                Object {
-                  "kind": "method",
-                  "method": Object {
-                    "kind": "parameterIndex",
-                    "value": Object {
-                      "kind": "expression",
-                      "methods": Array [],
-                      "root": Object {
-                        "kind": "name",
-                        "name": "b",
-                      },
-                    },
-                  },
-                },
-              ],
-              "root": Object {
-                "kind": "name",
-                "name": "a",
-              },
+              "index": 0,
+              "kind": "Saved",
             },
           },
         },
       ],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "fff",
+      "input": Array [
+        Object {
+          "data": undefined,
+          "kind": "Any",
+        },
+      ],
     },
   },
-]
+  "globals": Map {},
+}
+`;
+
+exports[`language can overwrite inputs 1`] = `
+Object {
+  "funcs": Map {
+    "fff" => Object {
+      "computation": Array [
+        Object {
+          "kind": "Update",
+          "operation": Object {
+            "kind": "Bool",
+            "value": false,
+          },
+          "target": Object {
+            "index": 0,
+            "kind": "Saved",
+          },
+        },
+      ],
+      "input": Array [
+        Object {
+          "data": undefined,
+          "kind": "Any",
+        },
+      ],
+    },
+  },
+  "globals": Map {},
+}
+`;
+
+exports[`language cannot have a variable with the same name as a function 1`] = `
+"In function fff: 
+	The symbol fff is already in use"
+`;
+
+exports[`language cannot have duplicate variables 1`] = `
+"In function fff: 
+	The symbol a is already in use"
+`;
+
+exports[`language does not allow overwriting constants 1`] = `
+"In function fff: 
+	Attempting to overwrite constant variable b"
 `;
 
 exports[`language globals must be empty objects 1`] = `"Global someVar must be initialized as empty object"`;
@@ -375,34 +331,61 @@ Object {
         Object {
           "kind": "Update",
           "operation": Object {
-            "index": 0,
-            "kind": "Saved",
+            "field_name": Array [
+              Object {
+                "kind": "String",
+                "value": "abc",
+              },
+            ],
+            "kind": "SetField",
+            "value": Object {
+              "index": 0,
+              "kind": "Saved",
+            },
           },
           "target": Object {
-            "index": 0,
-            "kind": "Saved",
+            "kind": "GlobalObject",
+            "name": "gg",
           },
         },
         Object {
           "kind": "Update",
           "operation": Object {
-            "index": 0,
-            "kind": "Saved",
+            "field_name": Array [
+              Object {
+                "index": 0,
+                "kind": "Saved",
+              },
+            ],
+            "kind": "SetField",
+            "value": Object {
+              "index": 0,
+              "kind": "Saved",
+            },
           },
           "target": Object {
-            "index": 0,
-            "kind": "Saved",
+            "kind": "GlobalObject",
+            "name": "gg",
           },
         },
         Object {
           "kind": "Update",
           "operation": Object {
-            "index": 0,
-            "kind": "Saved",
+            "field_name": Array [
+              Object {
+                "kind": "String",
+                "value": "abc",
+              },
+            ],
+            "kind": "SetField",
+            "value": Object {
+              "index": 0,
+              "kind": "Saved",
+            },
           },
           "target": Object {
-            "index": 0,
-            "kind": "Saved",
+            "kind": "GlobalObject",
+            "name": "gg",
           },
         },
       ],

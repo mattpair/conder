@@ -76,8 +76,7 @@ describe("language", () => {
     
     `))
     
-    // need to update parser to accept variables in function
-    it.skip('can declare temp variables', tunaTest("succeed", `
+    it('can declare temp variables', tunaTest("succeed", `
     
     public function fff(a) {
         const b = true
@@ -85,6 +84,35 @@ describe("language", () => {
         const d = a[b]
     }
     
+    `))
+
+    it('can overwrite inputs', tunaTest("succeed", `
+    
+    public function fff(a) {
+        a = false
+    }
+    `))
+
+    it('cannot have duplicate variables', tunaTest("fail", `
+    
+    public function fff(a) {
+        const a = true
+    }
+    `))
+
+    it('cannot have a variable with the same name as a function', tunaTest("fail", `
+    
+    public function fff(a) {
+        const fff = 12
+    }
+    `))
+
+    it("does not allow overwriting constants", tunaTest("fail",`
+    public function fff(a) {
+        const b = a
+        b = 42
+    }
+
     `))
     
     it('only allows global constants', tunaTest("fail", `    

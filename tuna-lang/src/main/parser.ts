@@ -16,7 +16,7 @@
 * field := name=name ws* ':' value=literal newLineOrComma?
 * fields := value=field*
 * space := ' '
-* executable := ws* value={value={ret | assignment | expression } ws+ }*
+* executable := ws* value={value={ret | varDecl | assignment | expression } ws+ }*
 * expression := !ret root={literal | name   } methods={method}*
 * method := method={parameterIndex | literalIndex}
 * parameterIndex := '\[' space* value={expression} space* '\]'
@@ -69,6 +69,7 @@ export enum ASTKinds {
     executable_$0_$0_1 = "executable_$0_$0_1",
     executable_$0_$0_2 = "executable_$0_$0_2",
     executable_$0_$0_3 = "executable_$0_$0_3",
+    executable_$0_$0_4 = "executable_$0_$0_4",
     expression = "expression",
     expression_$0_1 = "expression_$0_1",
     expression_$0_2 = "expression_$0_2",
@@ -162,10 +163,11 @@ export interface executable_$0 {
     kind: ASTKinds.executable_$0;
     value: executable_$0_$0;
 }
-export type executable_$0_$0 = executable_$0_$0_1 | executable_$0_$0_2 | executable_$0_$0_3;
+export type executable_$0_$0 = executable_$0_$0_1 | executable_$0_$0_2 | executable_$0_$0_3 | executable_$0_$0_4;
 export type executable_$0_$0_1 = ret;
-export type executable_$0_$0_2 = assignment;
-export type executable_$0_$0_3 = expression;
+export type executable_$0_$0_2 = varDecl;
+export type executable_$0_$0_3 = assignment;
+export type executable_$0_$0_4 = expression;
 export interface expression {
     kind: ASTKinds.expression;
     root: expression_$0;
@@ -533,15 +535,19 @@ export class Parser {
             () => this.matchexecutable_$0_$0_1($$dpth + 1, $$cr),
             () => this.matchexecutable_$0_$0_2($$dpth + 1, $$cr),
             () => this.matchexecutable_$0_$0_3($$dpth + 1, $$cr),
+            () => this.matchexecutable_$0_$0_4($$dpth + 1, $$cr),
         ]);
     }
     public matchexecutable_$0_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0_$0_1> {
         return this.matchret($$dpth + 1, $$cr);
     }
     public matchexecutable_$0_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0_$0_2> {
-        return this.matchassignment($$dpth + 1, $$cr);
+        return this.matchvarDecl($$dpth + 1, $$cr);
     }
     public matchexecutable_$0_$0_3($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0_$0_3> {
+        return this.matchassignment($$dpth + 1, $$cr);
+    }
+    public matchexecutable_$0_$0_4($$dpth: number, $$cr?: ContextRecorder): Nullable<executable_$0_$0_4> {
         return this.matchexpression($$dpth + 1, $$cr);
     }
     public matchexpression($$dpth: number, $$cr?: ContextRecorder): Nullable<expression> {
