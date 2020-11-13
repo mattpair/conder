@@ -139,56 +139,45 @@ Array [
 ]
 `;
 
-exports[`language globals must be empty objects 1`] = `"Global someVar must be initialized as empty objects"`;
+exports[`language globals must be empty objects 1`] = `"Global someVar must be initialized as empty object"`;
 
 exports[`language only allows global constants 1`] = `"Global variable someVar must be const"`;
 
 exports[`language should allow a fixed number of args in functions 1`] = `
-Array [
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": Object {
-        "kind": "name",
-        "name": "c",
-      },
-      "leadingArgs": Array [
+Object {
+  "funcs": Map {
+    "argy" => Object {
+      "computation": Array [],
+      "input": Array [
         Object {
-          "kind": "args_$0",
-          "name": Object {
-            "kind": "name",
-            "name": "a",
-          },
+          "data": undefined,
+          "kind": "Any",
         },
         Object {
-          "kind": "args_$0",
-          "name": Object {
-            "kind": "name",
-            "name": "b",
-          },
+          "data": undefined,
+          "kind": "Any",
+        },
+        Object {
+          "data": undefined,
+          "kind": "Any",
         },
       ],
     },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "argy",
-    },
   },
-]
+  "globals": Map {},
+}
 `;
 
 exports[`language should allow a global object 1`] = `
-Array [
-  Object {
-    "kind": "glob",
-    "name": "obj",
+Object {
+  "funcs": Map {},
+  "globals": Map {
+    "obj" => Object {
+      "kind": "glob",
+      "name": "obj",
+    },
   },
-]
+}
 `;
 
 exports[`language should allow bools, numbers, and strings 1`] = `
@@ -286,266 +275,150 @@ Array [
 `;
 
 exports[`language should allow empty public functions 1`] = `
-Array [
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": null,
-      "leadingArgs": Array [],
-    },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "doSomething",
+Object {
+  "funcs": Map {
+    "doSomething" => Object {
+      "computation": Array [],
+      "input": Array [],
     },
   },
-]
+  "globals": Map {},
+}
 `;
 
 exports[`language should allow getting of nested keys 1`] = `
-Array [
-  Object {
-    "kind": "glob",
-    "name": "gg",
-  },
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": Object {
-        "kind": "name",
-        "name": "a",
-      },
-      "leadingArgs": Array [],
-    },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [
+Object {
+  "funcs": Map {
+    "fff" => Object {
+      "computation": Array [
         Object {
-          "kind": "executable_$0",
-          "value": "return",
-        },
-        Object {
-          "kind": "executable_$0",
+          "kind": "Return",
           "value": Object {
-            "kind": "expression",
-            "methods": Array [
+            "field_name": Array [
               Object {
-                "kind": "method",
-                "method": Object {
-                  "kind": "parameterIndex",
-                  "value": Object {
-                    "kind": "expression",
-                    "methods": Array [],
-                    "root": Object {
-                      "kind": "name",
-                      "name": "a",
-                    },
-                  },
-                },
-              },
-              Object {
-                "kind": "method",
-                "method": Object {
-                  "kind": "literalIndex",
-                  "value": Object {
-                    "kind": "name",
-                    "name": "field",
-                  },
-                },
+                "kind": "String",
+                "value": "field",
               },
             ],
-            "root": Object {
-              "kind": "name",
-              "name": "gg",
+            "kind": "GetField",
+            "target": Object {
+              "field_name": Array [
+                Object {
+                  "index": 0,
+                  "kind": "Saved",
+                },
+              ],
+              "kind": "GetField",
+              "target": Object {
+                "kind": "GlobalObject",
+                "name": "gg",
+              },
             },
           },
         },
       ],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "fff",
+      "input": Array [
+        Object {
+          "data": undefined,
+          "kind": "Any",
+        },
+      ],
     },
   },
-]
+  "globals": Map {
+    "gg" => Object {
+      "kind": "glob",
+      "name": "gg",
+    },
+  },
+}
 `;
 
 exports[`language should allow many global objects 1`] = `
-Array [
-  Object {
-    "kind": "glob",
-    "name": "obj1",
+Object {
+  "funcs": Map {},
+  "globals": Map {
+    "obj1" => Object {
+      "kind": "glob",
+      "name": "obj1",
+    },
+    "obj2" => Object {
+      "kind": "glob",
+      "name": "obj2",
+    },
   },
-  Object {
-    "kind": "glob",
-    "name": "obj2",
-  },
-]
+}
 `;
 
 exports[`language should allow return statements within functions 1`] = `
-Array [
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": null,
-      "leadingArgs": Array [],
-    },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [
+Object {
+  "funcs": Map {
+    "returny" => Object {
+      "computation": Array [
         Object {
-          "kind": "executable_$0",
-          "value": "return",
+          "kind": "Return",
+          "value": undefined,
         },
       ],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "returny",
+      "input": Array [],
     },
   },
-]
+  "globals": Map {},
+}
 `;
 
 exports[`language should allow setting of keys on a global object 1`] = `
-Array [
-  Object {
-    "kind": "glob",
-    "name": "gg",
-  },
-  Object {
-    "args": Object {
-      "kind": "args",
-      "lastArg": Object {
-        "kind": "name",
-        "name": "a",
-      },
-      "leadingArgs": Array [],
-    },
-    "body": Object {
-      "kind": "executable",
-      "value": Array [
+Object {
+  "funcs": Map {
+    "fff" => Object {
+      "computation": Array [
         Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "assignment",
-            "target": Object {
-              "kind": "expression",
-              "methods": Array [
-                Object {
-                  "kind": "method",
-                  "method": Object {
-                    "kind": "literalIndex",
-                    "value": Object {
-                      "kind": "name",
-                      "name": "abc",
-                    },
-                  },
-                },
-              ],
-              "root": Object {
-                "kind": "name",
-                "name": "gg",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "a",
-              },
-            },
+          "kind": "Update",
+          "operation": Object {
+            "index": 0,
+            "kind": "Saved",
+          },
+          "target": Object {
+            "index": 0,
+            "kind": "Saved",
           },
         },
         Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "assignment",
-            "target": Object {
-              "kind": "expression",
-              "methods": Array [
-                Object {
-                  "kind": "method",
-                  "method": Object {
-                    "kind": "parameterIndex",
-                    "value": Object {
-                      "kind": "expression",
-                      "methods": Array [],
-                      "root": Object {
-                        "kind": "name",
-                        "name": "a",
-                      },
-                    },
-                  },
-                },
-              ],
-              "root": Object {
-                "kind": "name",
-                "name": "gg",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "a",
-              },
-            },
+          "kind": "Update",
+          "operation": Object {
+            "index": 0,
+            "kind": "Saved",
+          },
+          "target": Object {
+            "index": 0,
+            "kind": "Saved",
           },
         },
         Object {
-          "kind": "executable_$0",
-          "value": Object {
-            "kind": "assignment",
-            "target": Object {
-              "kind": "expression",
-              "methods": Array [
-                Object {
-                  "kind": "method",
-                  "method": Object {
-                    "kind": "parameterIndex",
-                    "value": Object {
-                      "kind": "expression",
-                      "methods": Array [],
-                      "root": Object {
-                        "kind": "str",
-                        "value": "abc",
-                      },
-                    },
-                  },
-                },
-              ],
-              "root": Object {
-                "kind": "name",
-                "name": "gg",
-              },
-            },
-            "value": Object {
-              "kind": "expression",
-              "methods": Array [],
-              "root": Object {
-                "kind": "name",
-                "name": "a",
-              },
-            },
+          "kind": "Update",
+          "operation": Object {
+            "index": 0,
+            "kind": "Saved",
+          },
+          "target": Object {
+            "index": 0,
+            "kind": "Saved",
           },
         },
       ],
-    },
-    "kind": "func",
-    "name": Object {
-      "kind": "name",
-      "name": "fff",
+      "input": Array [
+        Object {
+          "data": undefined,
+          "kind": "Any",
+        },
+      ],
     },
   },
-]
+  "globals": Map {
+    "gg" => Object {
+      "kind": "glob",
+      "name": "gg",
+    },
+  },
+}
 `;

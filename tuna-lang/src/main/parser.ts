@@ -17,12 +17,12 @@
 * fields := value=field*
 * space := ' '
 * executable := ws* value={value={ret | assignment | expression } ws+ }*
-* expression := root={literal | name   } methods={method}*
+* expression := !ret root={literal | name   } methods={method}*
 * method := method={parameterIndex | literalIndex}
 * parameterIndex := '\[' space* value={expression} space* '\]'
 * literalIndex := '\.' value={name}
 * objectIndex := obj=expression index={parameterIndex | literalIndex}
-* ret := 'return'
+* ret := 'return(?=\s)' value={expression}?
 * func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 * args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
 * assignment := target=expression space* equals space* value=expression
@@ -84,6 +84,7 @@ export enum ASTKinds {
     objectIndex_$0_1 = "objectIndex_$0_1",
     objectIndex_$0_2 = "objectIndex_$0_2",
     ret = "ret",
+    ret_$0 = "ret_$0",
     func = "func",
     args = "args",
     args_$0 = "args_$0",
@@ -199,7 +200,11 @@ export interface objectIndex {
 export type objectIndex_$0 = objectIndex_$0_1 | objectIndex_$0_2;
 export type objectIndex_$0_1 = parameterIndex;
 export type objectIndex_$0_2 = literalIndex;
-export type ret = string;
+export interface ret {
+    kind: ASTKinds.ret;
+    value: Nullable<ret_$0>;
+}
+export type ret_$0 = expression;
 export interface func {
     kind: ASTKinds.func;
     name: name;
@@ -549,6 +554,7 @@ export class Parser {
                 let $scope$methods: Nullable<expression_$1[]>;
                 let $$res: Nullable<expression> = null;
                 if (true
+                    && this.negate(() => this.matchret($$dpth + 1, $$cr)) !== null
                     && ($scope$root = this.matchexpression_$0($$dpth + 1, $$cr)) !== null
                     && ($scope$methods = this.loop<expression_$1>(() => this.matchexpression_$1($$dpth + 1, $$cr), true)) !== null
                 ) {
@@ -674,7 +680,24 @@ export class Parser {
         return this.matchliteralIndex($$dpth + 1, $$cr);
     }
     public matchret($$dpth: number, $$cr?: ContextRecorder): Nullable<ret> {
-        return this.regexAccept(String.raw`(?:return)`, $$dpth + 1, $$cr);
+        return this.runner<ret>($$dpth,
+            (log) => {
+                if (log) {
+                    log("ret");
+                }
+                let $scope$value: Nullable<Nullable<ret_$0>>;
+                let $$res: Nullable<ret> = null;
+                if (true
+                    && this.regexAccept(String.raw`(?:return(?=\s))`, $$dpth + 1, $$cr) !== null
+                    && (($scope$value = this.matchret_$0($$dpth + 1, $$cr)) || true)
+                ) {
+                    $$res = {kind: ASTKinds.ret, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchret_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<ret_$0> {
+        return this.matchexpression($$dpth + 1, $$cr);
     }
     public matchfunc($$dpth: number, $$cr?: ContextRecorder): Nullable<func> {
         return this.runner<func>($$dpth,
