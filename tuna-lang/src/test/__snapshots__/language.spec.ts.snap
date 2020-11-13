@@ -70,6 +70,106 @@ ParseResult {
 }
 `;
 
+exports[`language should allow bools, numbers, and strings 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": Object {
+            "kind": "name",
+            "name": "a",
+          },
+          "leadingArgs": Array [],
+        },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "bool",
+                  "value": "true",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "bool",
+                  "value": "false",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "num",
+                  "value": "12",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "num",
+                  "value": "-12.12",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "kind": "str",
+                  "value": "hello world",
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [],
+                "root": Object {
+                  "fields": Object {
+                    "kind": "fields",
+                    "value": Array [],
+                  },
+                  "kind": "obj",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "fff",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
 exports[`language should allow empty public functions 1`] = `
 ParseResult {
   "ast": Array [

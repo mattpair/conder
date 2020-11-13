@@ -61,4 +61,17 @@ describe("language", () => {
         }
         `)
     )
+
+    it('should allow bools, numbers, and strings', tunaTest("succeed", `
+    
+    public function fff(a) {
+        true
+        false
+        12
+        -12.12
+        'hello world'
+        {}
+    }
+    
+    `))
 })

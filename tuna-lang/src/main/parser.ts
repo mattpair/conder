@@ -7,13 +7,15 @@
 * ws := '\s'
 * obj := '\{' ws* fields=fields ws* '\}'
 * str := '\'' value='[\w \t]*' '\''
-* literal := obj | str
+* bool := value={'true' | 'false'}
+* num := value='-?\d+(\.\d+)?'
+* literal := obj | str | bool | num
 * newLineOrComma := '\n|,'
 * field := name=name ws* ':' value=literal newLineOrComma?
 * fields := value=field*
 * space := ' '
 * executable := ws* value={value={ret | assignment | expression } ws+ }*
-* expression := root={name | literal } methods={method}*
+* expression := root={literal | name   } methods={method}*
 * method := method={parameterIndex | literalIndex}
 * parameterIndex := '\[' space* value={expression} space* '\]'
 * literalIndex := '\.' value={name}
@@ -44,8 +46,14 @@ export enum ASTKinds {
     ws = "ws",
     obj = "obj",
     str = "str",
+    bool = "bool",
+    bool_$0_1 = "bool_$0_1",
+    bool_$0_2 = "bool_$0_2",
+    num = "num",
     literal_1 = "literal_1",
     literal_2 = "literal_2",
+    literal_3 = "literal_3",
+    literal_4 = "literal_4",
     newLineOrComma = "newLineOrComma",
     field = "field",
     fields = "fields",
@@ -106,9 +114,22 @@ export interface str {
     kind: ASTKinds.str;
     value: string;
 }
-export type literal = literal_1 | literal_2;
+export interface bool {
+    kind: ASTKinds.bool;
+    value: bool_$0;
+}
+export type bool_$0 = bool_$0_1 | bool_$0_2;
+export type bool_$0_1 = string;
+export type bool_$0_2 = string;
+export interface num {
+    kind: ASTKinds.num;
+    value: string;
+}
+export type literal = literal_1 | literal_2 | literal_3 | literal_4;
 export type literal_1 = obj;
 export type literal_2 = str;
+export type literal_3 = bool;
+export type literal_4 = num;
 export type newLineOrComma = string;
 export interface field {
     kind: ASTKinds.field;
@@ -138,8 +159,8 @@ export interface expression {
     methods: expression_$1[];
 }
 export type expression_$0 = expression_$0_1 | expression_$0_2;
-export type expression_$0_1 = name;
-export type expression_$0_2 = literal;
+export type expression_$0_1 = literal;
+export type expression_$0_2 = name;
 export type expression_$1 = method;
 export interface method {
     kind: ASTKinds.method;
@@ -330,10 +351,56 @@ export class Parser {
                 return $$res;
             }, $$cr)();
     }
+    public matchbool($$dpth: number, $$cr?: ContextRecorder): Nullable<bool> {
+        return this.runner<bool>($$dpth,
+            (log) => {
+                if (log) {
+                    log("bool");
+                }
+                let $scope$value: Nullable<bool_$0>;
+                let $$res: Nullable<bool> = null;
+                if (true
+                    && ($scope$value = this.matchbool_$0($$dpth + 1, $$cr)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.bool, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchbool_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<bool_$0> {
+        return this.choice<bool_$0>([
+            () => this.matchbool_$0_1($$dpth + 1, $$cr),
+            () => this.matchbool_$0_2($$dpth + 1, $$cr),
+        ]);
+    }
+    public matchbool_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<bool_$0_1> {
+        return this.regexAccept(String.raw`(?:true)`, $$dpth + 1, $$cr);
+    }
+    public matchbool_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<bool_$0_2> {
+        return this.regexAccept(String.raw`(?:false)`, $$dpth + 1, $$cr);
+    }
+    public matchnum($$dpth: number, $$cr?: ContextRecorder): Nullable<num> {
+        return this.runner<num>($$dpth,
+            (log) => {
+                if (log) {
+                    log("num");
+                }
+                let $scope$value: Nullable<string>;
+                let $$res: Nullable<num> = null;
+                if (true
+                    && ($scope$value = this.regexAccept(String.raw`(?:-?\d+(\.\d+)?)`, $$dpth + 1, $$cr)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.num, value: $scope$value};
+                }
+                return $$res;
+            }, $$cr)();
+    }
     public matchliteral($$dpth: number, $$cr?: ContextRecorder): Nullable<literal> {
         return this.choice<literal>([
             () => this.matchliteral_1($$dpth + 1, $$cr),
             () => this.matchliteral_2($$dpth + 1, $$cr),
+            () => this.matchliteral_3($$dpth + 1, $$cr),
+            () => this.matchliteral_4($$dpth + 1, $$cr),
         ]);
     }
     public matchliteral_1($$dpth: number, $$cr?: ContextRecorder): Nullable<literal_1> {
@@ -341,6 +408,12 @@ export class Parser {
     }
     public matchliteral_2($$dpth: number, $$cr?: ContextRecorder): Nullable<literal_2> {
         return this.matchstr($$dpth + 1, $$cr);
+    }
+    public matchliteral_3($$dpth: number, $$cr?: ContextRecorder): Nullable<literal_3> {
+        return this.matchbool($$dpth + 1, $$cr);
+    }
+    public matchliteral_4($$dpth: number, $$cr?: ContextRecorder): Nullable<literal_4> {
+        return this.matchnum($$dpth + 1, $$cr);
     }
     public matchnewLineOrComma($$dpth: number, $$cr?: ContextRecorder): Nullable<newLineOrComma> {
         return this.regexAccept(String.raw`(?:\n|,)`, $$dpth + 1, $$cr);
@@ -460,10 +533,10 @@ export class Parser {
         ]);
     }
     public matchexpression_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$0_1> {
-        return this.matchname($$dpth + 1, $$cr);
+        return this.matchliteral($$dpth + 1, $$cr);
     }
     public matchexpression_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$0_2> {
-        return this.matchliteral($$dpth + 1, $$cr);
+        return this.matchname($$dpth + 1, $$cr);
     }
     public matchexpression_$1($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$1> {
         return this.matchmethod($$dpth + 1, $$cr);

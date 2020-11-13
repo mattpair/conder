@@ -7,14 +7,16 @@ equals := '='
 ws := '\s'
 obj := '\{' ws* fields=fields ws* '\}'
 str := '\'' value='[\w \t]*' '\''
-literal := obj | str
+bool := value={'true' | 'false'}
+num := value='-?\d+(\.\d+)?'
+literal := obj | str | bool | num
 newLineOrComma := '\n|,'
 field := name=name ws* ':' value=literal newLineOrComma?
 fields := value=field*
 space := ' '
 
 executable := ws* value={value={ret | assignment | expression } ws+ }*
-expression := root={name | literal } methods={method}*
+expression := root={literal | name   } methods={method}*
 method := method={parameterIndex | literalIndex}
 
 parameterIndex := '\[' space* value={expression} space* '\]'
