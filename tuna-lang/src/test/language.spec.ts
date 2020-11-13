@@ -37,4 +37,17 @@ describe("language", () => {
     tunaTest("succeed", `public function returny() {
         return
     }`))
+
+    it("should allow setting of keys on a global object", 
+    
+        tunaTest("succeed",
+        `
+        const gg = {}
+        public function fff(a) {
+            gg.abc = a
+            gg[a] = a
+            gg['abc'] = a
+        }
+        `)
+    )
 })

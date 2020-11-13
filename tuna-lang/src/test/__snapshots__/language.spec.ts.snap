@@ -170,3 +170,144 @@ ParseResult {
   "err": null,
 }
 `;
+
+exports[`language should allow setting of keys on a global object 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "constant",
+        "name": Object {
+          "kind": "name",
+          "name": "gg",
+        },
+        "value": Object {
+          "fields": Object {
+            "kind": "fields",
+            "value": Array [],
+          },
+          "kind": "obj",
+        },
+      },
+    },
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": Object {
+            "kind": "name",
+            "name": "a",
+          },
+          "leadingArgs": Array [],
+        },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "select",
+                  "value": Object {
+                    "index": Object {
+                      "kind": "literalIndex",
+                      "value": Object {
+                        "kind": "name",
+                        "name": "abc",
+                      },
+                    },
+                    "kind": "objectIndex",
+                    "obj": Object {
+                      "kind": "name",
+                      "name": "gg",
+                    },
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "value": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "select",
+                  "value": Object {
+                    "index": Object {
+                      "kind": "parameterIndex",
+                      "value": Object {
+                        "kind": "name",
+                        "name": "a",
+                      },
+                    },
+                    "kind": "objectIndex",
+                    "obj": Object {
+                      "kind": "name",
+                      "name": "gg",
+                    },
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "value": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "select",
+                  "value": Object {
+                    "index": Object {
+                      "kind": "parameterIndex",
+                      "value": Object {
+                        "kind": "expression",
+                        "value": Object {
+                          "kind": "str",
+                          "value": "abc",
+                        },
+                      },
+                    },
+                    "kind": "objectIndex",
+                    "obj": Object {
+                      "kind": "name",
+                      "name": "gg",
+                    },
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "value": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "fff",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
