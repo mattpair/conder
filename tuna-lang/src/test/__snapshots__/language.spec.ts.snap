@@ -51,7 +51,8 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
-        "kind": "constant",
+        "kind": "varDecl",
+        "mutability": "const",
         "name": Object {
           "kind": "name",
           "name": "obj",
@@ -207,7 +208,8 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
-        "kind": "constant",
+        "kind": "varDecl",
+        "mutability": "const",
         "name": Object {
           "kind": "name",
           "name": "gg",
@@ -299,7 +301,8 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
-        "kind": "constant",
+        "kind": "varDecl",
+        "mutability": "const",
         "name": Object {
           "kind": "name",
           "name": "obj1",
@@ -320,7 +323,8 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
-        "kind": "constant",
+        "kind": "varDecl",
+        "mutability": "const",
         "name": Object {
           "kind": "name",
           "name": "obj2",
@@ -381,7 +385,8 @@ ParseResult {
     Object {
       "kind": "globals_$0",
       "value": Object {
-        "kind": "constant",
+        "kind": "varDecl",
+        "mutability": "const",
         "name": Object {
           "kind": "name",
           "name": "gg",
