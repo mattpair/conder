@@ -23,4 +23,6 @@ describe("language", () => {
         const obj2 = {}
         `)
     )
+
+    it("should allow empty public functions", tunaTest("succeed", `public function doSomething() {}`))
 })

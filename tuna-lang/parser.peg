@@ -1,4 +1,4 @@
-globals := {value=constant {ws+ | '$'}}*
+globals := {value={constant | func} {ws+ | '$'}}*
 
 
 constant := ws* 'const' ws+ name=name ws* equals ws* value=literal
@@ -10,3 +10,5 @@ literal := obj
 newLineOrComma := '\n' | ','
 field := name=name ws* ':' value=literal newLineOrComma?
 fields := value=field*
+space := ' '
+func := ws* 'public' space+ 'function' space+ name=name space* '\(\)' ws* '\{' ws* '\}'

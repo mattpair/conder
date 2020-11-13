@@ -25,6 +25,24 @@ ParseResult {
 }
 `;
 
+exports[`language should allow empty public functions 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "doSomething",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
 exports[`language should allow many global objects 1`] = `
 ParseResult {
   "ast": Array [
