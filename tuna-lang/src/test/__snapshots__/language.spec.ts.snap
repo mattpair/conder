@@ -97,6 +97,94 @@ ParseResult {
 }
 `;
 
+exports[`language should allow getting of nested keys 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "constant",
+        "name": Object {
+          "kind": "name",
+          "name": "gg",
+        },
+        "value": Object {
+          "fields": Object {
+            "kind": "fields",
+            "value": Array [],
+          },
+          "kind": "obj",
+        },
+      },
+    },
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "args": Object {
+          "kind": "args",
+          "lastArg": Object {
+            "kind": "name",
+            "name": "a",
+          },
+          "leadingArgs": Array [],
+        },
+        "body": Object {
+          "kind": "executable",
+          "value": Array [
+            Object {
+              "kind": "executable_$0",
+              "value": "return",
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "expression",
+                "methods": Array [
+                  Object {
+                    "kind": "method",
+                    "method": Object {
+                      "kind": "parameterIndex",
+                      "value": Object {
+                        "kind": "expression",
+                        "methods": Array [],
+                        "root": Object {
+                          "kind": "name",
+                          "name": "a",
+                        },
+                      },
+                    },
+                  },
+                  Object {
+                    "kind": "method",
+                    "method": Object {
+                      "kind": "literalIndex",
+                      "value": Object {
+                        "kind": "name",
+                        "name": "field",
+                      },
+                    },
+                  },
+                ],
+                "root": Object {
+                  "kind": "name",
+                  "name": "gg",
+                },
+              },
+            },
+          ],
+        },
+        "kind": "func",
+        "name": Object {
+          "kind": "name",
+          "name": "fff",
+        },
+      },
+    },
+  ],
+  "err": null,
+}
+`;
+
 exports[`language should allow many global objects 1`] = `
 ParseResult {
   "ast": Array [
@@ -210,97 +298,102 @@ ParseResult {
               "value": Object {
                 "kind": "assignment",
                 "target": Object {
-                  "kind": "select",
-                  "value": Object {
-                    "index": Object {
-                      "kind": "literalIndex",
-                      "value": Object {
-                        "kind": "name",
-                        "name": "abc",
-                      },
-                    },
-                    "kind": "objectIndex",
-                    "obj": Object {
-                      "kind": "expression",
-                      "value": Object {
-                        "kind": "name",
-                        "name": "gg",
-                      },
-                    },
-                  },
-                },
-                "value": Object {
                   "kind": "expression",
-                  "value": Object {
-                    "kind": "name",
-                    "name": "a",
-                  },
-                },
-              },
-            },
-            Object {
-              "kind": "executable_$0",
-              "value": Object {
-                "kind": "assignment",
-                "target": Object {
-                  "kind": "select",
-                  "value": Object {
-                    "index": Object {
-                      "kind": "parameterIndex",
-                      "value": Object {
-                        "kind": "name",
-                        "name": "a",
-                      },
-                    },
-                    "kind": "objectIndex",
-                    "obj": Object {
-                      "kind": "expression",
-                      "value": Object {
-                        "kind": "name",
-                        "name": "gg",
-                      },
-                    },
-                  },
-                },
-                "value": Object {
-                  "kind": "expression",
-                  "value": Object {
-                    "kind": "name",
-                    "name": "a",
-                  },
-                },
-              },
-            },
-            Object {
-              "kind": "executable_$0",
-              "value": Object {
-                "kind": "assignment",
-                "target": Object {
-                  "kind": "select",
-                  "value": Object {
-                    "index": Object {
-                      "kind": "parameterIndex",
-                      "value": Object {
-                        "kind": "expression",
+                  "methods": Array [
+                    Object {
+                      "kind": "method",
+                      "method": Object {
+                        "kind": "literalIndex",
                         "value": Object {
-                          "kind": "str",
-                          "value": "abc",
+                          "kind": "name",
+                          "name": "abc",
                         },
                       },
                     },
-                    "kind": "objectIndex",
-                    "obj": Object {
-                      "kind": "expression",
-                      "value": Object {
-                        "kind": "name",
-                        "name": "gg",
-                      },
-                    },
+                  ],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "gg",
                   },
                 },
                 "value": Object {
                   "kind": "expression",
-                  "value": Object {
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "expression",
+                  "methods": Array [
+                    Object {
+                      "kind": "method",
+                      "method": Object {
+                        "kind": "parameterIndex",
+                        "value": Object {
+                          "kind": "expression",
+                          "methods": Array [],
+                          "root": Object {
+                            "kind": "name",
+                            "name": "a",
+                          },
+                        },
+                      },
+                    },
+                  ],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "gg",
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "a",
+                  },
+                },
+              },
+            },
+            Object {
+              "kind": "executable_$0",
+              "value": Object {
+                "kind": "assignment",
+                "target": Object {
+                  "kind": "expression",
+                  "methods": Array [
+                    Object {
+                      "kind": "method",
+                      "method": Object {
+                        "kind": "parameterIndex",
+                        "value": Object {
+                          "kind": "expression",
+                          "methods": Array [],
+                          "root": Object {
+                            "kind": "str",
+                            "value": "abc",
+                          },
+                        },
+                      },
+                    },
+                  ],
+                  "root": Object {
+                    "kind": "name",
+                    "name": "gg",
+                  },
+                },
+                "value": Object {
+                  "kind": "expression",
+                  "methods": Array [],
+                  "root": Object {
                     "kind": "name",
                     "name": "a",
                   },

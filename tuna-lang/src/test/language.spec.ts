@@ -50,4 +50,15 @@ describe("language", () => {
         }
         `)
     )
+
+    it("should allow getting of nested keys",
+    
+        tunaTest("succeed",
+        `
+        const gg = {}
+        public function fff(a) {
+            return gg[a].field
+        }
+        `)
+    )
 })

@@ -14,13 +14,13 @@ fields := value=field*
 space := ' '
 
 executable := ws* value={value={ret | assignment | expression } ws+ }*
-expression := value={name | literal }
+expression := root={name | literal } methods={method}*
+method := method={parameterIndex | literalIndex}
 
-parameterIndex := '\[' space* value={name | expression} space* '\]'
+parameterIndex := '\[' space* value={expression} space* '\]'
 literalIndex := '\.' value={name}
 objectIndex := obj=expression index={parameterIndex | literalIndex}
-select := value={objectIndex | name}
 ret := 'return'
 func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
-assignment := target=select space* equals space* value=expression
+assignment := target=expression space* equals space* value=expression

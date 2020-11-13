@@ -13,15 +13,15 @@
 * fields := value=field*
 * space := ' '
 * executable := ws* value={value={ret | assignment | expression } ws+ }*
-* expression := value={name | literal }
-* parameterIndex := '\[' space* value={name | expression} space* '\]'
+* expression := root={name | literal } methods={method}*
+* method := method={parameterIndex | literalIndex}
+* parameterIndex := '\[' space* value={expression} space* '\]'
 * literalIndex := '\.' value={name}
 * objectIndex := obj=expression index={parameterIndex | literalIndex}
-* select := value={objectIndex | name}
 * ret := 'return'
 * func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 * args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
-* assignment := target=select space* equals space* value=expression
+* assignment := target=expression space* equals space* value=expression
 */
 type Nullable<T> = T | null;
 type $$RuleType<T> = (log?: (msg: string) => void) => Nullable<T>;
@@ -58,17 +58,17 @@ export enum ASTKinds {
     expression = "expression",
     expression_$0_1 = "expression_$0_1",
     expression_$0_2 = "expression_$0_2",
+    expression_$1 = "expression_$1",
+    method = "method",
+    method_$0_1 = "method_$0_1",
+    method_$0_2 = "method_$0_2",
     parameterIndex = "parameterIndex",
-    parameterIndex_$0_1 = "parameterIndex_$0_1",
-    parameterIndex_$0_2 = "parameterIndex_$0_2",
+    parameterIndex_$0 = "parameterIndex_$0",
     literalIndex = "literalIndex",
     literalIndex_$0 = "literalIndex_$0",
     objectIndex = "objectIndex",
     objectIndex_$0_1 = "objectIndex_$0_1",
     objectIndex_$0_2 = "objectIndex_$0_2",
-    select = "select",
-    select_$0_1 = "select_$0_1",
-    select_$0_2 = "select_$0_2",
     ret = "ret",
     func = "func",
     args = "args",
@@ -134,18 +134,25 @@ export type executable_$0_$0_2 = assignment;
 export type executable_$0_$0_3 = expression;
 export interface expression {
     kind: ASTKinds.expression;
-    value: expression_$0;
+    root: expression_$0;
+    methods: expression_$1[];
 }
 export type expression_$0 = expression_$0_1 | expression_$0_2;
 export type expression_$0_1 = name;
 export type expression_$0_2 = literal;
+export type expression_$1 = method;
+export interface method {
+    kind: ASTKinds.method;
+    method: method_$0;
+}
+export type method_$0 = method_$0_1 | method_$0_2;
+export type method_$0_1 = parameterIndex;
+export type method_$0_2 = literalIndex;
 export interface parameterIndex {
     kind: ASTKinds.parameterIndex;
     value: parameterIndex_$0;
 }
-export type parameterIndex_$0 = parameterIndex_$0_1 | parameterIndex_$0_2;
-export type parameterIndex_$0_1 = name;
-export type parameterIndex_$0_2 = expression;
+export type parameterIndex_$0 = expression;
 export interface literalIndex {
     kind: ASTKinds.literalIndex;
     value: literalIndex_$0;
@@ -159,13 +166,6 @@ export interface objectIndex {
 export type objectIndex_$0 = objectIndex_$0_1 | objectIndex_$0_2;
 export type objectIndex_$0_1 = parameterIndex;
 export type objectIndex_$0_2 = literalIndex;
-export interface select {
-    kind: ASTKinds.select;
-    value: select_$0;
-}
-export type select_$0 = select_$0_1 | select_$0_2;
-export type select_$0_1 = objectIndex;
-export type select_$0_2 = name;
 export type ret = string;
 export interface func {
     kind: ASTKinds.func;
@@ -185,7 +185,7 @@ export interface args_$0 {
 export type args_$1 = name;
 export interface assignment {
     kind: ASTKinds.assignment;
-    target: select;
+    target: expression;
     value: expression;
 }
 export class Parser {
@@ -441,12 +441,14 @@ export class Parser {
                 if (log) {
                     log("expression");
                 }
-                let $scope$value: Nullable<expression_$0>;
+                let $scope$root: Nullable<expression_$0>;
+                let $scope$methods: Nullable<expression_$1[]>;
                 let $$res: Nullable<expression> = null;
                 if (true
-                    && ($scope$value = this.matchexpression_$0($$dpth + 1, $$cr)) !== null
+                    && ($scope$root = this.matchexpression_$0($$dpth + 1, $$cr)) !== null
+                    && ($scope$methods = this.loop<expression_$1>(() => this.matchexpression_$1($$dpth + 1, $$cr), true)) !== null
                 ) {
-                    $$res = {kind: ASTKinds.expression, value: $scope$value};
+                    $$res = {kind: ASTKinds.expression, root: $scope$root, methods: $scope$methods};
                 }
                 return $$res;
             }, $$cr)();
@@ -462,6 +464,37 @@ export class Parser {
     }
     public matchexpression_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$0_2> {
         return this.matchliteral($$dpth + 1, $$cr);
+    }
+    public matchexpression_$1($$dpth: number, $$cr?: ContextRecorder): Nullable<expression_$1> {
+        return this.matchmethod($$dpth + 1, $$cr);
+    }
+    public matchmethod($$dpth: number, $$cr?: ContextRecorder): Nullable<method> {
+        return this.runner<method>($$dpth,
+            (log) => {
+                if (log) {
+                    log("method");
+                }
+                let $scope$method: Nullable<method_$0>;
+                let $$res: Nullable<method> = null;
+                if (true
+                    && ($scope$method = this.matchmethod_$0($$dpth + 1, $$cr)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.method, method: $scope$method};
+                }
+                return $$res;
+            }, $$cr)();
+    }
+    public matchmethod_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<method_$0> {
+        return this.choice<method_$0>([
+            () => this.matchmethod_$0_1($$dpth + 1, $$cr),
+            () => this.matchmethod_$0_2($$dpth + 1, $$cr),
+        ]);
+    }
+    public matchmethod_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<method_$0_1> {
+        return this.matchparameterIndex($$dpth + 1, $$cr);
+    }
+    public matchmethod_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<method_$0_2> {
+        return this.matchliteralIndex($$dpth + 1, $$cr);
     }
     public matchparameterIndex($$dpth: number, $$cr?: ContextRecorder): Nullable<parameterIndex> {
         return this.runner<parameterIndex>($$dpth,
@@ -484,15 +517,6 @@ export class Parser {
             }, $$cr)();
     }
     public matchparameterIndex_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<parameterIndex_$0> {
-        return this.choice<parameterIndex_$0>([
-            () => this.matchparameterIndex_$0_1($$dpth + 1, $$cr),
-            () => this.matchparameterIndex_$0_2($$dpth + 1, $$cr),
-        ]);
-    }
-    public matchparameterIndex_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<parameterIndex_$0_1> {
-        return this.matchname($$dpth + 1, $$cr);
-    }
-    public matchparameterIndex_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<parameterIndex_$0_2> {
         return this.matchexpression($$dpth + 1, $$cr);
     }
     public matchliteralIndex($$dpth: number, $$cr?: ContextRecorder): Nullable<literalIndex> {
@@ -544,34 +568,6 @@ export class Parser {
     }
     public matchobjectIndex_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<objectIndex_$0_2> {
         return this.matchliteralIndex($$dpth + 1, $$cr);
-    }
-    public matchselect($$dpth: number, $$cr?: ContextRecorder): Nullable<select> {
-        return this.runner<select>($$dpth,
-            (log) => {
-                if (log) {
-                    log("select");
-                }
-                let $scope$value: Nullable<select_$0>;
-                let $$res: Nullable<select> = null;
-                if (true
-                    && ($scope$value = this.matchselect_$0($$dpth + 1, $$cr)) !== null
-                ) {
-                    $$res = {kind: ASTKinds.select, value: $scope$value};
-                }
-                return $$res;
-            }, $$cr)();
-    }
-    public matchselect_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<select_$0> {
-        return this.choice<select_$0>([
-            () => this.matchselect_$0_1($$dpth + 1, $$cr),
-            () => this.matchselect_$0_2($$dpth + 1, $$cr),
-        ]);
-    }
-    public matchselect_$0_1($$dpth: number, $$cr?: ContextRecorder): Nullable<select_$0_1> {
-        return this.matchobjectIndex($$dpth + 1, $$cr);
-    }
-    public matchselect_$0_2($$dpth: number, $$cr?: ContextRecorder): Nullable<select_$0_2> {
-        return this.matchname($$dpth + 1, $$cr);
     }
     public matchret($$dpth: number, $$cr?: ContextRecorder): Nullable<ret> {
         return this.regexAccept(String.raw`(?:return)`, $$dpth + 1, $$cr);
@@ -655,11 +651,11 @@ export class Parser {
                 if (log) {
                     log("assignment");
                 }
-                let $scope$target: Nullable<select>;
+                let $scope$target: Nullable<expression>;
                 let $scope$value: Nullable<expression>;
                 let $$res: Nullable<assignment> = null;
                 if (true
-                    && ($scope$target = this.matchselect($$dpth + 1, $$cr)) !== null
+                    && ($scope$target = this.matchexpression($$dpth + 1, $$cr)) !== null
                     && this.loop<space>(() => this.matchspace($$dpth + 1, $$cr), true) !== null
                     && this.matchequals($$dpth + 1, $$cr) !== null
                     && this.loop<space>(() => this.matchspace($$dpth + 1, $$cr), true) !== null
