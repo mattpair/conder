@@ -139,6 +139,8 @@ Array [
 ]
 `;
 
+exports[`language globals must be empty objects 1`] = `"Global someVar must be initialized as empty objects"`;
+
 exports[`language only allows global constants 1`] = `"Global variable someVar must be const"`;
 
 exports[`language should allow a fixed number of args in functions 1`] = `
@@ -183,23 +185,8 @@ Array [
 exports[`language should allow a global object 1`] = `
 Array [
   Object {
-    "kind": "varDecl",
-    "mutability": "const",
-    "name": Object {
-      "kind": "name",
-      "name": "obj",
-    },
-    "value": Object {
-      "kind": "expression",
-      "methods": Array [],
-      "root": Object {
-        "fields": Object {
-          "kind": "fields",
-          "value": Array [],
-        },
-        "kind": "obj",
-      },
-    },
+    "kind": "glob",
+    "name": "obj",
   },
 ]
 `;
@@ -322,23 +309,8 @@ Array [
 exports[`language should allow getting of nested keys 1`] = `
 Array [
   Object {
-    "kind": "varDecl",
-    "mutability": "const",
-    "name": Object {
-      "kind": "name",
-      "name": "gg",
-    },
-    "value": Object {
-      "kind": "expression",
-      "methods": Array [],
-      "root": Object {
-        "fields": Object {
-          "kind": "fields",
-          "value": Array [],
-        },
-        "kind": "obj",
-      },
-    },
+    "kind": "glob",
+    "name": "gg",
   },
   Object {
     "args": Object {
@@ -406,42 +378,12 @@ Array [
 exports[`language should allow many global objects 1`] = `
 Array [
   Object {
-    "kind": "varDecl",
-    "mutability": "const",
-    "name": Object {
-      "kind": "name",
-      "name": "obj1",
-    },
-    "value": Object {
-      "kind": "expression",
-      "methods": Array [],
-      "root": Object {
-        "fields": Object {
-          "kind": "fields",
-          "value": Array [],
-        },
-        "kind": "obj",
-      },
-    },
+    "kind": "glob",
+    "name": "obj1",
   },
   Object {
-    "kind": "varDecl",
-    "mutability": "const",
-    "name": Object {
-      "kind": "name",
-      "name": "obj2",
-    },
-    "value": Object {
-      "kind": "expression",
-      "methods": Array [],
-      "root": Object {
-        "fields": Object {
-          "kind": "fields",
-          "value": Array [],
-        },
-        "kind": "obj",
-      },
-    },
+    "kind": "glob",
+    "name": "obj2",
   },
 ]
 `;
@@ -475,23 +417,8 @@ Array [
 exports[`language should allow setting of keys on a global object 1`] = `
 Array [
   Object {
-    "kind": "varDecl",
-    "mutability": "const",
-    "name": Object {
-      "kind": "name",
-      "name": "gg",
-    },
-    "value": Object {
-      "kind": "expression",
-      "methods": Array [],
-      "root": Object {
-        "fields": Object {
-          "kind": "fields",
-          "value": Array [],
-        },
-        "kind": "obj",
-      },
-    },
+    "kind": "glob",
+    "name": "gg",
   },
   Object {
     "args": Object {

@@ -93,4 +93,9 @@ describe("language", () => {
     it('only allows global constants', tunaTest("fail", `    
     let someVar = {}
     `))
+
+    it('globals must be empty objects', tunaTest("fail", `
+    const someVar = false
+    
+    `))
 })
