@@ -1,7 +1,8 @@
 globals := {value={varDecl | func} {ws+ | '$'}}*
 
-
-varDecl := ws* mutability={'const' | 'var'} ws+ name=name ws* equals ws* value=expression
+mutable := 'let'
+constant := 'const'
+varDecl := ws* mutability={ constant | mutable } ws+ name=name ws* equals ws* value=expression
 name := name='[a-zA-Z]+\w*'
 equals := '='
 ws := '\s'
