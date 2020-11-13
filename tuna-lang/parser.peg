@@ -1,5 +1,7 @@
+globals := {value=constant {ws+ | '$'}}*
 
-initializeConst := 'const' ws+ name=name ws+ equals ws+ value=literal
+
+constant := ws* 'const' ws+ name=name ws* equals ws* value=literal
 name := name='[a-zA-Z]+\w*'
 equals := '='
 ws := '\s'

@@ -2,20 +2,67 @@
 
 exports[`parser should parse a global object 1`] = `
 ParseResult {
-  "ast": Object {
-    "kind": "initializeConst",
-    "name": Object {
-      "kind": "name",
-      "name": "obj",
-    },
-    "value": Object {
-      "fields": Object {
-        "kind": "fields",
-        "value": Array [],
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "constant",
+        "name": Object {
+          "kind": "name",
+          "name": "obj",
+        },
+        "value": Object {
+          "fields": Object {
+            "kind": "fields",
+            "value": Array [],
+          },
+          "kind": "obj",
+        },
       },
-      "kind": "obj",
     },
-  },
+  ],
+  "err": null,
+}
+`;
+
+exports[`parser should parse many global objects 1`] = `
+ParseResult {
+  "ast": Array [
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "constant",
+        "name": Object {
+          "kind": "name",
+          "name": "obj1",
+        },
+        "value": Object {
+          "fields": Object {
+            "kind": "fields",
+            "value": Array [],
+          },
+          "kind": "obj",
+        },
+      },
+    },
+    Object {
+      "kind": "globals_$0",
+      "value": Object {
+        "kind": "constant",
+        "name": Object {
+          "kind": "name",
+          "name": "obj2",
+        },
+        "value": Object {
+          "fields": Object {
+            "kind": "fields",
+            "value": Array [],
+          },
+          "kind": "obj",
+        },
+      },
+    },
+  ],
   "err": null,
 }
 `;
