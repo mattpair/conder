@@ -45,6 +45,16 @@ function only<IN extends AnyNode["kind"]>(node: AnyNode, ...only: IN[]): Extract
 
     throw Error(`Invalid expression ${node.kind}`)
 }
+
+function cbOnly<IN extends AnyNode["kind"]>(node: AnyNode, f: (i: PickNode<IN>) => void, ...only: IN[]) {
+    //@ts-ignore
+    if (only.includes(node.kind)) {
+        //@ts-ignore
+        f(node)
+    }
+}
+
+
 function literal_to_node(lit: literal, scope: ScopeMap): AnyNode {
     switch (lit.kind) {
         case ASTKinds.bool:
@@ -197,7 +207,8 @@ function to_computation(ex: executable, scope: ScopeMap): FunctionDescription["c
                 break
             }
             case ASTKinds.expression: {
-                ret.push(only(expression_to_node(e.value, scope), "Return", "If", "Save", "Update"))
+                cbOnly(expression_to_node(e.value, scope), ret.push, "Return", "If", "Save", "Update")
+                
                 break
             }
 

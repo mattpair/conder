@@ -62,8 +62,7 @@ describe("language", () => {
         `)
     )
 
-    // Should allow literals at top level, even if they aren't used.
-    it.skip('should allow bools, numbers, and strings', tunaTest("succeed", `
+    it('should allow bools, numbers, and strings', tunaTest("succeed", `
     
     public function fff(a) {
         true
