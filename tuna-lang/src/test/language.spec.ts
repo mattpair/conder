@@ -1,3 +1,4 @@
+import { OPSIFY_MANIFEST, Transformer } from 'conder_core';
 import { TUNA_TO_MANIFEST } from '../main/assembled';
 
 describe("language", () => {
@@ -5,7 +6,13 @@ describe("language", () => {
     function tunaTest(maybeSucceed: "succeed" | "fail", code: string): jest.ProvidesCallback {
         return (cb) => {
             if (maybeSucceed === "succeed") {
-                expect(TUNA_TO_MANIFEST.run(code)).toMatchSnapshot()
+                const ops = TUNA_TO_MANIFEST.then(new Transformer(i => {
+                    expect(i).toMatchSnapshot("intermediate representation")
+                    return i
+                })).then(OPSIFY_MANIFEST).run(code)
+
+                expect(ops).toMatchSnapshot("ops representation")
+
             } else {
                 expect(() => TUNA_TO_MANIFEST.run(code)).toThrowErrorMatchingSnapshot()
             }

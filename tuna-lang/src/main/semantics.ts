@@ -1,12 +1,5 @@
 import { ParseResult, executable, ASTKinds, func, expression, literal } from "./parser";
-import {AnyNode, PickNode, FunctionDescription} from "conder_core"
-
-type GlobalObject = {kind: "glob", name: string}
-
-export type Manifest = {
-    globals: Map<string, GlobalObject>
-    funcs: Map<string, FunctionDescription>
-}
+import {AnyNode, PickNode, FunctionDescription, GlobalObject, Manifest} from "conder_core"
 
 type ScopeMapEntry= "func" | "global" | {kind: "const" | "mut", index: number}
 class ScopeMap extends Map<string, ScopeMapEntry>  {

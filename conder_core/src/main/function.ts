@@ -3,6 +3,14 @@ import { AnyNode, RootNode } from "./IR";
 import {MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL} from './globals/mongo'
 import { Transformer } from "./compilers";
 
+
+export type GlobalObject = {kind: "glob", name: string}
+
+export type Manifest<F=FunctionDescription> = {
+    globals: Map<string, GlobalObject>
+    funcs: Map<string, F>
+}
+
 export type FunctionDescription = {
     input: AnySchemaInstance[]
     computation: RootNode[]
@@ -26,12 +34,15 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
 }
 
 
-export const FUNCTION_TRANSFORMER = new Transformer<
-    Map<string, FunctionDescription>, 
-    Map<string, AnyOpInstance[]>>((funcs) => {
-        const ret = new Map<string, AnyOpInstance[]>()
-        funcs.forEach((v, k) => {
-            ret.set(k, toOps(v)) 
+export const OPSIFY_MANIFEST = new Transformer<
+    Manifest, 
+    Manifest<AnyOpInstance[]>>((man) => {
+        const funcs = new Map<string, AnyOpInstance[]>()
+        man.funcs.forEach((v, k) => {
+            funcs.set(k, toOps(v)) 
         })
-        return ret
+        return {
+            funcs,
+            globals: man.globals
+        }
     })
