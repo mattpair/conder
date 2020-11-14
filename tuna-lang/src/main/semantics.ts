@@ -85,33 +85,32 @@ function literal_to_node(lit: literal, scope: ScopeMap): AnyNode {
     }
 }
 
-function method_to_node(input: AnyNode, methods: expression["methods"], scope: ScopeMap): AnyNode {
-    let lastValue = input
+function method_to_node(target: PickNode<"Saved" | "GlobalObject">, methods: expression["methods"], scope: ScopeMap): AnyNode {
+    if (methods.length === 0) {
+        return target
+    }
+    const fields: PickNode<"GetField">["field_name"] = []
     methods.forEach(m => {
         switch(m.method.kind) {
             case ASTKinds.literalIndex: 
-                lastValue = {
-                    kind: "GetField",
-                    //@ts-ignore
-                    target: {...lastValue},
-                    field_name: [{kind: "String", value: m.method.value.name}]
-                }
+                fields.push({kind: "String", value: m.method.value.name})
+        
                 break
             case ASTKinds.parameterIndex:
-                
-                lastValue = {
-                    kind: "GetField",
-                    field_name: [only(expression_to_node(m.method.value, scope), "String", "Saved")],
-                    //@ts-ignore
-                    target: {...lastValue}
-                }
+                const e = expression_to_node(m.method.value, scope)
+                fields.push(only(e, "String", "Saved"))
                 break
 
             default: 
                 const n: never = m.method
         }
     })
-    return lastValue
+    
+    return {
+        kind: "GetField",
+        target,
+        field_name: fields
+    }
 }
 
 type Target = {root: PickNode<"Update">["target"], field: PickNode<"SetField">["field_name"]}
@@ -158,10 +157,14 @@ function expression_to_update_target(exp: expression, scope: ScopeMap): Target {
 function expression_to_node(exp: expression, scope: ScopeMap): AnyNode {
     switch(exp.root.kind) {
         case ASTKinds.bool:
-        case ASTKinds.obj:
         case ASTKinds.str:
         case ASTKinds.num:
-            return method_to_node(only(literal_to_node(exp.root, scope), "Bool", "Int", "Object", "String"), exp.methods, scope)
+        case ASTKinds.obj:
+            if (exp.methods.length > 0) {
+                throw Error(`Unexpected method on ${exp.root.kind} literal`)
+            }
+            return only(literal_to_node(exp.root, scope), "Bool", "Int", "String", "Object")
+            
         
         case ASTKinds.name:
             const name = scope.get(exp.root.name)
@@ -189,7 +192,7 @@ function to_computation(ex: executable, scope: ScopeMap): FunctionDescription["c
             case ASTKinds.ret:
                 ret.push({
                     kind: "Return", 
-                    value: e.value.value ? excluding(expression_to_node(e.value.value, scope), "Update", "SetField", "Return", "If", "Save") : undefined
+                    value: e.value.value !== null ? excluding(expression_to_node(e.value.value.exp, scope), "Update", "SetField", "Return", "If", "Save") : undefined
                     }
                 )
                 break

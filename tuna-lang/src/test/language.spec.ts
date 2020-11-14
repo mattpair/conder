@@ -50,8 +50,8 @@ describe("language", () => {
         `)
     )
 
-    // Needs investigation.
-    it.skip("should allow getting of nested keys",
+
+    it("should allow getting of nested keys",
     
         tunaTest("succeed",
         `

@@ -22,7 +22,7 @@
 * parameterIndex := '\[' space* value={expression} space* '\]'
 * literalIndex := '\.' value={name}
 * objectIndex := obj=expression index={parameterIndex | literalIndex}
-* ret := 'return(?=\s)' value={expression}?
+* ret := 'return(?=\s)' space* value={'(?<= )' exp=expression}?
 * func := ws* 'public' space+ 'function' space+ name=name space* args=args ws* '\{' body=executable '\}'
 * args := '\(' ws* leadingArgs={name=name newLineOrComma ws*}* ws* lastArg={name}? ws* '\)'
 * assignment := target=expression space* equals space* value=expression
@@ -206,7 +206,10 @@ export interface ret {
     kind: ASTKinds.ret;
     value: Nullable<ret_$0>;
 }
-export type ret_$0 = expression;
+export interface ret_$0 {
+    kind: ASTKinds.ret_$0;
+    exp: expression;
+}
 export interface func {
     kind: ASTKinds.func;
     name: name;
@@ -695,6 +698,7 @@ export class Parser {
                 let $$res: Nullable<ret> = null;
                 if (true
                     && this.regexAccept(String.raw`(?:return(?=\s))`, $$dpth + 1, $$cr) !== null
+                    && this.loop<space>(() => this.matchspace($$dpth + 1, $$cr), true) !== null
                     && (($scope$value = this.matchret_$0($$dpth + 1, $$cr)) || true)
                 ) {
                     $$res = {kind: ASTKinds.ret, value: $scope$value};
@@ -703,7 +707,21 @@ export class Parser {
             }, $$cr)();
     }
     public matchret_$0($$dpth: number, $$cr?: ContextRecorder): Nullable<ret_$0> {
-        return this.matchexpression($$dpth + 1, $$cr);
+        return this.runner<ret_$0>($$dpth,
+            (log) => {
+                if (log) {
+                    log("ret_$0");
+                }
+                let $scope$exp: Nullable<expression>;
+                let $$res: Nullable<ret_$0> = null;
+                if (true
+                    && this.regexAccept(String.raw`(?:(?<= ))`, $$dpth + 1, $$cr) !== null
+                    && ($scope$exp = this.matchexpression($$dpth + 1, $$cr)) !== null
+                ) {
+                    $$res = {kind: ASTKinds.ret_$0, exp: $scope$exp};
+                }
+                return $$res;
+            }, $$cr)();
     }
     public matchfunc($$dpth: number, $$cr?: ContextRecorder): Nullable<func> {
         return this.runner<func>($$dpth,

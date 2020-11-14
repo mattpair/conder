@@ -175,23 +175,18 @@ Object {
           "value": Object {
             "field_name": Array [
               Object {
+                "index": 0,
+                "kind": "Saved",
+              },
+              Object {
                 "kind": "String",
                 "value": "field",
               },
             ],
             "kind": "GetField",
             "target": Object {
-              "field_name": Array [
-                Object {
-                  "index": 0,
-                  "kind": "Saved",
-                },
-              ],
-              "kind": "GetField",
-              "target": Object {
-                "kind": "GlobalObject",
-                "name": "gg",
-              },
+              "kind": "GlobalObject",
+              "name": "gg",
             },
           },
         },
