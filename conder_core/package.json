@@ -1,6 +1,7 @@
 {
   "name": "conder_core",
   "version": "0.0.1",
+  "licenses": [{"license": "NCSA"}],
   "scripts": {
     "compile": "tsc -b",
     "pretest": "npm run compile",
