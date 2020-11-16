@@ -1,6 +1,5 @@
 {
   "name": "conder_kernel",
-  "version": "0.0.1",
   "licenses": [{"license": "NCSA"}],
   "scripts": {
     "gen": "node -e 'require(\"./dist/index.js\").writeMain()'",
