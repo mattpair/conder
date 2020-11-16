@@ -5,9 +5,7 @@
     "gen": "node -e 'require(\"./dist/index.js\").writeMain()'",
     "compile": "tsc -b && npm run gen && cd src/rust && cargo build",
     "pretest": "npm run compile",
-    "test": "jest --maxWorkers=50%",
-    "prepush": "npm run compile",
-    "push": "node -e 'require(\"./dist/index.js\").containerize()'"
+    "test": "jest --maxWorkers=50%"
   },
   "author": "Jeremy",
   "license": "ISC",
