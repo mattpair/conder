@@ -16,9 +16,7 @@
     "tspeg": "^2.1.0",
     "typescript": "^4.0.0"
   },
-  "dependencies": {
-    "conder_core": "file:../conder_core/"
-  },
+  "dependencies": {},
   "jest": {
     "preset": "ts-jest",
     "testMatch": [
