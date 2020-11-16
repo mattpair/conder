@@ -1,6 +1,6 @@
-import { AnyOpInstance, ow } from 'conder_kernel';
+import { AnyOpInstance, ow } from '../../ops/index';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet } from '../IR';
-import { base_compiler, Compiler, Transform, Transformer } from './../compilers';
+import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 
 type Mongo = {
     GetWholeObject: Node<{name: string}>,

@@ -1,7 +1,7 @@
 
-import {Test, schemaFactory, AnyOpInstance} from 'conder_kernel'
-import { AnyNode, RootNode } from 'src/main/IR'
-import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../index'
+import {Test, schemaFactory, AnyOpInstance} from '../ops/index'
+import { AnyNode, RootNode } from 'src/main/abstract/IR'
+import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../../index'
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
@@ -29,7 +29,7 @@ function withInputHarness(
                 SCHEMAS: [],
                 DEPLOYMENT_NAME: "statefultest",
                 ...spec
-            }, "./conder_kernel/")
+            })
             .then(async server => {
                 const testSurface: DagServer = {}
                 for (const key in spec.PROCEDURES) {
@@ -56,7 +56,7 @@ function withInputHarness(
             SCHEMAS: [],
             DEPLOYMENT_NAME: "statefultest",
             ...spec
-        }, "./conder_kernel/")
+        })
         .then(async server => {
             const testSurface: DagServer = {}
             for (const key in spec.PROCEDURES) {

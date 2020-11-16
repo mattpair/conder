@@ -1,4 +1,4 @@
-import { AnyOpInstance, Utils } from 'conder_kernel';
+import { AnyOpInstance, Utils } from '../ops/index';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
 type ValueNode = PickNode<

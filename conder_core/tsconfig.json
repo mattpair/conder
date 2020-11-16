@@ -17,7 +17,5 @@
         "outDir": "dist",
         "composite": true
     },
-    "references": [
-        {"path": "./conder_kernel"}
-    ]
+    "references": []
 }

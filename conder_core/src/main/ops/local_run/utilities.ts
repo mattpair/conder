@@ -9,9 +9,9 @@ export namespace Test {
     export class Server {
         private process: child_process.ChildProcess;
         private readonly port: number;
-        private static next_port = 8080;
-        constructor(env: StrongServerEnv, path_prefix: string) {
-          this.port = Server.next_port++;
+        private static next_port = new Uint8Array(new SharedArrayBuffer(16));
+        private constructor(env: StrongServerEnv) {
+          this.port = 8080 + Atomics.add(Server.next_port, 0, 1);
           const string_env: Partial<ServerEnv> = {};
           for (const key in env) {
             //@ts-ignore
@@ -20,16 +20,16 @@ export namespace Test {
               typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
           }
           this.process = child_process.exec(`./app ${this.port}`, {
-            cwd: `${path_prefix}src/rust/target/debug`,
+            cwd: `./src/main/ops/rust/target/debug`,
             env: string_env,
           });
           this.process.stdout.pipe(process.stdout);
           this.process.stderr.pipe(process.stderr);
         }
       
-        public static async start(env: StrongServerEnv, path_prefix="./"): Promise<Server> {
+        public static async start(env: StrongServerEnv): Promise<Server> {
           // portAssignments.set(8080, this.process);
-          const ret = new Server(env, path_prefix);
+          const ret = new Server(env);
           let retry = true;
           while (retry) {
             try {
@@ -85,9 +85,9 @@ export namespace Test {
       
       export class Mongo {
         readonly port: number;
-        private static next_port = 27017;
+        private static next_port = new Uint32Array(new SharedArrayBuffer(16));
         private constructor() {
-          this.port = Test.Mongo.next_port++;
+          this.port = 27017 + Atomics.add(Test.Mongo.next_port, 0, 1);
           child_process.execSync(
             `docker run --rm --name mongo${this.port} -d  --mount type=tmpfs,destination=/data/db -p ${this.port}:27017 mongo:4.4 `
           );

@@ -1,4 +1,3 @@
-import * as child_process from "child_process";
 import {
   ow,
   Procedures,
@@ -9,10 +8,9 @@ import {
   StrongServerEnv,
   AnySchemaInstance,
   schemaFactory
-} from "../../index";
+} from "./index";
 
-import * as mongodb from "mongodb";
-import {Test} from '../main/local_run/utilities'
+import {Test} from './local_run/utilities'
 
 
 describe("conduit kernel", () => {
