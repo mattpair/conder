@@ -1,6 +1,10 @@
 {
   "name": "conder_core",
-  "licenses": [{"license": "NCSA"}],
+  "licenses": [
+    {
+      "license": "NCSA"
+    }
+  ],
   "scripts": {
     "compile": "tsc -b",
     "pretest": "npm run compile",
@@ -35,5 +39,6 @@
     ]
   },
   "main": "dist/index.js",
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "version": "0.0.5"
 }
