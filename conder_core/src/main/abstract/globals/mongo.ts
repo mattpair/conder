@@ -19,6 +19,14 @@ const MONGO_REPLACER: RequiredReplacer<Mongo> = {
             finally: r(n.finally),
         }
     },
+    Math(n, r) {
+        return {
+            kind: "Math",
+            sign: n.sign,
+            left: r(n.left),
+            right: r(n.right)
+        }
+    },
 
     Object(n, r) {
         return {

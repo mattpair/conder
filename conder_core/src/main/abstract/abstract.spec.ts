@@ -258,6 +258,20 @@ describe("basic functionality", () => {
         })
     )
 
+    it("supports basic math",
+        noInputHarness({
+            minus: [{kind: "Return", value: {
+                kind: "Math",
+                left: {kind: "Int", value: 42},
+                right: {kind: "Int", value: -42},
+                sign: "-"
+            }}]
+        }, async server => {
+            expect(await server.minus()).toBe(84)
+        })
+    
+    )
+
     it("allows if statements", 
         noInputHarness({
             ifTrue: [{

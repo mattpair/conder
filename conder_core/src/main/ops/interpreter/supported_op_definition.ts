@@ -893,8 +893,8 @@ export const OpSpec: CompleteOpSpec = {
 
 
 function mathOp(sym: string): string {
-    return `let first = ${popStack};
-    let second = ${popStack};
-    ${pushStack(applyAgainstNumbers("first", "second", sym, "number"))};
+    return `let right = ${popStack};
+    let left = ${popStack};
+    ${pushStack(applyAgainstNumbers("left", "right", sym, "number"))};
     None`
 }

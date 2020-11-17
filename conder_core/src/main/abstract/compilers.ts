@@ -34,6 +34,13 @@ const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> 
     "<=": [ow.lesseq]
 }
 
+const mathLookup: Record<PickNode<"Math">["sign"], AnyOpInstance[]> = {
+    "+": [ow.nPlus],
+    "-": [ow.nMinus],
+    "/": [ow.nDivide],
+    "*": [ow.nMult],
+}
+
 const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "and": [ow.boolAnd],
     "or": [ow.boolOr]
@@ -46,6 +53,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "String":
             
             return [ow.instantiate(n.value)]
+
+        case "Math":
+            return [
+                ...full_compiler(n.left),
+                ...full_compiler(n.right),
+                ...mathLookup[n.sign]
+            ]
 
         case "BoolAlg":
             return [

@@ -11,7 +11,8 @@ type ValueNode = PickNode<
     "String" |
     "FieldExists" |
     "GetField" |
-    "GlobalObject"
+    "GlobalObject" | 
+    "Math"
     >
 
 
@@ -29,7 +30,12 @@ export type BaseNodeDefs = {
         sign: "==" | "!=" | "<" | ">" | "<=" | ">="
         left: PickNode<"Int" | "Saved">
         right: PickNode<"Int" | "Saved">
-    }>
+    }>,
+    Math: Node<{
+        sign: "+" | "-" | "*" | "/",
+        left: Exclude<ValueNode, {kind: "GlobalObject"}>,
+        right: Exclude<ValueNode, {kind: "GlobalObject"}>
+    }>,
     BoolAlg: Node<{
         sign: "and" | "or", 
         left: PickNode<"Bool" | "Comparison" | "Saved">, 
