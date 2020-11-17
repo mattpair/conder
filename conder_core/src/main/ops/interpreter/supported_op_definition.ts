@@ -69,7 +69,8 @@ StaticOp<"isLastNone"> |
 ParamOp<"stringConcat", {nStrings: number, joiner: string}> | 
 StaticOp<"nPlus"> |
 StaticOp<"nMinus"> |
-StaticOp<"nDivide"> 
+StaticOp<"nDivide"> |
+StaticOp<"nMult"> 
 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
@@ -870,32 +871,30 @@ export const OpSpec: CompleteOpSpec = {
 
     nPlus: {
         opDefinition: {
-            rustOpHandler: `
-            let first = ${popStack};
-            let second = ${popStack};
-            ${pushStack(applyAgainstNumbers("first", "second", "+", "number"))};
-            None
-            `
+            rustOpHandler: mathOp("+")
         }
     },
     nMinus: {
         opDefinition: {
-            rustOpHandler: `
-            let first = ${popStack};
-            let second = ${popStack};
-            ${pushStack(applyAgainstNumbers("first", "second", "-", "number"))};
-            None
-            `
+            rustOpHandler: mathOp("-")
         }
     },
     nDivide: {
         opDefinition: {
-            rustOpHandler: `
-            let first = ${popStack};
-            let second = ${popStack};
-            ${pushStack(applyAgainstNumbers("first", "second", "/", "number"))};
-            None
-            `
+            rustOpHandler: mathOp("/")
+        }
+    },
+    nMult: {
+        opDefinition: {
+            rustOpHandler: mathOp("*")
         }
     }
+}
+
+
+function mathOp(sym: string): string {
+    return `let first = ${popStack};
+    let second = ${popStack};
+    ${pushStack(applyAgainstNumbers("first", "second", sym, "number"))};
+    None`
 }
