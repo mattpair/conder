@@ -1,4 +1,4 @@
-import { AnyOpInstance, ow, Utils } from 'conder_kernel';
+import { AnyOpInstance, ow, Utils } from '../ops/index';
 import { BaseNodesFromTargetSet, PickNode, TargetNodeSet } from './IR';
 
 export type Transform<I, O> = {

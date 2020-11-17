@@ -1,10 +1,16 @@
 {
   "name": "conder_core",
-  "licenses": [{"license": "NCSA"}],
+  "licenses": [
+    {
+      "license": "NCSA"
+    }
+  ],
   "scripts": {
+    "gen": "node -e 'require(\"./dist/src/main/ops/index.js\").writeMain()'",
+    "precompile": "npm run gen && cd src/main/ops/rust && cargo build",
     "compile": "tsc -b",
     "pretest": "npm run compile",
-    "test": "jest --maxWorkers=50%"
+    "test": "jest --runInBand"
   },
   "author": "Jeremy",
   "license": "ISC",
@@ -18,22 +24,20 @@
     "typescript": "^3.9.3"
   },
   "dependencies": {
-    "conder_kernel": "file:conder_kernel",
     "isomorphic-fetch": "^2.2.1",
     "mongodb": "^3.6.2"
   },
   "jest": {
     "preset": "ts-jest",
     "testMatch": [
-      "**/test/**/*.[jt]s",
-      "**/?(*.)+(spec|test).[tj]s"
+      "**/?(*.)+(spec).[tj]s"
     ],
     "testPathIgnorePatterns": [
       "/node_modules/",
-      "/dist/",
-      "/conder_kernel/"
+      "/dist/"
     ]
   },
   "main": "dist/index.js",
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "version": "0.0.6"
 }

@@ -1,4 +1,4 @@
-import { AnySchemaInstance, AnyOpInstance, ow } from "conder_kernel";
+import { AnySchemaInstance, AnyOpInstance, ow } from '../ops/index';
 import { AnyNode, RootNode } from "./IR";
 import {MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL} from './globals/mongo'
 import { Transformer } from "./compilers";

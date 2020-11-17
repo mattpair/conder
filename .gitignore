@@ -4,3 +4,7 @@ gen/
 target/
 node_modules/
 dist/
+index.js
+dist/
+bin/
+main.rs
