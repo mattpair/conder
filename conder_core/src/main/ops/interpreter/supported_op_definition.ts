@@ -66,7 +66,8 @@ StaticOp<"fieldExists"> |
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
 StaticOp<"isLastNone"> |
-ParamOp<"stringConcat", {nStrings: number, joiner: string}>
+ParamOp<"stringConcat", {nStrings: number, joiner: string}> | 
+StaticOp<"nPlus">
 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
@@ -863,5 +864,16 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "assertHeapLen", data})
+    },
+
+    nPlus: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popStack};
+            let second = ${popStack};
+            ${pushStack(applyAgainstNumbers("first", "second", "+", "number"))};
+            None
+            `
+        }
     }
 }

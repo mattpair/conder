@@ -58,6 +58,13 @@ describe("conduit kernel", () => {
       },
       {PROCEDURES: {destructure: [ow.instantiate({f: {o: {o: "target field"}}}), ow.extractFields([["f", "o", "o"]]), ow.returnStackTop]}}
     )
+    kernelTest(
+      "math",
+      async server => {
+        expect(await server.invoke("plus")).toBe(42)
+      },
+      {PROCEDURES: {plus: [ow.instantiate(1), ow.instantiate(41), ow.nPlus, ow.returnStackTop]}}
+      )
   });
 
   describe("schema", () => {
