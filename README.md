@@ -15,3 +15,6 @@ The IR representation is compiled to executable ops. However, the IR can have an
 
 Ops are what is actually executed by the stored procedure server. If one is crazy enough, they could build something that works with the op writing interface directly. However, you open yourself up to a host of runtime errors, so you better know what you're doing.
 
+### Disclaimer
+
+This project is pretty new and still requires much more work before you can build complete and useful languages on top of it.
