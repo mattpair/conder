@@ -18,3 +18,8 @@ Ops are what is actually executed by the stored procedure server. If one is craz
 ### Disclaimer
 
 This project is pretty new and still requires much more work before you can build complete and useful languages on top of it.
+
+#### See also
+
+[The stored procedure server (sps)](https://hub.docker.com/r/condersystems/sps)
+[Tuna-lang](https://github.com/Conder-Systems/tuna-lang)
