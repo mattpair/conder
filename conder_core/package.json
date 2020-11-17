@@ -7,8 +7,7 @@
   ],
   "scripts": {
     "gen": "node -e 'require(\"./dist/src/main/ops/index.js\").writeMain()'",
-    "precompile": "npm run gen && cd src/main/ops/rust && cargo build",
-    "compile": "tsc -b",
+    "compile": "tsc -b && npm run gen && cd src/main/ops/rust && cargo build",
     "pretest": "npm run compile",
     "test": "jest --runInBand"
   },

@@ -66,7 +66,12 @@ StaticOp<"fieldExists"> |
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
 StaticOp<"isLastNone"> |
-ParamOp<"stringConcat", {nStrings: number, joiner: string}>
+ParamOp<"stringConcat", {nStrings: number, joiner: string}> | 
+StaticOp<"nPlus"> |
+StaticOp<"nMinus"> |
+StaticOp<"nDivide"> |
+StaticOp<"nMult"> 
+
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -149,6 +154,30 @@ function pushStack(instance: string): string {
     return `stack.push(${instance})`
 }
 
+function applyAgainstNumbers(n1: string, n2: string, op: string, type: "number" | "bool"): string {
+    const toType = (value: string, di: "double" | "int") => {
+        if (type === "number") {
+            return `InterpreterType::${di}(${value})`
+        } else {
+            return `InterpreterType::bool(${value})`
+        }
+    }
+
+    return ` 
+        match ${n1} {
+            InterpreterType::int(i1) => match ${n2} {
+                InterpreterType::int(i2) => ${toType(`i1 ${op} i2`, "int")},
+                InterpreterType::double(d2) => ${toType(`(i1 as f64) ${op} d2`, "double")},
+                _ => panic!("not a number")
+            },
+            InterpreterType::double(d1) => match ${n2} {
+                InterpreterType::int(i2) => ${toType(`d1 ${op} (i2 as f64)`, "double")},
+                InterpreterType::double(d2) => ${toType(`d1 ${op} d2`, "double")},
+                _ => panic!("not a number")
+            }, 
+            _ => panic!("not a number")
+        }`
+}
 
 export const OpSpec: CompleteOpSpec = {
     negatePrev: {
@@ -768,6 +797,7 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::string(ss) => fs == ss,
                     _ => false
                 },
+            
                 InterpreterType::int(fi) => match second {
                     InterpreterType::int(si) => fi == si,
                     _ => false
@@ -789,19 +819,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let first = ${popStack};
             let second = ${popStack};
-            ${pushStack(`InterpreterType::bool(match first {
-                InterpreterType::int(i1) => match second {
-                    InterpreterType::int(i2) => i1 < i2,
-                    _ => false
-                },
-
-                InterpreterType::double(d1) => match second {
-                    InterpreterType::double(d2) => d1 < d2,
-                    _ => false
-                },
-                _ => false
-            
-            })`)};
+            ${pushStack(applyAgainstNumbers("first", "second", "<", "bool"))};
             None
             `
         }
@@ -811,19 +829,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let first = ${popStack};
             let second = ${popStack};
-            ${pushStack(`InterpreterType::bool(match first {
-                InterpreterType::int(i1) => match second {
-                    InterpreterType::int(i2) => i1 <= i2,
-                    _ => false
-                },
-
-                InterpreterType::double(d1) => match second {
-                    InterpreterType::double(d2) => d1 <= d2,
-                    _ => false
-                },
-                _ => false
-            
-            })`)};
+            ${pushStack(applyAgainstNumbers("first", "second", "<=", "bool"))};
             None
             
             `
@@ -861,5 +867,34 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "assertHeapLen", data})
+    },
+
+    nPlus: {
+        opDefinition: {
+            rustOpHandler: mathOp("+")
+        }
+    },
+    nMinus: {
+        opDefinition: {
+            rustOpHandler: mathOp("-")
+        }
+    },
+    nDivide: {
+        opDefinition: {
+            rustOpHandler: mathOp("/")
+        }
+    },
+    nMult: {
+        opDefinition: {
+            rustOpHandler: mathOp("*")
+        }
     }
+}
+
+
+function mathOp(sym: string): string {
+    return `let first = ${popStack};
+    let second = ${popStack};
+    ${pushStack(applyAgainstNumbers("first", "second", sym, "number"))};
+    None`
 }
