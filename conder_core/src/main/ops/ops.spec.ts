@@ -62,8 +62,13 @@ describe("conduit kernel", () => {
       "math",
       async server => {
         expect(await server.invoke("plus")).toBe(42)
+        expect(await server.invoke("minus")).toBe(0.5)
       },
-      {PROCEDURES: {plus: [ow.instantiate(1), ow.instantiate(41), ow.nPlus, ow.returnStackTop]}}
+      {PROCEDURES: {
+        plus: [ow.instantiate(1), ow.instantiate(41), ow.nPlus, ow.returnStackTop],
+        minus: [ow.instantiate(.5), ow.instantiate(1), ow.nMinus, ow.returnStackTop]
+
+      }}
       )
   });
 
