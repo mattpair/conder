@@ -2,7 +2,7 @@ Conder Core
 
 # Abstract
 
-This is a set of libraries and containers that can be used to build horizontally scalable, fault-tolerant, and portable systems. At the moment, we only have stored procedure servers. However, there will be more in the future.
+This is a set of libraries and containers that can be used to build horizontally scalable, fault-tolerant, and portable systems. At the moment, the only way to run conder code is on a stored procedure server [stored procedure server (sps)](https://hub.docker.com/r/condersystems/sps).
 
 ## Intermediate Representation (IR)
 
