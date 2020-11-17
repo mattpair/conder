@@ -68,7 +68,8 @@ ParamOp<"tryGetField", string> |
 StaticOp<"isLastNone"> |
 ParamOp<"stringConcat", {nStrings: number, joiner: string}> | 
 StaticOp<"nPlus"> |
-StaticOp<"nMinus">
+StaticOp<"nMinus"> |
+StaticOp<"nDivide"> 
 
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
@@ -883,6 +884,16 @@ export const OpSpec: CompleteOpSpec = {
             let first = ${popStack};
             let second = ${popStack};
             ${pushStack(applyAgainstNumbers("first", "second", "-", "number"))};
+            None
+            `
+        }
+    },
+    nDivide: {
+        opDefinition: {
+            rustOpHandler: `
+            let first = ${popStack};
+            let second = ${popStack};
+            ${pushStack(applyAgainstNumbers("first", "second", "/", "number"))};
             None
             `
         }
