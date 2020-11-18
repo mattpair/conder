@@ -6,7 +6,8 @@ type Mongo = {
     GetWholeObject: Node<{name: string}>,
     GetKeyFromObject: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">[]}>
     keyExists: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">}>
-    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"], value: PickTargetNode<Mongo, "SetField">["value"]}>
+    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"], value: PickTargetNode<Mongo, "SetField">["value"]}>,
+    DeleteKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"]}>
 }
 
 
@@ -19,6 +20,8 @@ const MONGO_REPLACER: RequiredReplacer<Mongo> = {
             finally: r(n.finally),
         }
     },
+
+
     Math(n, r) {
         return {
             kind: "Math",
@@ -116,6 +119,13 @@ const MONGO_REPLACER: RequiredReplacer<Mongo> = {
                             obj: n.target.name,
                             key: n.operation.field_name,
                             value: r(n.operation.value)
+                        }
+
+                    case "DeleteField":
+                        return {
+                            kind: "DeleteKeyOnObject",
+                            obj: n.target.name,
+                            key: n.operation.field_name.map(r)
                         }
                 }
 
@@ -229,6 +239,38 @@ function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
                 ow.instantiate(false)
             ]
         
+
+        case "DeleteKeyOnObject": {
+            if (n.key.length > 1) {
+                return [
+                    ow.instantiate({"$unset": {}}),
+                    ow.instantiate("$unset"),
+                    ow.instantiate("_val"),
+                    ...n.key.slice(1).flatMap(compile_function),
+                    ow.stringConcat({nStrings: n.key.length, joiner: "."}),
+                    ow.instantiate(""),
+                    ow.setField({field_depth: 2}),
+                    ow.instantiate({_key: {}}),
+                    ow.instantiate("_key"),
+                    ...compile_function(n.key[0]),
+                    ow.setField({field_depth: 1}),
+                    ow.updateOne({store: n.obj, upsert: false}),
+                    ow.popStack
+                ]
+                    
+            } else {
+                return  [
+                    ow.instantiate({_key: {}}),
+                    ow.instantiate("_key"),
+                    ...base_compiler(n.key[0], compile_function),
+                    ow.setField({field_depth: 1}),
+                    ow.deleteOneInStore(n.obj),
+                    ow.popStack
+                ]
+            }
+        }
+            
+
         default: return base_compiler(n, compile_function)
     }
 }

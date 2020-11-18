@@ -160,6 +160,29 @@ describe("basic functionality", () => {
         })
     )
 
+    it ("allows deleting of fields on local objects",
+        withInputHarness(
+            "no storage", 
+            {
+                delete: {
+                    input: [schemaFactory.Any], 
+                    computation: [
+                        {
+                            kind: "Update", 
+                            target: {kind: "Saved", index: 0},
+                            operation: {kind: "DeleteField", field_name: [{kind: "String", value: "some_key"}]}
+                        },
+                        {
+                            kind: "Return",
+                            value: {kind: "Saved", index: 0}
+                        }
+                    ]}},
+            async server => {
+                expect(await server.delete({some_key: false, other: true})).toEqual({other: true})
+            }
+        )
+    )
+
     it("can get nested field",
         noInputHarness({
             r: [{
@@ -495,4 +518,5 @@ describe("global objects", () => {
             "requires storage"
         )
     )
+
 })
