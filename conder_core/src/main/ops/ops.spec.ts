@@ -7,20 +7,23 @@ import {
   Var,
   StrongServerEnv,
   AnySchemaInstance,
-  schemaFactory
+  schemaFactory,
 } from "./index";
 
-import {Test} from './local_run/utilities'
-
+import { Test } from "./local_run/utilities";
 
 describe("conduit kernel", () => {
-  
   function kernelTest(
     descr: string,
     test: (server: Test.Server) => Promise<void>,
     envOverride: Partial<StrongServerEnv> = {}
   ) {
-    const env: StrongServerEnv = { PROCEDURES: {}, STORES: {}, SCHEMAS: [], DEPLOYMENT_NAME: "testdeployment" };
+    const env: StrongServerEnv = {
+      PROCEDURES: {},
+      STORES: {},
+      SCHEMAS: [],
+      DEPLOYMENT_NAME: "testdeployment",
+    };
     for (const key in envOverride) {
       //@ts-ignore
       env[key] = envOverride[key];
@@ -40,7 +43,7 @@ describe("conduit kernel", () => {
     kernelTest("should be able to do nothing", async () => {});
   });
 
-  describe("procedures", () => {
+  describe.only("procedures", () => {
     kernelTest(
       "invoking a custom noop",
       async (server) => {
@@ -53,25 +56,77 @@ describe("conduit kernel", () => {
     kernelTest(
       "destructuring an object",
       async (server) => {
-        const res = await server.invoke("destructure")
-        expect(res).toEqual("target field")
+        const res = await server.invoke("destructure");
+        expect(res).toEqual("target field");
       },
-      {PROCEDURES: {destructure: [ow.instantiate({f: {o: {o: "target field"}}}), ow.extractFields([["f", "o", "o"]]), ow.returnStackTop]}}
-    )
+      {
+        PROCEDURES: {
+          destructure: [
+            ow.instantiate({ f: { o: { o: "target field" } } }),
+            ow.extractFields([["f", "o", "o"]]),
+            ow.returnStackTop,
+          ],
+        },
+      }
+    );
     kernelTest(
       "math",
-      async server => {
-        expect(await server.invoke("plus")).toBe(42)
-        expect(await server.invoke("minus")).toBe(-0.5)
-        expect(await server.invoke("divide")).toBe(-.125)
+      async (server) => {
+        expect(await server.invoke("plus")).toBe(42);
+        expect(await server.invoke("minus")).toBe(-0.5);
+        expect(await server.invoke("divide")).toBe(-0.125);
       },
-      {PROCEDURES: {
-        plus: [ow.instantiate(1), ow.instantiate(41), ow.nPlus, ow.returnStackTop],
-        minus: [ow.instantiate(.5), ow.instantiate(1), ow.nMinus, ow.returnStackTop],
-        divide: [ow.instantiate(-.5), ow.instantiate(4), ow.nDivide, ow.returnStackTop]
+      {
+        PROCEDURES: {
+          plus: [
+            ow.instantiate(1),
+            ow.instantiate(41),
+            ow.nPlus,
+            ow.returnStackTop,
+          ],
+          minus: [
+            ow.instantiate(0.5),
+            ow.instantiate(1),
+            ow.nMinus,
+            ow.returnStackTop,
+          ],
+          divide: [
+            ow.instantiate(-0.5),
+            ow.instantiate(4),
+            ow.nDivide,
+            ow.returnStackTop,
+          ],
+        },
+      }
+    );
 
-      }}
-      )
+    kernelTest(
+      "deleting on local objects",
+      async (server) => {
+        expect(
+          await server.invoke("delete", {
+            l1: { l2: "delete me", other: "hi" },
+          })
+        ).toMatchInlineSnapshot(`
+          Object {
+            "l1": Object {
+              "other": "hi",
+            },
+          }
+        `);
+      },
+      {
+        PROCEDURES: {
+          delete: [
+            ow.copyFromHeap(0),
+            ow.instantiate("l1"),
+            ow.instantiate("l2"),
+            ow.deleteField({ field_depth: 2 }),
+            ow.returnStackTop,
+          ],
+        },
+      }
+    );
   });
 
   describe("schema", () => {
@@ -89,9 +144,12 @@ describe("conduit kernel", () => {
             expect(await server.invoke("validateSchema", [null])).toBeFalsy();
           }
 
-          expect(await server
-            .invoke("validateSchema", invalidInput)).toBeFalsy()
-          expect(await server.invoke("validateSchema", validInput)).toBeTruthy()
+          expect(
+            await server.invoke("validateSchema", invalidInput)
+          ).toBeFalsy();
+          expect(
+            await server.invoke("validateSchema", validInput)
+          ).toBeTruthy();
         },
         {
           PROCEDURES: {
@@ -106,24 +164,33 @@ describe("conduit kernel", () => {
     }
 
     kernelTest(
-      "input args test", 
-      async server => {
-        expect(await server.invoke("test", true, 42, 12)).toBeTruthy()
-        expect(await server.invoke("test", 42, false, "abc")).toBeFalsy()
+      "input args test",
+      async (server) => {
+        expect(await server.invoke("test", true, 42, 12)).toBeTruthy();
+        expect(await server.invoke("test", 42, false, "abc")).toBeFalsy();
       },
       {
         PROCEDURES: {
           test: [
-            ow.enforceSchemaInstanceOnHeap({heap_pos: 0, schema: schemaFactory.bool}),
-            ow.enforceSchemaInstanceOnHeap({heap_pos: 1, schema: schemaFactory.int}),
-            ow.enforceSchemaInstanceOnHeap({heap_pos: 2, schema: schemaFactory.Any}),
+            ow.enforceSchemaInstanceOnHeap({
+              heap_pos: 0,
+              schema: schemaFactory.bool,
+            }),
+            ow.enforceSchemaInstanceOnHeap({
+              heap_pos: 1,
+              schema: schemaFactory.int,
+            }),
+            ow.enforceSchemaInstanceOnHeap({
+              heap_pos: 2,
+              schema: schemaFactory.Any,
+            }),
             ow.boolAnd,
             ow.boolAnd,
-            ow.returnStackTop
-          ]
-        }
-      },
-    )
+            ow.returnStackTop,
+          ],
+        },
+      }
+    );
 
     schemaTest(
       "boolean",
@@ -241,28 +308,29 @@ describe("conduit kernel", () => {
     | { bsonType: "double" };
 
   describe("mongo storage layer", () => {
-
     function storageTest(
       descr: string,
       params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,
       test: (server: Test.Server) => Promise<void>,
-      only=false
+      only = false
     ) {
-      let tester = only ? it.only : it 
-              
-        tester(
-          descr,
-          async () => Test.Mongo.start(params).then((mongo) =>
-              Test.Server.start({
-                MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
-                ...params,
-                SCHEMAS: [],
-                DEPLOYMENT_NAME: "statefultest"
-              }).then(server => test(server).finally(() => server.kill()))
+      let tester = only ? it.only : it;
+
+      tester(
+        descr,
+        async () =>
+          Test.Mongo.start(params).then((mongo) =>
+            Test.Server.start({
+              MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
+              ...params,
+              SCHEMAS: [],
+              DEPLOYMENT_NAME: "statefultest",
+            })
+              .then((server) => test(server).finally(() => server.kill()))
               .finally(() => mongo.kill())
-            ),
-          15000
-        );
+          ),
+        15000
+      );
     }
 
     storageTest(
@@ -320,7 +388,7 @@ describe("conduit kernel", () => {
           testStore: [
             ow.insertFromHeap({ heap_pos: 0, store: "storeName" }),
             ow.instantiate({}), // Filter for query
-            ow.queryStore(["storeName", { right: false}]),
+            ow.queryStore(["storeName", { right: false }]),
             ow.returnStackTop,
           ],
         },
@@ -340,82 +408,94 @@ describe("conduit kernel", () => {
       "should be able to filter strings in query",
       {
         STORES: {
-          strings: schemaFactory.Object({value: schemaFactory.string})
+          strings: schemaFactory.Object({ value: schemaFactory.string }),
         },
         PROCEDURES: {
           insert: [
-            ow.instantiate([{value: "a"}, {value: "b"}]),
+            ow.instantiate([{ value: "a" }, { value: "b" }]),
             ow.insertFromStack("strings"),
             ow.instantiate(true),
-            ow.returnStackTop
+            ow.returnStackTop,
           ],
           getBs: [
-            ow.instantiate({value: "b"}),
+            ow.instantiate({ value: "b" }),
             ow.queryStore(["strings", {}]),
-            ow.returnStackTop
-          ]
-        }
+            ow.returnStackTop,
+          ],
+        },
       },
       async (server) => {
-        expect(await server.invoke("insert")).toBeTruthy()
-        expect(await server.invoke("insert")).toBeTruthy()
-        expect(await server.invoke("getBs")).toEqual([{value: "b"}, {value: "b"}])
+        expect(await server.invoke("insert")).toBeTruthy();
+        expect(await server.invoke("insert")).toBeTruthy();
+        expect(await server.invoke("getBs")).toEqual([
+          { value: "b" },
+          { value: "b" },
+        ]);
       }
-    )
-    
+    );
+
     storageTest(
       "should be able to filter numbers in query",
       {
         STORES: {
-          nums: schemaFactory.Object({value: schemaFactory.int})
+          nums: schemaFactory.Object({ value: schemaFactory.int }),
         },
         PROCEDURES: {
           insert: [
-            ow.instantiate([{value: 1}, {value: 2}]),
+            ow.instantiate([{ value: 1 }, { value: 2 }]),
             ow.insertFromStack("nums"),
             ow.instantiate(true),
-            ow.returnStackTop
+            ow.returnStackTop,
           ],
           getLte: [
-            ow.instantiate({value: {"$lte": {}}}),
+            ow.instantiate({ value: { $lte: {} } }),
             ow.copyFromHeap(0),
             ow.setNestedField(["value", "$lte"]),
             ow.queryStore(["nums", {}]),
-            ow.returnStackTop
-          ]
-        }
+            ow.returnStackTop,
+          ],
+        },
       },
       async (server) => {
-        expect(await server.invoke("insert")).toBeTruthy()
-        expect(await server.invoke("getLte", 2)).toEqual([{value: 1}, {value: 2}])
-        expect(await server.invoke("getLte", 1)).toEqual([{value: 1}])
+        expect(await server.invoke("insert")).toBeTruthy();
+        expect(await server.invoke("getLte", 2)).toEqual([
+          { value: 1 },
+          { value: 2 },
+        ]);
+        expect(await server.invoke("getLte", 1)).toEqual([{ value: 1 }]);
       }
-    )
+    );
 
     storageTest(
       "find one",
       {
         STORES: {
-          users: schemaFactory.Object({email: schemaFactory.string, pwd: schemaFactory.string})
+          users: schemaFactory.Object({
+            email: schemaFactory.string,
+            pwd: schemaFactory.string,
+          }),
         },
         PROCEDURES: {
-          addUser: [ow.insertFromHeap({heap_pos: 0, store: "users"}), ow.returnVariable(0)],
+          addUser: [
+            ow.insertFromHeap({ heap_pos: 0, store: "users" }),
+            ow.returnVariable(0),
+          ],
           getUser: [
-            ow.instantiate({}), 
-            ow.copyFromHeap(0), 
+            ow.instantiate({}),
+            ow.copyFromHeap(0),
             ow.assignPreviousToField("email"),
             ow.findOneInStore(["users", {}]),
-            ow.returnStackTop
-          ]
-        }
+            ow.returnStackTop,
+          ],
+        },
       },
       async (server) => {
-        const user = {email: "a@gmail.com", pwd: "password"}
-        expect(await server.invoke("addUser", user)).toBeTruthy()
-        expect(await server.invoke("getUser", user.email)).toEqual(user)
-        expect(await server.invoke("getUser", "someoneelse")).toBeNull()
+        const user = { email: "a@gmail.com", pwd: "password" };
+        expect(await server.invoke("addUser", user)).toBeTruthy();
+        expect(await server.invoke("getUser", user.email)).toEqual(user);
+        expect(await server.invoke("getUser", "someoneelse")).toBeNull();
       }
-    )
+    );
 
     storageTest(
       "should be able to suppress objects in a query",
@@ -433,7 +513,7 @@ describe("conduit kernel", () => {
           testStore: [
             ow.insertFromHeap({ heap_pos: 0, store: "storeName" }),
             ow.instantiate({}), //filter for query
-            ow.queryStore(["storeName", { right: false}]),
+            ow.queryStore(["storeName", { right: false }]),
             ow.returnStackTop,
           ],
         },
@@ -450,9 +530,7 @@ describe("conduit kernel", () => {
       }
     );
 
-    const insert = [
-      ow.insertFromHeap({ heap_pos: 0, store: "test" }),
-    ];
+    const insert = [ow.insertFromHeap({ heap_pos: 0, store: "test" })];
 
     const len = [ow.instantiate({}), ow.storeLen("test"), ow.returnStackTop];
     const STORES = {
@@ -460,7 +538,6 @@ describe("conduit kernel", () => {
         data: schemaFactory.string,
       }),
     };
-
 
     storageTest(
       "measure global store",
@@ -470,10 +547,9 @@ describe("conduit kernel", () => {
           await server.invoke("insert", [{ data: "first" }, { data: "second" }])
         ).toBeNull();
         expect(await server.invoke("len")).toBe(2);
-      },
+      }
     );
   });
-
 
   describe("instructions", () => {
     kernelTest(
@@ -489,11 +565,7 @@ describe("conduit kernel", () => {
       },
       {
         PROCEDURES: {
-          measure: [
-            ow.copyFromHeap(0),
-            ow.arrayLen,
-            ow.returnStackTop,
-          ],
+          measure: [ow.copyFromHeap(0), ow.arrayLen, ow.returnStackTop],
         },
       }
     );
@@ -501,51 +573,53 @@ describe("conduit kernel", () => {
     kernelTest(
       "comparisons",
       async (server) => {
-        const less = await server.invoke(
-          "less",
-          [0, 1]
-        )
+        const less = await server.invoke("less", [0, 1]);
 
-        const notless = await server.invoke(
-          "less",
-          [0, 0]
-        )
+        const notless = await server.invoke("less", [0, 0]);
 
-        const lessequal = await server.invoke(
-          "lesseq",
-          [0, 0]
-        )
+        const lessequal = await server.invoke("lesseq", [0, 0]);
 
-        const notlessequal = await server.invoke(
-          "lesseq",
-          [0.1, 0.01]
-        )
-        const equal = await server.invoke(
-          "equal",
-          ["abc", "abc"]
-        )
+        const notlessequal = await server.invoke("lesseq", [0.1, 0.01]);
+        const equal = await server.invoke("equal", ["abc", "abc"]);
 
-        const notequal = await server.invoke(
-          "notequal",
-          ["abcd", "abc"]
-        )
+        const notequal = await server.invoke("notequal", ["abcd", "abc"]);
 
-
-        expect(less).toBeTruthy()
-        expect(notless).toBeFalsy()
-        expect(lessequal).toBeTruthy()
-        expect(notlessequal).toBeFalsy()
-        expect(equal).toBeTruthy()
-        expect(notequal).toBeTruthy()
+        expect(less).toBeTruthy();
+        expect(notless).toBeFalsy();
+        expect(lessequal).toBeTruthy();
+        expect(notlessequal).toBeFalsy();
+        expect(equal).toBeTruthy();
+        expect(notequal).toBeTruthy();
       },
       {
         PROCEDURES: {
-          less: [ow.copyFromHeap(0), ow.flattenArray, ow.less, ow.returnStackTop],
-          lesseq: [ow.copyFromHeap(0), ow.flattenArray, ow.lesseq, ow.returnStackTop],
-          equal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.returnStackTop],
-          notequal: [ow.copyFromHeap(0), ow.flattenArray, ow.equal, ow.negatePrev, ow.returnStackTop]
-        }
+          less: [
+            ow.copyFromHeap(0),
+            ow.flattenArray,
+            ow.less,
+            ow.returnStackTop,
+          ],
+          lesseq: [
+            ow.copyFromHeap(0),
+            ow.flattenArray,
+            ow.lesseq,
+            ow.returnStackTop,
+          ],
+          equal: [
+            ow.copyFromHeap(0),
+            ow.flattenArray,
+            ow.equal,
+            ow.returnStackTop,
+          ],
+          notequal: [
+            ow.copyFromHeap(0),
+            ow.flattenArray,
+            ow.equal,
+            ow.negatePrev,
+            ow.returnStackTop,
+          ],
+        },
       }
-    )
+    );
   });
-})
+});
