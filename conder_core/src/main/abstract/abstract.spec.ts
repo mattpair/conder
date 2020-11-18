@@ -184,30 +184,29 @@ describe("basic functionality", () => {
         )
     )
     it("allows deleting of nested fields on locals",
-    withInputHarness(
-        "no storage", 
-        {
-            delete: {
-                input: [schemaFactory.Any], 
-                computation: [
-                    {
-                        kind: "Update", 
-                        target: {kind: "Saved", index: 0},
-                        operation: {
-                            kind: "DeleteField", 
-                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]}
-                    },
-                    {
-                        kind: "Return",
-                        value: {kind: "Saved", index: 0}
-                    }
-                ]}},
-        async server => {
-            expect(await server.delete({l1: {l2: false, other: true}})).toEqual({l1: {other: true}})
-            expect(await server.delete({l1: {}})).toEqual({l1: {}})
-        }
-    )
-    
+        withInputHarness(
+            "no storage", 
+            {
+                delete: {
+                    input: [schemaFactory.Any], 
+                    computation: [
+                        {
+                            kind: "Update", 
+                            target: {kind: "Saved", index: 0},
+                            operation: {
+                                kind: "DeleteField", 
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]}
+                        },
+                        {
+                            kind: "Return",
+                            value: {kind: "Saved", index: 0}
+                        }
+                    ]}},
+            async server => {
+                expect(await server.delete({l1: {l2: false, other: true}})).toEqual({l1: {other: true}})
+                expect(await server.delete({l1: {}})).toEqual({l1: {}})
+            }
+        )
     )
 
     it("can get nested field",
@@ -541,6 +540,59 @@ describe("global objects", () => {
                 expect(await server.checkL1()).toBe(false)
                 expect(await server.set()).toBeNull()
                 expect(await server.checkL1()).toBe(true)
+            },
+            "requires storage"
+        )
+    )
+
+
+    it("allows deleting of keys on global objects",
+        noInputHarness(
+            
+            {
+                delete: [
+                        {
+                            kind: "Update", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {kind: "DeleteField", field_name: [{kind: "String", value: "l1"}]}
+                        }
+                    ],
+                set,
+                get
+            },
+            async server => {
+                expect(await server.delete()).toBeNull()
+                expect(await server.set()).toBeNull()
+                expect(await server.get()).toEqual({l2: 42})
+                expect(await server.delete()).toBeNull()
+                expect(await server.get()).toBeNull()
+            },
+            "requires storage"
+        )
+    )
+
+    it("allows deleting of nested fields on globals",
+        noInputHarness( 
+            {
+                delete: [
+                        {
+                            kind: "Update", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {
+                                kind: "DeleteField", 
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]}
+                        }
+                    ],
+                set,
+                get,
+            },
+            async server => {
+                // Deleting a nested field on an object that does not exist is acceptable.
+                expect(await server.delete()).toBeNull()
+                expect(await server.set()).toBeNull()
+                expect(await server.get()).toEqual({l2: 42})
+                expect(await server.delete()).toBeNull()
+                expect(await server.get()).toEqual({})
             },
             "requires storage"
         )
