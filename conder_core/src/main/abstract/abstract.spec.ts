@@ -160,7 +160,7 @@ describe("basic functionality", () => {
         })
     )
 
-    it ("allows deleting of fields on local objects",
+    it("allows deleting of fields on local objects",
         withInputHarness(
             "no storage", 
             {
@@ -179,6 +179,7 @@ describe("basic functionality", () => {
                     ]}},
             async server => {
                 expect(await server.delete({some_key: false, other: true})).toEqual({other: true})
+                expect(await server.delete({})).toEqual({})
             }
         )
     )
