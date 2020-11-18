@@ -183,6 +183,32 @@ describe("basic functionality", () => {
             }
         )
     )
+    it("allows deleting of nested fields on locals",
+    withInputHarness(
+        "no storage", 
+        {
+            delete: {
+                input: [schemaFactory.Any], 
+                computation: [
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {
+                            kind: "DeleteField", 
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]}
+                    },
+                    {
+                        kind: "Return",
+                        value: {kind: "Saved", index: 0}
+                    }
+                ]}},
+        async server => {
+            expect(await server.delete({l1: {l2: false, other: true}})).toEqual({l1: {other: true}})
+            expect(await server.delete({l1: {}})).toEqual({l1: {}})
+        }
+    )
+    
+    )
 
     it("can get nested field",
         noInputHarness({
