@@ -43,7 +43,7 @@ describe("conduit kernel", () => {
     kernelTest("should be able to do nothing", async () => {});
   });
 
-  describe.only("procedures", () => {
+  describe("procedures", () => {
     kernelTest(
       "invoking a custom noop",
       async (server) => {
@@ -501,13 +501,7 @@ describe("conduit kernel", () => {
       "should be able to suppress objects in a query",
       {
         STORES: {
-          storeName: schemaFactory.Object({
-            left: schemaFactory.Object({
-              a: schemaFactory.bool,
-              b: schemaFactory.bool,
-            }),
-            right: schemaFactory.Object({ c: schemaFactory.bool }),
-          }),
+          storeName: schemaFactory.Any,
         },
         PROCEDURES: {
           testStore: [
@@ -549,6 +543,31 @@ describe("conduit kernel", () => {
         expect(await server.invoke("len")).toBe(2);
       }
     );
+
+    storageTest("should be able to delete fields an existing document", 
+      {
+        STORES: {storeName: schemaFactory.Any},
+        PROCEDURES: {
+          insert: [ow.instantiate([{f1: 1, f2: 2}, {f1: 3, f2: 4}]), ow.insertFromStack("storeName")],
+          deletes: [
+            ow.instantiate({f1: 1}), 
+            ow.deleteOneInStore("storeName"), 
+            ow.instantiate({"$unset": {f2: ""}}), // Drop the f2 on the second doc.
+            ow.instantiate({f1: 3}), // Query for the drop
+            ow.updateOne({store: "storeName", upsert: false}),
+            ow.returnStackTop
+          ],
+          getAll: [
+            ow.getAllFromStore("storeName"),
+            ow.returnStackTop
+          ]
+        }
+      },
+      async server => {
+        expect(await server.invoke("insert")).toBeNull()
+        expect(await server.invoke("deletes")).toEqual({f1: 3})
+        expect(await server.invoke("getAll")).toEqual([{f1: 3}])
+      })
   });
 
   describe("instructions", () => {
