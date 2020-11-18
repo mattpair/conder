@@ -111,12 +111,14 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             
             switch (n.operation.kind) {
                 case "SetField":
-                    
+                case "DeleteField":
+
                     return [
                         ...full_compiler(n.target), 
                         ...full_compiler(n.operation),
                         ow.overwriteHeap(n.target.index)
                     ]
+                    
                 default: 
                     return [
                         ...full_compiler(n.operation),
@@ -139,6 +141,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ow.conditonallySkipXops(ifTrue.length),
                 ...ifTrue,
                 ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
+            ]
+        }
+
+        case "DeleteField": {
+            return [
+                ...n.field_name.flatMap(full_compiler),
+                ow.deleteField({field_depth: n.field_name.length}),
             ]
         }
 

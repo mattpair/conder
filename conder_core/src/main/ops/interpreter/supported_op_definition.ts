@@ -62,6 +62,7 @@ ParamOp<"raiseError", string> |
 ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
 ParamOp<"getField", {field_depth: number}> |
+ParamOp<"deleteField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
@@ -314,6 +315,44 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
+    },
+    deleteField: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            let mut fields = Vec::with_capacity(*op_param);
+            for n in 1..=*op_param {
+                fields.push(${popToString});
+            }
+            let mut object = ${popToObject};
+            let mut destructured = Vec::with_capacity(*op_param);
+            
+            while fields.len() > 1 {
+                let removed_field = fields.pop().unwrap();
+                let removed = match object.remove(&removed_field).unwrap() {
+                    InterpreterType::Object(obj) => obj,
+                    _ => panic!("not an object")
+                };
+                destructured.push((object, removed_field));
+                object = removed;
+            }
+            if let Some(last) = fields.pop() {
+                object.remove(&last);
+                destructured.push((object, "".to_string()));
+            }
+
+            while destructured.len() > 1 {
+                let child = destructured.pop().unwrap().0;
+                let mut parent_tuple = destructured.pop().unwrap();
+                parent_tuple.0.insert(parent_tuple.1.clone(), InterpreterType::Object(child));
+                destructured.push(parent_tuple);
+            }
+
+            ${pushStack(`InterpreterType::Object(destructured.pop().unwrap().0)`)};
+            None
+            `
+        },
+        factoryMethod: ({field_depth}) => ({kind: "deleteField", data: field_depth})
     },
 
     fieldExists: {
