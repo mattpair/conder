@@ -1,21 +1,28 @@
-import { ActionSequence, validate } from "./main";
+import { ActionSequence, calculate_lock_requirements } from "./main";
 
-describe("temporal logic", () => {
-  it("allows getting the same piece of data twice if it cannot be mutated", () => {
+describe("lock calculation", () => {
+  it("require a read lock across multiple gets if mutated elsewhere", () => {
     const gets: ActionSequence = [
       { kind: "get", id: "i" },
       { kind: "get", id: "i" },
     ];
-    expect(validate({ gets })).toEqual([]);
+    expect(calculate_lock_requirements({ gets })).toEqual({ gets: [] });
 
-    expect(validate({ gets, sets: [{ kind: "set", id: "i" }] }))
-      .toMatchInlineSnapshot(`
-      Array [
-        Object {
-          "func": "gets",
-          "msg": "Getting i multiple times while mutated elsewhere",
-        },
-      ]
+    expect(
+      calculate_lock_requirements({
+        gets,
+        sets: [{ kind: "mutation", id: "i", using: [] }],
+      })
+    ).toMatchInlineSnapshot(`
+      Object {
+        "gets": Array [
+          Object {
+            "global": "i",
+            "kind": "r",
+          },
+        ],
+        "sets": Array [],
+      }
     `);
   });
 });

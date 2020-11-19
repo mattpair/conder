@@ -1,6 +1,6 @@
 type Actions = {
     get: {id: string},
-    set: {id: string},
+    mutation: {id: string, using: string[]},
 }
 type ActionKind = keyof Actions
 type AnyAction = {
@@ -9,11 +9,11 @@ type AnyAction = {
 
 
 export type ActionSequence = AnyAction[]
-type Error = { msg: string, func: string}
+type LockRequirements = Record<string, {global: string, kind: "r" | "w"}[]>
 
-export function validate(sequences: Record<string, ActionSequence>): Error[] {
+export function calculate_lock_requirements(sequences: Record<string, ActionSequence>): LockRequirements {
     const actionAgainstData = new Map<string, Set<ActionKind>>()
-    
+    const lockReqs: LockRequirements = {}
 
     Object.values(sequences).forEach(seq => {
         seq.forEach(action => {
@@ -26,21 +26,22 @@ export function validate(sequences: Record<string, ActionSequence>): Error[] {
             }
         })
     })
-    const errors: Error[] = []
+    
     Object.keys(sequences).forEach(func => {
+        lockReqs[func] = []
         const previouslyGot = new Set<string>()
         sequences[func].forEach(action => {
             
             switch (action.kind) {
                 case "get":
                     if (previouslyGot.has(action.id)) {
-                        if (actionAgainstData.get(action.id).has("set")) {
-                            errors.push({msg: `Getting ${action.id} multiple times while mutated elsewhere`, func})
+                        if (actionAgainstData.get(action.id).has("mutation")) {
+                            lockReqs[func].push({global: action.id, kind: "r"})
                         }
                     } else {
                         previouslyGot.add(action.id)
                     }
-                case "set":
+                case "mutation":
                     break
                 default: 
                     const n: never = action
@@ -48,5 +49,5 @@ export function validate(sequences: Record<string, ActionSequence>): Error[] {
         })
     })
 
-    return errors
+    return lockReqs
 }
