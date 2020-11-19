@@ -1,6 +1,6 @@
 type Actions = {
     get: {id: string},
-    mutation: {id: string, usesLatest: string[]},
+    mut: {id: string, usesLatest: string[]},
 }
 type ActionKind = keyof Actions
 type AnyAction = {
@@ -39,14 +39,14 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     if (previouslyMut.has(action.id)) {
                         lockReqs[func].set(action.id, "w")
                     } else if (previouslyGot.has(action.id)) {
-                        if (actionAgainstData.get(action.id).has("mutation") && !lockReqs[func].has(action.id)) {
+                        if (actionAgainstData.get(action.id).has("mut") && !lockReqs[func].has(action.id)) {
                             lockReqs[func].set(action.id, "r")
                         }
                     } else {
                         previouslyGot.add(action.id)
                     }
                     break
-                case "mutation":
+                case "mut":
                     if (action.usesLatest.length > 0) {
                         action.usesLatest.forEach(dependency => {
                             const original = lockReqs[func].get(dependency)

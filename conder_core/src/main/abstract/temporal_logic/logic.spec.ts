@@ -37,27 +37,27 @@ describe("lock calculation", () => {
         givenActions({gets}).expectLocks({}))
     
     it("requires a read lock across gets if mutated",
-        givenActions({gets, sets: [{ kind: "mutation", id: "i", usesLatest: [] }]})
+        givenActions({gets, sets: [{ kind: "mut", id: "i", usesLatest: [] }]})
         .expectLocks({gets: {i: "r"}})
     )
 
-    it("doesn't require a lock if a mutation is independent of any global state",
-        givenActions({set: [{kind: "mutation", id: "i", usesLatest: []}]})
+    it("doesn't require a lock if a mut is independent of any global state",
+        givenActions({set: [{kind: "mut", id: "i", usesLatest: []}]})
         .expectLocks({})
     )
 
-    it("requires a read lock if a mutation is dependent on some other global state", 
-        givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["j"]}]})
+    it("requires a read lock if a mut is dependent on some other global state", 
+        givenActions({set: [{kind: "mut", id: "i", usesLatest: ["j"]}]})
         .expectLocks({set: {j: "r"}})
     )
-    it("requires a write lock if a mutation references itself",
-        givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["i"]}]})
+    it("requires a write lock if a mut references itself",
+        givenActions({set: [{kind: "mut", id: "i", usesLatest: ["i"]}]})
         .expectLocks({set: {i: "w"}})
     )
 
     it("requires a write lock if you read a global after writing it",
         givenActions({setGet: [
-            {kind: "mutation", id: "i", usesLatest: []},
+            {kind: "mut", id: "i", usesLatest: []},
             {kind: "get", id: "i"}
         ]})
         .expectLocks({setGet: {i: "w"}})
@@ -65,8 +65,8 @@ describe("lock calculation", () => {
 
     it("requires a write lock if a used variable is later mutated", 
         givenActions({setOn2: [
-            {kind: "mutation", id: "i", usesLatest: ["j"]},
-            {kind: "mutation", id: "j", usesLatest: []}
+            {kind: "mut", id: "i", usesLatest: ["j"]},
+            {kind: "mut", id: "j", usesLatest: []}
         ]}).expectLocks({setOn2: {j: "w"}})
     )
 })
