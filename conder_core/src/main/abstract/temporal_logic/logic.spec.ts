@@ -7,15 +7,15 @@ describe("lock calculation", () => {
         constructor(actions: Record<string, ActionSequence>) {
             this.actions = actions
         }
-        expectLocks(expectation: LockRequirements): jest.ProvidesCallback {
+        expectLocks(expectation: Record<string, Record<string, "r" | "w">>): jest.ProvidesCallback {
             return (cb) => {
                 const full_expectations: LockRequirements = {}
                 for (const key in this.actions) {
                     // Don't require specifying no locks required.
                     if (key in expectation) {
-                        full_expectations[key] = expectation[key]
+                        full_expectations[key] = new Map(Object.entries(expectation[key]))
                     } else {
-                        full_expectations[key] = []
+                        full_expectations[key] = new Map()
                     }
                 }
                 expect(calculate_lock_requirements(this.actions)).toEqual(full_expectations)   
@@ -38,7 +38,7 @@ describe("lock calculation", () => {
     
     it("requires a read lock across gets if mutated",
         givenActions({gets, sets: [{ kind: "mutation", id: "i", usesLatest: [] }]})
-        .expectLocks({gets: [{kind: "r", global: "i"}]})
+        .expectLocks({gets: {i: "r"}})
     )
 
     it("doesn't require a lock if a mutation is independent of any global state",
@@ -48,11 +48,11 @@ describe("lock calculation", () => {
 
     it("requires a read lock if a mutation is dependent on some other global state", 
         givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["j"]}]})
-        .expectLocks({set: [{kind: "r", global: "j"}]})
+        .expectLocks({set: {j: "r"}})
     )
     it("requires a write lock if a mutation references itself",
         givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["i"]}]})
-        .expectLocks({set: [{kind: "w", global: "i"}]})
+        .expectLocks({set: {i: "w"}})
     )
 
     it("requires a write lock if you read a global after writing it",
@@ -60,6 +60,13 @@ describe("lock calculation", () => {
             {kind: "mutation", id: "i", usesLatest: []},
             {kind: "get", id: "i"}
         ]})
-        .expectLocks({setGet: [{kind: "w", global: "i"}]})
+        .expectLocks({setGet: {i: "w"}})
+    )
+
+    it("requires a write lock if a used variable is later mutated", 
+        givenActions({setOn2: [
+            {kind: "mutation", id: "i", usesLatest: ["j"]},
+            {kind: "mutation", id: "j", usesLatest: []}
+        ]}).expectLocks({setOn2: {j: "w"}})
     )
 })

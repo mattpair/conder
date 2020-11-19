@@ -9,7 +9,7 @@ type AnyAction = {
 
 
 export type ActionSequence = AnyAction[]
-export type LockRequirements = Record<string, {global: string, kind: "r" | "w"}[]>
+export type LockRequirements = Record<string, Map<string, "r" | "w">>
 
 export function calculate_lock_requirements(sequences: Record<string, ActionSequence>): LockRequirements {
     const actionAgainstData = new Map<string, Set<ActionKind>>()
@@ -28,18 +28,19 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
     })
     
     Object.keys(sequences).forEach(func => {
-        lockReqs[func] = []
+        lockReqs[func] = new Map()
         const previouslyGot = new Set<string>()
         const previouslyMut = new Set<string>()
+        const previousDep = new Set<string>()
         sequences[func].forEach(action => {
             
             switch (action.kind) {
                 case "get":
                     if (previouslyMut.has(action.id)) {
-                        lockReqs[func].push({global: action.id, kind: "w"})
+                        lockReqs[func].set(action.id, "w")
                     } else if (previouslyGot.has(action.id)) {
-                        if (actionAgainstData.get(action.id).has("mutation")) {
-                            lockReqs[func].push({global: action.id, kind: "r"})
+                        if (actionAgainstData.get(action.id).has("mutation") && !lockReqs[func].has(action.id)) {
+                            lockReqs[func].set(action.id, "r")
                         }
                     } else {
                         previouslyGot.add(action.id)
@@ -48,11 +49,19 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                 case "mutation":
                     if (action.usesLatest.length > 0) {
                         action.usesLatest.forEach(dependency => {
-                            lockReqs[func].push({
-                                kind: dependency !== action.id ? "r" : "w", 
-                                global: dependency
-                            })
+                            const original = lockReqs[func].get(dependency)
+                            const dependencyIsSelf = dependency === action.id
+                            
+                            lockReqs[func].set(
+                                dependency,
+                                // Never downgrade a lock
+                                original === "w" || dependencyIsSelf ? "w" : "r" 
+                            )
+                            previousDep.add(dependency)
                         })
+                    }
+                    if (previousDep.has(action.id)) {
+                        lockReqs[func].set(action.id, "w")
                     }
                     previouslyMut.add(action.id)
                     break
