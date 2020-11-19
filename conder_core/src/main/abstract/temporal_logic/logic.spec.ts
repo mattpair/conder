@@ -1,28 +1,25 @@
-import { ActionSequence, calculate_lock_requirements } from "./main";
+import { ActionSequence, calculate_lock_requirements, LockRequirements } from "./main";
 
 describe("lock calculation", () => {
-  it("require a read lock across multiple gets if mutated elsewhere", () => {
+    function given_actions_expect(actions: Record<string, ActionSequence>, expectation: LockRequirements): jest.ProvidesCallback {
+        return (cb) => {
+            expect(calculate_lock_requirements(actions)).toEqual(expectation)   
+            cb() 
+        }
+    }
     const gets: ActionSequence = [
-      { kind: "get", id: "i" },
-      { kind: "get", id: "i" },
-    ];
-    expect(calculate_lock_requirements({ gets })).toEqual({ gets: [] });
+        { kind: "get", id: "i" },
+        { kind: "get", id: "i" },
+    ]
 
-    expect(
-      calculate_lock_requirements({
-        gets,
-        sets: [{ kind: "mutation", id: "i", using: [] }],
-      })
-    ).toMatchInlineSnapshot(`
-      Object {
-        "gets": Array [
-          Object {
-            "global": "i",
-            "kind": "r",
-          },
-        ],
-        "sets": Array [],
-      }
-    `);
-  });
-});
+    it("doesn't require a read lock across multiple gets if never mutated", 
+        given_actions_expect({gets}, {gets: []}))
+    
+    it("requires a read lock across gets if mutated",
+        given_actions_expect(
+            {gets, sets: [{ kind: "mutation", id: "i", using: [] }]}, 
+            {gets: [{kind: "r", global: "i"}], sets: []}
+            )
+    )
+
+})

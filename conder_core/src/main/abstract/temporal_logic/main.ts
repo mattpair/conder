@@ -9,7 +9,7 @@ type AnyAction = {
 
 
 export type ActionSequence = AnyAction[]
-type LockRequirements = Record<string, {global: string, kind: "r" | "w"}[]>
+export type LockRequirements = Record<string, {global: string, kind: "r" | "w"}[]>
 
 export function calculate_lock_requirements(sequences: Record<string, ActionSequence>): LockRequirements {
     const actionAgainstData = new Map<string, Set<ActionKind>>()
