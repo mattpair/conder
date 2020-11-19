@@ -41,7 +41,13 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     } else {
                         previouslyGot.add(action.id)
                     }
+                    break
                 case "mutation":
+                    if (action.using.length > 0) {
+                        action.using.forEach(dependency => {
+                            lockReqs[func].push( {kind: "r", global: dependency})
+                        })
+                    }
                     break
                 default: 
                     const n: never = action
