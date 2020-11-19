@@ -1,11 +1,16 @@
-type Actions = {
-    get: {id: string},
-    mut: {id: string, usesLatest: string[]}
+type AtomicActions = {
+    get: {id: string}, // Gets some global state to use locally.
+    mut: {id: string, usesLatest: string[]}, 
+    // Mutates some global state with any number of dependencies on other global state.
+    // Does not return any data.
+
+    swap: {id: string, usesLatest: string[]}
+    // Like mut but returns state.
 }
-type ActionKind = keyof Actions
+type ActionKind = keyof AtomicActions
 type AnyAction = {
-    [K in keyof Actions]: {kind: K} & Actions[K]
-}[keyof Actions]
+    [K in keyof AtomicActions]: {kind: K} & AtomicActions[K]
+}[keyof AtomicActions]
 
 
 export type ActionSequence = AnyAction[]
@@ -39,7 +44,8 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     if (previouslyMut.has(action.id)) {
                         lockReqs[func].set(action.id, "w")
                     } else if (previouslyGot.has(action.id)) {
-                        if (actionAgainstData.get(action.id).has("mut") && !lockReqs[func].has(action.id)) {
+                        const thisActions = actionAgainstData.get(action.id)
+                        if ((thisActions.has("mut") || thisActions.has("swap")) && !lockReqs[func].has(action.id)) {
                             lockReqs[func].set(action.id, "r")
                         }
                     } else {
@@ -47,6 +53,8 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     }
                     break
                 case "mut":
+                case "swap":
+
                     if (action.usesLatest.length > 0) {
                         action.usesLatest.forEach(dependency => {
                             const original = lockReqs[func].get(dependency)
@@ -65,6 +73,8 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     }
                     previouslyMut.add(action.id)
                     break
+
+                
                 default: 
                     const n: never = action
             }

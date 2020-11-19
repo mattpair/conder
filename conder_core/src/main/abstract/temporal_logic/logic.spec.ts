@@ -3,7 +3,7 @@ import { ActionSequence, calculate_lock_requirements, LockRequirements } from ".
 describe("lock calculation", () => {
 
     class TestActionSet {
-        readonly actions: Record<string, ActionSequence>
+        private readonly actions: Record<string, ActionSequence>
         constructor(actions: Record<string, ActionSequence>) {
             this.actions = actions
         }
@@ -40,12 +40,23 @@ describe("lock calculation", () => {
         givenActions({gets, sets: [{ kind: "mut", id: "i", usesLatest: [] }]})
         .expectLocks({gets: {i: "r"}})
     )
+    it("requires a read lock across gets if swapped elsewhere",
+        givenActions({gets, swap: [{kind: "swap", id: "i", usesLatest: []}]})
+        .expectLocks({gets: {i: "r"}})
+    ) 
 
     it("doesn't require a lock if a mut is independent of any global state",
         givenActions({set: [{kind: "mut", id: "i", usesLatest: []}]})
         .expectLocks({})
     )
     
+    
+    // The local view will never be inconsistent.
+    // It is a weird use case:
+    // g = 1
+    // ... do stuff with local state
+    // g = 2
+    // ... do stuff with local state
     it("doesn't require a lock if a series of mut are independent of any global state",
         givenActions({
             set: [
