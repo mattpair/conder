@@ -1,25 +1,44 @@
 import { ActionSequence, calculate_lock_requirements, LockRequirements } from "./main";
 
 describe("lock calculation", () => {
-    function given_actions_expect(actions: Record<string, ActionSequence>, expectation: LockRequirements): jest.ProvidesCallback {
-        return (cb) => {
-            expect(calculate_lock_requirements(actions)).toEqual(expectation)   
-            cb() 
+
+    class TestActionSet {
+        readonly actions: Record<string, ActionSequence>
+        constructor(actions: Record<string, ActionSequence>) {
+            this.actions = actions
+        }
+        expectLocks(expectation: LockRequirements): jest.ProvidesCallback {
+            return (cb) => {
+                const full_expectations: LockRequirements = {}
+                for (const key in this.actions) {
+                    // Don't require specifying no locks required.
+                    if (key in expectation) {
+                        full_expectations[key] = expectation[key]
+                    } else {
+                        full_expectations[key] = []
+                    }
+                }
+                expect(calculate_lock_requirements(this.actions)).toEqual(full_expectations)   
+                cb()    
+            }
         }
     }
+
+    function givenActions(actions: Record<string, ActionSequence>): TestActionSet {
+        return new TestActionSet(actions)
+    }
+
     const gets: ActionSequence = [
         { kind: "get", id: "i" },
         { kind: "get", id: "i" },
     ]
 
     it("doesn't require a read lock across multiple gets if never mutated", 
-        given_actions_expect({gets}, {gets: []}))
+        givenActions({gets}).expectLocks({}))
     
     it("requires a read lock across gets if mutated",
-        given_actions_expect(
-            {gets, sets: [{ kind: "mutation", id: "i", using: [] }]}, 
-            {gets: [{kind: "r", global: "i"}], sets: []}
-            )
+        givenActions({gets, sets: [{ kind: "mutation", id: "i", using: [] }]})
+        .expectLocks({gets: [{kind: "r", global: "i"}]})
     )
 
 })
