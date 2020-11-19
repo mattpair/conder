@@ -45,6 +45,17 @@ describe("lock calculation", () => {
         givenActions({set: [{kind: "mut", id: "i", usesLatest: []}]})
         .expectLocks({})
     )
+    
+    it("doesn't require a lock if a series of mut are independent of any global state",
+        givenActions({
+            set: [
+                {kind: "mut", id: "i", usesLatest: []},
+                {kind: "mut", id: "i", usesLatest: []},
+                {kind: "mut", id: "j", usesLatest: []}
+            ],
+        })
+        .expectLocks({})
+    )
 
     it("requires a read lock if a mut is dependent on some other global state", 
         givenActions({set: [{kind: "mut", id: "i", usesLatest: ["j"]}]})

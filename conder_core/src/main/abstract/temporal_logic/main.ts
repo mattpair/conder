@@ -1,6 +1,6 @@
 type Actions = {
     get: {id: string},
-    mut: {id: string, usesLatest: string[]},
+    mut: {id: string, usesLatest: string[]}
 }
 type ActionKind = keyof Actions
 type AnyAction = {
