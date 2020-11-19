@@ -54,4 +54,12 @@ describe("lock calculation", () => {
         givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["i"]}]})
         .expectLocks({set: [{kind: "w", global: "i"}]})
     )
+
+    it("requires a write lock if you read a global after writing it",
+        givenActions({setGet: [
+            {kind: "mutation", id: "i", usesLatest: []},
+            {kind: "get", id: "i"}
+        ]})
+        .expectLocks({setGet: [{kind: "w", global: "i"}]})
+    )
 })

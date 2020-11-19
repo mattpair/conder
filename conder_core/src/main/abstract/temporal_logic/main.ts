@@ -30,11 +30,14 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
     Object.keys(sequences).forEach(func => {
         lockReqs[func] = []
         const previouslyGot = new Set<string>()
+        const previouslyMut = new Set<string>()
         sequences[func].forEach(action => {
             
             switch (action.kind) {
                 case "get":
-                    if (previouslyGot.has(action.id)) {
+                    if (previouslyMut.has(action.id)) {
+                        lockReqs[func].push({global: action.id, kind: "w"})
+                    } else if (previouslyGot.has(action.id)) {
                         if (actionAgainstData.get(action.id).has("mutation")) {
                             lockReqs[func].push({global: action.id, kind: "r"})
                         }
@@ -51,6 +54,7 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                             })
                         })
                     }
+                    previouslyMut.add(action.id)
                     break
                 default: 
                     const n: never = action
