@@ -37,17 +37,17 @@ describe("lock calculation", () => {
         givenActions({gets}).expectLocks({}))
     
     it("requires a read lock across gets if mutated",
-        givenActions({gets, sets: [{ kind: "mutation", id: "i", using: [] }]})
+        givenActions({gets, sets: [{ kind: "mutation", id: "i", usesLatest: [] }]})
         .expectLocks({gets: [{kind: "r", global: "i"}]})
     )
 
     it("doesn't require a lock if a mutation is independent of any global state",
-        givenActions({set: [{kind: "mutation", id: "i", using: []}]})
+        givenActions({set: [{kind: "mutation", id: "i", usesLatest: []}]})
         .expectLocks({})
     )
 
     it("requires a lock if a mutation is dependent on global state", 
-        givenActions({set: [{kind: "mutation", id: "i", using: ["j"]}]})
+        givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["j"]}]})
         .expectLocks({set: [{kind: "r", global: "j"}]})
     )
 })

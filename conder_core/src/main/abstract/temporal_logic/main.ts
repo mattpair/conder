@@ -1,6 +1,6 @@
 type Actions = {
     get: {id: string},
-    mutation: {id: string, using: string[]},
+    mutation: {id: string, usesLatest: string[]},
 }
 type ActionKind = keyof Actions
 type AnyAction = {
@@ -43,8 +43,8 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     }
                     break
                 case "mutation":
-                    if (action.using.length > 0) {
-                        action.using.forEach(dependency => {
+                    if (action.usesLatest.length > 0) {
+                        action.usesLatest.forEach(dependency => {
                             lockReqs[func].push( {kind: "r", global: dependency})
                         })
                     }
