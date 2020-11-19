@@ -46,8 +46,12 @@ describe("lock calculation", () => {
         .expectLocks({})
     )
 
-    it("requires a lock if a mutation is dependent on global state", 
+    it("requires a read lock if a mutation is dependent on some other global state", 
         givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["j"]}]})
         .expectLocks({set: [{kind: "r", global: "j"}]})
+    )
+    it("requires a write lock if a mutation references itself",
+        givenActions({set: [{kind: "mutation", id: "i", usesLatest: ["i"]}]})
+        .expectLocks({set: [{kind: "w", global: "i"}]})
     )
 })
