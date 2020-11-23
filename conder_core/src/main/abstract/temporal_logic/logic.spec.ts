@@ -73,12 +73,12 @@ describe("lock calculation", () => {
         .expectLocks({set: {i: "w"}})
     )
 
-    it("requires a write lock if you read a global after writing it",
+    it("doesn't require a write lock if you read a global after writing it",
         givenActions({setGet: [
             {kind: "mut", id: "i", usesLatest: []},
             {kind: "get", id: "i"}
         ]})
-        .expectLocks({setGet: {i: "w"}})
+        .expectLocks({})
     )
 
     it("requires a write lock if a used variable is later mutated", 

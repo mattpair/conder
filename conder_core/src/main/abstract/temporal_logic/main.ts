@@ -32,15 +32,11 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
     
     Object.keys(sequences).forEach(func => {
         lockReqs[func] = new Map()
-        const previouslyMut = new Set<string>()
         const previousDep = new Set<string>()
         sequences[func].forEach(action => {
             
             switch (action.kind) {
                 case "get":
-                    if (previouslyMut.has(action.id)) {
-                        lockReqs[func].set(action.id, "w")
-                    }
                     break
                 case "mut":
 
@@ -60,7 +56,6 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     if (previousDep.has(action.id)) {
                         lockReqs[func].set(action.id, "w")
                     }
-                    previouslyMut.add(action.id)
                     break
 
                 
