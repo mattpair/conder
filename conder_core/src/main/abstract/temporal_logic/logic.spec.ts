@@ -36,9 +36,9 @@ describe("lock calculation", () => {
     it("doesn't require a read lock across multiple gets if never mutated", 
         givenActions({gets}).expectLocks({}))
     
-    it("requires a read lock across gets if mutated",
+    it("doesn't require a read lock across gets if mutated",
         givenActions({gets, sets: [{ kind: "mut", id: "i", usesLatest: [] }]})
-        .expectLocks({gets: {i: "r"}})
+        .expectLocks({})
     )
     
     it("doesn't require a lock if a mut is independent of any global state",
