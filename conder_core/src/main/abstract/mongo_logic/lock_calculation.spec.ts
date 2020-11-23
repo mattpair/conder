@@ -1,4 +1,4 @@
-import { ActionSequence, calculate_lock_requirements, LockRequirements } from "./main";
+import { ActionSequence, calculate_lock_requirements, LockRequirements } from "./lock_calculation";
 
 describe("lock calculation", () => {
 
