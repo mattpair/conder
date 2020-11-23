@@ -1,11 +1,9 @@
 type AtomicActions = {
-    get: {id: string}, // Gets some global state to use locally.
-    mut: {id: string, usesLatest: string[]}, 
+    // Gets some global state to use locally.
+    get: {id: string}, 
     // Mutates some global state with any number of dependencies on other global state.
     // Does not return any data.
-
-    swap: {id: string, usesLatest: string[]}
-    // Like mut but returns state.
+    mut: {id: string, usesLatest: string[]}, 
 }
 type ActionKind = keyof AtomicActions
 type AnyAction = {
@@ -45,7 +43,7 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                         lockReqs[func].set(action.id, "w")
                     } else if (previouslyGot.has(action.id)) {
                         const thisActions = actionAgainstData.get(action.id)
-                        if ((thisActions.has("mut") || thisActions.has("swap")) && !lockReqs[func].has(action.id)) {
+                        if (thisActions.has("mut") && !lockReqs[func].has(action.id)) {
                             lockReqs[func].set(action.id, "r")
                         }
                     } else {
@@ -53,7 +51,6 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     }
                     break
                 case "mut":
-                case "swap":
 
                     if (action.usesLatest.length > 0) {
                         action.usesLatest.forEach(dependency => {

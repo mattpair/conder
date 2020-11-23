@@ -40,11 +40,7 @@ describe("lock calculation", () => {
         givenActions({gets, sets: [{ kind: "mut", id: "i", usesLatest: [] }]})
         .expectLocks({gets: {i: "r"}})
     )
-    it("requires a read lock across gets if swapped elsewhere",
-        givenActions({gets, swap: [{kind: "swap", id: "i", usesLatest: []}]})
-        .expectLocks({gets: {i: "r"}})
-    ) 
-
+    
     it("doesn't require a lock if a mut is independent of any global state",
         givenActions({set: [{kind: "mut", id: "i", usesLatest: []}]})
         .expectLocks({})
