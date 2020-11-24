@@ -16,8 +16,6 @@ export function apply(nodes: TargetNodeSet<MongoNodeSet>[], visitor: Visitor) {
     })
 }
 
-
-
 // Sees everything but does nothing.
 export class DummyVisitor implements Visitor {
 
@@ -30,6 +28,9 @@ export class DummyVisitor implements Visitor {
         this.on.push(n.kind) 
         
         // It would make me oh so happy if there was a generic type that could said:
+        // For all nodes, for those fields of the nodes that point to nodes (i.e. are edges),
+        // specify the traversal priority across the edges.
+        // Then a generic visitor object could be initialized with that.
         switch (n.kind) {
             case "Save":                
                 return [n.value]
