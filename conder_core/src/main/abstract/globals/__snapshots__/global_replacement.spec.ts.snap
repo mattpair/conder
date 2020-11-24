@@ -1,48 +1,54 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`mongo can replace SetField updates 1`] = `
-Array [
-  Object {
-    "key": Array [
-      Object {
-        "index": 12,
-        "kind": "Saved",
+Map {
+  "func" => Array [
+    Object {
+      "key": Array [
+        Object {
+          "index": 12,
+          "kind": "Saved",
+        },
+      ],
+      "kind": "SetKeyOnObject",
+      "obj": "gg",
+      "value": Object {
+        "kind": "String",
+        "value": "some val",
       },
-    ],
-    "kind": "SetKeyOnObject",
-    "obj": "gg",
-    "value": Object {
-      "kind": "String",
-      "value": "some val",
     },
-  },
-]
+  ],
+}
 `;
 
 exports[`mongo can replace existence checking 1`] = `
-Array [
-  Object {
-    "key": Object {
-      "kind": "String",
-      "value": "maybe",
+Map {
+  "func" => Array [
+    Object {
+      "key": Object {
+        "kind": "String",
+        "value": "maybe",
+      },
+      "kind": "keyExists",
+      "obj": "glob",
     },
-    "kind": "keyExists",
-    "obj": "glob",
-  },
-]
+  ],
+}
 `;
 
 exports[`mongo get field with mongo specific op 1`] = `
-Array [
-  Object {
-    "key": Array [
-      Object {
-        "kind": "String",
-        "value": "field",
-      },
-    ],
-    "kind": "GetKeyFromObject",
-    "obj": "global",
-  },
-]
+Map {
+  "func" => Array [
+    Object {
+      "key": Array [
+        Object {
+          "kind": "String",
+          "value": "field",
+        },
+      ],
+      "kind": "GetKeyFromObject",
+      "obj": "global",
+    },
+  ],
+}
 `;

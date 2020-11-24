@@ -9,8 +9,10 @@ type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
 const testCompiler: RootNodeCompiler =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
     .tap((nonAbstractRepresentation) => {
-        const locks = MONGO_LOCK_CALCULATOR(nonAbstractRepresentation)
-        expect(locks).toMatchSnapshot("Required locks")
+        nonAbstractRepresentation.forEach((v, k) => {
+            const locks = MONGO_LOCK_CALCULATOR(v)
+            expect(locks).toMatchSnapshot(`Required locks for ${k}`)
+        })
     })
     .then(MONGO_COMPILER)
 
@@ -19,12 +21,8 @@ function withInputHarness(
     proc_nodes: Record<string, FunctionDescription>,
     test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const getStoresAndProcedures = () => {
-        const PROCEDURES: Record<string, AnyOpInstance[]> = {}
-        for (const key in proc_nodes) {
-            const comp = toOps(proc_nodes[key], testCompiler)
-            PROCEDURES[key] = comp
-        }
-
+        const compiled = toOps(new Map(Object.entries(proc_nodes)), testCompiler)
+        const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
         const STORES = {TEST_STORE: schemaFactory.Object({})}
         return {PROCEDURES, STORES}
     }

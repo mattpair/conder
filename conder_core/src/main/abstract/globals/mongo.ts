@@ -1,6 +1,7 @@
 import { AnyOpInstance, ow } from '../../ops/index';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
+import { FunctionDescription } from '../function';
 
 export type MongoNodeSet = {
     GetWholeObject: Node<{name: string}>,
@@ -143,12 +144,9 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 }
 const complete_replace = make_replacer(MONGO_REPLACER) 
-export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode[], TargetNodeSet<MongoNodeSet>[]> = new Transformer((input) => {
-    return input.map(complete_replace)
-})
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<Map<string, FunctionDescription>, Map<string, TargetNodeSet<MongoNodeSet>[]>> = Transformer.Map((i) => i.computation.map(complete_replace))
 
-
-type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>[]>
+type MongoCompiler = Compiler<Map<string, TargetNodeSet<MongoNodeSet>[]>>
 
 function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
@@ -277,6 +275,4 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     }
 }
 
-export const MONGO_COMPILER: MongoCompiler = new Transformer((input) => {
-    return input.flatMap(compile_function)
-})
+export const MONGO_COMPILER: MongoCompiler = Transformer.Map(inp => inp.flatMap(compile_function))
