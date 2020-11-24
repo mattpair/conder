@@ -17,12 +17,13 @@ export function apply(nodes: TargetNodeSet<MongoNodeSet>[], visitor: Visitor) {
 }
 
 
-type Subscriptions = Partial<{
+export type Subscriptions = Partial<{
     [K in TargetNodes["kind"]]: {
         before: (n: PickTargetNode<MongoNodeSet, K>) => void
         after: (n: PickTargetNode<MongoNodeSet, K>) => void
     }
 }>
+
 // Sees everything but does nothing.
 export class DummyVisitor implements Visitor {
 
