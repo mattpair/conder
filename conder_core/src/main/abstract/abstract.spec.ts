@@ -9,10 +9,8 @@ type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
 const testCompiler: RootNodeCompiler =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
     .tap((nonAbstractRepresentation) => {
-        nonAbstractRepresentation.forEach((v, k) => {
-            const locks = MONGO_LOCK_CALCULATOR(v)
-            expect(locks).toMatchSnapshot(`Required locks for ${k}`)
-        })
+        const locks = MONGO_LOCK_CALCULATOR(nonAbstractRepresentation)
+        expect(locks).toMatchSnapshot(`Required locks`)
     })
     .then(MONGO_COMPILER)
 

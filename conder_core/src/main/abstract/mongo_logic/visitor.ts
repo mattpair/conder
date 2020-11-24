@@ -15,28 +15,32 @@ export function apply(nodes: TargetNodeSet<MongoNodeSet>[], visitor: Visitor) {
         visitor.after(n)
     })
 }
+type Subscriber<K extends TargetNodes["kind"], STATE> = {
+    before: (n: PickTargetNode<MongoNodeSet, K>, state: STATE) => void
+    after: (n: PickTargetNode<MongoNodeSet, K>, state: STATE) => void
+}
 
-
-export type Subscriptions = Partial<{
-    [K in TargetNodes["kind"]]: {
-        before: (n: PickTargetNode<MongoNodeSet, K>) => void
-        after: (n: PickTargetNode<MongoNodeSet, K>) => void
-    }
-}>
+export type Subscriptions<STATE, REQUIRES extends TargetNodes["kind"]=never> = {
+    [K in Exclude<TargetNodes["kind"], REQUIRES>]?: Subscriber<K, STATE>
+} & {
+    [K in Extract<TargetNodes["kind"], REQUIRES>]: Subscriber<K, STATE>
+}
 
 // Sees everything but does nothing.
-export class DummyVisitor implements Visitor {
+export class GraphAnalysis<STATE> implements Visitor {
 
-    private readonly subs: Subscriptions
-    constructor(subs: Subscriptions) {
+    private readonly subs: Subscriptions<STATE>
+    readonly state: STATE
+    constructor(subs: Subscriptions<STATE>, initial_state: STATE) {
         this.subs = subs
+        this.state = initial_state
     }   
 
     before(n: TargetNodes): TargetNodes[] {
         
         if (this.subs[n.kind]) {
             //@ts-ignore
-            this.subs[n.kind].before(n)
+            this.subs[n.kind].before(n, this.state)
         }
         
         // It would make me oh so happy if there was a generic type that could said:
@@ -96,7 +100,7 @@ export class DummyVisitor implements Visitor {
     after(n: TargetNodes) {
         if (this.subs[n.kind]) {
             //@ts-ignore
-            this.subs[n.kind].after(n)
+            this.subs[n.kind].after(n, this.state)
         }
     }
 
