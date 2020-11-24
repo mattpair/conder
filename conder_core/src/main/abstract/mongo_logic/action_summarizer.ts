@@ -2,7 +2,7 @@ import { apply, GraphAnalysis, Subscriptions } from './visitor';
 import { ActionSequence } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
-import { ScopeMap } from './scope_map';
+import { ScopeMap } from '../../data_structures/scope_map';
 
 type ActionSummarizer = (n: TargetNodeSet<MongoNodeSet>[]) => ActionSequence
 

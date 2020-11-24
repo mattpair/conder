@@ -1,7 +1,7 @@
 import { ActionSequence, calculate_lock_requirements, LockRequirements } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet } from "../IR";
-import { ScopeMap } from './scope_map';
+import { ScopeMap } from '../../data_structures/scope_map';
 import { MONGO_ACTION_SUMMARIZER } from './action_summarizer';
 
 type LockCalculator = (input: Map<string, TargetNodeSet<MongoNodeSet>[]>) =>  Map<string, LockRequirements[string]>
