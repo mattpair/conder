@@ -3,15 +3,19 @@ import { ActionSequence } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
 import { ScopeMap } from '../../data_structures/scope_map';
+import { StackOfSets } from 'src/main/data_structures/stack_of_sets';
 
 type ActionSummarizer = (n: TargetNodeSet<MongoNodeSet>[]) => ActionSequence
 
 type SummarizerState = {
-    seq: ActionSequence
+    seq: ActionSequence,
+    globals_tainting_exectuion: StackOfSets<string>
 }
 
 export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
-    const summary_analysis = new GraphAnalysis<SummarizerState>({}, {seq: []})
+    const summary_analysis = new GraphAnalysis<SummarizerState>(
+        SUMMARIZER_SUBSCRIPTIONS, 
+        {seq: [], globals_tainting_exectuion: new StackOfSets()})
     apply(nodes, summary_analysis)
     return summary_analysis.state.seq
 }
