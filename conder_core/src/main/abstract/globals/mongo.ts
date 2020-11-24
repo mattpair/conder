@@ -2,16 +2,16 @@ import { AnyOpInstance, ow } from '../../ops/index';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 
-type Mongo = {
+export type MongoNodeSet = {
     GetWholeObject: Node<{name: string}>,
-    GetKeyFromObject: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">[]}>
-    keyExists: Node<{obj: string, key: PickTargetNode<Mongo, "String" | "Saved">}>
-    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"], value: PickTargetNode<Mongo, "SetField">["value"]}>,
-    DeleteKeyOnObject: Node<{obj: string, key: PickTargetNode<Mongo, "SetField">["field_name"]}>
+    GetKeyFromObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "String" | "Saved">[]}>
+    keyExists: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "String" | "Saved">}>
+    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "SetField">["field_name"], value: PickTargetNode<MongoNodeSet, "SetField">["value"]}>,
+    DeleteKeyOnObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "SetField">["field_name"]}>
 }
 
 
-const MONGO_REPLACER: RequiredReplacer<Mongo> = {
+const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     If(n, r) {
         return {
             kind: "If",
@@ -61,7 +61,7 @@ const MONGO_REPLACER: RequiredReplacer<Mongo> = {
         }
     },
 
-    SetField(n, r): PickTargetNode<Mongo, "SetField"> {
+    SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
         if (n.value.kind === "GlobalObject") {
             throw Error("cannot set values from global objects")
         }
@@ -143,12 +143,12 @@ const MONGO_REPLACER: RequiredReplacer<Mongo> = {
     },
 }
 
-export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode, TargetNodeSet<Mongo>> = new Transformer(make_replacer(MONGO_REPLACER))
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode, TargetNodeSet<MongoNodeSet>> = new Transformer(make_replacer(MONGO_REPLACER))
 
 
-type MongoCompiler = Compiler<TargetNodeSet<Mongo>>
+type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
 
-function compile_function(n: TargetNodeSet<Mongo>): AnyOpInstance[] {
+function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
         case "GetWholeObject":
             throw Error("can't actually compile")
