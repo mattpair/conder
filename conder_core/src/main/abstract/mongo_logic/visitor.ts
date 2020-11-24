@@ -1,6 +1,6 @@
 
 import { MongoNodeSet } from '../globals/mongo';
-import { TargetNodeSet, NodeSet } from "../IR";
+import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
 
 type TargetNodes = TargetNodeSet<MongoNodeSet>
 type Visitor = {
@@ -16,16 +16,27 @@ export function apply(nodes: TargetNodeSet<MongoNodeSet>[], visitor: Visitor) {
     })
 }
 
+
+type Subscriptions = Partial<{
+    [K in TargetNodes["kind"]]: {
+        before: (n: PickTargetNode<MongoNodeSet, K>) => void
+        after: (n: PickTargetNode<MongoNodeSet, K>) => void
+    }
+}>
 // Sees everything but does nothing.
 export class DummyVisitor implements Visitor {
 
-    private on: TargetNodes["kind"][] =[]
-    constructor() {
-
-    }
+    private readonly subs: Subscriptions
+    constructor(subs: Subscriptions) {
+        this.subs = subs
+    }   
 
     before(n: TargetNodes): TargetNodes[] {
-        this.on.push(n.kind) 
+        
+        if (this.subs[n.kind]) {
+            //@ts-ignore
+            this.subs[n.kind].before(n)
+        }
         
         // It would make me oh so happy if there was a generic type that could said:
         // For all nodes, for those fields of the nodes that point to nodes (i.e. are edges),
@@ -82,7 +93,10 @@ export class DummyVisitor implements Visitor {
     }
 
     after(n: TargetNodes) {
-        this.on.pop()
+        if (this.subs[n.kind]) {
+            //@ts-ignore
+            this.subs[n.kind].after(n)
+        }
     }
 
 }

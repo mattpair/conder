@@ -8,7 +8,7 @@ import { ScopeMap } from './scope_map';
 type ActionSummarizer = (n: TargetNodeSet<MongoNodeSet>[]) => ActionSequence
 
 export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
-    apply(nodes, new DummyVisitor())
+    apply(nodes, new DummyVisitor({}))
     return []
 }
 
