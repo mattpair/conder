@@ -1,0 +1,89 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic functionality allows deleting of fields on local objects: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality allows deleting of nested fields on locals: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality allows if statements: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality allows if statements: Required locks 2`] = `Object {}`;
+
+exports[`basic functionality allows if statements: Required locks 3`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 2`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 3`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 4`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 5`] = `Object {}`;
+
+exports[`basic functionality can compare numbers: Required locks 6`] = `Object {}`;
+
+exports[`basic functionality can get nested field: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 2`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 3`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 4`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 5`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 6`] = `Object {}`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 7`] = `Object {}`;
+
+exports[`basic functionality can set double nested field: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality return node returns null: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality return node with value returns value: Required locks 1`] = `Object {}`;
+
+exports[`basic functionality supports basic math: Required locks 1`] = `Object {}`;
+
+exports[`global objects allows deleting of keys on global objects: Required locks 1`] = `Object {}`;
+
+exports[`global objects allows deleting of keys on global objects: Required locks 2`] = `Object {}`;
+
+exports[`global objects allows deleting of keys on global objects: Required locks 3`] = `Object {}`;
+
+exports[`global objects allows deleting of nested fields on globals: Required locks 1`] = `Object {}`;
+
+exports[`global objects allows deleting of nested fields on globals: Required locks 2`] = `Object {}`;
+
+exports[`global objects allows deleting of nested fields on globals: Required locks 3`] = `Object {}`;
+
+exports[`global objects can check existence of keys: Required locks 1`] = `Object {}`;
+
+exports[`global objects can check existence of keys: Required locks 2`] = `Object {}`;
+
+exports[`global objects getting a key returns the value: Required locks 1`] = `Object {}`;
+
+exports[`global objects getting a key returns the value: Required locks 2`] = `Object {}`;
+
+exports[`global objects getting a non existent key returns null: Required locks 1`] = `Object {}`;
+
+exports[`global objects getting a non existent nested field throws an error: Required locks 1`] = `Object {}`;
+
+exports[`global objects setting a nested key on a non existent object throws an error: Required locks 1`] = `Object {}`;
+
+exports[`global objects setting a nested key on a non existent object throws an error: Required locks 2`] = `Object {}`;
+
+exports[`global objects setting a nested key on a non existent object throws an error: Required locks 3`] = `Object {}`;
+
+exports[`global objects setting a nested key on an existing object: Required locks 1`] = `Object {}`;
+
+exports[`global objects setting a nested key on an existing object: Required locks 2`] = `Object {}`;
+
+exports[`global objects setting a nested key on an existing object: Required locks 3`] = `Object {}`;
+
+exports[`global objects setting a nested key on an existing object: Required locks 4`] = `Object {}`;
+
+exports[`with input check if field exists: Required locks 1`] = `Object {}`;
+
+exports[`with input validates input: Required locks 1`] = `Object {}`;

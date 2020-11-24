@@ -5,7 +5,7 @@ describe("mongo", () => {
 
     function replaceTest(original: Exclude<AnyNode, AbstractNodes>): jest.ProvidesCallback {
         return (cb) => {
-            expect(MONGO_GLOBAL_ABSTRACTION_REMOVAL.run(original)).toMatchSnapshot()
+            expect(MONGO_GLOBAL_ABSTRACTION_REMOVAL.run([original])).toMatchSnapshot()
             cb()
         }
     }

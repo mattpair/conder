@@ -4,6 +4,7 @@ import { BaseNodesFromTargetSet, PickNode, TargetNodeSet } from './IR';
 export type Transform<I, O> = {
     then<N>(t: Transform<O, N>): Transform<I, N>
 
+    tap(f: (data: O) => void): Transform<I, O>
     run(i: I): O
 }
 
@@ -14,6 +15,13 @@ export type Compiler<I> = Transform<I, AnyOpInstance[]>
 export class Transformer<I, O> implements Transform<I, O> {
     readonly f: (i: I) => O
     constructor(f: (i: I) => O) {this.f= f}
+
+    tap(f: (data: O) =>void): Transform<I, O> {
+        return this.then(new Transformer((input) => {
+            f(input)
+            return input
+        }))
+    }
     
     then<N>(t: Transform<O, N>): Transform<I, N> {
         const f = this.f

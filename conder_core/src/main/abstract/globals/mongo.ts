@@ -142,11 +142,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
     },
 }
+const complete_replace = make_replacer(MONGO_REPLACER) 
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode[], TargetNodeSet<MongoNodeSet>[]> = new Transformer((input) => {
+    return input.map(complete_replace)
+})
 
-export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<AnyNode, TargetNodeSet<MongoNodeSet>> = new Transformer(make_replacer(MONGO_REPLACER))
 
-
-type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
+type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>[]>
 
 function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
@@ -275,4 +277,6 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     }
 }
 
-export const MONGO_COMPILER: MongoCompiler = new Transformer(compile_function)
+export const MONGO_COMPILER: MongoCompiler = new Transformer((input) => {
+    return input.flatMap(compile_function)
+})

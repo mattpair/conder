@@ -1,7 +1,7 @@
 import { AnySchemaInstance, AnyOpInstance, ow } from '../ops/index';
-import { AnyNode, RootNode } from "./IR";
+import { AnyNode, AnyRootNodeFromSet, BaseNodeDefs, RootNode } from "./IR";
 import {MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL} from './globals/mongo'
-import { Transformer } from "./compilers";
+import { Transformer, Compiler } from "./compilers";
 
 
 export type GlobalObject = {kind: "glob", name: string}
@@ -16,7 +16,9 @@ export type FunctionDescription = {
     computation: RootNode[]
 }
 
-export function toOps(func: FunctionDescription): AnyOpInstance[] {
+export type RootNodeCompiler = Compiler<RootNode[]>
+
+export function toOps(func: FunctionDescription, override:  RootNodeCompiler | undefined=undefined): AnyOpInstance[] {
     const ops: AnyOpInstance[] = [
         ow.assertHeapLen(func.input.length)
     ]
@@ -27,9 +29,9 @@ export function toOps(func: FunctionDescription): AnyOpInstance[] {
             ow.raiseError("invalid input")
         )
     })
-    const compiler = MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
+    const compiler: RootNodeCompiler = override ? override : MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
 
-    ops.push(...func.computation.flatMap(c => compiler.run(c)))
+    ops.push(...compiler.run(func.computation))
     return ops
 }
 

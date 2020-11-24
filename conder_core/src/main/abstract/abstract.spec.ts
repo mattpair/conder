@@ -1,10 +1,18 @@
+import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
 
 import {Test, schemaFactory, AnyOpInstance} from '../ops/index'
 import { AnyNode, RootNode } from 'src/main/abstract/IR'
-import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../../index'
+import {BaseNodeDefs,PickNode, toOps, FunctionDescription, RootNodeCompiler } from '../../../index'
+import { MONGO_LOCK_CALCULATOR } from './mongo_logic/main';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
+const testCompiler: RootNodeCompiler =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
+    .tap((nonAbstractRepresentation) => {
+        const locks = MONGO_LOCK_CALCULATOR(nonAbstractRepresentation)
+        expect(locks).toMatchSnapshot("Required locks")
+    })
+    .then(MONGO_COMPILER)
 
 function withInputHarness(
     maybeStorage: "requires storage" | "no storage",
@@ -13,7 +21,7 @@ function withInputHarness(
     const getStoresAndProcedures = () => {
         const PROCEDURES: Record<string, AnyOpInstance[]> = {}
         for (const key in proc_nodes) {
-            const comp = toOps(proc_nodes[key])
+            const comp = toOps(proc_nodes[key], testCompiler)
             PROCEDURES[key] = comp
         }
 

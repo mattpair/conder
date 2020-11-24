@@ -1,5 +1,4 @@
 import { apply, DummyVisitor, Subscriptions } from './visitor';
-import { PickTargetNode } from './../IR';
 import { ActionSequence } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet } from "../IR";
