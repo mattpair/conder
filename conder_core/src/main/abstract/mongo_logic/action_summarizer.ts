@@ -1,4 +1,4 @@
-import { apply, GraphAnalysis, Subscriptions } from './visitor';
+import { GraphAnalysis, Subscriptions } from '../../data_structures/visitor';
 import { ActionSequence } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
@@ -9,14 +9,13 @@ type ActionSummarizer = (n: TargetNodeSet<MongoNodeSet>[]) => ActionSequence
 
 type SummarizerState = {
     seq: ActionSequence,
-    globals_tainting_exectuion: StackOfSets<string>
 }
 
 export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
     const summary_analysis = new GraphAnalysis<SummarizerState>(
         SUMMARIZER_SUBSCRIPTIONS, 
-        {seq: [], globals_tainting_exectuion: new StackOfSets()})
-    apply(nodes, summary_analysis)
+        {seq: []})
+    summary_analysis.apply(nodes)
     return summary_analysis.state.seq
 }
 
