@@ -602,4 +602,35 @@ describe("global objects", () => {
         )
     )
 
+    describe("race condition possible actions", () => {
+        it("can perform updates that depend on global state", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [{
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            },
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage"))
+    })
+
 })
