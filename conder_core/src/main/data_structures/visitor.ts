@@ -8,8 +8,8 @@ type Visitor = {
 }
 
 type Subscriber<K extends TargetNodes["kind"], STATE> = {
-    before: (n: PickTargetNode<MongoNodeSet, K>, state: STATE) => void
-    after: (n: PickTargetNode<MongoNodeSet, K>, state: STATE) => void
+    before: (n: PickTargetNode<MongoNodeSet, K>, state: STATE, thisVisitor: Visitor) => void
+    after: (n: PickTargetNode<MongoNodeSet, K>, state: STATE, thisVisitor: Visitor) => void
 }
 
 export type Subscriptions<STATE, REQUIRES extends TargetNodes["kind"]=never> = {
@@ -32,14 +32,14 @@ export class GraphAnalysis<STATE> implements Visitor {
         nodes.forEach(n => {
             const subscriber: Subscriber<any, STATE> = this.subs[n.kind]
             if (subscriber) {
-                subscriber.before(n, this.state)
+                subscriber.before(n, this.state, this)
             }
             
             const children = extract_children(n)
             this.apply(children)
     
             if (subscriber) {
-                subscriber.after(n, this.state)
+                subscriber.after(n, this.state, this)
             }
         })   
     }

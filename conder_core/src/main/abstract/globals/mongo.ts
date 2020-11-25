@@ -14,9 +14,12 @@ export type MongoNodeSet = {
 
 const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     If(n, r) {
+        if (n.cond.kind === "GlobalObject") {
+            throw Error(`Global objects cannot be used as conditions`)
+        }
         return {
             kind: "If",
-            cond: n.cond,
+            cond: r(n.cond),
             ifTrue: r(n.ifTrue),
             finally: r(n.finally),
         }

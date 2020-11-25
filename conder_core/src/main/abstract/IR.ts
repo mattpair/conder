@@ -43,7 +43,7 @@ export type BaseNodeDefs = {
         right: PickNode<"Bool" | "Comparison"| "Saved">}>
 
     If: Node<{
-        cond: PickNode<"Bool" | "Comparison" | "BoolAlg" | "Saved">
+        cond: ValueNode
         ifTrue: RootNode
         finally?: RootNode
     }, "root">  

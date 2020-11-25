@@ -28,7 +28,7 @@ export class Mutation implements Extract<AnyAction, {kind: "mut"}>{
         this.using = new Set(using)
     }
 }
-type ActionKind = keyof MongoActions
+export type ActionKind = keyof MongoActions
 type AnyAction = {
     [K in keyof MongoActions]: {kind: K} & MongoActions[K]
 }[keyof MongoActions]

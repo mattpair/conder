@@ -633,6 +633,33 @@ describe("global objects", () => {
             }, "requires storage")
         )
 
+        it("can perform updates that depend on global state - ifs", noInputHarness(
+            {
+                get, 
+                set,
+                setTo0If42: [
+                    {
+                        kind: "If",
+                        cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                        ifTrue: {
+                            kind: "Update",
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {
+                                kind: "SetField",
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                value: {kind: "Int", value: 0}
+                            }
+                        },
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setTo0If42()).toBeNull()
+                expect(await server.get()).toEqual({l2: 0})
+            }, "requires storage")
+        )
+
         it("can perform updates that depend on some other global state", noInputHarness(
             {
                 get, 
