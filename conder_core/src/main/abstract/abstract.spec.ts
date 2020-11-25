@@ -812,6 +812,84 @@ describe("global objects", () => {
                 expect(await server.get()).toEqual({l2: 43})
             }, "requires storage")
         )
+
+        it("global state taint is applied on partial updates to variables", noInputHarness(
+            {
+                get, 
+                set,
+                updateWithPartialState: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Object", fields: [{
+                            kind: "SetField",
+                            value: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            field_name: [{kind: "String", value: "global_origin"}]
+                        }]}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {kind: "SetField", field_name: [{kind: "String",value: "clean"}], value: {kind: "Int", value: 12}},
+                    },
+                    {
+                        kind: "Update",
+                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        operation: {
+                            kind: "SetField",
+                            field_name: [{kind: "String", value: "l1"}],
+                            value: {kind: "Saved", index: 0}
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.updateWithPartialState()).toBeNull()
+                expect(await server.get()).toEqual({clean: 12, global_origin: {l2: 42}})
+            }, "requires storage")
+        )
+
+        it("global state taint is erased on overwrites", noInputHarness(
+            {
+                get, 
+                set,
+                updateWithOverwrittenState: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Object", fields: [{
+                            kind: "SetField",
+                            value: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            field_name: [{kind: "String", value: "global_origin"}]
+                        }]}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {kind: "Int", value: 0},
+                    },
+                    {
+                        kind: "Update",
+                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        operation: {
+                            kind: "SetField",
+                            field_name: [{kind: "String", value: "l1"}],
+                            value: {kind: "Saved", index: 0}
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.updateWithOverwrittenState()).toBeNull()
+                expect(await server.get()).toEqual(0)
+            }, "requires storage")
+        )
     })
 
 })

@@ -155,6 +155,16 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions global state taint is applied on partial updates to variables: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "updateWithPartialState" => Map {
+    "test" => "w",
+  },
+}
+`;
+
 exports[`global objects race condition possible actions global state taint is applied on updates to variables: Required locks 1`] = `
 Map {
   "get" => Map {},
@@ -162,6 +172,14 @@ Map {
   "setToSelfPlusOne" => Map {
     "test" => "w",
   },
+}
+`;
+
+exports[`global objects race condition possible actions global state taint is erased on overwrites: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "updateWithOverwrittenState" => Map {},
 }
 `;
 
