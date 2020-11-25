@@ -1,4 +1,4 @@
-import { ActionSequence, calculate_lock_requirements, LockRequirements } from "./lock_calculation";
+import { ActionSequence, calculate_lock_requirements, LockRequirements, Mutation } from "./lock_calculation";
 
 describe("lock calculation", () => {
 
@@ -37,12 +37,12 @@ describe("lock calculation", () => {
         givenActions({gets}).expectLocks({}))
     
     it("doesn't require a read lock across gets if mutated",
-        givenActions({gets, sets: [{ kind: "mut", id: "i", usesLatest: [] }]})
+        givenActions({gets, sets: [new Mutation("i", [])]})
         .expectLocks({})
     )
     
     it("doesn't require a lock if a mut is independent of any global state",
-        givenActions({set: [{kind: "mut", id: "i", usesLatest: []}]})
+        givenActions({set: [new Mutation("i", [])]})
         .expectLocks({})
     )
     
@@ -56,26 +56,26 @@ describe("lock calculation", () => {
     it("doesn't require a lock if a series of mut are independent of any global state",
         givenActions({
             set: [
-                {kind: "mut", id: "i", usesLatest: []},
-                {kind: "mut", id: "i", usesLatest: []},
-                {kind: "mut", id: "j", usesLatest: []}
+                new Mutation("i", []),
+                new Mutation("i", []),
+                new Mutation("j", [])
             ],
         })
         .expectLocks({})
     )
 
     it("requires a read lock if a mut is dependent on some other global state", 
-        givenActions({set: [{kind: "mut", id: "i", usesLatest: ["j"]}]})
+        givenActions({set: [new Mutation("i", ["j"])]})
         .expectLocks({set: {j: "r"}})
     )
     it("requires a write lock if a mut references itself",
-        givenActions({set: [{kind: "mut", id: "i", usesLatest: ["i"]}]})
+        givenActions({set: [new Mutation("i", ["i"])]})
         .expectLocks({set: {i: "w"}})
     )
 
     it("doesn't require a write lock if you read a global after writing it",
         givenActions({setGet: [
-            {kind: "mut", id: "i", usesLatest: []},
+            new Mutation("i", []),
             {kind: "get", id: "i"}
         ]})
         .expectLocks({})
@@ -83,8 +83,8 @@ describe("lock calculation", () => {
 
     it("requires a write lock if a used variable is later mutated", 
         givenActions({setOn2: [
-            {kind: "mut", id: "i", usesLatest: ["j"]},
-            {kind: "mut", id: "j", usesLatest: []}
+            new Mutation("i", "j"),
+            new Mutation("j", [])
         ]}).expectLocks({setOn2: {j: "w"}})
     )
 })

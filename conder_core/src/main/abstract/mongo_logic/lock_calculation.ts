@@ -16,13 +16,23 @@ type MongoActions = {
     get: {id: string}, 
     // Mutates some global state with any number of dependencies on other global state.
     // Does not return any data.
-    mut: {id: string, usesLatest: string[]}, 
+    mut: {id: string, using: Set<string>}, 
+}
+
+export class Mutation implements Extract<AnyAction, {kind: "mut"}>{
+    readonly kind = "mut"
+    readonly id: string
+    readonly using: Set<string>
+    constructor(id: string, using: Iterable<string>) {
+        this.id = id
+        this.using = new Set(using)
+    }
 }
 type ActionKind = keyof MongoActions
 type AnyAction = {
     [K in keyof MongoActions]: {kind: K} & MongoActions[K]
 }[keyof MongoActions]
-
+export type Action<K extends keyof MongoActions> = Extract<AnyAction, {kind: K}>
 
 export type ActionSequence = AnyAction[]
 export type LockRequirements = Record<string, Map<string, "r" | "w">>
@@ -40,8 +50,8 @@ export function calculate_lock_requirements(sequences: Record<string, ActionSequ
                     break
                 case "mut":
 
-                    if (action.usesLatest.length > 0) {
-                        action.usesLatest.forEach(dependency => {
+                    if (action.using.size > 0) {
+                        action.using.forEach(dependency => {
                             const original = lockReqs[func].get(dependency)
                             const dependencyIsSelf = dependency === action.id
                             

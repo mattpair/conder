@@ -1,5 +1,5 @@
 import { GraphAnalysis, Subscriptions } from '../../data_structures/visitor';
-import { ActionSequence } from './lock_calculation';
+import { Action, ActionSequence, Mutation } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
 import { ScopeMap } from '../../data_structures/scope_map';
@@ -7,57 +7,90 @@ import { StackOfSets } from 'src/main/data_structures/stack_of_sets';
 
 type ActionSummarizer = (n: TargetNodeSet<MongoNodeSet>[]) => ActionSequence
 
+type NodeSummary = {
+    children_did: ActionSequence
+}
+
 type SummarizerState = {
-    seq: ActionSequence,
+    active: NodeSummary[]
+    cumulated_actions: ActionSequence,
 }
 
 export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
     const summary_analysis = new GraphAnalysis<SummarizerState>(
-        SUMMARIZER_SUBSCRIPTIONS, 
-        {seq: []})
+        SUMMARIZER_SUBSCRIPTIONS,
+        {cumulated_actions: [], active: []})
     summary_analysis.apply(nodes)
-    return summary_analysis.state.seq
+    return summary_analysis.state.cumulated_actions
 }
 
 const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<SummarizerState, keyof MongoNodeSet> = {
     GetKeyFromObject: {
         before: (n, state) => {
-            state.seq.push({kind: 'get', id: n.obj})
+            state.active.push({children_did: []})
         },
         after: (n, state) => {
+            const this_action: Action<"get"> = {kind: "get", id: n.obj}
+            const {children_did} = state.active.pop()
+            const parent = state.active.pop()
+            if (parent) {
+                parent.children_did.push(...children_did, this_action)
+                state.active.push(parent)
+            }
+            state.cumulated_actions.push(this_action)
         }
     },
     GetWholeObject: {
         before: (n, state) => {
-            state.seq.push({kind: "get", id: n.name})
-        },
-        after: () => {
 
+        },
+        after: (n, state) => {
+            state.cumulated_actions.push({kind: "get", id: n.name})
         }
     },
     keyExists: {
         before: (n, state) => {
-            state.seq.push({kind: "get", id: n.obj})
+            state.active.push({children_did: []})
         },
-        after: () => {
-
+        after: (n, state) => {
+            const {children_did} = state.active.pop()
+            const this_action: Action<"get"> = {kind: "get", id: n.obj}
+            const parent = state.active.pop()
+            if (parent) {
+                parent.children_did.push(...children_did, this_action)
+                state.active.push(parent)
+            }
+            state.cumulated_actions.push(this_action)
         }
     },
     DeleteKeyOnObject: {
         before: (n, state) => {
-            // TODO: ensure uses latest is accurate
-            state.seq.push({kind: "mut", id: n.obj, usesLatest: []})
+            state.active.push({children_did: []})
         },
-        after: () => {
-
+        after: (n, state) => {
+            const {children_did} = state.active.pop()
+            const this_action = new Mutation(n.obj, children_did.map(c => c.id))
+            const parent = state.active.pop()
+            if (parent) {
+                parent.children_did.push(...children_did, this_action)
+                state.active.push(parent)
+            }
+            state.cumulated_actions.push(this_action)
         }
     },
     SetKeyOnObject: {
         before: (n, state) => {
-            state.seq.push({kind: "mut", id: n.obj, usesLatest: []})
+            state.active.push({children_did: []})
         },
-        after: () => {
-
+        after: (n, state) => {
+            const {children_did} = state.active.pop()
+            const this_action = new Mutation(n.obj, children_did.map(c => c.id))
+            const parent = state.active.pop()
+            if (parent) {
+                parent.children_did.push(...children_did, this_action)
+                state.active.push(parent)
+            }
+            state.cumulated_actions.push(this_action) 
         }
     }
 }

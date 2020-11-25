@@ -119,7 +119,9 @@ exports[`global objects race condition possible actions can perform updates that
 Map {
   "get" => Map {},
   "set" => Map {},
-  "setToSelfPlusOne" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
 }
 `;
 
