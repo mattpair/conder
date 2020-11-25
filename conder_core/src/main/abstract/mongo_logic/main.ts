@@ -6,7 +6,7 @@ import { MONGO_ACTION_SUMMARIZER } from './action_summarizer';
 
 type LockCalculator = (input: Map<string, TargetNodeSet<MongoNodeSet>[]>) =>  Map<string, LockRequirements[string]>
 
-export const MONGO_LOCK_CALCULATOR: LockCalculator = input => {
+export const MONGO_UNPROVIDED_LOCK_CALCULATOR: LockCalculator = input => {
     
     const actions: Record<string, ActionSequence> = {}
     input.forEach((v, k) => {
