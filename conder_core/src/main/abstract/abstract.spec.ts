@@ -1,22 +1,26 @@
+import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
 
 import {Test, schemaFactory, AnyOpInstance} from '../ops/index'
 import { AnyNode, RootNode } from 'src/main/abstract/IR'
-import {BaseNodeDefs,PickNode, toOps, FunctionDescription } from '../../../index'
+import {BaseNodeDefs, PickNode, toOps, FunctionDescription, RootNodeCompiler } from '../../../index'
+import { MONGO_UNPROVIDED_LOCK_CALCULATOR } from './mongo_logic/main';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
+const testCompiler: RootNodeCompiler =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
+    .tap((nonAbstractRepresentation) => {
+        const locks = MONGO_UNPROVIDED_LOCK_CALCULATOR(nonAbstractRepresentation)
+        expect(locks).toMatchSnapshot(`Required locks`)
+    })
+    .then(MONGO_COMPILER)
 
 function withInputHarness(
     maybeStorage: "requires storage" | "no storage",
     proc_nodes: Record<string, FunctionDescription>,
     test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const getStoresAndProcedures = () => {
-        const PROCEDURES: Record<string, AnyOpInstance[]> = {}
-        for (const key in proc_nodes) {
-            const comp = toOps(proc_nodes[key])
-            PROCEDURES[key] = comp
-        }
-
+        const compiled = toOps(new Map(Object.entries(proc_nodes)), testCompiler)
+        const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
         const STORES = {TEST_STORE: schemaFactory.Object({})}
         return {PROCEDURES, STORES}
     }
@@ -597,5 +601,326 @@ describe("global objects", () => {
             "requires storage"
         )
     )
+
+    describe("race condition possible actions", () => {
+        it("can perform updates that depend on global state", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [{
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            },
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
+
+        it("can perform updates that depend on global state - ifs", noInputHarness(
+            {
+                get, 
+                set,
+                setTo0If42: [
+                    {
+                        kind: "If",
+                        cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                        ifTrue: {
+                            kind: "Update",
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {
+                                kind: "SetField",
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                value: {kind: "Int", value: 0}
+                            }
+                        },
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setTo0If42()).toBeNull()
+                expect(await server.get()).toEqual({l2: 0})
+            }, "requires storage")
+        )
+
+        it("mutation conditional on same global state requires lock", noInputHarness(
+            {
+                get, 
+                set,
+                setTo0If42: [
+                    {
+                        kind: "If",
+                        cond: {kind:  "BoolAlg", sign: "and", 
+                            left: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                            right: {kind: "Bool", value: false}
+                        },
+                        ifTrue: {kind: "Return"},
+                        finally: {
+                            kind: "Update",
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {
+                                kind: "SetField",
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                value: {kind: "Int", value: 0}
+                            }
+                        }
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setTo0If42()).toBeNull()
+                expect(await server.get()).toEqual({l2: 0})
+            }, "requires storage")
+        )
+
+        it("can perform updates that depend on some other global state", noInputHarness(
+            {
+                get, 
+                setOther: [{
+                    kind: "Update", 
+                    target: {kind: "GlobalObject", name: "other"}, 
+                    operation: {
+                        kind: "SetField", 
+                        field_name: [{kind: "String", value: "l1"}],
+                        value: {kind: "Int", value: 734}
+                    }
+                }],
+                setToOtherPlusOne: [{
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}],
+                        value: {
+                            kind: "Math",
+                            left: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: "other"},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.setOther()).toBeNull()
+                expect(await server.setToOtherPlusOne()).toBeNull()
+                expect(await server.get()).toBe(735)
+            }, "requires storage")
+        )
+
+
+        it("can perform updates that depend on global state transitively", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {
+                            kind: "GetField", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                        }
+                    },
+                    {
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {kind: "Saved", index: 0},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
+
+        it("global state taint is transitive through variables", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {
+                            kind: "GetField", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                        }
+                    },
+                    {
+                        kind: "Save", index: 1,
+                        value: {kind: "Saved", index: 0}
+                    },
+                    {
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {kind: "Saved", index: 1},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
+
+        it("global state taint is applied on updates to variables", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Int", value: 0}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {
+                            kind: "GetField", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                        },
+                    },
+                    {
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {kind: "Saved", index: 0},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
+
+        it("global state taint is applied on partial updates to variables", noInputHarness(
+            {
+                get, 
+                set,
+                updateWithPartialState: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Object", fields: [{
+                            kind: "SetField",
+                            value: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            field_name: [{kind: "String", value: "global_origin"}]
+                        }]}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {kind: "SetField", field_name: [{kind: "String",value: "clean"}], value: {kind: "Int", value: 12}},
+                    },
+                    {
+                        kind: "Update",
+                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        operation: {
+                            kind: "SetField",
+                            field_name: [{kind: "String", value: "l1"}],
+                            value: {kind: "Saved", index: 0}
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.updateWithPartialState()).toBeNull()
+                expect(await server.get()).toEqual({clean: 12, global_origin: {l2: 42}})
+            }, "requires storage")
+        )
+
+        it("global state taint is erased on overwrites", noInputHarness(
+            {
+                get, 
+                set,
+                updateWithOverwrittenState: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Object", fields: [{
+                            kind: "SetField",
+                            value: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: TEST_STORE},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            field_name: [{kind: "String", value: "global_origin"}]
+                        }]}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {kind: "Int", value: 0},
+                    },
+                    {
+                        kind: "Update",
+                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        operation: {
+                            kind: "SetField",
+                            field_name: [{kind: "String", value: "l1"}],
+                            value: {kind: "Saved", index: 0}
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.updateWithOverwrittenState()).toBeNull()
+                expect(await server.get()).toEqual(0)
+            }, "requires storage")
+        )
+    })
 
 })

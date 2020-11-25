@@ -1,11 +1,19 @@
 import { MONGO_GLOBAL_ABSTRACTION_REMOVAL, AnyNode, AbstractNodes } from "../../../../index"
+import { FunctionDescription } from "../function"
 
 
 describe("mongo", () => {
 
     function replaceTest(original: Exclude<AnyNode, AbstractNodes>): jest.ProvidesCallback {
         return (cb) => {
-            expect(MONGO_GLOBAL_ABSTRACTION_REMOVAL.run(original)).toMatchSnapshot()
+            const map = new Map<string, FunctionDescription>().set("func", {   
+                // Typically, a root node is required so you express a meaningful computation.
+                // However, it would make tests more verbose here and the abstraction remover
+                // is capable of handling any type of node.
+                computation: [original] as any, 
+                input: []
+            })
+            expect(MONGO_GLOBAL_ABSTRACTION_REMOVAL.run(map)).toMatchSnapshot()
             cb()
         }
     }

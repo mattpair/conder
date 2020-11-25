@@ -1,0 +1,233 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`basic functionality allows deleting of fields on local objects: Required locks 1`] = `
+Map {
+  "delete" => Map {},
+}
+`;
+
+exports[`basic functionality allows deleting of nested fields on locals: Required locks 1`] = `
+Map {
+  "delete" => Map {},
+}
+`;
+
+exports[`basic functionality allows if statements: Required locks 1`] = `
+Map {
+  "ifTrue" => Map {},
+  "ifFalseNoFinally" => Map {},
+  "ifFalseFinally" => Map {},
+}
+`;
+
+exports[`basic functionality can compare numbers: Required locks 1`] = `
+Map {
+  "geq" => Map {},
+  "leq" => Map {},
+  "l" => Map {},
+  "g" => Map {},
+  "e" => Map {},
+  "ne" => Map {},
+}
+`;
+
+exports[`basic functionality can get nested field: Required locks 1`] = `
+Map {
+  "r" => Map {},
+}
+`;
+
+exports[`basic functionality can handle boolean algebra: Required locks 1`] = `
+Map {
+  "trueNtrue" => Map {},
+  "falseNtrue" => Map {},
+  "trueNfalse" => Map {},
+  "trueOtrue" => Map {},
+  "falseOtrue" => Map {},
+  "trueOfalse" => Map {},
+  "falseOfalse" => Map {},
+}
+`;
+
+exports[`basic functionality can set double nested field: Required locks 1`] = `
+Map {
+  "r" => Map {},
+}
+`;
+
+exports[`basic functionality return node returns null: Required locks 1`] = `
+Map {
+  "r" => Map {},
+}
+`;
+
+exports[`basic functionality return node with value returns value: Required locks 1`] = `
+Map {
+  "r" => Map {},
+}
+`;
+
+exports[`basic functionality supports basic math: Required locks 1`] = `
+Map {
+  "minus" => Map {},
+}
+`;
+
+exports[`global objects allows deleting of keys on global objects: Required locks 1`] = `
+Map {
+  "delete" => Map {},
+  "set" => Map {},
+  "get" => Map {},
+}
+`;
+
+exports[`global objects allows deleting of nested fields on globals: Required locks 1`] = `
+Map {
+  "delete" => Map {},
+  "set" => Map {},
+  "get" => Map {},
+}
+`;
+
+exports[`global objects can check existence of keys: Required locks 1`] = `
+Map {
+  "set" => Map {},
+  "checkL1" => Map {},
+}
+`;
+
+exports[`global objects getting a key returns the value: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+}
+`;
+
+exports[`global objects getting a non existent key returns null: Required locks 1`] = `
+Map {
+  "get" => Map {},
+}
+`;
+
+exports[`global objects getting a non existent nested field throws an error: Required locks 1`] = `
+Map {
+  "getNested" => Map {},
+}
+`;
+
+exports[`global objects race condition possible actions can perform updates that depend on global state - ifs: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setTo0If42" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions can perform updates that depend on global state transitively: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions can perform updates that depend on global state: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions can perform updates that depend on some other global state: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "setOther" => Map {},
+  "setToOtherPlusOne" => Map {
+    "other" => "r",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions global state taint is applied on partial updates to variables: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "updateWithPartialState" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions global state taint is applied on updates to variables: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions global state taint is erased on overwrites: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "updateWithOverwrittenState" => Map {},
+}
+`;
+
+exports[`global objects race condition possible actions global state taint is transitive through variables: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions mutation conditional on same global state requires lock: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setTo0If42" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects setting a nested key on a non existent object throws an error: Required locks 1`] = `
+Map {
+  "setNested" => Map {},
+  "get" => Map {},
+  "getNested" => Map {},
+}
+`;
+
+exports[`global objects setting a nested key on an existing object: Required locks 1`] = `
+Map {
+  "setNested" => Map {},
+  "set" => Map {},
+  "get" => Map {},
+  "getNested" => Map {},
+}
+`;
+
+exports[`with input check if field exists: Required locks 1`] = `
+Map {
+  "checksField" => Map {},
+}
+`;
+
+exports[`with input validates input: Required locks 1`] = `
+Map {
+  "accepts3any" => Map {},
+}
+`;

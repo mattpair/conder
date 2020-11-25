@@ -39,11 +39,11 @@ export type BaseNodeDefs = {
     }>,
     BoolAlg: Node<{
         sign: "and" | "or", 
-        left: PickNode<"Bool" | "Comparison" | "Saved">, 
-        right: PickNode<"Bool" | "Comparison"| "Saved">}>
+        left: ValueNode, 
+        right: ValueNode}>
 
     If: Node<{
-        cond: PickNode<"Bool" | "Comparison" | "BoolAlg" | "Saved">
+        cond: ValueNode
         ifTrue: RootNode
         finally?: RootNode
     }, "root">  
@@ -133,7 +133,6 @@ type PassThroughReplacer = {
 const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     Bool: n => n,
     Int: n => n,
-    BoolAlg: n => n,
     Comparison: n => n,
     Saved: n => n,
     String: n => n,
