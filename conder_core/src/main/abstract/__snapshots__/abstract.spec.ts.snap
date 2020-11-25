@@ -115,6 +115,16 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions can perform updates that depend on global state transitively: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
 exports[`global objects race condition possible actions can perform updates that depend on global state: Required locks 1`] = `
 Map {
   "get" => Map {},

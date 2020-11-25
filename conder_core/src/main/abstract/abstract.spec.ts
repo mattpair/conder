@@ -670,6 +670,42 @@ describe("global objects", () => {
                 expect(await server.get()).toBe(735)
             }, "requires storage")
         )
+
+
+        it("can perform updates that depend on global state transitively", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {
+                            kind: "GetField", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                        }
+                    },
+                    {
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {kind: "Saved", index: 0},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
     })
 
 })
