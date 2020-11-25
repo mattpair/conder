@@ -660,6 +660,37 @@ describe("global objects", () => {
             }, "requires storage")
         )
 
+        it("mutation conditional on same global state requires lock", noInputHarness(
+            {
+                get, 
+                set,
+                setTo0If42: [
+                    {
+                        kind: "If",
+                        cond: {kind:  "BoolAlg", sign: "and", 
+                            left: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                            right: {kind: "Bool", value: false}
+                        },
+                        ifTrue: {kind: "Return"},
+                        finally: {
+                            kind: "Update",
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {
+                                kind: "SetField",
+                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                value: {kind: "Int", value: 0}
+                            }
+                        }
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setTo0If42()).toBeNull()
+                expect(await server.get()).toEqual({l2: 0})
+            }, "requires storage")
+        )
+
         it("can perform updates that depend on some other global state", noInputHarness(
             {
                 get, 
