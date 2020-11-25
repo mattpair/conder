@@ -630,7 +630,46 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, "requires storage"))
+            }, "requires storage")
+        )
+
+        it("can perform updates that depend on some other global state", noInputHarness(
+            {
+                get, 
+                setOther: [{
+                    kind: "Update", 
+                    target: {kind: "GlobalObject", name: "other"}, 
+                    operation: {
+                        kind: "SetField", 
+                        field_name: [{kind: "String", value: "l1"}],
+                        value: {kind: "Int", value: 734}
+                    }
+                }],
+                setToOtherPlusOne: [{
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}],
+                        value: {
+                            kind: "Math",
+                            left: {
+                                kind: "GetField", 
+                                target: {kind: "GlobalObject", name: "other"},
+                                field_name: [{kind: "String", value: "l1"}]
+                            },
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.setOther()).toBeNull()
+                expect(await server.setToOtherPlusOne()).toBeNull()
+                expect(await server.get()).toBe(735)
+            }, "requires storage")
+        )
     })
 
 })

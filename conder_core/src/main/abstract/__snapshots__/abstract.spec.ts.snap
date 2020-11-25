@@ -125,6 +125,16 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions can perform updates that depend on some other global state: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "setOther" => Map {},
+  "setToOtherPlusOne" => Map {
+    "other" => "r",
+  },
+}
+`;
+
 exports[`global objects setting a nested key on a non existent object throws an error: Required locks 1`] = `
 Map {
   "setNested" => Map {},
