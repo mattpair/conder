@@ -34,7 +34,7 @@ class IntuitiveSummarizerState implements SummarizerState {
     }
 
     public endSummaryGroupWith(obj: string, action: ActionKind): void {
-        const {children_did, uses_data_with_taints} = this.active.pop()
+        const {children_did, uses_data_with_taints} = this.endSummaryGroup()
         const this_action: Action<ActionKind> = action === "get" ?
         {kind: "get", id: obj}
         : new Mutation(obj, [...children_did.map(c => c.id), ...uses_data_with_taints.values(), ...this.scope_is_tainted_by.values()])
