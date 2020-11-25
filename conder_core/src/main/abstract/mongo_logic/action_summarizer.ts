@@ -1,5 +1,6 @@
 import { DefaultMap } from './../../data_structures/default_map';
 import { GraphAnalysis, Subscriptions } from '../../data_structures/visitor';
+import { Stack } from '../../data_structures/Stack';
 import { Action, ActionSequence, Mutation } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet, PickTargetNode } from "../IR";
@@ -12,7 +13,7 @@ type NodeSummary = {
 }
 
 type SummarizerState = {
-    active: NodeSummary[],
+    active: Stack<NodeSummary>,
     taints: DefaultMap<number, Set<string>>
     cumulated_actions: ActionSequence,
 }
@@ -20,7 +21,11 @@ type SummarizerState = {
 export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
     const summary_analysis = new GraphAnalysis<SummarizerState>(
         SUMMARIZER_SUBSCRIPTIONS,
-        {cumulated_actions: [], active: [], taints: new DefaultMap(() => new Set())})
+        {
+            cumulated_actions: [], 
+            active: new Stack(() => ({children_did: [], uses_data_with_taints: new Set()})), 
+            taints: new DefaultMap(() => new Set())
+        })
     summary_analysis.apply(nodes)
     return summary_analysis.state.cumulated_actions
 }
@@ -28,16 +33,15 @@ export const MONGO_ACTION_SUMMARIZER: ActionSummarizer = (nodes) => {
 const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<SummarizerState, keyof MongoNodeSet> = {
     GetKeyFromObject: {
         before: (n, state) => {
-            state.active.push({children_did: [], uses_data_with_taints: new Set()})
+            state.active.push()
         },
         after: (n, state) => {
             const this_action: Action<"get"> = {kind: "get", id: n.obj}
             const {children_did} = state.active.pop()
-            const parent = state.active.pop()
-            if (parent) {
+            state.active.apply_to_last(parent => {
                 parent.children_did.push(...children_did, this_action)
-                state.active.push(parent)
-            }
+                return parent
+            })
             state.cumulated_actions.push(this_action)
         }
     },
@@ -51,52 +55,50 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<SummarizerState, keyof MongoNodeSe
     },
     keyExists: {
         before: (n, state) => {
-            state.active.push({children_did: [], uses_data_with_taints: new Set()})
+            state.active.push()
         },
         after: (n, state) => {
             const {children_did} = state.active.pop()
             const this_action: Action<"get"> = {kind: "get", id: n.obj}
-            const parent = state.active.pop()
-            if (parent) {
+            state.active.apply_to_last(parent => {
                 parent.children_did.push(...children_did, this_action)
-                state.active.push(parent)
-            }
+                return parent
+            })
+
             state.cumulated_actions.push(this_action)
         }
     },
     DeleteKeyOnObject: {
         before: (n, state) => {
-            state.active.push({children_did: [], uses_data_with_taints: new Set()})
+            state.active.push()
         },
         after: (n, state) => {
             const {children_did, uses_data_with_taints} = state.active.pop()
             const this_action = new Mutation(n.obj, [...children_did.map(c => c.id), ...uses_data_with_taints.values()])
-            const parent = state.active.pop()
-            if (parent) {
+            state.active.apply_to_last(parent => {
                 parent.children_did.push(...children_did, this_action)
-                state.active.push(parent)
-            }
+                return parent
+            })
             state.cumulated_actions.push(this_action)
         }
     },
     SetKeyOnObject: {
         before: (n, state) => {
-            state.active.push({children_did: [], uses_data_with_taints: new Set()})
+            state.active.push()
         },
         after: (n, state) => {
             const {children_did, uses_data_with_taints} = state.active.pop()
             const this_action = new Mutation(n.obj, [...children_did.map(c => c.id), ...uses_data_with_taints.values()])
-            const parent = state.active.pop()
-            if (parent) {
+            state.active.apply_to_last(parent => {
                 parent.children_did.push(...children_did, this_action)
-                state.active.push(parent)
-            }
+                return parent
+            })
             state.cumulated_actions.push(this_action) 
         }
     },
     Save: {
         before: (n, state) => {
-            state.active.push({children_did: [], uses_data_with_taints: new Set()})
+            state.active.push()
         },
         after: (n, state) => {
             const {children_did} = state.active.pop()
@@ -113,9 +115,10 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<SummarizerState, keyof MongoNodeSe
             
         },
         after: (n, state) => {
-            const parents = state.active.pop()
-            state.taints.get(n.index).forEach(global => parents.uses_data_with_taints.add(global))
-            state.active.push(parents)
+            state.active.apply_to_last(parent => {
+                state.taints.get(n.index).forEach(global => parent.uses_data_with_taints.add(global))
+                return parent
+            })
         }
     }
 }
