@@ -148,5 +148,27 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
         after: (n, state, this_visitor) => {
 
         }
+    },
+
+    Update: {
+        before: (n, state) => {
+            state.startSummaryGroup()
+        },
+        after: (n, state) => {
+            const update_summary = state.endSummaryGroup()
+            switch (n.target.kind) {
+                case "Saved":
+                    state.taints.delete(n.target.index)
+                    const new_taints = new Set<string>()
+                    update_summary.uses_data_with_taints.forEach(new_taints.add)
+                    update_summary.children_did.forEach(c => new_taints.add(c.id))
+                    state.taints.set(n.target.index, new_taints)
+                    break
+                default:
+                    throw Error(`Unexpected update target ${n.kind}`)
+            }
+            
+        }
+
     }
 }

@@ -772,6 +772,46 @@ describe("global objects", () => {
                 expect(await server.get()).toEqual({l2: 43})
             }, "requires storage")
         )
+
+        it("global state taint is applied on updates to variables", noInputHarness(
+            {
+                get, 
+                set,
+                setToSelfPlusOne: [
+                    {
+                        kind: "Save", index: 0,
+                        value: {kind: "Int", value: 0}
+                    },
+                    {
+                        kind: "Update", 
+                        target: {kind: "Saved", index: 0},
+                        operation: {
+                            kind: "GetField", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                        },
+                    },
+                    {
+                    kind: "Update",
+                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    operation: {
+                        kind: "SetField",
+                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                        value: {
+                            kind: "Math",
+                            left: {kind: "Saved", index: 0},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    }
+                }]
+            },
+            async server => {
+                expect(await server.set()).toBeNull()
+                expect(await server.setToSelfPlusOne()).toBeNull()
+                expect(await server.get()).toEqual({l2: 43})
+            }, "requires storage")
+        )
     })
 
 })
