@@ -101,12 +101,12 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<SummarizerState, keyof MongoNodeSe
             state.active.push()
         },
         after: (n, state) => {
-            const {children_did} = state.active.pop()
-            if (children_did.length > 0) {
-                const taint = state.taints.get(n.index)
-                children_did.forEach(c => taint.add(c.id))
-                state.taints.set(n.index, taint)
-            }
+            const {children_did, uses_data_with_taints} = state.active.pop()
+            const taint = state.taints.get(n.index)
+
+            children_did.forEach(c => taint.add(c.id))
+            uses_data_with_taints.forEach(c => taint.add(c))
+            state.taints.set(n.index, taint)            
         }
     },
 

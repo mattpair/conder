@@ -145,6 +145,16 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions global state taint is transitive through variables: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
 exports[`global objects setting a nested key on a non existent object throws an error: Required locks 1`] = `
 Map {
   "setNested" => Map {},
