@@ -12,7 +12,8 @@ type ValueNode = PickNode<
     "FieldExists" |
     "GetField" |
     "GlobalObject" | 
-    "Math"
+    "Math" |
+    "None"
     >
 
 
@@ -26,11 +27,12 @@ export type BaseNodeDefs = {
     DeleteField: Node<{field_name: PickNode<"String" | "Saved">[]}>,
     Object: Node<{fields: PickNode<"SetField">[]}>
     Int: Node<{value: number}> 
+    None: Node<{}>
     Comparison: Node<
         {
         sign: "==" | "!=" | "<" | ">" | "<=" | ">="
-        left: PickNode<"Int" | "Saved">
-        right: PickNode<"Int" | "Saved">
+        left: ValueNode
+        right: ValueNode
     }>,
     Math: Node<{
         sign: "+" | "-" | "*" | "/",
@@ -133,10 +135,10 @@ type PassThroughReplacer = {
 const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     Bool: n => n,
     Int: n => n,
-    Comparison: n => n,
     Saved: n => n,
     String: n => n,
-    DeleteField: n => n
+    DeleteField: n => n,
+    None: _ => _
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
