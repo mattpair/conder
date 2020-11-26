@@ -94,6 +94,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "Bool":
         case "String":
         case "Saved":
+        case "None":
             return []
         default: 
             const ne: never = n

@@ -25,6 +25,18 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
     },
 
+    Comparison(n, r) {
+        if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
+            throw Error(`Global objects cannot be used in boolean alg`)
+        }
+        return {
+            kind: "Comparison",
+            left: r(n.left),
+            right: r(n.right),
+            sign: n.sign
+        }
+    },
+
     BoolAlg(n, r) {
         if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
             throw Error(`Global objects cannot be used in boolean alg`)

@@ -170,6 +170,9 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
         }
 
+        case "None":
+            return [ow.instantiate(null)]
+
         default: Utils.assertNever(n)
     }
 }
