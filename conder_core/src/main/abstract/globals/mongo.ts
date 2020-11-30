@@ -22,6 +22,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             cond: r(n.cond),
             ifTrue: r(n.ifTrue),
             finally: r(n.finally),
+            else: r(n.else)
         }
     },
 

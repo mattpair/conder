@@ -12,6 +12,12 @@ Map {
 }
 `;
 
+exports[`basic functionality allows elses: Required locks 1`] = `
+Map {
+  "else" => Map {},
+}
+`;
+
 exports[`basic functionality allows if statements: Required locks 1`] = `
 Map {
   "ifTrue" => Map {},

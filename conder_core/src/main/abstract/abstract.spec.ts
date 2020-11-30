@@ -350,6 +350,20 @@ describe("basic functionality", () => {
                 expect(await server.ifFalseFinally()).toBe(2)
         })
     )
+
+    it("allows elses", 
+        noInputHarness({
+            else: [{
+                kind: "If",
+                cond: {kind: "Bool", value: false},
+                ifTrue: {kind: "Return", value: {kind: "Int", value: -1}},
+                else: {kind: "Return", value: {kind: "Int", value: 42}}
+            }] 
+        },
+        async server => {
+            expect(await server.else()).toBe(42)
+        })
+    )
 })
 
 describe("with input", () => {

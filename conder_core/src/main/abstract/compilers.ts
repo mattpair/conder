@@ -153,12 +153,14 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
         case "If":{
             const ifTrue = full_compiler(n.ifTrue)
-
+            const elseOps = n.else ? full_compiler(n.else) : [ow.noop]
             return [
                 ...full_compiler(n.cond),
                 ow.negatePrev,
-                ow.conditonallySkipXops(ifTrue.length),
+                ow.conditonallySkipXops(ifTrue.length + 1),
                 ...ifTrue,
+                ow.offsetOpCursor(elseOps.length),
+                ...elseOps,
                 ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
             ]
         }

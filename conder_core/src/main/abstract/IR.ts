@@ -47,6 +47,7 @@ export type BaseNodeDefs = {
     If: Node<{
         cond: ValueNode
         ifTrue: RootNode
+        else?: RootNode
         finally?: RootNode
     }, "root">  
 

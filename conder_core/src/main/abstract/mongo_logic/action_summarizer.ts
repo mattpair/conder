@@ -143,7 +143,10 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
             condition_summary.uses_data_with_taints.forEach(c => state.scope_is_tainted_by.add(c))
 
             
-            this_visitor.apply([n.ifTrue, ... n.finally ? [n.finally] : []])
+            this_visitor.apply([
+                n.ifTrue, 
+                ... n.else ? [n.else] : [],
+                ... n.finally ? [n.finally] : []])
         },
         after: (n, state, this_visitor) => {
 
