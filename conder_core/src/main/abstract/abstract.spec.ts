@@ -329,25 +329,67 @@ describe("basic functionality", () => {
         noInputHarness({
             ifTrue: [{
                 kind: "If",
-                cond: {kind: "Bool", value: true},
-                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+                conditionally: [
+                    {
+                        kind: "Conditional", 
+                        cond: {kind: "Bool", value: true},
+                        do: {kind: "Return", value: {kind: "Int", value: 1}}
+                    }
+                ]
             }],
             ifFalseNoFinally: [{
                 kind: "If",
-                cond: {kind: "Bool", value: false},
-                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}}
+                conditionally: [
+                    {
+                        kind: "Conditional", 
+                        cond: {kind: "Bool", value: false}, 
+                        do: {kind: "Return", value: {kind: "Int", value: 1}}
+                    },
+                ]
             }],
             ifFalseFinally: [{
                 kind: "If",
-                cond: {kind: "Bool", value: false},
-                ifTrue: {kind: "Return", value: {kind: "Int", value: 1}},
-                finally: {kind: "Return", value: {kind: "Int", value: 2}}
+                conditionally: [
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
+                    {kind: "Finally", do: {kind: "Return", value: {kind: "Int", value: 2}}}
+                ]
             }]
         }, 
             async server => {
                 expect(await server.ifTrue()).toBe(1)
                 expect(await server.ifFalseNoFinally()).toBeNull()
                 expect(await server.ifFalseFinally()).toBe(2)
+        })
+    )
+
+    it("allows elses", 
+        noInputHarness({
+            else: [{
+                kind: "If",
+                conditionally: [
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
+                    {kind: "Else", do: {kind: "Return", value: {kind: "Int", value: 42}}}
+                ]
+            }] 
+        },
+        async server => {
+            expect(await server.else()).toBe(42)
+        })
+    )
+
+    it("allows else ifs", 
+        noInputHarness({
+            elseIfs: [{
+                kind: "If",
+                conditionally: [
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
+                    {kind: "Conditional", cond:  {kind: "Bool", value: false}, do: {kind: "Return"}},
+                    {kind: "Conditional", cond: {kind: "Bool", value: true}, do: {kind: "Return", value: {kind: "Int", value: 42}}}
+                ]
+            }] 
+        },
+        async server => {
+            expect(await server.elseIfs()).toBe(42)
         })
     )
 })
@@ -640,16 +682,21 @@ describe("global objects", () => {
                 setTo0If42: [
                     {
                         kind: "If",
-                        cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
-                        ifTrue: {
-                            kind: "Update",
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            operation: {
-                                kind: "SetField",
-                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
-                                value: {kind: "Int", value: 0}
+                        conditionally: [
+                            {
+                                kind: "Conditional",
+                                cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                                do: {
+                                    kind: "Update",
+                                    target: {kind: "GlobalObject", name: TEST_STORE},
+                                    operation: {
+                                        kind: "SetField",
+                                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                        value: {kind: "Int", value: 0}
+                                    }
+                                }
                             }
-                        },
+                        ]
                     }
                 ]
             },
@@ -667,20 +714,29 @@ describe("global objects", () => {
                 setTo0If42: [
                     {
                         kind: "If",
-                        cond: {kind:  "BoolAlg", sign: "and", 
-                            left: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
-                            right: {kind: "Bool", value: false}
-                        },
-                        ifTrue: {kind: "Return"},
-                        finally: {
-                            kind: "Update",
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            operation: {
-                                kind: "SetField",
-                                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
-                                value: {kind: "Int", value: 0}
+                        conditionally: [
+                            {
+                                kind: "Conditional",
+                                cond: {
+                                    kind:  "BoolAlg", sign: "and", 
+                                    left: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
+                                    right: {kind: "Bool", value: false}
+                                },
+                                do: {kind: "Return"}
+                            },
+                            {
+                                kind: "Finally",
+                                do: {
+                                    kind: "Update",
+                                    target: {kind: "GlobalObject", name: TEST_STORE},
+                                    operation: {
+                                        kind: "SetField",
+                                        field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                                        value: {kind: "Int", value: 0}
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
                 ]
             },

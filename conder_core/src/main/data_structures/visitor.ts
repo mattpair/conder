@@ -65,7 +65,9 @@ function extract_children(n: TargetNodes): TargetNodes[] {
             return [n.left, n.right]
             
         case "If":
-            return [n.cond, n.ifTrue, ...n.ifTrue ? [n.ifTrue] : []]
+            return n.conditionally
+        case "Conditional":
+            return [n.cond, n.do]
 
         case "GetKeyFromObject":
         case "DeleteKeyOnObject":
@@ -95,7 +97,12 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "String":
         case "Saved":
         case "None":
+        case "Noop":
             return []
+
+        case "Else":
+        case "Finally":
+            return [n.do]
         default: 
             const ne: never = n
             

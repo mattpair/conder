@@ -1,5 +1,5 @@
 import { AnyOpInstance, ow, Utils } from '../ops/index';
-import { BaseNodesFromTargetSet, PickNode, TargetNodeSet } from './IR';
+import { BaseNodesFromTargetSet, PickNode, PickTargetNode, TargetNodeSet } from './IR';
 
 export type Transform<I, O> = {
     then<N>(t: Transform<O, N>): Transform<I, N>
@@ -63,6 +63,63 @@ const mathLookup: Record<PickNode<"Math">["sign"], AnyOpInstance[]> = {
 const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
     "and": [ow.boolAnd],
     "or": [ow.boolOr]
+}
+
+// Last entry is guaranteed to be a finally
+function create_well_formed_branch(n: PickTargetNode<{}, "If">): PickTargetNode<{}, "If">["conditionally"] {
+    const wellFormed: PickTargetNode<{}, "If">["conditionally"] = []
+    let state: "needs conditional" | "conditions" | "maybe finally" | "done" = "needs conditional"
+    for (let index = 0; index < n.conditionally.length; index++) {
+        const branch = n.conditionally[index];
+        switch (state) {
+            case "needs conditional":
+                if (branch.kind !== "Conditional") {
+                    throw Error(`Expected a conditional branch`)
+                }
+                wellFormed.push(branch)
+                state = "conditions"
+                break
+            case "conditions":
+                switch (branch.kind) {
+                    case "Finally":
+                        wellFormed.push(branch)
+                        state = "done"
+                        break
+                    case "Else":
+                        state = "maybe finally"
+                    case "Conditional":
+                        wellFormed.push(branch)
+                        break
+                }
+                
+                break
+            case "maybe finally":
+                if (branch.kind !== "Finally") {
+                    throw Error(`Expected a finally branch`)
+                }
+                wellFormed.push(branch)
+                state = "done"
+                break
+            
+            default: const n: never = state
+        }
+        if (state === "done"){
+            break
+        }
+        
+    }
+
+    switch (state) {
+        case "needs conditional":
+            throw Error(`Branch without any conditionals`)
+        case "conditions":
+        case "maybe finally":
+            wellFormed.push({kind: "Finally", do: {kind: "Noop"}})
+        case "done":
+            break
+    }
+    return wellFormed
+
 }
 
 export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: TargetNodeSet<{}>) => AnyOpInstance[]): AnyOpInstance[] {
@@ -152,15 +209,53 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ow.getField({field_depth: n.field_name.length})
             ]
         case "If":{
-            const ifTrue = full_compiler(n.ifTrue)
+            const wellFormed = create_well_formed_branch(n)
+            const fin = full_compiler(wellFormed.pop().do)
+            const first_to_last = wellFormed.reverse()
+            const conditionals: (AnyOpInstance | "skip to finally")[] = []
+            while (first_to_last.length > 0) {
+                const this_branch = wellFormed.pop()
+                const this_branch_ops: (AnyOpInstance | "skip to finally")[] = [
+                    ...full_compiler(this_branch.do), // do this
+                    "skip to finally" // then skip to finally
+                ]
 
+                switch (this_branch.kind) {
+                    case "Else":
+                        conditionals.push(...this_branch_ops)
+                        break
+                    case "Conditional":
+                        conditionals.push(
+                            ...full_compiler(this_branch.cond),
+                            ow.negatePrev,
+                            ow.conditonallySkipXops(this_branch_ops.length), // Skip to next condition
+                            ...this_branch_ops,                            
+                            )
+
+                        break
+                }
+            }
+            
+            
             return [
-                ...full_compiler(n.cond),
-                ow.negatePrev,
-                ow.conditonallySkipXops(ifTrue.length),
-                ...ifTrue,
-                ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
+                ...conditionals.map((op, index) => {
+                    if (op === "skip to finally") {
+                        return ow.offsetOpCursor(conditionals.length - index)
+                    } else {
+                        return op
+                    }
+                }),
+                ...fin
             ]
+            // n.conditionally.f
+            // const ifTrue = full_compiler(n.ifTrue)
+            // const elseOps = n.else ? full_compiler(n.else) : [ow.noop]
+            // return [
+            //     ...ifTrue,
+            //     ow.offsetOpCursor(elseOps.length),
+            //     ...elseOps,
+            //     ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
+            // ]
         }
 
         case "DeleteField": {
@@ -169,10 +264,15 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ow.deleteField({field_depth: n.field_name.length}),
             ]
         }
-
+        case "Noop": 
+            return [ow.noop]
         case "None":
             return [ow.instantiate(null)]
 
+        case "Conditional":
+        case "Finally":
+        case "Else":
+            throw Error(`${n.kind} should be compiled within if`)
         default: Utils.assertNever(n)
     }
 }
