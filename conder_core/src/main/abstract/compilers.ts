@@ -1,4 +1,5 @@
 import { AnyOpInstance, ow, Utils } from '../ops/index';
+import { FunctionDescription } from './function';
 import { BaseNodesFromTargetSet, PickNode, PickTargetNode, TargetNodeSet } from './IR';
 
 export type Transform<I, O> = {
@@ -8,7 +9,8 @@ export type Transform<I, O> = {
     run(i: I): O
 }
 
-export type Compiler<I> = Transform<I, Map<string, AnyOpInstance[]>>
+export type MapTransform<I, O> = Transform<Map<string, I>, Map<string, O>>
+export type Compiler<FROM> = Transform<Map<string, FunctionDescription<FROM>>, Map<string, FunctionDescription<AnyOpInstance>>>
 
 
 
@@ -16,7 +18,7 @@ export class Transformer<I, O> implements Transform<I, O> {
     readonly f: (i: I) => O
     constructor(f: (i: I) => O) {this.f= f}
 
-    public static Map<I, O>(f: (data: I) => O): Transform<Map<string, I>, Map<string, O>> {
+    public static Map<I, O>(f: (data: I) => O): MapTransform<I, O> {
 
         return new Transformer((input: Map<string, I>) => {
             const out: Map<string, O> = new Map()
@@ -268,6 +270,24 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [ow.noop]
         case "None":
             return [ow.instantiate(null)]
+
+        case "ArrayForEach":
+            const loop: AnyOpInstance[] = [
+                ow.popArray,
+                ow.moveStackTopToHeap,
+                ...n.do.flatMap(full_compiler),
+                ow.truncateHeap(1),
+            ]
+            loop.push(ow.offsetOpCursor(-loop.length - 4))
+            return[
+                ...full_compiler(n.target),
+                ow.ndArrayLen,
+                ow.instantiate(0),
+                ow.equal,
+                ow.conditonallySkipXops(loop.length),
+                ...loop,
+                ow.popStack
+            ]
 
         case "Conditional":
         case "Finally":

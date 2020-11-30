@@ -99,6 +99,8 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "None":
         case "Noop":
             return []
+        case "ArrayForEach":
+            return [n.target, ...n.do]
 
         case "Else":
         case "Finally":

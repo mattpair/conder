@@ -44,6 +44,7 @@ ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
 ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
+StaticOp<"ndArrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", {store: string, upsert: boolean}> |
@@ -685,6 +686,18 @@ export const OpSpec: CompleteOpSpec = {
                 InterpreterType::Array(a) => {${pushStack("InterpreterType::int(i64::try_from(a.len()).unwrap())")}; None},
                 _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             }
+            `
+        }
+    },
+    ndArrayLen: {
+        opDefinition: {
+            rustOpHandler: `
+            let len = match ${lastStack} {
+                InterpreterType::Array(a) => InterpreterType::int(i64::try_from(a.len()).unwrap()),
+                _ => panic!("Cannot take len of non array object")
+            };
+            ${pushStack("len")};
+            None
             `
         }
     },

@@ -1,10 +1,12 @@
+import { MapTransform, Transformer } from './../compilers';
 import { ActionSequence, calculate_lock_requirements, LockRequirements } from './lock_calculation';
 import { MongoNodeSet } from '../globals/mongo';
 import { TargetNodeSet, NodeSet } from "../IR";
-import { ScopeMap } from '../../data_structures/scope_map';
 import { MONGO_ACTION_SUMMARIZER } from './action_summarizer';
+import { FunctionDescription } from '../function';
 
-type LockCalculator = (input: Map<string, TargetNodeSet<MongoNodeSet>[]>) =>  Map<string, LockRequirements[string]>
+type LockCalculator = MapTransform<FunctionDescription<TargetNodeSet<MongoNodeSet>>, LockRequirements>
+
 
 /**
  * For some mutation of global state turning g_x -> g_x',
@@ -29,14 +31,6 @@ type LockCalculator = (input: Map<string, TargetNodeSet<MongoNodeSet>[]>) =>  Ma
  * 
  * @param input: Some Sequential Computation
  */
-export const MONGO_UNPROVIDED_LOCK_CALCULATOR: LockCalculator = input => {
-    
-    const actions: Record<string, ActionSequence> = {}
-    input.forEach((v, k) => {
-        actions[k] = MONGO_ACTION_SUMMARIZER(v)
-    })
-    const locks = calculate_lock_requirements(actions)
-    
-    return new Map(Object.entries(locks))
-}
+export const MONGO_UNPROVIDED_LOCK_CALCULATOR: LockCalculator = Transformer.Map(input => calculate_lock_requirements(MONGO_ACTION_SUMMARIZER.run(input)))
+
 

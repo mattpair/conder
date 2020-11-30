@@ -1,25 +1,30 @@
+import { Compiler } from './compilers';
 import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
 
 import {Test, schemaFactory, AnyOpInstance} from '../ops/index'
 import { AnyNode, RootNode } from 'src/main/abstract/IR'
-import {BaseNodeDefs, PickNode, toOps, FunctionDescription, RootNodeCompiler } from '../../../index'
+import {BaseNodeDefs, PickNode, toOps } from '../../../index'
 import { MONGO_UNPROVIDED_LOCK_CALCULATOR } from './mongo_logic/main';
+import { FunctionData, FunctionDescription } from './function';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
-const testCompiler: RootNodeCompiler =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
+const testCompiler: Compiler<RootNode> =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
     .tap((nonAbstractRepresentation) => {
-        const locks = MONGO_UNPROVIDED_LOCK_CALCULATOR(nonAbstractRepresentation)
+        const locks = MONGO_UNPROVIDED_LOCK_CALCULATOR.run(nonAbstractRepresentation)
         expect(locks).toMatchSnapshot(`Required locks`)
     })
     .then(MONGO_COMPILER)
 
 function withInputHarness(
     maybeStorage: "requires storage" | "no storage",
-    proc_nodes: Record<string, FunctionDescription>,
+    proc_nodes: Record<string, FunctionData>,
     test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
     const getStoresAndProcedures = () => {
-        const compiled = toOps(new Map(Object.entries(proc_nodes)), testCompiler)
+        const map = new Map(
+            Object.entries(proc_nodes)
+            .map(([k, v]) => [k, new FunctionDescription(v)]))
+        const compiled = toOps(map, testCompiler)
         const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
         const STORES = {TEST_STORE: schemaFactory.Object({})}
         return {PROCEDURES, STORES}
@@ -86,10 +91,7 @@ function noInputHarness(
     ): jest.ProvidesCallback {
     const PROCEDURES: Record<string, FunctionDescription> = {}
     for (const key in proc_nodes) {
-        PROCEDURES[key] = {
-            input: [],
-            computation: proc_nodes[key]
-        }
+        PROCEDURES[key] = new FunctionDescription({input: [], computation: proc_nodes[key]})
     }
     
     return withInputHarness(maybeStorage,PROCEDURES, test)
@@ -135,7 +137,6 @@ describe("basic functionality", () => {
         noInputHarness({
             r: [{
                     kind: "Save", 
-                    index: 0,
                     value: {
                         kind: "Object", 
                         fields: [{
@@ -217,7 +218,6 @@ describe("basic functionality", () => {
         noInputHarness({
             r: [{
                     kind: "Save", 
-                    index: 0,
                     value: {
                         kind: "Object", 
                         fields: [{
@@ -644,6 +644,47 @@ describe("global objects", () => {
         )
     )
 
+    describe("iterations", () => {
+        it("can iterate over local arrays", () => {
+            withInputHarness(
+                "no storage",
+                {
+                    sum: {
+                        input: [schemaFactory.Array(schemaFactory.double)],
+                        computation: [
+                            {
+                                kind: "Save",
+                                value: {kind: "Int", value: 0},
+                            },
+                            {
+                                kind: "ArrayForEach", 
+                                target: {kind: "Saved", index: 0},
+                                do: [
+                                    {
+                                        kind: "Update",
+                                        operation: {
+                                            kind: "Math", 
+                                            sign: "+", 
+                                            left: {kind: "Saved", index: 1},
+                                            right: {kind: "Saved", index: 2}
+                                        },
+                                        target: {kind: "Saved", index: 1}
+                                    }
+                                ]
+                            },
+                            {
+                                kind: "Return", value: {kind: "Saved", index: 1}
+                            }
+                        ]
+                    }
+                },
+                async server => {
+                    expect(await server.sum([1, 2, 3])).toBe(6)
+                }
+            )
+        })
+    })
+
     describe("race condition possible actions", () => {
         it("can perform updates that depend on global state", noInputHarness(
             {
@@ -792,7 +833,7 @@ describe("global objects", () => {
                 set,
                 setToSelfPlusOne: [
                     {
-                        kind: "Save", index: 0,
+                        kind: "Save",
                         value: {
                             kind: "GetField", 
                             target: {kind: "GlobalObject", name: TEST_STORE},
@@ -827,7 +868,7 @@ describe("global objects", () => {
                 set,
                 setToSelfPlusOne: [
                     {
-                        kind: "Save", index: 0,
+                        kind: "Save",
                         value: {
                             kind: "GetField", 
                             target: {kind: "GlobalObject", name: TEST_STORE},
@@ -835,7 +876,7 @@ describe("global objects", () => {
                         }
                     },
                     {
-                        kind: "Save", index: 1,
+                        kind: "Save",
                         value: {kind: "Saved", index: 0}
                     },
                     {
@@ -866,7 +907,7 @@ describe("global objects", () => {
                 set,
                 setToSelfPlusOne: [
                     {
-                        kind: "Save", index: 0,
+                        kind: "Save",
                         value: {kind: "Int", value: 0}
                     },
                     {
@@ -906,7 +947,7 @@ describe("global objects", () => {
                 set,
                 updateWithPartialState: [
                     {
-                        kind: "Save", index: 0,
+                        kind: "Save",
                         value: {kind: "Object", fields: [{
                             kind: "SetField",
                             value: {
@@ -945,7 +986,7 @@ describe("global objects", () => {
                 set,
                 updateWithOverwrittenState: [
                     {
-                        kind: "Save", index: 0,
+                        kind: "Save",
                         value: {kind: "Object", fields: [{
                             kind: "SetField",
                             value: {

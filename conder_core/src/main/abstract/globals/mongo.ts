@@ -25,6 +25,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     Finally(n, r) {
         return {kind: "Finally", do: r(n.do)}
     },
+
+    ArrayForEach(n, r) {
+        if (n.target.kind === "GlobalObject") {
+            throw Error(`Cannot iterate over global objects`)
+        }
+        return {kind: "ArrayForEach", do: n.do.map(r), target: r(n.target)}
+    },
     Conditional(n, r) {
         if (n.cond.kind === "GlobalObject") {
             throw Error(`Global objects cannot be used as conditions`)
@@ -90,7 +97,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
 
         return {
             kind: "Save",
-            index: n.index,
             value: r(n.value)
         }
     },
@@ -177,9 +183,11 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 }
 const complete_replace = make_replacer(MONGO_REPLACER) 
-export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<Map<string, FunctionDescription>, Map<string, TargetNodeSet<MongoNodeSet>[]>> = Transformer.Map((i) => i.computation.map(complete_replace))
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<   
+    Map<string, FunctionDescription>, 
+    Map<string, FunctionDescription<TargetNodeSet<MongoNodeSet>>>> = Transformer.Map((func) => func.apply(f => [complete_replace(f)]))
 
-type MongoCompiler = Compiler<Map<string, TargetNodeSet<MongoNodeSet>[]>>
+type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
 
 function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
@@ -308,4 +316,4 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     }
 }
 
-export const MONGO_COMPILER: MongoCompiler = Transformer.Map(inp => inp.flatMap(compile_function))
+export const MONGO_COMPILER: MongoCompiler = Transformer.Map(fun => fun.apply(compile_function))
