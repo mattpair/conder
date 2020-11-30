@@ -44,13 +44,14 @@ export type BaseNodeDefs = {
         left: ValueNode, 
         right: ValueNode}>
 
+    Else: Node<{do: RootNode}>
+    Finally: Node<{do: RootNode}>
+    Conditional: Node<{cond: ValueNode, do: RootNode}>
     If: Node<{
-        cond: ValueNode
-        ifTrue: RootNode
-        else?: RootNode
-        finally?: RootNode
-    }, "root">  
+        conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
+    }, "root">
 
+    Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
     String: Node<{value: string}>
     FieldExists: Node<{value: ValueNode, field: PickNode<"String">}>
@@ -139,7 +140,8 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     Saved: n => n,
     String: n => n,
     DeleteField: n => n,
-    None: _ => _
+    None: _ => _,
+    Noop: _ => _
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
