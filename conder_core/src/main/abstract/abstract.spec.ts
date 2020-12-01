@@ -561,6 +561,39 @@ describe("global objects", () => {
         )
     )
 
+    it("allows getting a key with a number key", noInputHarness({
+        get: [
+            {
+                kind: "Return", 
+                value: {
+                    kind: "Selection", 
+                    root: {
+                        kind: "GlobalObject", 
+                        name: TEST_STORE
+                    },
+                    level: [{
+                        kind: "Int",
+                        value: 1
+                    }]
+                }
+            }
+        ],
+        set: [
+            {
+                kind: "Update",
+                root: {kind: "GlobalObject", name: TEST_STORE},
+                level: [{kind: "Int", value: 1}],
+                operation: {kind: "String", value: "Number field"}
+            }
+        ]
+    },
+    async server => {
+        expect(await server.set()).toBeNull()
+        expect(await server.get()).toEqual("Number field")
+    },
+    "requires storage"
+    ))
+
     const getNested: RootNode[] = [
         {
             kind: "Return", 

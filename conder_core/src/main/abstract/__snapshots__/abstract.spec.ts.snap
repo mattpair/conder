@@ -119,6 +119,13 @@ Map {
 }
 `;
 
+exports[`global objects allows getting a key with a number key: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+}
+`;
+
 exports[`global objects can check existence of keys: Required locks 1`] = `
 Map {
   "set" => Map {},
