@@ -76,7 +76,7 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> 
 
 
-function getField(data: {depth: string, location: {save: string} | "stack"}): string {
+function againstField(data: {depth: string, location: {save: string} | "stack"}): string {
     return `
             let mut fields = Vec::with_capacity(${data.depth});
             for n in 1..=${data.depth} {
@@ -339,14 +339,14 @@ export const OpSpec: CompleteOpSpec = {
     getField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: getField({depth: "*op_param", location: "stack"})
+            rustOpHandler: againstField({depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
     },
     getSavedField: {
         opDefinition: {
             paramType: ["usize", "usize"],
-            rustOpHandler: getField({depth: "*param0", location: {save: "*param1"}})
+            rustOpHandler: againstField({depth: "*param0", location: {save: "*param1"}})
         },
         factoryMethod: ({field_depth, index}) => ({kind: "getSavedField", data: [field_depth, index]})
     },
