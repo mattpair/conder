@@ -392,6 +392,31 @@ describe("basic functionality", () => {
             expect(await server.elseIfs()).toBe(42)
         })
     )
+
+    it.skip("cleans up after ifs", noInputHarness({
+        ifVars: [
+            {
+                kind: "If",
+                conditionally: [
+                    {kind: "Conditional", 
+                    cond: {kind: "Bool", value: true}, 
+                    do: {kind: "Save", value: {kind: "Int", value: -1}}},
+                ]
+            },
+            {
+                kind: "Save",
+                value: {kind: "Int", value: 2}
+            },
+            {
+                kind: "Return", value: {kind: "Saved", index: 0}
+            }
+    ] 
+    },
+    async server => {
+        expect(await server.ifVars()).toBe(2)
+    })
+    )
+
 })
 
 describe("with input", () => {
