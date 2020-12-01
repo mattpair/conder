@@ -73,8 +73,8 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "DeleteKeyOnObject":
             return n.key
 
-        case "GetField":
-            return [n.target, ...n.field_name]
+        case "Selection":
+            return [n.root, ...n.level]
 
         case "FieldExists":
             return [n.value, n.field]
@@ -82,7 +82,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "keyExists":
             return [n.key]
         case "Update":
-            return [n.target, n.operation]
+            return [n.root, n.operation]
         case "SetKeyOnObject":
             return [...n.key, n.value]
         case "Field":                

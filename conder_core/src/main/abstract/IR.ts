@@ -10,7 +10,7 @@ export type ValueNode = PickNode<
     "Saved" | 
     "String" |
     "FieldExists" |
-    "GetField" |
+    "Selection" |
     "GlobalObject" | 
     "Math" |
     "None" |
@@ -23,7 +23,6 @@ export type AbstractNodes = PickNode<"GlobalObject">
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
     Bool: Node<{value: boolean}>
-    GetField: Node<{field_name: Key[], target: PickNode<"Saved" | "GlobalObject">}>,
     DeleteField: Node<{}>,
     Field: Node<{key: Key, value: ValueNode}>
     Object: Node<{fields: PickNode<"Field">[]}>
@@ -54,12 +53,14 @@ export type BaseNodeDefs = {
 
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
-    String: Node<{value: string}>
+    String: Node<{value: string}>,
+    Selection: Node<{root: PickNode<"Saved" | "GlobalObject">, level: ValueNode[]}>
     FieldExists: Node<{value: ValueNode, field: Key}>
     Save: Node<{value: ValueNode}, "root">
-    Update: Node<{
-        target: PickNode<"Saved" | "GlobalObject">,
-        level: Key[]
+    Update: Node<
+    {
+        root: PickNode<"Selection">["root"]
+        level: PickNode<"Selection">["level"]
         operation: PickNode<"DeleteField" | "Push"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
@@ -129,7 +130,8 @@ export type BaseNodesFromTargetSet<TS extends NodeSet> = TargetNode<PickNode<Any
 
 export type PickTargetNode<R extends NodeSet, K extends keyof R | AnyBaseNonAbstractKey> = Extract<TargetNodeSet<R>, {kind: K}>
 
-type GenericReplacer<R extends NodeSet> = <K extends AnyBaseNonAbstractKey>(n: PickNode<K>) => PickTargetNode<R, K>
+type ReplacerReturnType<R extends NodeSet, K extends AnyNode["kind"]> = K extends AbstractNodes["kind"] ? never : PickTargetNode<R, K>
+type GenericReplacer<R extends NodeSet> = <K extends AnyNode["kind"]>(n: PickNode<K>) => ReplacerReturnType<R, K>
 type ReplacerFunction<K extends AnyBaseNonAbstractKey, R extends NodeSet> = (n: PickNode<K>, r: GenericReplacer<R>) => (PickTargetNode<R, K> | AnyNodeFromSet<R>)
 export type RequiredReplacer<R extends NodeSet> =  {
     [K in AbstractNodeReplacerPairs<R>["kind"]]: ReplacerFunction<K, R>
@@ -155,6 +157,10 @@ export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): Gen
         if (n === undefined) {
             return n
         }
+        if (n.kind === "GlobalObject") {
+            throw Error(`Unexpected global object`)
+        }
+        //@ts-ignore
         return requiresGeneric[n.kind](n as any, generic) as any 
     }
     return generic

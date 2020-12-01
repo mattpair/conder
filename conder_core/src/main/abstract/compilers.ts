@@ -192,40 +192,46 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                     return n.operation.values.flatMap(v => {
                         return [
                             ...full_compiler(v),
-                            ow.moveStackToHeapArray(n.target.index)
+                            ow.moveStackToHeapArray(n.root.index)
                         ]
                     })
 
                 case "DeleteField":
+                    
+                    // n.target.
                     return [
-                        ...full_compiler(n.target), 
+                        ...full_compiler(n.root), 
                         ...n.level.flatMap(full_compiler),
                         ow.deleteField({field_depth: n.level.length}),
-                        ow.overwriteHeap(n.target.index)
+                        ow.overwriteHeap(n.root.index)
                     ]
                     
                 default:
                     if (n.level.length === 0) {
                         return [
                             ...full_compiler(n.operation),
-                            ow.overwriteHeap(n.target.index)
+                            ow.overwriteHeap(n.root.index)
                         ]
                     }
                     return [
-                        ...full_compiler(n.target),
+                        ...full_compiler(n.root),
                         ...n.level.flatMap(full_compiler),
                         ...full_compiler(n.operation),
                         ow.setField({field_depth: n.level.length}),
-                        ow.overwriteHeap(n.target.index)
+                        ow.overwriteHeap(n.root.index)
                     ]
             }
-        case "GetField":
+        case "Selection":
+            if (n.level.length > 0) {
+                return [
+                    ...full_compiler(n.root),
+                    ...n.level.flatMap(full_compiler),
+                    ow.getField({field_depth: n.level.length})
+                ]
+            } else {
+                return full_compiler(n.root)
+            }
             
-            return [
-                ...full_compiler(n.target),
-                ...n.field_name.flatMap(full_compiler),
-                ow.getField({field_depth: n.field_name.length})
-            ]
         case "If":{
             const wellFormed = create_well_formed_branch(n)
             const fin = wellFormed.pop().do.flatMap(full_compiler)

@@ -1,18 +1,20 @@
+
 import { AnyOpInstance, ow } from '../../ops/index';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet, ValueNode, Key } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 import { FunctionDescription } from '../function';
 
+type TargetKeys = PickTargetNode<MongoNodeSet, "Selection">["level"]
 export type MongoNodeSet = {
     GetWholeObject: Node<{name: string}>,
-    GetKeyFromObject: Node<{obj: string, key: Key[]}>
-    keyExists: Node<{obj: string, key: Key}>
-    SetKeyOnObject: Node<{obj: string, key: Key[], value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
-    DeleteKeyOnObject: Node<{obj: string, key: Key[]}>
+    GetKeyFromObject: Node<{obj: string, key: TargetKeys}>
+    keyExists: Node<{obj: string, key: TargetKeys[0]}>
+    SetKeyOnObject: Node<{obj: string, key: TargetKeys, value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
+    DeleteKeyOnObject: Node<{obj: string, key: TargetKeys}>
 }
 
-
 const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
+
     If(n, r) {
         return {
             kind: "If",
@@ -27,9 +29,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     Field(n, r) {
-        if (n.value.kind === "GlobalObject") {
-            throw Error("Cannot use entire global object as field")
-        }
         return {kind: "Field", key: n.key, value: r(n.value)}
     },
 
@@ -64,14 +63,14 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     Conditional(n, r) {
         if (n.cond.kind === "GlobalObject") {
-            throw Error(`Global objects cannot be used as conditions`)
+            throw Error(`Global objects are not bools`)
         }
         return {kind: "Conditional", cond: r(n.cond), do: n.do.map(r)}
     },
 
     Comparison(n, r) {
         if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
-            throw Error(`Global objects cannot be used in boolean alg`)
+            throw Error(`Global objects are not comparable`)
         }
         return {
             kind: "Comparison",
@@ -130,6 +129,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             value: r(n.value)
         }
     },
+    
 
     // SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
     //     if (n.value.kind === "GlobalObject") {
@@ -141,31 +141,48 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     //         value: r(n.value)
     //     }
     // },
-    GetField(n, r) {
-        switch (n.target.kind) {
+    // GetField(n, r) {
+    //     switch (n.target.kind) {
+    //         case "GlobalObject":
+    //             return {
+    //                 kind: "GetKeyFromObject",
+    //                 obj: n.target.name,
+    //                 key: n.field_name.map(r)
+    //             }
+    //         case "Saved":
+    //             return {
+    //                 kind: "GetField",
+    //                 target: n.target,
+    //                 field_name: n.field_name.map(r)
+    //             }
+    //     }
+    
+    // },
+
+    Selection(n, r) {
+        switch (n.root.kind) {
             case "GlobalObject":
                 return {
                     kind: "GetKeyFromObject",
-                    obj: n.target.name,
-                    key: n.field_name.map(r)
+                    obj: n.root.name,
+                    key: n.level.map(r)
                 }
             case "Saved":
                 return {
-                    kind: "GetField",
-                    target: n.target,
-                    field_name: n.field_name.map(r)
+                    kind: "Selection",
+                    root: n.root,
+                    level: n.level.map(r)
                 }
         }
-    
     },
     FieldExists(n, r) {
-
+    
         switch (n.value.kind) {
             case "GlobalObject":
                 return {
                     kind: "keyExists",
                     obj: n.value.name,
-                    key: n.field
+                    key: r(n.field)
                 }
         }
         
@@ -177,7 +194,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     Update(n, r) {
 
-        switch (n.target.kind) {
+        switch (n.root.kind) {
             case "GlobalObject":
                 switch (n.operation.kind) {
                     case "Push":
@@ -186,31 +203,26 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
                     case "DeleteField":
                         return {
                             kind: "DeleteKeyOnObject",
-                            obj: n.target.name,
-                            key: n.level
+                            obj: n.root.name,
+                            key: n.level.map(r)
                         }
                     
                     default: 
-                        if (n.operation.kind === "GlobalObject") {
-                            throw Error(`Cannot set key to a global object`)
-                        }
                         return {
                             kind: "SetKeyOnObject",
-                            obj: n.target.name,
-                            key: n.level,
+                            obj: n.root.name,
+                            key: n.level.map(r),
                             value: r(n.operation)
                         }
                 }
 
         }
-        if (n.operation.kind === "GlobalObject") {
-            throw Error("cannot set value from global object")
-        }
+        
         
         return {
             kind: "Update",
-            target: n.target,
-            level: n.level,
+            root: n.root,
+            level: n.level.map(r),
             operation: r(n.operation)
         }
     },
@@ -244,7 +256,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.instantiate({_key: {}}),
                 // Search for key
                 ow.instantiate("_key"),
-                ...base_compiler(n.key[0], compile_function),
+                ...compile_function(n.key[0]),
                 ow.setField({field_depth: 1}),
                 ow.findOneInStore([n.obj, {}]),
                 ow.isLastNone,
@@ -283,7 +295,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 // Create the query doc
                 ow.instantiate({_key: {}}),
                 ow.instantiate("_key"),
-                ...base_compiler(n.key[0], compile_function),
+                ...compile_function(n.key[0]),
                 ow.setField({field_depth: 1}),
                 // update or insert key
                 ow.updateOne({store: n.obj, upsert: n.key.length === 1}),
@@ -300,7 +312,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.instantiate({_key: {}}),
                 // Search for key
                 ow.instantiate("_key"),
-                ...base_compiler(n.key, compile_function),
+                ...compile_function(n.key),
                 ow.setField({field_depth: 1}),
                 // We don't need the value, so just suppress it.
                 ow.findOneInStore([n.obj, {_val: false}]),
@@ -336,7 +348,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 return  [
                     ow.instantiate({_key: {}}),
                     ow.instantiate("_key"),
-                    ...base_compiler(n.key[0], compile_function),
+                    ...compile_function(n.key[0]),
                     ow.setField({field_depth: 1}),
                     ow.deleteOneInStore(n.obj),
                     ow.popStack

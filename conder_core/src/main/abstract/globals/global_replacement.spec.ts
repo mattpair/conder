@@ -19,9 +19,9 @@ describe("mongo", () => {
         }
     }
     it("get field with mongo specific op", replaceTest({
-            kind: "GetField",
-            target: {kind: "GlobalObject", name: "global"},
-            field_name: [{kind: "String", value: "field"}]
+            kind: "Selection",
+            root: {kind: "GlobalObject", name: "global"},
+            level: [{kind: "String", value: "field"}]
         })
     )
 
@@ -34,7 +34,7 @@ describe("mongo", () => {
 
     it("can replace SetField updates", replaceTest({
         kind: "Update",
-        target: {kind: "GlobalObject", name: "gg"},
+        root: {kind: "GlobalObject", name: "gg"},
         level: [{kind: "Saved", index: 12}],
         operation: {kind: "String", value: 'some val'}
     }))

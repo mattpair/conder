@@ -20,7 +20,7 @@ describe("visitor traversal order", () => {
       {
         Math: { before, after },
         Int: { before, after },
-        GetField: { before, after },
+        Selection: { before, after },
         String: { before, after },
         SetKeyOnObject: { before, after },
       },
@@ -38,9 +38,9 @@ describe("visitor traversal order", () => {
         kind: "SetKeyOnObject",
         obj: "global_object",
         value: {
-          kind: "GetField",
-          target: { kind: "Saved", index: 0 },
-          field_name: [{ kind: "String", value: "get_key" }],
+          kind: "Selection",
+          root: { kind: "Saved", index: 0 },
+          level: [{ kind: "String", value: "get_key" }],
         },
         key: [{ kind: "String", value: "target_key" }],
       },

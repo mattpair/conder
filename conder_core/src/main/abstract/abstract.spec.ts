@@ -151,7 +151,7 @@ describe("basic functionality", () => {
                 },
                 {
                     kind: "Update",
-                    target: {kind: "Saved", index: 0},
+                    root: {kind: "Saved", index: 0},
                     level: [{kind: "String", value: "nested"}, {kind: "String", value: "inside"}],
                     operation: { kind: "String", value: "hello world"}
                 },
@@ -171,7 +171,7 @@ describe("basic functionality", () => {
                     computation: [
                         {
                             kind: "Update", 
-                            target: {kind: "Saved", index: 0},
+                            root:{kind: "Saved", index: 0},
                             level: [{kind: "String", value: "some_key"}],
                             operation: {kind: "DeleteField"}
                         },
@@ -195,7 +195,7 @@ describe("basic functionality", () => {
                     computation: [
                         {
                             kind: "Update", 
-                            target: {kind: "Saved", index: 0},
+                            root: {kind: "Saved", index: 0},
                             level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                             operation: {kind: "DeleteField"}
                         },
@@ -229,14 +229,14 @@ describe("basic functionality", () => {
                 },
                 {
                     kind: "Update",
-                    target: {kind: "Saved", index: 0},
+                    root: {kind: "Saved", index: 0},
                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                     operation: { kind: "String", value: "hello world"}
                 },
                 {kind: "Return", value: {
-                    kind: "GetField", 
-                    field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
-                    target: {kind: "Saved", index: 0}
+                    kind: "Selection", 
+                    level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
+                    root: {kind: "Saved", index: 0}
                 }}
             ]
         }, async (server) => {
@@ -440,7 +440,7 @@ describe("basic functionality", () => {
                 computation: [
                     {
                         kind: "Update",
-                        target: {kind: "Saved", index: 0},
+                        root: {kind: "Saved", index: 0},
                         level: [],
                         operation: {
                             kind: "Push", 
@@ -510,12 +510,12 @@ describe("global objects", () => {
         {
             kind: "Return", 
             value: {
-                kind: "GetField", 
-                target: {
+                kind: "Selection", 
+                root: {
                     kind: "GlobalObject", 
                     name: TEST_STORE
                 },
-                field_name: [{
+                level: [{
                     kind: "String",
                     value: "l1"
                 }]
@@ -534,7 +534,7 @@ describe("global objects", () => {
 
     const set: RootNode[] = [{
         kind: "Update",
-        target: {kind: "GlobalObject", name: TEST_STORE},
+        root: {kind: "GlobalObject", name: TEST_STORE},
         level: [{kind: "String", value: "l1"}],
         operation: {kind: "Object", fields: [
             {
@@ -565,12 +565,12 @@ describe("global objects", () => {
         {
             kind: "Return", 
             value: {
-                kind: "GetField", 
-                target: {
+                kind: "Selection", 
+                root: {
                     kind: "GlobalObject", 
                     name: TEST_STORE
                 },
-                field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
             }
         }
     ]
@@ -586,7 +586,7 @@ describe("global objects", () => {
 
     const setNested: RootNode[] = [{
         kind: "Update",
-        target: {kind: "GlobalObject", name: TEST_STORE},
+        root: {kind: "GlobalObject", name: TEST_STORE},
         level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
         operation: {
             kind: "Int", value: 41
@@ -659,7 +659,7 @@ describe("global objects", () => {
                 delete: [
                         {
                             kind: "Update", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            root: {kind: "GlobalObject", name: TEST_STORE},
                             level: [{kind: "String", value: "l1"}],
                             operation: {kind: "DeleteField"}
                         }
@@ -684,7 +684,7 @@ describe("global objects", () => {
                 delete: [
                         {
                             kind: "Update", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            root: {kind: "GlobalObject", name: TEST_STORE},
                             level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                             operation: {kind: "DeleteField"}
                         }
@@ -729,7 +729,7 @@ describe("global objects", () => {
                                             right: {kind: "Saved", index: 2}
                                         },
                                         level: [],
-                                        target: {kind: "Saved", index: 1}
+                                        root: {kind: "Saved", index: 1}
                                     }
                                 ]
                             },
@@ -753,14 +753,14 @@ describe("global objects", () => {
                 set,
                 setToSelfPlusOne: [{
                     kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    root: {kind: "GlobalObject", name: TEST_STORE},
                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                     operation: {
                         kind: "Math",
                         left: {
-                            kind: "GetField", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            kind: "Selection", 
+                            root: {kind: "GlobalObject", name: TEST_STORE},
+                            level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
                         },
                         right: {kind: "Int", value: 1},
                         sign: "+"
@@ -787,7 +787,7 @@ describe("global objects", () => {
                                 cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
                                 do: [{
                                     kind: "Update",
-                                    target: {kind: "GlobalObject", name: TEST_STORE},
+                                    root: {kind: "GlobalObject", name: TEST_STORE},
                                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                                     operation: {kind: "Int", value: 0}
                                 }]
@@ -824,7 +824,7 @@ describe("global objects", () => {
                                 kind: "Finally",
                                 do: [{
                                     kind: "Update",
-                                    target: {kind: "GlobalObject", name: TEST_STORE},
+                                    root: {kind: "GlobalObject", name: TEST_STORE},
                                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                                     operation: {kind: "Int", value: 0}
                                 }]
@@ -845,20 +845,20 @@ describe("global objects", () => {
                 get, 
                 setOther: [{
                     kind: "Update", 
-                    target: {kind: "GlobalObject", name: "other"}, 
+                    root: {kind: "GlobalObject", name: "other"}, 
                     level: [{kind: "String", value: "l1"}],
                     operation: {kind: "Int", value: 734}
                 }],
                 setToOtherPlusOne: [{
                     kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    root: {kind: "GlobalObject", name: TEST_STORE},
                     level: [{kind: "String", value: "l1"}],
                     operation: {
                         kind: "Math",
                         left: {
-                            kind: "GetField", 
-                            target: {kind: "GlobalObject", name: "other"},
-                            field_name: [{kind: "String", value: "l1"}]
+                            kind: "Selection", 
+                            root: {kind: "GlobalObject", name: "other"},
+                            level: [{kind: "String", value: "l1"}]
                         },
                         right: {kind: "Int", value: 1},
                         sign: "+"
@@ -881,14 +881,14 @@ describe("global objects", () => {
                     {
                         kind: "Save",
                         value: {
-                            kind: "GetField", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            kind: "Selection", 
+                            root: {kind: "GlobalObject", name: TEST_STORE},
+                            level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
                         }
                     },
                     {
                     kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    root: {kind: "GlobalObject", name: TEST_STORE},
                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                     operation: {
                         kind: "Math",
@@ -913,9 +913,9 @@ describe("global objects", () => {
                     {
                         kind: "Save",
                         value: {
-                            kind: "GetField", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            kind: "Selection", 
+                            root: {kind: "GlobalObject", name: TEST_STORE},
+                            level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
                         }
                     },
                     {
@@ -924,7 +924,7 @@ describe("global objects", () => {
                     },
                     {
                     kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    root: {kind: "GlobalObject", name: TEST_STORE},
                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                     operation: {
                         kind: "Math",
@@ -952,17 +952,17 @@ describe("global objects", () => {
                     },
                     {
                         kind: "Update", 
-                        target: {kind: "Saved", index: 0},
+                        root: {kind: "Saved", index: 0},
                         level: [],
                         operation: {
-                            kind: "GetField", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
-                            field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
+                            kind: "Selection", 
+                            root: {kind: "GlobalObject", name: TEST_STORE},
+                            level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}]
                         },
                     },
                     {
                     kind: "Update",
-                    target: {kind: "GlobalObject", name: TEST_STORE},
+                    root: {kind: "GlobalObject", name: TEST_STORE},
                     level: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                     operation: {
                         kind: "Math",
@@ -987,21 +987,21 @@ describe("global objects", () => {
                     kind: "Update",
                     level: [{kind: "String", value: "arr"}],
                     operation: {kind: "ArrayLiteral", values: [{kind: "String", value: "l1"}]},
-                    target: {kind: "GlobalObject", name: TEST_STORE}
+                    root: {kind: "GlobalObject", name: TEST_STORE}
                 }
             ],
             deleteLookupFields: [
                 {
                     kind: "ArrayForEach",
                     target: {
-                        kind: "GetField", 
-                        target: {kind: "GlobalObject", name: TEST_STORE},
-                        field_name: [{kind: "String", value: "arr"}]
+                        kind: "Selection", 
+                        root: {kind: "GlobalObject", name: TEST_STORE},
+                        level: [{kind: "String", value: "arr"}]
                     },
                     do: [
                         {
                             kind: "Update", 
-                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            root: {kind: "GlobalObject", name: TEST_STORE},
                             level: [{kind: "String", value: "l1"}],
                             operation: {kind: "DeleteField"}
                         }
@@ -1028,22 +1028,22 @@ describe("global objects", () => {
                         value: {kind: "Object", fields: [{
                             kind: "Field",
                             value: {
-                                kind: "GetField", 
-                                target: {kind: "GlobalObject", name: TEST_STORE},
-                                field_name: [{kind: "String", value: "l1"}]
+                                kind: "Selection", 
+                                root: {kind: "GlobalObject", name: TEST_STORE},
+                                level: [{kind: "String", value: "l1"}]
                             },
                             key: {kind: "String", value: "global_origin"}
                         }]}
                     },
                     {
                         kind: "Update", 
-                        target: {kind: "Saved", index: 0},
+                        root: {kind: "Saved", index: 0},
                         level: [{kind: "String",value: "clean"}],
                         operation: {kind: "Int", value: 12},
                     },
                     {
                         kind: "Update",
-                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        root: {kind: "GlobalObject", name: TEST_STORE},
                         level: [{kind: "String", value: "l1"}],
                         operation: {kind: "Saved", index: 0}
                     }
@@ -1066,22 +1066,22 @@ describe("global objects", () => {
                         value: {kind: "Object", fields: [{
                             kind: "Field",
                             value: {
-                                kind: "GetField", 
-                                target: {kind: "GlobalObject", name: TEST_STORE},
-                                field_name: [{kind: "String", value: "l1"}]
+                                kind: "Selection", 
+                                root: {kind: "GlobalObject", name: TEST_STORE},
+                                level: [{kind: "String", value: "l1"}]
                             },
                             key: {kind: "String", value: "global_origin"}
                         }]}
                     },
                     {
                         kind: "Update", 
-                        target: {kind: "Saved", index: 0},
+                        root: {kind: "Saved", index: 0},
                         level: [],
                         operation: {kind: "Int", value: 0},
                     },
                     {
                         kind: "Update",
-                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        root: {kind: "GlobalObject", name: TEST_STORE},
                         level: [{kind: "String", value: "l1"}],
                         operation: {kind: "Saved", index: 0}
                 }]
