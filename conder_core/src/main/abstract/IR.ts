@@ -59,11 +59,12 @@ export type BaseNodeDefs = {
     Save: Node<{value: ValueNode}, "root">
     Update: Node<{
         target: PickNode<"Saved" | "GlobalObject">, 
-        operation: PickNode<"SetField" | "DeleteField"> | ValueNode,
+        operation: PickNode<"SetField" | "DeleteField" | "Push"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
     ArrayLiteral: Node<{values: ValueNode[]}>
+    Push: Node<{values: ValueNode[]}>
 }
 
 export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 

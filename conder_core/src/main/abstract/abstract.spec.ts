@@ -438,6 +438,31 @@ describe("basic functionality", () => {
     })
     )
 
+    it("allows pushing to local arrays", withInputHarness(
+        "no storage",
+        {
+            push: {
+                input: [schemaFactory.Array(schemaFactory.Any)],
+                computation: [
+                    {
+                        kind: "Update",
+                        target: {kind: "Saved", index: 0},
+                        operation: {
+                            kind: "Push", 
+                            values: [
+                                {kind: "String", value: "hello"},
+                                {kind: "Int", value: 12}
+                            ]
+                        }
+                    },
+                    {kind: "Return", value: {kind: "Saved", index: 0}}
+                ],
+            }
+        },
+        async server => {
+            expect(await server.push(["a"])).toEqual(["a", "hello", 12])
+        }
+    ))
 })
 
 describe("with input", () => {

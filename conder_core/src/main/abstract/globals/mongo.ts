@@ -25,6 +25,18 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     Finally(n, r) {
         return {kind: "Finally", do: n.do.map(r)}
     },
+
+    Push(n, r) {
+        return {
+            kind: "Push", values: n.values.map(v => {
+                if (v.kind === "GlobalObject") {
+                    throw Error(`Cannot use global object in a push`)
+                }
+                return r(v)
+            })
+        }
+    },
+
     ArrayLiteral(n, r) {
         return {
             kind: "ArrayLiteral",

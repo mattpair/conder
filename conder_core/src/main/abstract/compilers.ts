@@ -188,6 +188,14 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "Update":
             
             switch (n.operation.kind) {
+                case "Push": 
+                    return n.operation.values.flatMap(v => {
+                        return [
+                            ...full_compiler(v),
+                            ow.moveStackToHeapArray(n.target.index)
+                        ]
+                    })
+
                 case "SetField":
                 case "DeleteField":
 
@@ -307,10 +315,11 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             })
             return arr
 
+        case "Push":
         case "Conditional":
         case "Finally":
         case "Else":
-            throw Error(`${n.kind} should be compiled within if`)
+            throw Error(`${n.kind} should be compiled within parent`)
         default: Utils.assertNever(n)
     }
 }
