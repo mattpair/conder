@@ -231,7 +231,10 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
                 ])
             )
             this_visitor.apply(n.do)
-            state.taints.delete(row_var_index)
+            state.dropVariables(
+                // + 1 for row variable
+                n.do.filter(d => d.kind === "Save").length + 1
+            )
         },
 
         after: _ => {}

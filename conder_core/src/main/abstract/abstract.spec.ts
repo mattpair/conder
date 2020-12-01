@@ -417,6 +417,27 @@ describe("basic functionality", () => {
     })
     )
 
+    it("cleans up after for eachs", noInputHarness({
+        forVars: [
+            {
+                kind: "ArrayForEach",
+                target: {kind: "ArrayLiteral", values: [{kind: "Bool", value: true}]},
+                do: [{kind: "Save", value: {kind: "Int", value: -1}}],
+            },
+            {
+                kind: "Save",
+                value: {kind: "Int", value: 2}
+            },
+            {
+                kind: "Return", value: {kind: "Saved", index: 0}
+            }
+    ] 
+    },
+    async server => {
+        expect(await server.forVars()).toBe(2)
+    })
+    )
+
 })
 
 describe("with input", () => {

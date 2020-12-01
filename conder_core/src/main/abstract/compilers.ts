@@ -276,11 +276,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [ow.instantiate(null)]
 
         case "ArrayForEach":
+            // Row variable is saved as well
+            const num_vars = n.do.filter(d => d.kind === "Save").length + 1
             const loop: AnyOpInstance[] = [
                 ow.popArray,
                 ow.moveStackTopToHeap,
                 ...n.do.flatMap(full_compiler),
-                ow.truncateHeap(1),
+                ow.truncateHeap(num_vars),
             ]
             loop.push(ow.offsetOpCursor({offset: loop.length + 4, direction: "bwd"}))
             return[

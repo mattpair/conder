@@ -67,6 +67,12 @@ Map {
 }
 `;
 
+exports[`basic functionality cleans up after for eachs: Required locks 1`] = `
+Map {
+  "forVars" => Map {},
+}
+`;
+
 exports[`basic functionality cleans up after ifs: Required locks 1`] = `
 Map {
   "ifVars" => Map {},
