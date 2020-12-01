@@ -13,7 +13,8 @@ type ValueNode = PickNode<
     "GetField" |
     "GlobalObject" | 
     "Math" |
-    "None"
+    "None" |
+    "ArrayLiteral"
     >
 
 
@@ -62,6 +63,7 @@ export type BaseNodeDefs = {
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
+    ArrayLiteral: Node<{values: ValueNode[]}>
 }
 
 export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 

@@ -102,6 +102,8 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "ArrayForEach":
             return [n.target, ...n.do]
 
+        case "ArrayLiteral":
+            return n.values
         case "Else":
         case "Finally":
             return [n.do]

@@ -25,6 +25,17 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     Finally(n, r) {
         return {kind: "Finally", do: r(n.do)}
     },
+    ArrayLiteral(n, r) {
+        return {
+            kind: "ArrayLiteral",
+            values: n.values.map(v => {
+                if (v.kind === "GlobalObject") {
+                    throw Error(`Cannot use global object in array literal`)
+                }
+                return r(v)
+            })
+        }
+    },
 
     ArrayForEach(n, r) {
         if (n.target.kind === "GlobalObject") {
@@ -218,7 +229,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(1 + manyKeySuccess.length + 1),
                 ow.tryGetField("_val"),
                 ...manyKeySuccess,
-                ow.offsetOpCursor(manyKeyFail.length + 1),
+                ow.offsetOpCursor({offset: manyKeyFail.length + 1, direction: "fwd"}),
                 ...manyKeyFail,
                 ow.instantiate(null)
             ]
@@ -257,7 +268,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.isLastNone,
                 ow.conditonallySkipXops(2),
                 ow.popStack,
-                ow.offsetOpCursor(1),
+                ow.offsetOpCursor({offset: 1, direction: "fwd"}),
                 ow.raiseError("Nested key does not exist"),
             ]
         
@@ -275,7 +286,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(3),
                 ow.popStack,
                 ow.instantiate(true),
-                ow.offsetOpCursor(2),
+                ow.offsetOpCursor({offset: 2, direction: "fwd"}),
                 ow.popStack,
                 ow.instantiate(false)
             ]

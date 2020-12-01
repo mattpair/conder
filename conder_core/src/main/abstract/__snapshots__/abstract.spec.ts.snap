@@ -205,6 +205,17 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions iterating over an array of globals while writing requires a lock: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setLookupKeys" => Map {},
+  "deleteLookupFields" => Map {
+    "test" => "w",
+  },
+}
+`;
+
 exports[`global objects race condition possible actions mutation conditional on same global state requires lock: Required locks 1`] = `
 Map {
   "get" => Map {},

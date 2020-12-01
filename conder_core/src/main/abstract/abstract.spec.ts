@@ -941,6 +941,47 @@ describe("global objects", () => {
             }, "requires storage")
         )
 
+        it("iterating over an array of globals while writing requires a lock", noInputHarness({
+            get,
+            set,
+            setLookupKeys: [
+                {
+                    kind: "Update",
+                    operation: {
+                        kind: "SetField", 
+                        field_name: [{kind: "String", value: "arr"}],
+                        value: {kind: "ArrayLiteral", values: [{kind: "String", value: "l1"}]}
+                    },
+                    target: {kind: "GlobalObject", name: TEST_STORE}
+                }
+            ],
+            deleteLookupFields: [
+                {
+                    kind: "ArrayForEach",
+                    target: {
+                        kind: "GetField", 
+                        target: {kind: "GlobalObject", name: TEST_STORE},
+                        field_name: [{kind: "String", value: "arr"}]
+                    },
+                    do: [
+                        {
+                            kind: "Update", 
+                            target: {kind: "GlobalObject", name: TEST_STORE},
+                            operation: {kind: "DeleteField", field_name: [{kind: "String", value: "l1"}]}
+                        }
+                    ]
+                }
+            ]
+        },
+        async server => {
+            expect(await server.set()).toBeNull()
+            expect(await server.setLookupKeys()).toBeNull()
+            expect(await server.deleteLookupFields()).toBeNull()
+            expect(await server.get()).toBeNull()
+        }, "requires storage")
+        
+        )
+
         it("global state taint is applied on partial updates to variables", noInputHarness(
             {
                 get, 

@@ -242,7 +242,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [
                 ...conditionals.map((op, index) => {
                     if (op === "skip to finally") {
-                        return ow.offsetOpCursor(conditionals.length - index)
+                        return ow.offsetOpCursor({offset: conditionals.length - index, direction: "fwd"})
                     } else {
                         return op
                     }
@@ -278,7 +278,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ...n.do.flatMap(full_compiler),
                 ow.truncateHeap(1),
             ]
-            loop.push(ow.offsetOpCursor(-loop.length - 4))
+            loop.push(ow.offsetOpCursor({offset: loop.length + 4, direction: "bwd"}))
             return[
                 ...full_compiler(n.target),
                 ow.ndArrayLen,
@@ -288,6 +288,18 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ...loop,
                 ow.popStack
             ]
+
+        case "ArrayLiteral":
+            const arr: AnyOpInstance[] = [
+                ow.instantiate([]),
+            ]
+            n.values.forEach(v => {
+                arr.push(
+                    ...full_compiler(v),
+                    ow.arrayPush
+                )
+            })
+            return arr
 
         case "Conditional":
         case "Finally":

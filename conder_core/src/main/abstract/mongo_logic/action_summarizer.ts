@@ -32,6 +32,10 @@ class IntuitiveSummarizerState implements SummarizerState {
     public get next_save_index(): number {
         return this.__next_save_index++;
     }
+    
+    public variablesLeftScope(n: number) {
+        this.__next_save_index -= n
+    }
 
     constructor(inputs: number) {
         this.may_perform_any_or_all = [], 
@@ -188,5 +192,26 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
         after: (n, state, this_visitor) => {
 
         }
+    },
+    ArrayForEach: {
+        before: (n, state, this_visitor) => {
+            const row_var_index = state.next_save_index
+            state.startSummaryGroup()
+            this_visitor.apply([n.target])
+            const target_summary = state.endSummaryGroup()
+            target_summary.may_perform.forEach(c => state.globals_tainting_execution.add(c.id))
+            target_summary.may_perform.forEach(c => state.may_perform_any_or_all.push(c))
+            target_summary.uses_data_with_taints.forEach(c => state.globals_tainting_execution.add(c))
+            state.taints.set(row_var_index, new Set(
+                [
+                    ...target_summary.uses_data_with_taints,
+                    ...target_summary.may_perform.map(a => a.id)
+                ])
+            )
+            this_visitor.apply(n.do)
+            state.taints.delete(row_var_index)
+        },
+
+        after: _ => {}
     }
 }
