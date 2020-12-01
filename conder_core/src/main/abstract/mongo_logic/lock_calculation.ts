@@ -35,44 +35,41 @@ type AnyAction = {
 export type Action<K extends keyof MongoActions> = Extract<AnyAction, {kind: K}>
 
 export type ActionSequence = AnyAction[]
-export type LockRequirements = Record<string, Map<string, "r" | "w">>
+export type LockRequirements = Map<string, "r" | "w">
 
-export function calculate_lock_requirements(sequences: Record<string, ActionSequence>): LockRequirements {
-    const lockReqs: LockRequirements = {}
-    
-    Object.keys(sequences).forEach(func => {
-        lockReqs[func] = new Map()
-        const previousDep = new Set<string>()
-        sequences[func].forEach(action => {
+export function calculate_lock_requirements(actions: ActionSequence): LockRequirements {
+    const lockReqs: LockRequirements = new Map()
+    const previousDep = new Set<string>()
+
+    actions.forEach(action => {
+        
+        switch (action.kind) {
+            case "get":
+                break
+            case "mut":
+
+                if (action.using.size > 0) {
+                    action.using.forEach(dependency => {
+                        const original = lockReqs.get(dependency)
+                        const dependencyIsSelf = dependency === action.id
+                        
+                        lockReqs.set(
+                            dependency,
+                            // Never downgrade a lock
+                            original === "w" || dependencyIsSelf ? "w" : "r" 
+                        )
+                        previousDep.add(dependency)
+                    })
+                }
+                if (previousDep.has(action.id)) {
+                    lockReqs.set(action.id, "w")
+                }
+                break
+
             
-            switch (action.kind) {
-                case "get":
-                    break
-                case "mut":
-
-                    if (action.using.size > 0) {
-                        action.using.forEach(dependency => {
-                            const original = lockReqs[func].get(dependency)
-                            const dependencyIsSelf = dependency === action.id
-                            
-                            lockReqs[func].set(
-                                dependency,
-                                // Never downgrade a lock
-                                original === "w" || dependencyIsSelf ? "w" : "r" 
-                            )
-                            previousDep.add(dependency)
-                        })
-                    }
-                    if (previousDep.has(action.id)) {
-                        lockReqs[func].set(action.id, "w")
-                    }
-                    break
-
-                
-                default: 
-                    const n: never = action
-            }
-        })
+            default: 
+                const n: never = action
+        }
     })
 
     return lockReqs

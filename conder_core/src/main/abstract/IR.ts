@@ -13,7 +13,8 @@ type ValueNode = PickNode<
     "GetField" |
     "GlobalObject" | 
     "Math" |
-    "None"
+    "None" |
+    "ArrayLiteral"
     >
 
 
@@ -44,9 +45,9 @@ export type BaseNodeDefs = {
         left: ValueNode, 
         right: ValueNode}>
 
-    Else: Node<{do: RootNode}>
-    Finally: Node<{do: RootNode}>
-    Conditional: Node<{cond: ValueNode, do: RootNode}>
+    Else: Node<{do: RootNode[]}>
+    Finally: Node<{do: RootNode[]}>
+    Conditional: Node<{cond: ValueNode, do: RootNode[]}>
     If: Node<{
         conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
     }, "root">
@@ -55,12 +56,14 @@ export type BaseNodeDefs = {
     Saved: Node<{index: number}> 
     String: Node<{value: string}>
     FieldExists: Node<{value: ValueNode, field: PickNode<"String">}>
-    Save: Node<{index: number, value: ValueNode}, "root">
+    Save: Node<{value: ValueNode}, "root">
     Update: Node<{
         target: PickNode<"Saved" | "GlobalObject">, 
         operation: PickNode<"SetField" | "DeleteField"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
+    ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
+    ArrayLiteral: Node<{values: ValueNode[]}>
 }
 
 export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 

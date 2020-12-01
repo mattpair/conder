@@ -23,7 +23,7 @@ ParamOp<"returnVariable", number> |
 StaticOp<"returnStackTop"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
-ParamOp<"offsetOpCursor", number> |
+ParamOp<"offsetOpCursor", {offset: number, direction: "fwd" | "bwd"}> |
 ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
@@ -44,6 +44,7 @@ ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
 ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
+StaticOp<"ndArrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", {store: string, upsert: boolean}> |
@@ -383,15 +384,24 @@ export const OpSpec: CompleteOpSpec = {
     offsetOpCursor: {
         opDefinition: {
             
-            rustOpHandler: safeGoto("*op_param + next_op_index"),
-            paramType: ["usize"]
+            rustOpHandler: `
+                if *param1 {
+                    ${safeGoto("*param0 + next_op_index")}
+                } else {
+                    ${safeGoto("next_op_index - *param0 - 1")}
+                }
+                
+            `,
+            paramType: ["usize", "bool"]
         },
         // here if p == -2    
         // here if p == -1
         // start <--- this op, the offset.
         // here if p == 0
         // here if p == 1
-        factoryMethod: (p) => ({kind: "offsetOpCursor", data: p < 0 ? p - 1 : p})
+        factoryMethod: ({offset, direction}) => ({kind: "offsetOpCursor", data: [
+            offset, direction === "fwd"
+        ]})
     },
 
     conditonallySkipXops: {
@@ -410,12 +420,8 @@ export const OpSpec: CompleteOpSpec = {
             `,
             paramType: ["usize"]
         },
-        // here if p == -2    
-        // here if p == -1
-        // start <--- this op, the conditional skip.
-        // here if p == 0
-        // here if p == 1
-        factoryMethod: (p) => ({kind: "conditonallySkipXops", data: p < 0 ? p - 1 : p})
+    
+        factoryMethod: (p) => ({kind: "conditonallySkipXops", data: p})
     },
 
 
@@ -685,6 +691,18 @@ export const OpSpec: CompleteOpSpec = {
                 InterpreterType::Array(a) => {${pushStack("InterpreterType::int(i64::try_from(a.len()).unwrap())")}; None},
                 _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             }
+            `
+        }
+    },
+    ndArrayLen: {
+        opDefinition: {
+            rustOpHandler: `
+            let len = match ${lastStack} {
+                InterpreterType::Array(a) => InterpreterType::int(i64::try_from(a.len()).unwrap()),
+                _ => panic!("Cannot take len of non array object")
+            };
+            ${pushStack("len")};
+            None
             `
         }
     },

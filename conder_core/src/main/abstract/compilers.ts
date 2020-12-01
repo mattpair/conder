@@ -1,4 +1,5 @@
 import { AnyOpInstance, ow, Utils } from '../ops/index';
+import { FunctionDescription } from './function';
 import { BaseNodesFromTargetSet, PickNode, PickTargetNode, TargetNodeSet } from './IR';
 
 export type Transform<I, O> = {
@@ -8,7 +9,8 @@ export type Transform<I, O> = {
     run(i: I): O
 }
 
-export type Compiler<I> = Transform<I, Map<string, AnyOpInstance[]>>
+export type MapTransform<I, O> = Transform<Map<string, I>, Map<string, O>>
+export type Compiler<FROM> = Transform<Map<string, FunctionDescription<FROM>>, Map<string, FunctionDescription<AnyOpInstance>>>
 
 
 
@@ -16,7 +18,7 @@ export class Transformer<I, O> implements Transform<I, O> {
     readonly f: (i: I) => O
     constructor(f: (i: I) => O) {this.f= f}
 
-    public static Map<I, O>(f: (data: I) => O): Transform<Map<string, I>, Map<string, O>> {
+    public static Map<I, O>(f: (data: I) => O): MapTransform<I, O> {
 
         return new Transformer((input: Map<string, I>) => {
             const out: Map<string, O> = new Map()
@@ -114,7 +116,7 @@ function create_well_formed_branch(n: PickTargetNode<{}, "If">): PickTargetNode<
             throw Error(`Branch without any conditionals`)
         case "conditions":
         case "maybe finally":
-            wellFormed.push({kind: "Finally", do: {kind: "Noop"}})
+            wellFormed.push({kind: "Finally", do: [{kind: "Noop"}]})
         case "done":
             break
     }
@@ -210,14 +212,18 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
         case "If":{
             const wellFormed = create_well_formed_branch(n)
-            const fin = full_compiler(wellFormed.pop().do)
+            const fin = wellFormed.pop().do.flatMap(full_compiler)
             const first_to_last = wellFormed.reverse()
             const conditionals: (AnyOpInstance | "skip to finally")[] = []
             while (first_to_last.length > 0) {
                 const this_branch = wellFormed.pop()
+                const num_vars_in_branch = this_branch.do.filter(k => k.kind === "Save").length
+                const drop_vars = num_vars_in_branch > 0 ? [ow.truncateHeap(num_vars_in_branch)] : []
+
                 const this_branch_ops: (AnyOpInstance | "skip to finally")[] = [
-                    ...full_compiler(this_branch.do), // do this
-                    "skip to finally" // then skip to finally
+                    ...this_branch.do.flatMap(full_compiler), // do this
+                    ...drop_vars,
+                    "skip to finally" // then skip to finally,
                 ]
 
                 switch (this_branch.kind) {
@@ -240,7 +246,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [
                 ...conditionals.map((op, index) => {
                     if (op === "skip to finally") {
-                        return ow.offsetOpCursor(conditionals.length - index)
+                        return ow.offsetOpCursor({offset: conditionals.length - index, direction: "fwd"})
                     } else {
                         return op
                     }
@@ -268,6 +274,38 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [ow.noop]
         case "None":
             return [ow.instantiate(null)]
+
+        case "ArrayForEach":
+            // Row variable is saved as well
+            const num_vars = n.do.filter(d => d.kind === "Save").length + 1
+            const loop: AnyOpInstance[] = [
+                ow.popArray,
+                ow.moveStackTopToHeap,
+                ...n.do.flatMap(full_compiler),
+                ow.truncateHeap(num_vars),
+            ]
+            loop.push(ow.offsetOpCursor({offset: loop.length + 4, direction: "bwd"}))
+            return[
+                ...full_compiler(n.target),
+                ow.ndArrayLen,
+                ow.instantiate(0),
+                ow.equal,
+                ow.conditonallySkipXops(loop.length),
+                ...loop,
+                ow.popStack
+            ]
+
+        case "ArrayLiteral":
+            const arr: AnyOpInstance[] = [
+                ow.instantiate([]),
+            ]
+            n.values.forEach(v => {
+                arr.push(
+                    ...full_compiler(v),
+                    ow.arrayPush
+                )
+            })
+            return arr
 
         case "Conditional":
         case "Finally":

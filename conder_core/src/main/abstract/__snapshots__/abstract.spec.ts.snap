@@ -67,6 +67,18 @@ Map {
 }
 `;
 
+exports[`basic functionality cleans up after for eachs: Required locks 1`] = `
+Map {
+  "forVars" => Map {},
+}
+`;
+
+exports[`basic functionality cleans up after ifs: Required locks 1`] = `
+Map {
+  "ifVars" => Map {},
+}
+`;
+
 exports[`basic functionality return node returns null: Required locks 1`] = `
 Map {
   "r" => Map {},
@@ -200,6 +212,17 @@ Map {
   "get" => Map {},
   "set" => Map {},
   "setToSelfPlusOne" => Map {
+    "test" => "w",
+  },
+}
+`;
+
+exports[`global objects race condition possible actions iterating over an array of globals while writing requires a lock: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
+  "setLookupKeys" => Map {},
+  "deleteLookupFields" => Map {
     "test" => "w",
   },
 }

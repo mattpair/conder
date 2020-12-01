@@ -20,16 +20,34 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
     },
     Else(n, r) {
-        return {kind: "Else", do: r(n.do)}
+        return {kind: "Else", do: n.do.map(r)}
     },
     Finally(n, r) {
-        return {kind: "Finally", do: r(n.do)}
+        return {kind: "Finally", do: n.do.map(r)}
+    },
+    ArrayLiteral(n, r) {
+        return {
+            kind: "ArrayLiteral",
+            values: n.values.map(v => {
+                if (v.kind === "GlobalObject") {
+                    throw Error(`Cannot use global object in array literal`)
+                }
+                return r(v)
+            })
+        }
+    },
+
+    ArrayForEach(n, r) {
+        if (n.target.kind === "GlobalObject") {
+            throw Error(`Cannot iterate over global objects`)
+        }
+        return {kind: "ArrayForEach", do: n.do.map(r), target: r(n.target)}
     },
     Conditional(n, r) {
         if (n.cond.kind === "GlobalObject") {
             throw Error(`Global objects cannot be used as conditions`)
         }
-        return {kind: "Conditional", cond: r(n.cond), do: r(n.do)}
+        return {kind: "Conditional", cond: r(n.cond), do: n.do.map(r)}
     },
 
     Comparison(n, r) {
@@ -90,7 +108,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
 
         return {
             kind: "Save",
-            index: n.index,
             value: r(n.value)
         }
     },
@@ -177,9 +194,11 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 }
 const complete_replace = make_replacer(MONGO_REPLACER) 
-export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<Map<string, FunctionDescription>, Map<string, TargetNodeSet<MongoNodeSet>[]>> = Transformer.Map((i) => i.computation.map(complete_replace))
+export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<   
+    Map<string, FunctionDescription>, 
+    Map<string, FunctionDescription<TargetNodeSet<MongoNodeSet>>>> = Transformer.Map((func) => func.apply(f => [complete_replace(f)]))
 
-type MongoCompiler = Compiler<Map<string, TargetNodeSet<MongoNodeSet>[]>>
+type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
 
 function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
@@ -210,7 +229,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(1 + manyKeySuccess.length + 1),
                 ow.tryGetField("_val"),
                 ...manyKeySuccess,
-                ow.offsetOpCursor(manyKeyFail.length + 1),
+                ow.offsetOpCursor({offset: manyKeyFail.length + 1, direction: "fwd"}),
                 ...manyKeyFail,
                 ow.instantiate(null)
             ]
@@ -249,7 +268,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.isLastNone,
                 ow.conditonallySkipXops(2),
                 ow.popStack,
-                ow.offsetOpCursor(1),
+                ow.offsetOpCursor({offset: 1, direction: "fwd"}),
                 ow.raiseError("Nested key does not exist"),
             ]
         
@@ -267,7 +286,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(3),
                 ow.popStack,
                 ow.instantiate(true),
-                ow.offsetOpCursor(2),
+                ow.offsetOpCursor({offset: 2, direction: "fwd"}),
                 ow.popStack,
                 ow.instantiate(false)
             ]
@@ -308,4 +327,4 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     }
 }
 
-export const MONGO_COMPILER: MongoCompiler = Transformer.Map(inp => inp.flatMap(compile_function))
+export const MONGO_COMPILER: MongoCompiler = Transformer.Map(fun => fun.apply(compile_function))

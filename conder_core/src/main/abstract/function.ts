@@ -11,16 +11,32 @@ export type Manifest<F=FunctionDescription> = {
     funcs: Map<string, F>
 }
 
-export type FunctionDescription = {
-    input: AnySchemaInstance[]
-    computation: RootNode[]
+export type FunctionData<COMP=RootNode> = {
+    readonly input: AnySchemaInstance[]
+    readonly computation: COMP[]
 }
 
-export type RootNodeCompiler = Compiler<Map<string, FunctionDescription>>
+export class FunctionDescription<COMP=RootNode> implements FunctionData<COMP>{
+    public readonly input: AnySchemaInstance[]
+    public readonly computation: COMP[]
+    
+    constructor(state: FunctionData<COMP>) {
+        this.input = state.input
+        this.computation = state.computation
+    }
 
-export function toOps(funcs: Map<string, FunctionDescription>, override:  RootNodeCompiler | undefined=undefined): Map<string, AnyOpInstance[]> {
+    public apply<NEW>(f: (c: COMP) => NEW[]): FunctionDescription<NEW> {
+        return new FunctionDescription({
+            input: this.input,
+            computation: this.computation.flatMap(f)
+        })
+    }
+}
+
+
+export function toOps(funcs: Map<string, FunctionDescription>, override:  Compiler<RootNode> | undefined=undefined): Map<string, AnyOpInstance[]> {
     const ret: Map<string, AnyOpInstance[]> = new Map()
-    const compiler: RootNodeCompiler = override ? override : MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
+    const compiler: Compiler<RootNode> = override ? override : MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
     // const computationLookup: Record<string, RootNode[]> = {}
 
     // ops.push(...compiler.run(funcs[k].computation))
@@ -42,7 +58,7 @@ export function toOps(funcs: Map<string, FunctionDescription>, override:  RootNo
 
     const compiled = compiler.run(funcs)
     funcs.forEach((func, func_name) => {
-        ret.set(func_name, [...ret.get(func_name), ...compiled.get(func_name)])
+        ret.set(func_name, [...ret.get(func_name), ...compiled.get(func_name).computation])
     })
     return ret
 }
