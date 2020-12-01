@@ -76,7 +76,10 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> 
 
 
-function againstField(data: {depth: string, location: {save: string} | "stack"}): string {
+function againstField(
+    action: "get" | "mut",
+    data: {depth: string, location: {save: string} | "stack"}): string {
+        const mut = action === "get" ? "" : "_mut"
     return `
             let mut fields = Vec::with_capacity(${data.depth});
             for n in 1..=${data.depth} {
@@ -84,16 +87,16 @@ function againstField(data: {depth: string, location: {save: string} | "stack"})
             }
             let (last_field, mut leading_fields) = fields.split_first_mut().unwrap();
             leading_fields.reverse();
-            let mut o_or_a = ${data.location === "stack" ? "stack.last().unwrap()" : `heap.get(${data.location.save}).unwrap()`};
+            let mut o_or_a = ${data.location === "stack" ? `stack.last${mut}().unwrap()` : `heap.get${mut}(${data.location.save}).unwrap()`};
             for f in leading_fields {
                 o_or_a = match o_or_a {
                     InterpreterType::Object(o) => match f {
-                        InterpreterType::string(s) => o.get(s).unwrap(),
+                        InterpreterType::string(s) => o.get${mut}(s).unwrap(),
                         _ => panic!("Cannot index object with this type")
                     },
                     InterpreterType::Array(a) => match f {
-                        InterpreterType::int(i) => &a[*i as usize],
-                        InterpreterType::double(d) => &a[*d as usize],
+                        InterpreterType::int(i) => a.get${mut}(*i as usize).unwrap(),
+                        InterpreterType::double(d) => a.get${mut}(*d as usize).unwrap(),
                         _ => panic!("Cannot index array with type")
                     },
                     _ => panic!("cannot index into type")
@@ -102,15 +105,15 @@ function againstField(data: {depth: string, location: {save: string} | "stack"})
 
             let push = match o_or_a {
                 InterpreterType::Object(o) => match last_field {
-                    InterpreterType::string(s) => match o.get(s) {
+                    InterpreterType::string(s) => match o.get${mut}(s) {
                         Some(val) => val.clone(),
                         None => InterpreterType::None 
                     },
                     _ => panic!("Cannot index object with this type")
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => &a[*i as usize],
-                    InterpreterType::double(d) => &a[*d as usize],
+                    InterpreterType::int(i) => a.get${mut}(*i as usize).unwrap(),
+                    InterpreterType::double(d) => a.get${mut}(*d as usize).unwrap(),
                     _ => panic!("Cannot index array with type")
                 }.clone(),
                 _ => panic!("cannot index into type")   
@@ -339,14 +342,14 @@ export const OpSpec: CompleteOpSpec = {
     getField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: againstField({depth: "*op_param", location: "stack"})
+            rustOpHandler: againstField("get", {depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
     },
     getSavedField: {
         opDefinition: {
             paramType: ["usize", "usize"],
-            rustOpHandler: againstField({depth: "*param0", location: {save: "*param1"}})
+            rustOpHandler: againstField("get", {depth: "*param0", location: {save: "*param1"}})
         },
         factoryMethod: ({field_depth, index}) => ({kind: "getSavedField", data: [field_depth, index]})
     },
