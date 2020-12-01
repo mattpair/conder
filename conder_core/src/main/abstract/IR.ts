@@ -1,7 +1,7 @@
 import { AnyOpInstance, Utils } from '../ops/index';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
-type ValueNode = PickNode<
+export type ValueNode = PickNode<
     "Bool" | 
     "Object" | 
     "Comparison" | 
@@ -17,16 +17,16 @@ type ValueNode = PickNode<
     "ArrayLiteral"
     >
 
-
+export type Key = PickNode<"String" | "Saved">
 export type AbstractNodes = PickNode<"GlobalObject">
 
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
     Bool: Node<{value: boolean}>
-    SetField: Node<{field_name: PickNode<"String" | "Saved">[], value: ValueNode}>
-    GetField: Node<{field_name: PickNode<"String" | "Saved">[], target: PickNode<"Saved" | "GlobalObject">}>,
-    DeleteField: Node<{field_name: PickNode<"String" | "Saved">[]}>,
-    Object: Node<{fields: PickNode<"SetField">[]}>
+    GetField: Node<{field_name: Key[], target: PickNode<"Saved" | "GlobalObject">}>,
+    DeleteField: Node<{}>,
+    Field: Node<{key: Key, value: ValueNode}>
+    Object: Node<{fields: PickNode<"Field">[]}>
     Int: Node<{value: number}> 
     None: Node<{}>
     Comparison: Node<
@@ -55,11 +55,12 @@ export type BaseNodeDefs = {
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
     String: Node<{value: string}>
-    FieldExists: Node<{value: ValueNode, field: PickNode<"String">}>
+    FieldExists: Node<{value: ValueNode, field: Key}>
     Save: Node<{value: ValueNode}, "root">
     Update: Node<{
-        target: PickNode<"Saved" | "GlobalObject">, 
-        operation: PickNode<"SetField" | "DeleteField" | "Push"> | ValueNode,
+        target: PickNode<"Saved" | "GlobalObject">,
+        level: Key[]
+        operation: PickNode<"DeleteField" | "Push"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
@@ -145,7 +146,7 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     String: n => n,
     DeleteField: n => n,
     None: _ => _,
-    Noop: _ => _
+    Noop: _ => _,
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {

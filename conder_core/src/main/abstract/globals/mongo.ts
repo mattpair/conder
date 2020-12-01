@@ -1,14 +1,14 @@
 import { AnyOpInstance, ow } from '../../ops/index';
-import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet } from '../IR';
+import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet, ValueNode, Key } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 import { FunctionDescription } from '../function';
 
 export type MongoNodeSet = {
     GetWholeObject: Node<{name: string}>,
-    GetKeyFromObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "String" | "Saved">[]}>
-    keyExists: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "String" | "Saved">}>
-    SetKeyOnObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "SetField">["field_name"], value: PickTargetNode<MongoNodeSet, "SetField">["value"]}>,
-    DeleteKeyOnObject: Node<{obj: string, key: PickTargetNode<MongoNodeSet, "SetField">["field_name"]}>
+    GetKeyFromObject: Node<{obj: string, key: Key[]}>
+    keyExists: Node<{obj: string, key: Key}>
+    SetKeyOnObject: Node<{obj: string, key: Key[], value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
+    DeleteKeyOnObject: Node<{obj: string, key: Key[]}>
 }
 
 
@@ -24,6 +24,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     Finally(n, r) {
         return {kind: "Finally", do: n.do.map(r)}
+    },
+
+    Field(n, r) {
+        if (n.value.kind === "GlobalObject") {
+            throw Error("Cannot use entire global object as field")
+        }
+        return {kind: "Field", key: n.key, value: r(n.value)}
     },
 
     Push(n, r) {
@@ -124,16 +131,16 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
     },
 
-    SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
-        if (n.value.kind === "GlobalObject") {
-            throw Error("cannot set values from global objects")
-        }
-        return {
-            kind: "SetField",
-            field_name: n.field_name.map(r),
-            value: r(n.value)
-        }
-    },
+    // SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
+    //     if (n.value.kind === "GlobalObject") {
+    //         throw Error("cannot set values from global objects")
+    //     }
+    //     return {
+    //         kind: "SetField",
+    //         field_name: n.field_name.map(r),
+    //         value: r(n.value)
+    //     }
+    // },
     GetField(n, r) {
         switch (n.target.kind) {
             case "GlobalObject":
@@ -173,26 +180,28 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         switch (n.target.kind) {
             case "GlobalObject":
                 switch (n.operation.kind) {
-                    case "SetField":
-                        if (n.operation.value.kind === "GlobalObject") {
-                            throw Error(`Cannot set key to a global object`)
-                        }
-                        return {
-                            kind: "SetKeyOnObject",
-                            obj: n.target.name,
-                            key: n.operation.field_name,
-                            value: r(n.operation.value)
-                        }
+                    case "Push":
+                        throw Error("")
 
                     case "DeleteField":
                         return {
                             kind: "DeleteKeyOnObject",
                             obj: n.target.name,
-                            key: n.operation.field_name.map(r)
+                            key: n.level
+                        }
+                    
+                    default: 
+                        if (n.operation.kind === "GlobalObject") {
+                            throw Error(`Cannot set key to a global object`)
+                        }
+                        return {
+                            kind: "SetKeyOnObject",
+                            obj: n.target.name,
+                            key: n.level,
+                            value: r(n.operation)
                         }
                 }
 
-                throw Error(`Could not fulfill global object update`)
         }
         if (n.operation.kind === "GlobalObject") {
             throw Error("cannot set value from global object")
@@ -201,6 +210,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         return {
             kind: "Update",
             target: n.target,
+            level: n.level,
             operation: r(n.operation)
         }
     },

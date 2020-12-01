@@ -169,7 +169,8 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
             
             this_visitor.apply([n.operation])
             const summary = state.endSummaryGroup()
-            const taint = ["SetField", "Push"].includes(n.operation.kind) ? state.taints.get(n.target.index) : new Set<string>()
+            const is_partial_update = "Push" === n.operation.kind || n.level.length > 0
+            const taint = is_partial_update ? state.taints.get(n.target.index) : new Set<string>()
             summary.uses_data_with_taints.forEach(t => taint.add(t))
             summary.may_perform.forEach(c => taint.add(c.id))
             state.taints.set(n.target.index, taint)

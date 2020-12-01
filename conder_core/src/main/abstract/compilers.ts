@@ -178,11 +178,11 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "Saved":
             return [ow.copyFromHeap(n.index)]
         
-        case "SetField":
+        case "Field":
             return [
-                ...n.field_name.flatMap(full_compiler),
+                ...full_compiler(n.key),
                 ...full_compiler(n.value),
-                ow.setField({field_depth: n.field_name.length})
+                ow.setField({field_depth: 1})
             ]
 
         case "Update":
@@ -196,18 +196,26 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                         ]
                     })
 
-                case "SetField":
                 case "DeleteField":
-
                     return [
                         ...full_compiler(n.target), 
-                        ...full_compiler(n.operation),
+                        ...n.level.flatMap(full_compiler),
+                        ow.deleteField({field_depth: n.level.length}),
                         ow.overwriteHeap(n.target.index)
                     ]
                     
-                default: 
+                default:
+                    if (n.level.length === 0) {
+                        return [
+                            ...full_compiler(n.operation),
+                            ow.overwriteHeap(n.target.index)
+                        ]
+                    }
                     return [
+                        ...full_compiler(n.target),
+                        ...n.level.flatMap(full_compiler),
                         ...full_compiler(n.operation),
+                        ow.setField({field_depth: n.level.length}),
                         ow.overwriteHeap(n.target.index)
                     ]
             }
@@ -261,23 +269,8 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 }),
                 ...fin
             ]
-            // n.conditionally.f
-            // const ifTrue = full_compiler(n.ifTrue)
-            // const elseOps = n.else ? full_compiler(n.else) : [ow.noop]
-            // return [
-            //     ...ifTrue,
-            //     ow.offsetOpCursor(elseOps.length),
-            //     ...elseOps,
-            //     ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
-            // ]
         }
 
-        case "DeleteField": {
-            return [
-                ...n.field_name.flatMap(full_compiler),
-                ow.deleteField({field_depth: n.field_name.length}),
-            ]
-        }
         case "Noop": 
             return [ow.noop]
         case "None":
@@ -319,6 +312,8 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "Conditional":
         case "Finally":
         case "Else":
+        case "DeleteField": 
+
             throw Error(`${n.kind} should be compiled within parent`)
         default: Utils.assertNever(n)
     }

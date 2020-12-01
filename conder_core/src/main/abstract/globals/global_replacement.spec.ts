@@ -35,6 +35,7 @@ describe("mongo", () => {
     it("can replace SetField updates", replaceTest({
         kind: "Update",
         target: {kind: "GlobalObject", name: "gg"},
-        operation: {kind: "SetField", value: {kind: "String", value: 'some val'}, field_name: [{kind: "Saved", index: 12}]}
+        level: [{kind: "Saved", index: 12}],
+        operation: {kind: "String", value: 'some val'}
     }))
 })
