@@ -297,21 +297,42 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut fields = Vec::with_capacity(*op_param);
             for n in 1..=*op_param {
-                fields.push(${popToString});
+                fields.push(${popStack});
             }
-            let mut object = ${popToObject};
-
+            let mut o_or_a = ${popStack};
             while fields.len() > 1 {
-                object = match object.remove(&fields.pop().unwrap()).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
+                let f = fields.pop().unwrap();
+                o_or_a = match o_or_a {
+                    InterpreterType::Object(mut o) => match f {
+                        InterpreterType::string(s) => o.remove(&s).unwrap(),
+                        _ => panic!("Cannot index object with this type")
+                    },
+                    InterpreterType::Array(mut a) => match f {
+                        InterpreterType::int(i) => a.remove(i as usize),
+                        InterpreterType::double(d) => a.remove(d as usize),
+                        _ => panic!("Cannot index array with type")
+                    },
+                    _ => panic!("cannot index into type")
                 };
             }
 
-            ${pushStack(`match object.remove(&fields.pop().unwrap()) {
-                Some(o) => o,
-                None => InterpreterType::None
-            }`)};
+            let f = fields.pop().unwrap();
+            let push = match o_or_a {
+                InterpreterType::Object(mut o) => match f {
+                    InterpreterType::string(s) => match o.remove(&s) {
+                        Some(val) => val,
+                        None => InterpreterType::None 
+                    },
+                    _ => panic!("Cannot index object with this type")
+                },
+                InterpreterType::Array(mut a) => match f {
+                    InterpreterType::int(i) => a.remove(i as usize),
+                    InterpreterType::double(d) => a.remove(d as usize),
+                    _ => panic!("Cannot index array with type")
+                },
+                _ => panic!("cannot index into type")   
+            };
+            ${pushStack(`push`)};
             None
             `
         },

@@ -458,6 +458,28 @@ describe("basic functionality", () => {
             expect(await server.push(["a"])).toEqual(["a", "hello", 12])
         }
     ))
+
+    it("allows indexing into arrays with an int", withInputHarness(
+        "requires storage",
+        {
+            getFirst: {
+                input: [schemaFactory.Array(schemaFactory.Any)],
+                computation: [
+                    {
+                        kind: "Return",
+                        value: {
+                            kind: "Selection",
+                            root: {kind: "Saved", index:0},
+                            level: [{kind: "Int", value: 0}]
+                        }
+                    }
+                ]
+            }
+        },
+        async server => {
+            expect(await server.getFirst(["a", "b"])).toBe("a")
+        }
+    ))
 })
 
 describe("with input", () => {

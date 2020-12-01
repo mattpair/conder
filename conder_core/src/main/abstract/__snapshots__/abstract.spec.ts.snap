@@ -32,6 +32,12 @@ Map {
 }
 `;
 
+exports[`basic functionality allows indexing into arrays with an int: Required locks 1`] = `
+Map {
+  "getFirst" => Map {},
+}
+`;
+
 exports[`basic functionality allows pushing to local arrays: Required locks 1`] = `
 Map {
   "push" => Map {},
