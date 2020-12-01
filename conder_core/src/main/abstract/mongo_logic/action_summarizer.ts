@@ -33,8 +33,11 @@ class IntuitiveSummarizerState implements SummarizerState {
         return this.__next_save_index++;
     }
     
-    public variablesLeftScope(n: number) {
-        this.__next_save_index -= n
+    public dropVariables(n: number) {
+        for (let i = 0; i < n; i++) {
+            const cleanup = --this.__next_save_index
+            this.taints.delete(cleanup)    
+        }
     }
 
     constructor(inputs: number) {
@@ -187,11 +190,30 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
             condition_summary.may_perform.forEach(c => state.may_perform_any_or_all.push(c))
             condition_summary.uses_data_with_taints.forEach(c => state.globals_tainting_execution.add(c))
 
-            this_visitor.apply([n.do])
+            this_visitor.apply(n.do)
         },
         after: (n, state, this_visitor) => {
 
         }
+    },
+
+    If: {
+        before: (n, state, this_visitor) => {
+            n.conditionally.forEach(cond => {
+                switch (cond.kind) {
+                    case "Conditional":
+                    case "Else":
+                        const num_vars = cond.do.filter(c => c.kind === "Save").length
+                        this_visitor.apply(cond.do)
+                        state.dropVariables(num_vars)
+                        break
+                    case "Finally":
+                        this_visitor.apply(cond.do)
+                        break
+                }
+            })
+        },
+        after: _=>{}
     },
     ArrayForEach: {
         before: (n, state, this_visitor) => {

@@ -20,10 +20,10 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
     },
     Else(n, r) {
-        return {kind: "Else", do: r(n.do)}
+        return {kind: "Else", do: n.do.map(r)}
     },
     Finally(n, r) {
-        return {kind: "Finally", do: r(n.do)}
+        return {kind: "Finally", do: n.do.map(r)}
     },
     ArrayLiteral(n, r) {
         return {
@@ -47,7 +47,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         if (n.cond.kind === "GlobalObject") {
             throw Error(`Global objects cannot be used as conditions`)
         }
-        return {kind: "Conditional", cond: r(n.cond), do: r(n.do)}
+        return {kind: "Conditional", cond: r(n.cond), do: n.do.map(r)}
     },
 
     Comparison(n, r) {

@@ -116,7 +116,7 @@ function create_well_formed_branch(n: PickTargetNode<{}, "If">): PickTargetNode<
             throw Error(`Branch without any conditionals`)
         case "conditions":
         case "maybe finally":
-            wellFormed.push({kind: "Finally", do: {kind: "Noop"}})
+            wellFormed.push({kind: "Finally", do: [{kind: "Noop"}]})
         case "done":
             break
     }
@@ -212,14 +212,18 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
         case "If":{
             const wellFormed = create_well_formed_branch(n)
-            const fin = full_compiler(wellFormed.pop().do)
+            const fin = wellFormed.pop().do.flatMap(full_compiler)
             const first_to_last = wellFormed.reverse()
             const conditionals: (AnyOpInstance | "skip to finally")[] = []
             while (first_to_last.length > 0) {
                 const this_branch = wellFormed.pop()
+                const num_vars_in_branch = this_branch.do.filter(k => k.kind === "Save").length
+                const drop_vars = num_vars_in_branch > 0 ? [ow.truncateHeap(num_vars_in_branch)] : []
+
                 const this_branch_ops: (AnyOpInstance | "skip to finally")[] = [
-                    ...full_compiler(this_branch.do), // do this
-                    "skip to finally" // then skip to finally
+                    ...this_branch.do.flatMap(full_compiler), // do this
+                    ...drop_vars,
+                    "skip to finally" // then skip to finally,
                 ]
 
                 switch (this_branch.kind) {

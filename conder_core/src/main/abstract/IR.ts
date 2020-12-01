@@ -45,9 +45,9 @@ export type BaseNodeDefs = {
         left: ValueNode, 
         right: ValueNode}>
 
-    Else: Node<{do: RootNode}>
-    Finally: Node<{do: RootNode}>
-    Conditional: Node<{cond: ValueNode, do: RootNode}>
+    Else: Node<{do: RootNode[]}>
+    Finally: Node<{do: RootNode[]}>
+    Conditional: Node<{cond: ValueNode, do: RootNode[]}>
     If: Node<{
         conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
     }, "root">

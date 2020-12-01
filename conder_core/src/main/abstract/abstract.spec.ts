@@ -333,7 +333,7 @@ describe("basic functionality", () => {
                     {
                         kind: "Conditional", 
                         cond: {kind: "Bool", value: true},
-                        do: {kind: "Return", value: {kind: "Int", value: 1}}
+                        do: [{kind: "Return", value: {kind: "Int", value: 1}}]
                     }
                 ]
             }],
@@ -343,15 +343,15 @@ describe("basic functionality", () => {
                     {
                         kind: "Conditional", 
                         cond: {kind: "Bool", value: false}, 
-                        do: {kind: "Return", value: {kind: "Int", value: 1}}
+                        do: [{kind: "Return", value: {kind: "Int", value: 1}}]
                     },
                 ]
             }],
             ifFalseFinally: [{
                 kind: "If",
                 conditionally: [
-                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
-                    {kind: "Finally", do: {kind: "Return", value: {kind: "Int", value: 2}}}
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: [{kind: "Return"}]},
+                    {kind: "Finally", do: [{kind: "Return", value: {kind: "Int", value: 2}}]}
                 ]
             }]
         }, 
@@ -367,8 +367,8 @@ describe("basic functionality", () => {
             else: [{
                 kind: "If",
                 conditionally: [
-                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
-                    {kind: "Else", do: {kind: "Return", value: {kind: "Int", value: 42}}}
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: [{kind: "Return"}]},
+                    {kind: "Else", do: [{kind: "Return", value: {kind: "Int", value: 42}}]}
                 ]
             }] 
         },
@@ -382,9 +382,9 @@ describe("basic functionality", () => {
             elseIfs: [{
                 kind: "If",
                 conditionally: [
-                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: {kind: "Return"}},
-                    {kind: "Conditional", cond:  {kind: "Bool", value: false}, do: {kind: "Return"}},
-                    {kind: "Conditional", cond: {kind: "Bool", value: true}, do: {kind: "Return", value: {kind: "Int", value: 42}}}
+                    {kind: "Conditional", cond: {kind: "Bool", value: false}, do: [{kind: "Return"}]},
+                    {kind: "Conditional", cond:  {kind: "Bool", value: false}, do: [{kind: "Return"}]},
+                    {kind: "Conditional", cond: {kind: "Bool", value: true}, do: [{kind: "Return", value: {kind: "Int", value: 42}}]}
                 ]
             }] 
         },
@@ -393,14 +393,14 @@ describe("basic functionality", () => {
         })
     )
 
-    it.skip("cleans up after ifs", noInputHarness({
+    it("cleans up after ifs", noInputHarness({
         ifVars: [
             {
                 kind: "If",
                 conditionally: [
                     {kind: "Conditional", 
                     cond: {kind: "Bool", value: true}, 
-                    do: {kind: "Save", value: {kind: "Int", value: -1}}},
+                    do: [{kind: "Save", value: {kind: "Int", value: -1}}]},
                 ]
             },
             {
@@ -752,7 +752,7 @@ describe("global objects", () => {
                             {
                                 kind: "Conditional",
                                 cond: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
-                                do: {
+                                do: [{
                                     kind: "Update",
                                     target: {kind: "GlobalObject", name: TEST_STORE},
                                     operation: {
@@ -760,7 +760,7 @@ describe("global objects", () => {
                                         field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                                         value: {kind: "Int", value: 0}
                                     }
-                                }
+                                }]
                             }
                         ]
                     }
@@ -788,11 +788,11 @@ describe("global objects", () => {
                                     left: {kind: "FieldExists", field: {kind: "String", value: "l1"}, value: {kind: "GlobalObject", name: TEST_STORE}},
                                     right: {kind: "Bool", value: false}
                                 },
-                                do: {kind: "Return"}
+                                do: [{kind: "Return"}]
                             },
                             {
                                 kind: "Finally",
-                                do: {
+                                do: [{
                                     kind: "Update",
                                     target: {kind: "GlobalObject", name: TEST_STORE},
                                     operation: {
@@ -800,7 +800,7 @@ describe("global objects", () => {
                                         field_name: [{kind: "String", value: "l1"}, {kind: "String", value: "l2"}],
                                         value: {kind: "Int", value: 0}
                                     }
-                                }
+                                }]
                             }
                         ]
                     }
