@@ -224,9 +224,8 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "Selection":
             if (n.level.length > 0) {
                 return [
-                    ...full_compiler(n.root),
                     ...n.level.flatMap(full_compiler),
-                    ow.getField({field_depth: n.level.length})
+                    ow.getSavedField({field_depth: n.level.length, index: n.root.index})
                 ]
             } else {
                 return full_compiler(n.root)

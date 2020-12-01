@@ -63,6 +63,7 @@ ParamOp<"raiseError", string> |
 ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
 ParamOp<"getField", {field_depth: number}> |
+ParamOp<"getSavedField", {field_depth: number, index: number}> |
 ParamOp<"deleteField", {field_depth: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
@@ -75,45 +76,46 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> 
 
 
-function getField(data: {depth: string}): string {
+function getField(data: {depth: string, location: {save: string} | "stack"}): string {
     return `
-    let mut fields = Vec::with_capacity(${data.depth});
+            let mut fields = Vec::with_capacity(${data.depth});
             for n in 1..=${data.depth} {
                 fields.push(${popStack});
             }
-            let mut o_or_a = ${popStack};
-            while fields.len() > 1 {
-                let f = fields.pop().unwrap();
+            let (last_field, mut leading_fields) = fields.split_first_mut().unwrap();
+            leading_fields.reverse();
+            let mut o_or_a = ${data.location === "stack" ? "stack.last().unwrap()" : `heap.get(${data.location.save}).unwrap()`};
+            for f in leading_fields {
                 o_or_a = match o_or_a {
-                    InterpreterType::Object(mut o) => match f {
-                        InterpreterType::string(s) => o.remove(&s).unwrap(),
+                    InterpreterType::Object(o) => match f {
+                        InterpreterType::string(s) => o.get(s).unwrap(),
                         _ => panic!("Cannot index object with this type")
                     },
-                    InterpreterType::Array(mut a) => match f {
-                        InterpreterType::int(i) => a.remove(i as usize),
-                        InterpreterType::double(d) => a.remove(d as usize),
+                    InterpreterType::Array(a) => match f {
+                        InterpreterType::int(i) => &a[*i as usize],
+                        InterpreterType::double(d) => &a[*d as usize],
                         _ => panic!("Cannot index array with type")
                     },
                     _ => panic!("cannot index into type")
                 };
             }
 
-            let f = fields.pop().unwrap();
             let push = match o_or_a {
-                InterpreterType::Object(mut o) => match f {
-                    InterpreterType::string(s) => match o.remove(&s) {
-                        Some(val) => val,
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => match o.get(s) {
+                        Some(val) => val.clone(),
                         None => InterpreterType::None 
                     },
                     _ => panic!("Cannot index object with this type")
                 },
-                InterpreterType::Array(mut a) => match f {
-                    InterpreterType::int(i) => a.remove(i as usize),
-                    InterpreterType::double(d) => a.remove(d as usize),
+                InterpreterType::Array(a) => match last_field {
+                    InterpreterType::int(i) => &a[*i as usize],
+                    InterpreterType::double(d) => &a[*d as usize],
                     _ => panic!("Cannot index array with type")
-                },
+                }.clone(),
                 _ => panic!("cannot index into type")   
             };
+            ${data.location === "stack" ? popStack : ""};
             ${pushStack(`push`)};
             None`
 }
@@ -337,9 +339,16 @@ export const OpSpec: CompleteOpSpec = {
     getField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: getField({depth: "*op_param"})
+            rustOpHandler: getField({depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
+    },
+    getSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: getField({depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "getSavedField", data: [field_depth, index]})
     },
     deleteField: {
         opDefinition: {
