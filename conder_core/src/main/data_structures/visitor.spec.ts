@@ -56,10 +56,10 @@ describe("visitor traversal order", () => {
         "Before SetKeyOnObject ",
         "Before String target_key",
         "After String target_key",
-        "Before GetField ",
+        "Before Selection ",
         "Before String get_key",
         "After String get_key",
-        "After GetField ",
+        "After Selection ",
         "After SetKeyOnObject ",
       ]
     `);
