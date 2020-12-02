@@ -79,7 +79,9 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
 StaticOp<"getKeys">
 
-
+// stack top -> anything you want to pull off in at start
+//              fields
+//              target entity if against stack
 function againstField(
     action: "get" | "overwrite" | "delete" | "push",
     data: {depth: string, location: {save: string} | "stack"}): string {

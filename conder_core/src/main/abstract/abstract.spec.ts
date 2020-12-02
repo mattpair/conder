@@ -831,6 +831,70 @@ describe("global objects", () => {
         )
     )
 
+    const arrLevel: PickNode<"String"> = {kind: "String", value: "arr"}
+    it("can push to arrays in global objects", 
+        noInputHarness(
+            {
+                init: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [arrLevel],
+                        operation: {kind: "ArrayLiteral", values: []}
+                    },
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "nested"}],
+                        operation: {kind: "Object", fields: [{kind: 'Field', key: arrLevel, value: {kind: "ArrayLiteral", values: []}}]}
+                    }
+                ],
+                push: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "arr"}],
+                        operation: {kind: "Push", values: [{kind: 'String', value: "HELLO"}]}
+                    },
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "nested"}, arrLevel],
+                        operation: {kind: "Push", values: [{kind: 'String', value: "HELLO"}]}
+                    }
+                ],
+                get: [
+                    {
+                        kind: "Save", value: {kind: "Object", fields: []}
+                    },
+                    {
+                        kind: "ArrayForEach",
+                        target: {kind: "Keys", target: GLOBAL},
+                        do: [
+                            {
+                                kind: "Update", 
+                                root: {kind: "Saved", index: 0},
+                                level: [{kind: "Saved", index: 1}],
+                                operation: {kind: "Selection", root: GLOBAL, level: [{kind: "Saved", index: 1}
+                                ]}
+                            }
+                        ]
+                    },
+                    {
+                        kind: "Return",
+                        value: {kind: 'Saved', index: 0}
+                    }
+                ]
+            }, 
+            async server => {
+                expect(await server.init()).toBeNull()
+                expect(await server.push()).toBeNull()
+                expect(await server.get()).toEqual({arr: ["HELLO"], nested: {arr: ["HELLO"]}})
+            },
+            "requires storage"
+        )
+    )
+
     describe("iterations", () => {
         it("can iterate over local arrays", () => {
             withInputHarness(

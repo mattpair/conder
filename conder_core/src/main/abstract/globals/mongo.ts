@@ -5,13 +5,15 @@ import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 import { FunctionDescription } from '../function';
 
 type TargetKeys = PickTargetNode<MongoNodeSet, "Selection">["level"]
+type AnyValue = PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>
 export type MongoNodeSet = {
     GetWholeObject: Node<{name: string}>,
     GetKeyFromObject: Node<{obj: string, key: TargetKeys}>
     keyExists: Node<{obj: string, key: TargetKeys[0]}>
-    SetKeyOnObject: Node<{obj: string, key: TargetKeys, value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
+    SetKeyOnObject: Node<{obj: string, key: TargetKeys, value: AnyValue}>,
     DeleteKeyOnObject: Node<{obj: string, key: TargetKeys}>
     GetKeysOnly: Node<{obj: string}>
+    PushAtKeyOnObject: Node<{obj: string, key: TargetKeys, values: AnyValue[]}>
 }
 
 const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
@@ -164,7 +166,12 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             case "GlobalObject":
                 switch (n.operation.kind) {
                     case "Push":
-                        throw Error("Cannot push against globals")
+                        return {
+                            kind: "PushAtKeyOnObject",
+                            obj: n.root.name,
+                            values: n.operation.values.map(r),
+                            key: n.level.map(r)
+                        }
 
                     case "DeleteField":
                         return {
@@ -233,6 +240,53 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ...manyKeyFail,
                 ow.instantiate(null)
             ]
+        case "PushAtKeyOnObject": {
+            const updateDocumentCreation: AnyOpInstance[] = []
+            if (n.key.length > 1) {
+                updateDocumentCreation.push(
+                    //The query doc
+                    ow.instantiate({"$push": {}}),
+                    // Move the each doc into the query doc.
+                    ow.instantiate("$push"),
+                        ow.instantiate("_val"),
+                        ...n.key.slice(1).flatMap(compile_function),
+                        ow.stringConcat({nStrings: n.key.length, joiner: "."}),
+                            // Creates an {each: [value]} doc
+                            ow.instantiate({}),
+                            ow.instantiate("$each"),
+                            ow.instantiate([]),
+                            ...n.values.flatMap(v => [...compile_function(v), ow.arrayPush]),
+                            ow.setField({field_depth: 1}),
+                    ow.setField({field_depth: 2})
+                )
+            } else {
+                
+                updateDocumentCreation.push( 
+                    ow.instantiate({"$push": {_val: {}}}),
+                    ow.instantiate("$push"),
+                    ow.instantiate("_val"),
+                    ow.instantiate("$each"),
+                    ow.instantiate([]),
+                    ...n.values.flatMap(v => [...compile_function(v), ow.arrayPush]),
+                    ow.setField({field_depth: 3}),
+                )
+            }
+            return [
+                ...updateDocumentCreation,
+                // Create the query doc
+                ow.instantiate({_key: {}}),
+                ow.instantiate("_key"),
+                ...compile_function(n.key[0]),
+                ow.setField({field_depth: 1}),
+                // update or insert key
+                ow.updateOne({store: n.obj, upsert: n.key.length === 1}),
+                ow.isLastNone,
+                ow.conditonallySkipXops(2),
+                ow.popStack,
+                ow.offsetOpCursor({offset: 1, direction: "fwd"}),
+                ow.raiseError("Nested key does not exist"),
+            ]
+        }
 
             
         case "SetKeyOnObject":
