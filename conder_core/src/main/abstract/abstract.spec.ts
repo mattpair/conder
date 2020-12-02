@@ -186,6 +186,29 @@ describe("basic functionality", () => {
             }
         )
     )
+
+    it("allows gathering of keys on objects",
+            withInputHarness(
+                "no storage",
+                {
+                    getKeys: {
+                        input: [schemaFactory.Object({
+                            a: schemaFactory.Any
+                        })],
+                        computation: [
+                            {kind: "Return", value: {
+                                kind: "Keys",
+                                target: {kind: "Saved", index: 0}
+                            }}
+                        ]
+                    }
+                },
+                async server => {
+                    expect(await server.getKeys({a: "yada yada"})).toEqual(["a"])
+                }
+            )
+    )
+
     it("allows deleting of nested fields on locals",
         withInputHarness(
             "no storage", 
@@ -649,6 +672,33 @@ describe("global objects", () => {
     },
     "requires storage"
     ))
+
+    it("can get keys from global objects", 
+        noInputHarness({
+            getKeys: [{
+                kind: "Return",
+                value: {
+                    kind: "Keys",
+                    target: {
+                        kind: "GlobalObject",
+                        name: TEST_STORE
+                    }
+                }
+            }],
+            setKeys: [{
+                kind: "Update",
+                root: {kind: "GlobalObject", name: TEST_STORE},
+                level: [{kind: "String", value: "k1"}],
+                operation: {kind: "String", value: "v1"}
+            }]
+        },
+        async server => {
+            expect(await server.getKeys()).toEqual([])
+            expect(await server.setKeys()).toBeNull()
+            expect(await server.getKeys()).toEqual(["k1"])
+        },
+        "requires storage")
+    )
 
     const getNested: RootNode[] = [
         {

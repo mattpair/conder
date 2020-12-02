@@ -11,6 +11,7 @@ export type MongoNodeSet = {
     keyExists: Node<{obj: string, key: TargetKeys[0]}>
     SetKeyOnObject: Node<{obj: string, key: TargetKeys, value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
     DeleteKeyOnObject: Node<{obj: string, key: TargetKeys}>
+    GetKeysOnly: Node<{obj: string}>
 }
 
 const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
@@ -56,22 +57,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     ArrayForEach(n, r) {
-        if (n.target.kind === "GlobalObject") {
-            throw Error(`Cannot iterate over global objects`)
-        }
         return {kind: "ArrayForEach", do: n.do.map(r), target: r(n.target)}
     },
     Conditional(n, r) {
-        if (n.cond.kind === "GlobalObject") {
-            throw Error(`Global objects are not bools`)
-        }
         return {kind: "Conditional", cond: r(n.cond), do: n.do.map(r)}
     },
 
     Comparison(n, r) {
-        if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
-            throw Error(`Global objects are not comparable`)
-        }
         return {
             kind: "Comparison",
             left: r(n.left),
@@ -81,9 +73,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     BoolAlg(n, r) {
-        if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
-            throw Error(`Global objects cannot be used in boolean alg`)
-        }
         return {
             kind: "BoolAlg",
             left: r(n.left),
@@ -109,10 +98,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     Return(n, r) {
-        if (n.value?.kind === "GlobalObject") {
-            throw Error(`Cannot return global objects`)
-        }
-
         return {
             kind: "Return",
             value: n.value ? r(n.value) : undefined
@@ -120,10 +105,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     Save(n, r) {
-        if (n.value.kind === "GlobalObject") {
-            throw Error(`Cannot save global objects`)
-        }
-
+        
         return {
             kind: "Save",
             value: r(n.value)
@@ -131,34 +113,18 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     
 
-    // SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
-    //     if (n.value.kind === "GlobalObject") {
-    //         throw Error("cannot set values from global objects")
-    //     }
-    //     return {
-    //         kind: "SetField",
-    //         field_name: n.field_name.map(r),
-    //         value: r(n.value)
-    //     }
-    // },
-    // GetField(n, r) {
-    //     switch (n.target.kind) {
-    //         case "GlobalObject":
-    //             return {
-    //                 kind: "GetKeyFromObject",
-    //                 obj: n.target.name,
-    //                 key: n.field_name.map(r)
-    //             }
-    //         case "Saved":
-    //             return {
-    //                 kind: "GetField",
-    //                 target: n.target,
-    //                 field_name: n.field_name.map(r)
-    //             }
-    //     }
-    
-    // },
-
+    Keys(n, r) {
+        if (n.target.kind !== "GlobalObject") {
+            return {
+                kind: "Keys",
+                target: r(n.target)
+            }
+        }
+        return {
+            kind: "GetKeysOnly",
+            obj: n.target.name
+        }
+    },
     Selection(n, r) {
         switch (n.root.kind) {
             case "GlobalObject":
@@ -198,7 +164,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             case "GlobalObject":
                 switch (n.operation.kind) {
                     case "Push":
-                        throw Error("")
+                        throw Error("Cannot push against globals")
 
                     case "DeleteField":
                         return {
@@ -355,6 +321,33 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ]
             }
         }
+        
+        case "GetKeysOnly": {
+            const collectKey = [
+                ow.popArray,
+                ow.instantiate("_key"),
+                ow.getField({field_depth: 1}),
+                ow.pArrayPush({stack_offset: 1}),
+            ]
+            
+            const evalLength = [
+                ow.ndArrayLen,
+                ow.instantiate(0),
+                ow.equal,
+                ow.conditonallySkipXops(collectKey.length + 1) // jump past the collection and repetition.
+            ]
+
+            return [
+                ow.instantiate([]), // Collect keys here
+                ow.instantiate({}), // No filter conditions,
+                ow.queryStore([n.obj, {_val: false}]), // supress the value
+                ...evalLength,
+                ...collectKey,
+                ow.offsetOpCursor({offset: collectKey.length + evalLength.length, direction: "bwd"}),
+                ow.popStack
+            ]
+        }
+
             
 
         default: return base_compiler(n, compile_function)

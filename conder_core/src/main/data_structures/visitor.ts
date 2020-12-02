@@ -88,6 +88,9 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "Field":                
             return [n.key, n.value]
 
+        case "Keys":
+            return [n.target]
+        
         case "Int":                
         case "GetWholeObject":
         case "Bool":
@@ -96,6 +99,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "None":
         case "Noop":
         case "DeleteField":
+        case "GetKeysOnly":
             return []
         case "ArrayForEach":
             return [n.target, ...n.do]

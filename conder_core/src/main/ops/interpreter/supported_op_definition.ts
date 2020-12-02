@@ -42,6 +42,7 @@ StaticOp<"popArray"> |
 StaticOp<"toBool"> |
 ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
+ParamOp<"pArrayPush", {stack_offset: number}> |
 ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
 StaticOp<"ndArrayLen"> |
@@ -75,7 +76,8 @@ ParamOp<"stringConcat", {nStrings: number, joiner: string}> |
 StaticOp<"nPlus"> |
 StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
-StaticOp<"nMult"> 
+StaticOp<"nMult"> |
+StaticOp<"getKeys">
 
 
 function againstField(
@@ -729,6 +731,29 @@ export const OpSpec: CompleteOpSpec = {
         },
     },
 
+    //Stack top
+    //---The value to be pushed
+    // Position 0
+    // Position 1
+
+    pArrayPush: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            let pushme = ${popStack};
+            let pos = stack.len() - 1 - *op_param;
+            match stack.get_mut(pos).unwrap() {
+                InterpreterType::Array(inner) => {
+                    inner.push(pushme);
+                    None
+                },
+                _ => ${raiseErrorWithMessage("Cannot push on non array")}
+            }
+            `
+        },
+        factoryMethod: ({stack_offset}) => ({kind: "pArrayPush", data: stack_offset})
+    },
+
     assignPreviousToField: {
         opDefinition: {
             paramType: ["String"],
@@ -1006,6 +1031,16 @@ export const OpSpec: CompleteOpSpec = {
     nMult: {
         opDefinition: {
             rustOpHandler: mathOp("*")
+        }
+    },
+    getKeys: {
+        opDefinition: {
+            rustOpHandler: `
+            let mut obj = ${popToObject};
+            let keys = obj.drain().map(|(k, v)| InterpreterType::string(k)).collect();
+            ${pushStack("InterpreterType::Array(keys)")};
+            None
+            `
         }
     }
 }

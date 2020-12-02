@@ -318,6 +318,12 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             })
             return arr
 
+        case "Keys":
+            return [
+                ...full_compiler(n.target),
+                ow.getKeys,   
+            ]
+
         case "Push":
         case "Conditional":
         case "Finally":
