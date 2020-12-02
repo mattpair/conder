@@ -199,10 +199,8 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 case "DeleteField":
                     
                     return [
-                        ...full_compiler(n.root), 
                         ...n.level.flatMap(full_compiler),
-                        ow.deleteField({field_depth: n.level.length}),
-                        ow.overwriteHeap(n.root.index)
+                        ow.deleteSavedField({field_depth: n.level.length, index: n.root.index}),
                     ]
                     
                 default:

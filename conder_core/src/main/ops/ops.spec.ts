@@ -118,11 +118,11 @@ describe("conduit kernel", () => {
       {
         PROCEDURES: {
           delete: [
-            ow.copyFromHeap(0),
+            
             ow.instantiate("l1"),
             ow.instantiate("l2"),
-            ow.deleteField({ field_depth: 2 }),
-            ow.returnStackTop,
+            ow.deleteSavedField({ field_depth: 2, index: 0}),
+            ow.returnVariable(0),
           ],
         },
       }

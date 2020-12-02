@@ -65,7 +65,7 @@ ParamOp<"setField", {field_depth: number}> |
 ParamOp<"setSavedField", {field_depth: number, index: number}> | 
 ParamOp<"getField", {field_depth: number}> |
 ParamOp<"getSavedField", {field_depth: number, index: number}> |
-ParamOp<"deleteField", {field_depth: number}> |
+ParamOp<"deleteSavedField", {field_depth: number, index: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
@@ -78,7 +78,7 @@ StaticOp<"nMult">
 
 
 function againstField(
-    action: "get" | "overwrite",
+    action: "get" | "overwrite" | "delete",
     data: {depth: string, location: {save: string} | "stack"}): string {
     
     const mut = action === "get" ? "" : "_mut"
@@ -116,6 +116,17 @@ function againstField(
                     _ => panic!("Cannot index object with this type")
                 },
                 _ => panic!("cannot overwrite type")   
+            };
+            `
+            break
+        case "delete":
+            withLastField = `
+            match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.remove(&s),
+                    _ => panic!("Cannot index object with this type")
+                },
+                _ => panic!("cannot delete type")   
             };
             `
     }
@@ -364,43 +375,12 @@ export const OpSpec: CompleteOpSpec = {
         },
         factoryMethod: ({field_depth, index}) => ({kind: "getSavedField", data: [field_depth, index]})
     },
-    deleteField: {
+    deleteSavedField: {
         opDefinition: {
-            paramType: ["usize"],
-            rustOpHandler: `
-            let mut fields = Vec::with_capacity(*op_param);
-            for n in 1..=*op_param {
-                fields.push(${popToString});
-            }
-            let mut object = ${popToObject};
-            let mut destructured = Vec::with_capacity(*op_param);
-            
-            while fields.len() > 1 {
-                let removed_field = fields.pop().unwrap();
-                let removed = match object.remove(&removed_field).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
-                };
-                destructured.push((object, removed_field));
-                object = removed;
-            }
-            if let Some(last) = fields.pop() {
-                object.remove(&last);
-                destructured.push((object, "".to_string()));
-            }
-
-            while destructured.len() > 1 {
-                let child = destructured.pop().unwrap().0;
-                let mut parent_tuple = destructured.pop().unwrap();
-                parent_tuple.0.insert(parent_tuple.1.clone(), InterpreterType::Object(child));
-                destructured.push(parent_tuple);
-            }
-
-            ${pushStack(`InterpreterType::Object(destructured.pop().unwrap().0)`)};
-            None
-            `
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("delete", {depth: "*param0", location: {save: "*param1"}})
         },
-        factoryMethod: ({field_depth}) => ({kind: "deleteField", data: field_depth})
+        factoryMethod: ({field_depth, index}) => ({kind: "deleteSavedField", data: [field_depth, index]})
     },
 
     fieldExists: {
