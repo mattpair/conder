@@ -62,6 +62,7 @@ StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
 ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
+ParamOp<"setSavedField", {field_depth: number, index: number}> | 
 ParamOp<"getField", {field_depth: number}> |
 ParamOp<"getSavedField", {field_depth: number, index: number}> |
 ParamOp<"deleteField", {field_depth: number}> |
@@ -77,49 +78,70 @@ StaticOp<"nMult">
 
 
 function againstField(
-    action: "get" | "mut",
+    action: "get" | "overwrite",
     data: {depth: string, location: {save: string} | "stack"}): string {
-        const mut = action === "get" ? "" : "_mut"
-    return `
-            let mut fields = Vec::with_capacity(${data.depth});
-            for n in 1..=${data.depth} {
-                fields.push(${popStack});
-            }
-            let (last_field, mut leading_fields) = fields.split_first_mut().unwrap();
-            leading_fields.reverse();
-            let mut o_or_a = ${data.location === "stack" ? `stack.last${mut}().unwrap()` : `heap.get${mut}(${data.location.save}).unwrap()`};
-            for f in leading_fields {
-                o_or_a = match o_or_a {
-                    InterpreterType::Object(o) => match f {
-                        InterpreterType::string(s) => o.get${mut}(s).unwrap(),
-                        _ => panic!("Cannot index object with this type")
-                    },
-                    InterpreterType::Array(a) => match f {
-                        InterpreterType::int(i) => a.get${mut}(*i as usize).unwrap(),
-                        InterpreterType::double(d) => a.get${mut}(*d as usize).unwrap(),
-                        _ => panic!("Cannot index array with type")
-                    },
-                    _ => panic!("cannot index into type")
-                };
-            }
-
+    
+    const mut = action === "get" ? "" : "_mut"
+    
+    let atStart: string = ''
+    let withLastField: string = ""
+    switch (action) {
+        case "get":
+            withLastField = `
             let push = match o_or_a {
                 InterpreterType::Object(o) => match last_field {
-                    InterpreterType::string(s) => match o.get${mut}(s) {
+                    InterpreterType::string(s) => match o.get${mut}(&s) {
                         Some(val) => val.clone(),
                         None => InterpreterType::None 
                     },
                     _ => panic!("Cannot index object with this type")
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => a.get${mut}(*i as usize).unwrap(),
-                    InterpreterType::double(d) => a.get${mut}(*d as usize).unwrap(),
+                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
                     _ => panic!("Cannot index array with type")
                 }.clone(),
                 _ => panic!("cannot index into type")   
             };
             ${data.location === "stack" ? popStack : ""};
             ${pushStack(`push`)};
+            `
+            break
+        case "overwrite":
+            atStart = `let set_to = ${popStack};`
+            withLastField = `
+            match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.insert(s, set_to),
+                    _ => panic!("Cannot index object with this type")
+                },
+                _ => panic!("cannot overwrite type")   
+            };
+            `
+    }
+
+    return `
+            ${atStart}
+            let mut fields = stack.split_off(stack.len() - ${data.depth});
+            let last_field = fields.pop().unwrap();
+    
+            let mut o_or_a = ${data.location === "stack" ? `stack.last${mut}().unwrap()` : `heap.get${mut}(${data.location.save}).unwrap()`};
+            for f in fields {
+                o_or_a = match o_or_a {
+                    InterpreterType::Object(o) => match f {
+                        InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                        _ => panic!("Cannot index object with this type")
+                    },
+                    InterpreterType::Array(a) => match f {
+                        InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                        InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                        _ => panic!("Cannot index array with type")
+                    },
+                    _ => panic!("cannot index into type")
+                };
+            }
+            ${withLastField}
+            
             None`
 }
 
@@ -300,27 +322,16 @@ export const OpSpec: CompleteOpSpec = {
     setField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: `
-            let setTo = ${popStack};
-            let mut fields = Vec::with_capacity(*op_param);
-            for n in 1..=*op_param {
-                fields.push(${popToString});
-            }
-            let mut original = ${popToObject};
-
-            let mut target = &mut original;
-            while fields.len() > 1 {
-                target = match target.get_mut(&fields.pop().unwrap()).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
-                };
-            }
-            target.insert(fields.pop().unwrap(), setTo);
-            ${pushStack("InterpreterType::Object(original)")};
-            None
-            `
+            rustOpHandler: againstField("overwrite", {depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
+    },
+    setSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("overwrite", {depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "setSavedField", data: [field_depth, index]})
     },
 
     stringConcat: {

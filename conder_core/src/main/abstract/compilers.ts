@@ -180,7 +180,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         
         case "Field":
             return [
-                ...full_compiler(n.key),
+                ...full_compiler(n.key),                
                 ...full_compiler(n.value),
                 ow.setField({field_depth: 1})
             ]
@@ -198,7 +198,6 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
 
                 case "DeleteField":
                     
-                    // n.target.
                     return [
                         ...full_compiler(n.root), 
                         ...n.level.flatMap(full_compiler),
@@ -214,11 +213,9 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                         ]
                     }
                     return [
-                        ...full_compiler(n.root),
                         ...n.level.flatMap(full_compiler),
-                        ...full_compiler(n.operation),
-                        ow.setField({field_depth: n.level.length}),
-                        ow.overwriteHeap(n.root.index)
+                        ...full_compiler(n.operation),                        
+                        ow.setSavedField({field_depth: n.level.length, index: n.root.index}),
                     ]
             }
         case "Selection":
