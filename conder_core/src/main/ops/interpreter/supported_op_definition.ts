@@ -42,6 +42,7 @@ StaticOp<"popArray"> |
 StaticOp<"toBool"> |
 ParamOp<"moveStackToHeapArray", number> |
 StaticOp<"arrayPush"> |
+ParamOp<"pArrayPush", {stack_offset: number}> |
 ParamOp<"assignPreviousToField", string> |
 StaticOp<"arrayLen"> |
 StaticOp<"ndArrayLen"> |
@@ -728,6 +729,29 @@ export const OpSpec: CompleteOpSpec = {
             }
             `
         },
+    },
+
+    //Stack top
+    //---The value to be pushed
+    // Position 0
+    // Position 1
+
+    pArrayPush: {
+        opDefinition: {
+            paramType: ["usize"],
+            rustOpHandler: `
+            let pushme = ${popStack};
+            let pos = stack.len() - 1 - *op_param;
+            match stack.get_mut(pos).unwrap() {
+                InterpreterType::Array(inner) => {
+                    inner.push(pushme);
+                    None
+                },
+                _ => ${raiseErrorWithMessage("Cannot push on non array")}
+            }
+            `
+        },
+        factoryMethod: ({stack_offset}) => ({kind: "pArrayPush", data: stack_offset})
     },
 
     assignPreviousToField: {

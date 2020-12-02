@@ -151,6 +151,13 @@ Map {
 }
 `;
 
+exports[`global objects can get keys from global objects: Required locks 1`] = `
+Map {
+  "getKeys" => Map {},
+  "setKeys" => Map {},
+}
+`;
+
 exports[`global objects getting a key returns the value: Required locks 1`] = `
 Map {
   "get" => Map {},

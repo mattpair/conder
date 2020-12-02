@@ -57,22 +57,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     ArrayForEach(n, r) {
-        if (n.target.kind === "GlobalObject") {
-            throw Error(`Cannot iterate over global objects`)
-        }
         return {kind: "ArrayForEach", do: n.do.map(r), target: r(n.target)}
     },
     Conditional(n, r) {
-        if (n.cond.kind === "GlobalObject") {
-            throw Error(`Global objects are not bools`)
-        }
         return {kind: "Conditional", cond: r(n.cond), do: n.do.map(r)}
     },
 
     Comparison(n, r) {
-        if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
-            throw Error(`Global objects are not comparable`)
-        }
         return {
             kind: "Comparison",
             left: r(n.left),
@@ -82,9 +73,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     BoolAlg(n, r) {
-        if (n.left.kind === "GlobalObject" || n.right.kind === "GlobalObject") {
-            throw Error(`Global objects cannot be used in boolean alg`)
-        }
         return {
             kind: "BoolAlg",
             left: r(n.left),
@@ -110,10 +98,6 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     Return(n, r) {
-        if (n.value?.kind === "GlobalObject") {
-            throw Error(`Cannot return global objects`)
-        }
-
         return {
             kind: "Return",
             value: n.value ? r(n.value) : undefined
@@ -121,10 +105,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
 
     Save(n, r) {
-        if (n.value.kind === "GlobalObject") {
-            throw Error(`Cannot save global objects`)
-        }
-
+        
         return {
             kind: "Save",
             value: r(n.value)
@@ -183,7 +164,7 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             case "GlobalObject":
                 switch (n.operation.kind) {
                     case "Push":
-                        throw Error("")
+                        throw Error("Cannot push against globals")
 
                     case "DeleteField":
                         return {
@@ -342,13 +323,29 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
         }
         
         case "GetKeysOnly": {
-            throw Error(`Global keys currently not supported`)
-            // return [
-            //     ow.
-            //     ow.instantiate({}), // No filter conditions,
-            //     ow.queryStore([n.obj, {_val: false}]) // supress the value
-                
-            // ]
+            const collectKey = [
+                ow.popArray,
+                ow.instantiate("_key"),
+                ow.getField({field_depth: 1}),
+                ow.pArrayPush({stack_offset: 1}),
+            ]
+            
+            const evalLength = [
+                ow.ndArrayLen,
+                ow.instantiate(0),
+                ow.equal,
+                ow.conditonallySkipXops(collectKey.length + 1) // jump past the collection and repetition.
+            ]
+
+            return [
+                ow.instantiate([]), // Collect keys here
+                ow.instantiate({}), // No filter conditions,
+                ow.queryStore([n.obj, {_val: false}]), // supress the value
+                ...evalLength,
+                ...collectKey,
+                ow.offsetOpCursor({offset: collectKey.length + evalLength.length, direction: "bwd"}),
+                ow.popStack
+            ]
         }
 
             

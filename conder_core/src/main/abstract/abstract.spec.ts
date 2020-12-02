@@ -673,6 +673,33 @@ describe("global objects", () => {
     "requires storage"
     ))
 
+    it("can get keys from global objects", 
+        noInputHarness({
+            getKeys: [{
+                kind: "Return",
+                value: {
+                    kind: "Keys",
+                    target: {
+                        kind: "GlobalObject",
+                        name: TEST_STORE
+                    }
+                }
+            }],
+            setKeys: [{
+                kind: "Update",
+                root: {kind: "GlobalObject", name: TEST_STORE},
+                level: [{kind: "String", value: "k1"}],
+                operation: {kind: "String", value: "v1"}
+            }]
+        },
+        async server => {
+            expect(await server.getKeys()).toEqual([])
+            expect(await server.setKeys()).toBeNull()
+            expect(await server.getKeys()).toEqual(["k1"])
+        },
+        "requires storage")
+    )
+
     const getNested: RootNode[] = [
         {
             kind: "Return", 
