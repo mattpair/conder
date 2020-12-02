@@ -79,7 +79,9 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
 StaticOp<"getKeys">
 
-
+// stack top -> anything you want to pull off in at start
+//              fields
+//              target entity if against stack
 function againstField(
     action: "get" | "overwrite" | "delete" | "push",
     data: {depth: string, location: {save: string} | "stack"}): string {
@@ -381,7 +383,13 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut strings = Vec::with_capacity(*param0);
             for n in 1..=*param0 {
-                strings.push(${popToString});
+                let str = match ${popStack} {
+                    InterpreterType::string(s) => s,
+                    InterpreterType::int(i) => i.to_string(),
+                    InterpreterType::double(d) => d.to_string(),
+                    _ => panic!("Cannot convert to string")
+                };
+                strings.push(str);
             }
             strings.reverse();
             ${pushStack("InterpreterType::string(strings.join(param1))")};

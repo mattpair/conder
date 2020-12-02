@@ -158,6 +158,21 @@ Map {
 }
 `;
 
+exports[`global objects can perform updates to objects within arrays: Required locks 1`] = `
+Map {
+  "init" => Map {},
+  "update" => Map {},
+}
+`;
+
+exports[`global objects can push to arrays in global objects: Required locks 1`] = `
+Map {
+  "init" => Map {},
+  "push" => Map {},
+  "get" => Map {},
+}
+`;
+
 exports[`global objects getting a key returns the value: Required locks 1`] = `
 Map {
   "get" => Map {},

@@ -831,6 +831,118 @@ describe("global objects", () => {
         )
     )
 
+    const arrLevel: PickNode<"String"> = {kind: "String", value: "arr"}
+    it("can push to arrays in global objects", 
+        noInputHarness(
+            {
+                init: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [arrLevel],
+                        operation: {kind: "ArrayLiteral", values: []}
+                    },
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "nested"}],
+                        operation: {kind: "Object", fields: [{kind: 'Field', key: arrLevel, value: {kind: "ArrayLiteral", values: []}}]}
+                    }
+                ],
+                push: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "arr"}],
+                        operation: {kind: "Push", values: [{kind: 'String', value: "HELLO"}]}
+                    },
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "nested"}, arrLevel],
+                        operation: {kind: "Push", values: [{kind: 'String', value: "HELLO"}]}
+                    }
+                ],
+                get: [
+                    {
+                        kind: "Save", value: {kind: "Object", fields: []}
+                    },
+                    {
+                        kind: "ArrayForEach",
+                        target: {kind: "Keys", target: GLOBAL},
+                        do: [
+                            {
+                                kind: "Update", 
+                                root: {kind: "Saved", index: 0},
+                                level: [{kind: "Saved", index: 1}],
+                                operation: {kind: "Selection", root: GLOBAL, level: [{kind: "Saved", index: 1}
+                                ]}
+                            }
+                        ]
+                    },
+                    {
+                        kind: "Return",
+                        value: {kind: 'Saved', index: 0}
+                    }
+                ]
+            }, 
+            async server => {
+                expect(await server.init()).toBeNull()
+                expect(await server.push()).toBeNull()
+                expect(await server.get()).toEqual({arr: ["HELLO"], nested: {arr: ["HELLO"]}})
+            },
+            "requires storage"
+        )
+    )
+
+    it("can perform updates to objects within arrays",
+        noInputHarness(
+            {
+                init: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: 'String', value: "l1"}],
+                        operation: {
+                            kind: "Object",
+                            fields: [{
+                                kind: "Field",
+                                key: {kind: "String", value: "l2"},
+                                value: {
+                                    kind: "ArrayLiteral",
+                                    values: [
+                                        {kind: "Bool", value: false}
+                                    ]
+                                }
+                            }]
+                        }
+                    }
+                ],
+                update: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: 'String', value: "l1"}, {kind: "String", value: "l2"}, {kind: "Int", value: 0}],
+                        operation: {kind: "String", value: "ow"}
+                    },
+                    {
+                        kind: "Return",
+                        value: {
+                            kind: "Selection",
+                            root: GLOBAL,
+                            level: [{kind: 'String', value: "l1"}, {kind: "String", value: "l2"}, {kind: "Int", value: 0}]
+                        }
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.init()).toBeNull()
+                expect(await server.update()).toEqual("ow")
+            },
+            "requires storage"
+        )
+    )
+
     describe("iterations", () => {
         it("can iterate over local arrays", () => {
             withInputHarness(
@@ -872,6 +984,8 @@ describe("global objects", () => {
             )
         })
     })
+
+    
 
     describe("race condition possible actions", () => {
         it("can perform updates that depend on global state", noInputHarness(

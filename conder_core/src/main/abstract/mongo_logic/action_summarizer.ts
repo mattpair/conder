@@ -92,6 +92,7 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
             state.endSummaryGroupWith(n.obj, "get")
         }
     },
+    
     GetWholeObject: {
         before: (n, state) => {
 
@@ -130,6 +131,10 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
         after: (n, state) => {
             state.endSummaryGroupWith(n.obj, "mut")
         }
+    },
+    PushAtKeyOnObject: {
+        before: (n, state) => state.startSummaryGroup(),
+        after: (n, state) => state.endSummaryGroupWith(n.obj, "mut")
     },
     Save: {
         before: (n, state, this_visitor) => {

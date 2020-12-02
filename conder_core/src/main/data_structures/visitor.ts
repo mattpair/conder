@@ -106,10 +106,14 @@ function extract_children(n: TargetNodes): TargetNodes[] {
 
         case "ArrayLiteral":
         case "Push":
+        
             return n.values
         case "Else":
         case "Finally":
             return n.do
+    
+        case "PushAtKeyOnObject":
+            return [...n.key, ...n.values]
         default: 
             const ne: never = n
             
