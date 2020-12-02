@@ -66,6 +66,7 @@ ParamOp<"setSavedField", {field_depth: number, index: number}> |
 ParamOp<"getField", {field_depth: number}> |
 ParamOp<"getSavedField", {field_depth: number, index: number}> |
 ParamOp<"deleteSavedField", {field_depth: number, index: number}> |
+ParamOp<"pushSavedField", {field_depth: number, index: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
@@ -78,7 +79,7 @@ StaticOp<"nMult">
 
 
 function againstField(
-    action: "get" | "overwrite" | "delete",
+    action: "get" | "overwrite" | "delete" | "push",
     data: {depth: string, location: {save: string} | "stack"}): string {
     
     const mut = action === "get" ? "" : "_mut"
@@ -129,6 +130,28 @@ function againstField(
                 _ => panic!("cannot delete type")   
             };
             `
+            break
+        case "push":
+            atStart = `let mut push = ${popToArray};`
+            withLastField = `
+            let arr = match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                    _ => panic!("Cannot index object with this type")
+                },
+                InterpreterType::Array(a) => match last_field {
+                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                    _ => panic!("Cannot index array with type")
+                },
+                _ => panic!("cannot index into type")
+            };
+            match arr {
+                InterpreterType::Array(a) => a.append(&mut push),
+                _ => panic!("expected array")
+            };
+            `
+            break
     }
 
     return `
@@ -208,6 +231,11 @@ const popStack = `
 const popToBool = `match ${popStack} {
     InterpreterType::bool(s) => s, 
     _ => panic!("Stack variable is not a bool")
+}
+`
+const popToArray = `match ${popStack} {
+    InterpreterType::Array(a) => a,
+    _ => panic!("Expected an array")
 }
 `
 
@@ -381,6 +409,13 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: againstField("delete", {depth: "*param0", location: {save: "*param1"}})
         },
         factoryMethod: ({field_depth, index}) => ({kind: "deleteSavedField", data: [field_depth, index]})
+    },
+    pushSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("push", {depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "pushSavedField", data: [field_depth, index]})
     },
 
     fieldExists: {

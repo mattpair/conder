@@ -189,12 +189,22 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             
             switch (n.operation.kind) {
                 case "Push": 
-                    return n.operation.values.flatMap(v => {
+                    if (n.level.length > 0) {
                         return [
-                            ...full_compiler(v),
-                            ow.moveStackToHeapArray(n.root.index)
+                            ...n.level.flatMap(full_compiler),
+                            ow.instantiate([]),
+                            ...n.operation.values.flatMap(v => [...full_compiler(v), ow.arrayPush]),
+                            ow.pushSavedField({field_depth: n.level.length, index: n.root.index})
                         ]
-                    })
+
+                    } else {
+                        return n.operation.values.flatMap(v => {
+                            return [
+                                ...full_compiler(v),
+                                ow.moveStackToHeapArray(n.root.index)
+                            ]
+                        })
+                    }
 
                 case "DeleteField":
                     

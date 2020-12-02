@@ -44,6 +44,12 @@ Map {
 }
 `;
 
+exports[`basic functionality allows pushing to nested local arrays: Required locks 1`] = `
+Map {
+  "push" => Map {},
+}
+`;
+
 exports[`basic functionality can compare numbers: Required locks 1`] = `
 Map {
   "geq" => Map {},

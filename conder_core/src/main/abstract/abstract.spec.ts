@@ -458,6 +458,40 @@ describe("basic functionality", () => {
             expect(await server.push(["a"])).toEqual(["a", "hello", 12])
         }
     ))
+    
+    it("allows pushing to nested local arrays", withInputHarness(
+        "no storage",
+        {
+            push: {
+                input: [schemaFactory.Any],
+                computation: [
+                    {
+                        kind: "Update",
+                        root: {kind: "Saved", index: 0},
+                        level: [{kind: "String", value: "array"}],
+                        operation: {
+                            kind: "Push", 
+                            values: [
+                                {kind: "String", value: "hello"},
+                                {kind: "Int", value: 12}
+                            ]
+                        }
+                    },
+                    {
+                        kind: "Return", 
+                        value: {
+                            kind: 'Selection',
+                            root: {kind: "Saved", index: 0},
+                            level: [{kind: "String", value: "array"}]
+                        }
+                    }
+                ],
+            }
+        },
+        async server => {
+            expect(await server.push({array: ["a"]})).toEqual(["a", "hello", 12])
+        }
+    ))
 
     it("allows indexing into arrays with an int", withInputHarness(
         "requires storage",
