@@ -895,6 +895,54 @@ describe("global objects", () => {
         )
     )
 
+    it("can perform updates to objects within arrays",
+        noInputHarness(
+            {
+                init: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: 'String', value: "l1"}],
+                        operation: {
+                            kind: "Object",
+                            fields: [{
+                                kind: "Field",
+                                key: {kind: "String", value: "l2"},
+                                value: {
+                                    kind: "ArrayLiteral",
+                                    values: [
+                                        {kind: "Bool", value: false}
+                                    ]
+                                }
+                            }]
+                        }
+                    }
+                ],
+                update: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: 'String', value: "l1"}, {kind: "String", value: "l2"}, {kind: "Int", value: 0}],
+                        operation: {kind: "String", value: "ow"}
+                    },
+                    {
+                        kind: "Return",
+                        value: {
+                            kind: "Selection",
+                            root: GLOBAL,
+                            level: [{kind: 'String', value: "l1"}, {kind: "String", value: "l2"}, {kind: "Int", value: 0}]
+                        }
+                    }
+                ]
+            },
+            async server => {
+                expect(await server.init()).toBeNull()
+                expect(await server.update()).toEqual("ow")
+            },
+            "requires storage"
+        )
+    )
+
     describe("iterations", () => {
         it("can iterate over local arrays", () => {
             withInputHarness(
@@ -936,6 +984,8 @@ describe("global objects", () => {
             )
         })
     })
+
+    
 
     describe("race condition possible actions", () => {
         it("can perform updates that depend on global state", noInputHarness(
