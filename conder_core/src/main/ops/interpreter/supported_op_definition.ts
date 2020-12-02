@@ -62,8 +62,11 @@ StaticOp<"boolOr"> |
 ParamOp<"raiseError", string> | 
 ParamOp<"assertHeapLen", number> |
 ParamOp<"setField", {field_depth: number}> | 
+ParamOp<"setSavedField", {field_depth: number, index: number}> | 
 ParamOp<"getField", {field_depth: number}> |
-ParamOp<"deleteField", {field_depth: number}> |
+ParamOp<"getSavedField", {field_depth: number, index: number}> |
+ParamOp<"deleteSavedField", {field_depth: number, index: number}> |
+ParamOp<"pushSavedField", {field_depth: number, index: number}> |
 StaticOp<"fieldExists"> | 
 ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
@@ -74,6 +77,107 @@ StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
 StaticOp<"nMult"> 
 
+
+function againstField(
+    action: "get" | "overwrite" | "delete" | "push",
+    data: {depth: string, location: {save: string} | "stack"}): string {
+    
+    const mut = action === "get" ? "" : "_mut"
+    
+    let atStart: string = ''
+    let withLastField: string = ""
+    switch (action) {
+        case "get":
+            withLastField = `
+            let push = match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => match o.get${mut}(&s) {
+                        Some(val) => val.clone(),
+                        None => InterpreterType::None 
+                    },
+                    _ => panic!("Cannot index object with this type")
+                },
+                InterpreterType::Array(a) => match last_field {
+                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                    _ => panic!("Cannot index array with type")
+                }.clone(),
+                _ => panic!("cannot index into type")   
+            };
+            ${data.location === "stack" ? popStack : ""};
+            ${pushStack(`push`)};
+            `
+            break
+        case "overwrite":
+            atStart = `let set_to = ${popStack};`
+            withLastField = `
+            match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.insert(s, set_to),
+                    _ => panic!("Cannot index object with this type")
+                },
+                _ => panic!("cannot overwrite type")   
+            };
+            `
+            break
+        case "delete":
+            withLastField = `
+            match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.remove(&s),
+                    _ => panic!("Cannot index object with this type")
+                },
+                _ => panic!("cannot delete type")   
+            };
+            `
+            break
+        case "push":
+            atStart = `let mut push = ${popToArray};`
+            withLastField = `
+            let arr = match o_or_a {
+                InterpreterType::Object(o) => match last_field {
+                    InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                    _ => panic!("Cannot index object with this type")
+                },
+                InterpreterType::Array(a) => match last_field {
+                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                    _ => panic!("Cannot index array with type")
+                },
+                _ => panic!("cannot index into type")
+            };
+            match arr {
+                InterpreterType::Array(a) => a.append(&mut push),
+                _ => panic!("expected array")
+            };
+            `
+            break
+    }
+
+    return `
+            ${atStart}
+            let mut fields = stack.split_off(stack.len() - ${data.depth});
+            let last_field = fields.pop().unwrap();
+    
+            let mut o_or_a = ${data.location === "stack" ? `stack.last${mut}().unwrap()` : `heap.get${mut}(${data.location.save}).unwrap()`};
+            for f in fields {
+                o_or_a = match o_or_a {
+                    InterpreterType::Object(o) => match f {
+                        InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                        _ => panic!("Cannot index object with this type")
+                    },
+                    InterpreterType::Array(a) => match f {
+                        InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
+                        InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                        _ => panic!("Cannot index array with type")
+                    },
+                    _ => panic!("cannot index into type")
+                };
+            }
+            ${withLastField}
+            
+            None`
+}
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
 
@@ -127,6 +231,11 @@ const popStack = `
 const popToBool = `match ${popStack} {
     InterpreterType::bool(s) => s, 
     _ => panic!("Stack variable is not a bool")
+}
+`
+const popToArray = `match ${popStack} {
+    InterpreterType::Array(a) => a,
+    _ => panic!("Expected an array")
 }
 `
 
@@ -252,27 +361,16 @@ export const OpSpec: CompleteOpSpec = {
     setField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: `
-            let setTo = ${popStack};
-            let mut fields = Vec::with_capacity(*op_param);
-            for n in 1..=*op_param {
-                fields.push(${popToString});
-            }
-            let mut original = ${popToObject};
-
-            let mut target = &mut original;
-            while fields.len() > 1 {
-                target = match target.get_mut(&fields.pop().unwrap()).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
-                };
-            }
-            target.insert(fields.pop().unwrap(), setTo);
-            ${pushStack("InterpreterType::Object(original)")};
-            None
-            `
+            rustOpHandler: againstField("overwrite", {depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "setField", data: field_depth})
+    },
+    setSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("overwrite", {depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "setSavedField", data: [field_depth, index]})
     },
 
     stringConcat: {
@@ -294,66 +392,30 @@ export const OpSpec: CompleteOpSpec = {
     getField: {
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: `
-            let mut fields = Vec::with_capacity(*op_param);
-            for n in 1..=*op_param {
-                fields.push(${popToString});
-            }
-            let mut object = ${popToObject};
-
-            while fields.len() > 1 {
-                object = match object.remove(&fields.pop().unwrap()).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
-                };
-            }
-
-            ${pushStack(`match object.remove(&fields.pop().unwrap()) {
-                Some(o) => o,
-                None => InterpreterType::None
-            }`)};
-            None
-            `
+            rustOpHandler: againstField("get", {depth: "*op_param", location: "stack"})
         },
         factoryMethod: ({field_depth}) => ({kind: "getField", data: field_depth})
     },
-    deleteField: {
+    getSavedField: {
         opDefinition: {
-            paramType: ["usize"],
-            rustOpHandler: `
-            let mut fields = Vec::with_capacity(*op_param);
-            for n in 1..=*op_param {
-                fields.push(${popToString});
-            }
-            let mut object = ${popToObject};
-            let mut destructured = Vec::with_capacity(*op_param);
-            
-            while fields.len() > 1 {
-                let removed_field = fields.pop().unwrap();
-                let removed = match object.remove(&removed_field).unwrap() {
-                    InterpreterType::Object(obj) => obj,
-                    _ => panic!("not an object")
-                };
-                destructured.push((object, removed_field));
-                object = removed;
-            }
-            if let Some(last) = fields.pop() {
-                object.remove(&last);
-                destructured.push((object, "".to_string()));
-            }
-
-            while destructured.len() > 1 {
-                let child = destructured.pop().unwrap().0;
-                let mut parent_tuple = destructured.pop().unwrap();
-                parent_tuple.0.insert(parent_tuple.1.clone(), InterpreterType::Object(child));
-                destructured.push(parent_tuple);
-            }
-
-            ${pushStack(`InterpreterType::Object(destructured.pop().unwrap().0)`)};
-            None
-            `
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("get", {depth: "*param0", location: {save: "*param1"}})
         },
-        factoryMethod: ({field_depth}) => ({kind: "deleteField", data: field_depth})
+        factoryMethod: ({field_depth, index}) => ({kind: "getSavedField", data: [field_depth, index]})
+    },
+    deleteSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("delete", {depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "deleteSavedField", data: [field_depth, index]})
+    },
+    pushSavedField: {
+        opDefinition: {
+            paramType: ["usize", "usize"],
+            rustOpHandler: againstField("push", {depth: "*param0", location: {save: "*param1"}})
+        },
+        factoryMethod: ({field_depth, index}) => ({kind: "pushSavedField", data: [field_depth, index]})
     },
 
     fieldExists: {

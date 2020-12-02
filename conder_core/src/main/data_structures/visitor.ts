@@ -73,23 +73,20 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "DeleteKeyOnObject":
             return n.key
 
-        case "GetField":
-            return [n.target, ...n.field_name]
+        case "Selection":
+            return [n.root, ...n.level]
 
         case "FieldExists":
             return [n.value, n.field]
-
-        case "DeleteField":
-            return n.field_name
         
         case "keyExists":
             return [n.key]
         case "Update":
-            return [n.target, n.operation]
+            return [n.root, n.operation]
         case "SetKeyOnObject":
             return [...n.key, n.value]
-        case "SetField":                
-            return [...n.field_name, n.value]
+        case "Field":                
+            return [n.key, n.value]
 
         case "Int":                
         case "GetWholeObject":
@@ -98,11 +95,13 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "Saved":
         case "None":
         case "Noop":
+        case "DeleteField":
             return []
         case "ArrayForEach":
             return [n.target, ...n.do]
 
         case "ArrayLiteral":
+        case "Push":
             return n.values
         case "Else":
         case "Finally":

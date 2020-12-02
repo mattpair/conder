@@ -178,38 +178,64 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "Saved":
             return [ow.copyFromHeap(n.index)]
         
-        case "SetField":
+        case "Field":
             return [
-                ...n.field_name.flatMap(full_compiler),
+                ...full_compiler(n.key),                
                 ...full_compiler(n.value),
-                ow.setField({field_depth: n.field_name.length})
+                ow.setField({field_depth: 1})
             ]
 
         case "Update":
             
             switch (n.operation.kind) {
-                case "SetField":
-                case "DeleteField":
+                case "Push": 
+                    if (n.level.length > 0) {
+                        return [
+                            ...n.level.flatMap(full_compiler),
+                            ow.instantiate([]),
+                            ...n.operation.values.flatMap(v => [...full_compiler(v), ow.arrayPush]),
+                            ow.pushSavedField({field_depth: n.level.length, index: n.root.index})
+                        ]
 
+                    } else {
+                        return n.operation.values.flatMap(v => {
+                            return [
+                                ...full_compiler(v),
+                                ow.moveStackToHeapArray(n.root.index)
+                            ]
+                        })
+                    }
+
+                case "DeleteField":
+                    
                     return [
-                        ...full_compiler(n.target), 
-                        ...full_compiler(n.operation),
-                        ow.overwriteHeap(n.target.index)
+                        ...n.level.flatMap(full_compiler),
+                        ow.deleteSavedField({field_depth: n.level.length, index: n.root.index}),
                     ]
                     
-                default: 
+                default:
+                    if (n.level.length === 0) {
+                        return [
+                            ...full_compiler(n.operation),
+                            ow.overwriteHeap(n.root.index)
+                        ]
+                    }
                     return [
-                        ...full_compiler(n.operation),
-                        ow.overwriteHeap(n.target.index)
+                        ...n.level.flatMap(full_compiler),
+                        ...full_compiler(n.operation),                        
+                        ow.setSavedField({field_depth: n.level.length, index: n.root.index}),
                     ]
             }
-        case "GetField":
+        case "Selection":
+            if (n.level.length > 0) {
+                return [
+                    ...n.level.flatMap(full_compiler),
+                    ow.getSavedField({field_depth: n.level.length, index: n.root.index})
+                ]
+            } else {
+                return full_compiler(n.root)
+            }
             
-            return [
-                ...full_compiler(n.target),
-                ...n.field_name.flatMap(full_compiler),
-                ow.getField({field_depth: n.field_name.length})
-            ]
         case "If":{
             const wellFormed = create_well_formed_branch(n)
             const fin = wellFormed.pop().do.flatMap(full_compiler)
@@ -253,23 +279,8 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 }),
                 ...fin
             ]
-            // n.conditionally.f
-            // const ifTrue = full_compiler(n.ifTrue)
-            // const elseOps = n.else ? full_compiler(n.else) : [ow.noop]
-            // return [
-            //     ...ifTrue,
-            //     ow.offsetOpCursor(elseOps.length),
-            //     ...elseOps,
-            //     ...n.finally ? full_compiler(n.finally) : [ow.noop] // give the opOffset somewhere to land.
-            // ]
         }
 
-        case "DeleteField": {
-            return [
-                ...n.field_name.flatMap(full_compiler),
-                ow.deleteField({field_depth: n.field_name.length}),
-            ]
-        }
         case "Noop": 
             return [ow.noop]
         case "None":
@@ -307,10 +318,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             })
             return arr
 
+        case "Push":
         case "Conditional":
         case "Finally":
         case "Else":
-            throw Error(`${n.kind} should be compiled within if`)
+        case "DeleteField": 
+
+            throw Error(`${n.kind} should be compiled within parent`)
         default: Utils.assertNever(n)
     }
 }

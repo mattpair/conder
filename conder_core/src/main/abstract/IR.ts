@@ -1,7 +1,7 @@
 import { AnyOpInstance, Utils } from '../ops/index';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
-type ValueNode = PickNode<
+export type ValueNode = PickNode<
     "Bool" | 
     "Object" | 
     "Comparison" | 
@@ -10,23 +10,22 @@ type ValueNode = PickNode<
     "Saved" | 
     "String" |
     "FieldExists" |
-    "GetField" |
+    "Selection" |
     "GlobalObject" | 
     "Math" |
     "None" |
     "ArrayLiteral"
     >
 
-
+export type Key = PickNode<"String" | "Saved">
 export type AbstractNodes = PickNode<"GlobalObject">
 
 export type BaseNodeDefs = {
     Return: Node<{value?: ValueNode}, "root">
     Bool: Node<{value: boolean}>
-    SetField: Node<{field_name: PickNode<"String" | "Saved">[], value: ValueNode}>
-    GetField: Node<{field_name: PickNode<"String" | "Saved">[], target: PickNode<"Saved" | "GlobalObject">}>,
-    DeleteField: Node<{field_name: PickNode<"String" | "Saved">[]}>,
-    Object: Node<{fields: PickNode<"SetField">[]}>
+    DeleteField: Node<{}>,
+    Field: Node<{key: Key, value: ValueNode}>
+    Object: Node<{fields: PickNode<"Field">[]}>
     Int: Node<{value: number}> 
     None: Node<{}>
     Comparison: Node<
@@ -54,16 +53,20 @@ export type BaseNodeDefs = {
 
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
-    String: Node<{value: string}>
-    FieldExists: Node<{value: ValueNode, field: PickNode<"String">}>
+    String: Node<{value: string}>,
+    Selection: Node<{root: PickNode<"Saved" | "GlobalObject">, level: ValueNode[]}>
+    FieldExists: Node<{value: ValueNode, field: Key}>
     Save: Node<{value: ValueNode}, "root">
-    Update: Node<{
-        target: PickNode<"Saved" | "GlobalObject">, 
-        operation: PickNode<"SetField" | "DeleteField"> | ValueNode,
+    Update: Node<
+    {
+        root: PickNode<"Selection">["root"]
+        level: PickNode<"Selection">["level"]
+        operation: PickNode<"DeleteField" | "Push"> | ValueNode,
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
     ArrayLiteral: Node<{values: ValueNode[]}>
+    Push: Node<{values: ValueNode[]}>
 }
 
 export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 
@@ -127,7 +130,8 @@ export type BaseNodesFromTargetSet<TS extends NodeSet> = TargetNode<PickNode<Any
 
 export type PickTargetNode<R extends NodeSet, K extends keyof R | AnyBaseNonAbstractKey> = Extract<TargetNodeSet<R>, {kind: K}>
 
-type GenericReplacer<R extends NodeSet> = <K extends AnyBaseNonAbstractKey>(n: PickNode<K>) => PickTargetNode<R, K>
+type ReplacerReturnType<R extends NodeSet, K extends AnyNode["kind"]> = K extends AbstractNodes["kind"] ? never : PickTargetNode<R, K>
+type GenericReplacer<R extends NodeSet> = <K extends AnyNode["kind"]>(n: PickNode<K>) => ReplacerReturnType<R, K>
 type ReplacerFunction<K extends AnyBaseNonAbstractKey, R extends NodeSet> = (n: PickNode<K>, r: GenericReplacer<R>) => (PickTargetNode<R, K> | AnyNodeFromSet<R>)
 export type RequiredReplacer<R extends NodeSet> =  {
     [K in AbstractNodeReplacerPairs<R>["kind"]]: ReplacerFunction<K, R>
@@ -144,7 +148,7 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     String: n => n,
     DeleteField: n => n,
     None: _ => _,
-    Noop: _ => _
+    Noop: _ => _,
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
@@ -153,6 +157,10 @@ export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): Gen
         if (n === undefined) {
             return n
         }
+        if (n.kind === "GlobalObject") {
+            throw Error(`Unexpected global object`)
+        }
+        //@ts-ignore
         return requiresGeneric[n.kind](n as any, generic) as any 
     }
     return generic

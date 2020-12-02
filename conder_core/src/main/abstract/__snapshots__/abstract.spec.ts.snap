@@ -32,6 +32,24 @@ Map {
 }
 `;
 
+exports[`basic functionality allows indexing into arrays with an int: Required locks 1`] = `
+Map {
+  "getFirst" => Map {},
+}
+`;
+
+exports[`basic functionality allows pushing to local arrays: Required locks 1`] = `
+Map {
+  "push" => Map {},
+}
+`;
+
+exports[`basic functionality allows pushing to nested local arrays: Required locks 1`] = `
+Map {
+  "push" => Map {},
+}
+`;
+
 exports[`basic functionality can compare numbers: Required locks 1`] = `
 Map {
   "geq" => Map {},
@@ -110,6 +128,13 @@ Map {
   "delete" => Map {},
   "set" => Map {},
   "get" => Map {},
+}
+`;
+
+exports[`global objects allows getting a key with a number key: Required locks 1`] = `
+Map {
+  "get" => Map {},
+  "set" => Map {},
 }
 `;
 
