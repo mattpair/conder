@@ -24,6 +24,12 @@ Map {
 }
 `;
 
+exports[`basic functionality allows gathering of keys on objects: Required locks 1`] = `
+Map {
+  "getKeys" => Map {},
+}
+`;
+
 exports[`basic functionality allows if statements: Required locks 1`] = `
 Map {
   "ifTrue" => Map {},

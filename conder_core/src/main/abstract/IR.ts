@@ -14,7 +14,8 @@ export type ValueNode = PickNode<
     "GlobalObject" | 
     "Math" |
     "None" |
-    "ArrayLiteral"
+    "ArrayLiteral" |
+    "Keys"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -65,6 +66,7 @@ export type BaseNodeDefs = {
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
+    Keys: Node<{target: ValueNode}>
     ArrayLiteral: Node<{values: ValueNode[]}>
     Push: Node<{values: ValueNode[]}>
 }

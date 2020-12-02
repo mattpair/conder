@@ -11,6 +11,7 @@ export type MongoNodeSet = {
     keyExists: Node<{obj: string, key: TargetKeys[0]}>
     SetKeyOnObject: Node<{obj: string, key: TargetKeys, value: PickTargetNode<MongoNodeSet, Exclude<ValueNode["kind"], "GlobalObject">>}>,
     DeleteKeyOnObject: Node<{obj: string, key: TargetKeys}>
+    GetKeysOnly: Node<{obj: string}>
 }
 
 const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
@@ -131,34 +132,18 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     
 
-    // SetField(n, r): PickTargetNode<MongoNodeSet, "SetField"> {
-    //     if (n.value.kind === "GlobalObject") {
-    //         throw Error("cannot set values from global objects")
-    //     }
-    //     return {
-    //         kind: "SetField",
-    //         field_name: n.field_name.map(r),
-    //         value: r(n.value)
-    //     }
-    // },
-    // GetField(n, r) {
-    //     switch (n.target.kind) {
-    //         case "GlobalObject":
-    //             return {
-    //                 kind: "GetKeyFromObject",
-    //                 obj: n.target.name,
-    //                 key: n.field_name.map(r)
-    //             }
-    //         case "Saved":
-    //             return {
-    //                 kind: "GetField",
-    //                 target: n.target,
-    //                 field_name: n.field_name.map(r)
-    //             }
-    //     }
-    
-    // },
-
+    Keys(n, r) {
+        if (n.target.kind !== "GlobalObject") {
+            return {
+                kind: "Keys",
+                target: r(n.target)
+            }
+        }
+        return {
+            kind: "GetKeysOnly",
+            obj: n.target.name
+        }
+    },
     Selection(n, r) {
         switch (n.root.kind) {
             case "GlobalObject":
@@ -355,6 +340,17 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ]
             }
         }
+        
+        case "GetKeysOnly": {
+            throw Error(`Global keys currently not supported`)
+            // return [
+            //     ow.
+            //     ow.instantiate({}), // No filter conditions,
+            //     ow.queryStore([n.obj, {_val: false}]) // supress the value
+                
+            // ]
+        }
+
             
 
         default: return base_compiler(n, compile_function)

@@ -75,7 +75,8 @@ ParamOp<"stringConcat", {nStrings: number, joiner: string}> |
 StaticOp<"nPlus"> |
 StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
-StaticOp<"nMult"> 
+StaticOp<"nMult"> |
+StaticOp<"getKeys">
 
 
 function againstField(
@@ -1006,6 +1007,16 @@ export const OpSpec: CompleteOpSpec = {
     nMult: {
         opDefinition: {
             rustOpHandler: mathOp("*")
+        }
+    },
+    getKeys: {
+        opDefinition: {
+            rustOpHandler: `
+            let mut obj = ${popToObject};
+            let keys = obj.drain().map(|(k, v)| InterpreterType::string(k)).collect();
+            ${pushStack("InterpreterType::Array(keys)")};
+            None
+            `
         }
     }
 }

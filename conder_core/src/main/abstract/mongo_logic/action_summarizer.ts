@@ -100,6 +100,13 @@ const SUMMARIZER_SUBSCRIPTIONS: Subscriptions<IntuitiveSummarizerState, keyof Mo
             state.may_perform_any_or_all.push({kind: "get", id: n.name})
         }
     },
+
+    GetKeysOnly: {
+        before: _ => {},
+        after: (n, state) => {
+            state.may_perform_any_or_all.push({kind: "get", id: n.obj})
+        }
+    },
     keyExists: {
         before: (n, state) => {
             state.startSummaryGroup()

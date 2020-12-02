@@ -186,6 +186,29 @@ describe("basic functionality", () => {
             }
         )
     )
+
+    it("allows gathering of keys on objects",
+            withInputHarness(
+                "no storage",
+                {
+                    getKeys: {
+                        input: [schemaFactory.Object({
+                            a: schemaFactory.Any
+                        })],
+                        computation: [
+                            {kind: "Return", value: {
+                                kind: "Keys",
+                                target: {kind: "Saved", index: 0}
+                            }}
+                        ]
+                    }
+                },
+                async server => {
+                    expect(await server.getKeys({a: "yada yada"})).toEqual(["a"])
+                }
+            )
+    )
+
     it("allows deleting of nested fields on locals",
         withInputHarness(
             "no storage", 
