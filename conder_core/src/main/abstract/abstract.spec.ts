@@ -608,6 +608,7 @@ describe("global objects", () => {
         }, 
         "requires storage")
     )
+
     const set: RootNode[] = [{
         kind: "Update",
         root: GLOBAL,
@@ -626,16 +627,20 @@ describe("global objects", () => {
     it("getting a key returns the value",
         noInputHarness({
             get,
-            set
+            set,
+            getWhole: [
+                {kind: "Return", value: {kind: "Selection", level: [], root: GLOBAL}}
+            ]
         },
         async server => {
             expect(await server.set()).toBeNull()
             expect(await server.get()).toEqual({l2: 42})
-
+            expect(await server.getWhole()).toEqual({l1: {l2: 42}})
         },
         "requires storage"
         )
     )
+
 
     it("allows getting a key with a number key", noInputHarness({
         get: [
