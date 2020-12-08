@@ -1,5 +1,5 @@
 #!/bin/zsh
-export CONDER_VERSION=0.1.3
+export CONDER_VERSION=0.1.4
 
 cd conder_core/
 npm run compile
