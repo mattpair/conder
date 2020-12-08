@@ -527,7 +527,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `match heap.get(*op_param) {
                 Some(d) => {${pushStack("d.clone()")}; None},
-                None => ${raiseErrorWithMessage("Echoing variable that does not exist")}
+                None => Some(format!("Echoing variable that does not exist {}", *op_param))
             }`
         }
     },
