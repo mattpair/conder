@@ -177,6 +177,7 @@ exports[`global objects getting a key returns the value: Required locks 1`] = `
 Map {
   "get" => Map {},
   "set" => Map {},
+  "getWhole" => Map {},
 }
 `;
 

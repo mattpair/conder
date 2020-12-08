@@ -130,11 +130,19 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     Selection(n, r) {
         switch (n.root.kind) {
             case "GlobalObject":
-                return {
-                    kind: "GetKeyFromObject",
-                    obj: n.root.name,
-                    key: n.level.map(r)
+                if (n.level.length > 0) {
+                    return {
+                        kind: "GetKeyFromObject",
+                        obj: n.root.name,
+                        key: n.level.map(r)
+                    }
+                } else {
+                    return {
+                        kind: "GetWholeObject",
+                        name: n.root.name
+                    }
                 }
+                
             case "Saved":
                 return {
                     kind: "Selection",
@@ -209,10 +217,13 @@ type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
 
 function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
     switch (n.kind) {
-        case "GetWholeObject":
-            throw Error("can't actually compile")
+        case "GetWholeObject": 
+            return [
+                ow.getAllFromStore(n.name),
+                ow.repackageCollection
+            ]
         
-        // Assume key depth is one
+        
         case "GetKeyFromObject":
             const manyKeySuccess: AnyOpInstance[] = []
             const manyKeyFail: AnyOpInstance[] = []

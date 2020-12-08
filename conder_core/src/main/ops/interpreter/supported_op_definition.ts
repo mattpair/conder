@@ -77,7 +77,8 @@ StaticOp<"nPlus"> |
 StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
-StaticOp<"getKeys">
+StaticOp<"getKeys"> |
+StaticOp<"repackageCollection">
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -1023,6 +1024,30 @@ export const OpSpec: CompleteOpSpec = {
             `
         },
         factoryMethod: (data) => ({kind: "assertHeapLen", data})
+    },
+
+    repackageCollection: {
+        opDefinition: {
+            rustOpHandler: `
+            let mut array = ${popToArray};
+            let mut re = HashMap::with_capacity(array.len());
+            while let Some(elt) = array.pop() {
+                match elt {
+                    InterpreterType::Object(mut o) => {
+                        let key = match o.remove("_key").unwrap() {
+                            InterpreterType::string(s) => s,
+                            _ => panic!("expected a string")
+                        };
+
+                        re.insert(key, o.remove("_val").unwrap())
+                    },
+                    _ => panic!("unexpected type during repackage")
+                };
+            }
+            ${pushStack("InterpreterType::Object(re)")};
+            None
+            `
+        }
     },
 
     nPlus: {
