@@ -1408,7 +1408,7 @@ describe("global objects", () => {
             ]
         }
 
-        it.only("should allow checks of existence with comparisons to none", withInputHarness("requires storage",
+        it("should allow checks of existence with comparisons to none", withInputHarness("requires storage",
         {
             get_user,
             create_user            
@@ -1416,6 +1416,9 @@ describe("global objects", () => {
         
         async server => {
             expect(await server.get_user("me")).toEqual({exists: false, val: null})
+            expect(await server.create_user("me")).toEqual("user created")
+            expect(await server.create_user("me")).toEqual("user already exists")
+            expect(await server.get_user("me")).toEqual({exists: true, val: {chats: []}})
         }))
 
         it("global state taint is applied on partial updates to variables", noInputHarness(
