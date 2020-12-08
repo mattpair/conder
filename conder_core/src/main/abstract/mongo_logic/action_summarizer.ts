@@ -56,7 +56,7 @@ class IntuitiveSummarizerState implements SummarizerState {
 
         this.applyToSummaryGroup(parent => {
             parent.may_perform.push(...children_did, this_action)
-            uses_data_with_taints.forEach(parent.uses_data_with_taints.add)
+            uses_data_with_taints.forEach(d => parent.uses_data_with_taints.add(d))
             return parent
         })
         this.may_perform_any_or_all.push(this_action) 

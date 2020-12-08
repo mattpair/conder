@@ -657,6 +657,37 @@ describe("global objects", () => {
         )
     )
 
+    it("allows conditional updates", noInputHarness({
+        maybeSet: [
+            {kind: "If", conditionally: [{
+                kind: "Conditional",
+                cond: {
+                    kind: "Comparison", 
+                    left: {kind: "Selection", root: GLOBAL, level: [{kind: "String", value: "k"}]},
+                    right: {kind: "None"},
+                    sign: "!="
+                },
+                do: [
+                    {kind: "Save", value: {kind: "Selection", root: GLOBAL, level: [{kind: "String", value: "k"}]}},
+                    {kind: "Save", value: {kind: "Object", fields: []}},
+                    {kind: "ArrayForEach", target: {kind: "Saved", index: 0}, do: [
+                        {
+                            kind: "Update",
+                            root: {kind: "Saved", index: 1}, level: [{kind: "Saved", index: 2}],
+                            operation: {kind: "Selection", root: GLOBAL, level: [{kind: "Saved", index: 2}]}
+                        }
+                    ]}
+                ]
+                
+            }]},
+        ]
+        },
+        async server => {
+            expect(await server.maybeSet()).toBeNull()
+        },
+        "requires storage"
+    ))
+
 
     it("allows getting a key with a number key", noInputHarness({
         get: [

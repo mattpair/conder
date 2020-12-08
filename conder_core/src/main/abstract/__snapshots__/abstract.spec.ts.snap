@@ -127,6 +127,12 @@ Map {
 }
 `;
 
+exports[`global objects allows conditional updates: Required locks 1`] = `
+Map {
+  "maybeSet" => Map {},
+}
+`;
+
 exports[`global objects allows deleting of keys on global objects: Required locks 1`] = `
 Map {
   "delete" => Map {},
