@@ -291,6 +291,12 @@ Map {
 }
 `;
 
+exports[`global objects race condition possible actions pushing then returning: Required locks 1`] = `
+Map {
+  "push" => Map {},
+}
+`;
+
 exports[`global objects race condition possible actions should allow checks of existence with comparisons to none: Required locks 1`] = `
 Map {
   "get_user" => Map {},

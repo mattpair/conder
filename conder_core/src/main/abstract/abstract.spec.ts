@@ -1407,6 +1407,7 @@ describe("global objects", () => {
                 }
             ]
         }
+        
 
         it("should allow checks of existence with comparisons to none", withInputHarness("requires storage",
         {
@@ -1419,6 +1420,43 @@ describe("global objects", () => {
             expect(await server.create_user("me")).toEqual("user created")
             expect(await server.create_user("me")).toEqual("user already exists")
             expect(await server.get_user("me")).toEqual({exists: true, val: {chats: []}})
+        }))
+
+        it("pushing then returning", withInputHarness("requires storage", 
+        {
+            push: {
+                input: [schemaFactory.string, schemaFactory.Any],
+
+                computation: [
+                    {
+                        kind: "Update", 
+                        root: GLOBAL, 
+                        level: [{kind:"Saved",index: 0}], 
+                        operation: {kind: "Object", fields: [{kind: "Field", key: {kind: "String", value: "k1"}, value: {kind: "ArrayLiteral", values: []}}]}
+                    },
+                    {
+                        kind: "ArrayForEach",
+                        target: {kind: "Saved", index: 1},
+                        do: [
+                            {
+                                kind: "Update", 
+                                root: GLOBAL, 
+                                level: [{kind:"Saved",index: 2}, {kind: "String", value: "k1"}], 
+                                operation: {kind: "Push", values: [
+                                    {kind: "Saved", index: 0}
+                                ]}
+                            },        
+                        ]
+                    },
+                    {
+                        kind: "Return", value: {kind: "String", value: "done"}
+                    }
+                ]
+            }
+
+        },
+        async server => {
+            expect(await server.push("key1", ["key1"])).toEqual("done")
         }))
 
         it("global state taint is applied on partial updates to variables", noInputHarness(
