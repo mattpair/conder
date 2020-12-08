@@ -233,7 +233,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.setField({field_depth: 1}),
                 ow.findOneInStore([n.obj, {}]),
                 ow.isLastNone,
-                ow.conditonallySkipXops(1 + manyKeySuccess.length + 1),
+                ow.conditonallySkipXops(1 + manyKeySuccess.length + manyKeyFail.length),
                 ow.tryGetField("_val"),
                 ...manyKeySuccess,
                 ow.offsetOpCursor({offset: manyKeyFail.length + 1, direction: "fwd"}),

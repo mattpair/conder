@@ -1256,8 +1256,170 @@ describe("global objects", () => {
             expect(await server.deleteLookupFields()).toBeNull()
             expect(await server.get()).toBeNull()
         }, "requires storage")
-        
         )
+        
+        const create_user: FunctionData = {
+            "computation": [
+                {
+                    "conditionally": [
+                        {
+                            "cond": {
+                                "kind": "Comparison",
+                                "left": {
+                                    "kind": "Selection",
+                                    "level": [
+                                        {
+                                            "index": 0,
+                                            "kind": "Saved"
+                                        }
+                                    ],
+                                    "root": {
+                                        "kind": "GlobalObject",
+                                        "name": "users"
+                                    }
+                                },
+                                "right": {
+                                    "kind": "None"
+                                },
+                                "sign": "!="
+                            },
+                            "do": [
+                                {
+                                    "kind": "Return",
+                                    "value": {
+                                        "kind": "String",
+                                        "value": "user already exists"
+                                    }
+                                }
+                            ],
+                            "kind": "Conditional"
+                        }
+                    ],
+                    "kind": "If"
+                },
+                {
+                    "kind": "Update",
+                    "level": [
+                        {
+                            "index": 0,
+                            "kind": "Saved"
+                        }
+                    ],
+                    "operation": {
+                        "fields": [
+                            {
+                                "key": {
+                                    "kind": "String",
+                                    "value": "chats"
+                                },
+                                "kind": "Field",
+                                "value": {
+                                    "kind": "ArrayLiteral",
+                                    "values": []
+                                }
+                            }
+                        ],
+                        "kind": "Object"
+                    },
+                    "root": {
+                        "kind": "GlobalObject",
+                        "name": "users"
+                    }
+                },
+                {
+                    "kind": "Return",
+                    "value": {
+                        "kind": "String",
+                        "value": "user created"
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "data": null,
+                    "kind": "string"
+                }
+            ]
+        }
+
+        const get_user: FunctionData = {
+            "computation": [
+                {
+                    "kind": "Return",
+                    "value": {
+                        "fields": [
+                            {
+                                "key": {
+                                    "kind": "String",
+                                    "value": "exists"
+                                },
+                                "kind": "Field",
+                                "value": {
+                                    "kind": "Comparison",
+                                    "left": {
+                                        "kind": "Selection",
+                                        "level": [
+                                            {
+                                                "index": 0,
+                                                "kind": "Saved"
+                                            }
+                                        ],
+                                        "root": {
+                                            "kind": "GlobalObject",
+                                            "name": "users"
+                                        }
+                                    },
+                                    "right": {
+                                        "kind": "None"
+                                    },
+                                    "sign": "!="
+                                }
+                            },
+                            {
+                                "key": {
+                                    "kind": "String",
+                                    "value": "val"
+                                },
+                                "kind": "Field",
+                                "value": {
+                                    "kind": "Selection",
+                                    "level": [
+                                        {
+                                            "index": 0,
+                                            "kind": "Saved"
+                                        }
+                                    ],
+                                    "root": {
+                                        "kind": "GlobalObject",
+                                        "name": "users"
+                                    }
+                                }
+                            }
+                        ],
+                        "kind": "Object"
+                    }
+                }
+            ],
+            "input": [
+                {
+                    "data": null,
+                    "kind": "string"
+                }
+            ]
+        }
+
+        it("should allow checks of existence with comparisons to none", withInputHarness("requires storage",
+        {
+            get_user,
+            create_user            
+        },
+        
+        async server => {
+            expect(await server.get_user("me")).toEqual({exists: false, val: null})
+            expect(await server.create_user("me")).toEqual("user created")
+            expect(await server.create_user("me")).toEqual("user already exists")
+            expect(await server.get_user("me")).toEqual({exists: true, val: {chats: []}})
+        }))
 
         it("global state taint is applied on partial updates to variables", noInputHarness(
             {

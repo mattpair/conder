@@ -959,6 +959,10 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::double(sd) => fd == sd,
                     _ => false
                 },
+                InterpreterType::None => match second {
+                    InterpreterType::None => true,
+                    _ => false
+                },
 
                 _ => false
             })`)};
