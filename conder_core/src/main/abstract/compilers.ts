@@ -228,10 +228,55 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             }
         case "Selection":
             if (n.level.length > 0) {
-                return [
-                    ...n.level.flatMap(full_compiler),
-                    ow.getSavedField({field_depth: n.level.length, index: n.root.index})
-                ]
+                let state: {
+                    mode: "indexing"
+                } | {
+                    mode: "got keys",
+                    lastKeyFetch: number
+                } = {mode: "indexing"}
+                const ops: AnyOpInstance[] = []
+                
+
+                n.level.forEach((lev, index) => {
+                    switch (state.mode) {
+                        case "got keys":
+                            if (lev.kind === "Keys") {
+                                throw Error(`Already got keys. Keys do not exist on array or strings`)
+                            }
+                            ops.push(...full_compiler(lev))
+                            break
+                        case "indexing":
+                            if (lev.kind === "Keys") {
+                                state = {
+                                    mode: "got keys",
+                                    lastKeyFetch: index
+                                }
+
+                                ops.push(
+                                    index === 0 ? ow.copyFromHeap(n.root.index) : ow.getSavedField({field_depth: index, index: n.root.index}),
+                                    ow.getKeys
+                                )
+                                
+                            } else {
+                                ops.push(...full_compiler(lev))                                
+                            }
+                            break
+                    }                    
+                })
+                
+                if (state.mode === "indexing") {
+                    ops.push(ow.getSavedField({field_depth: n.level.length, index: n.root.index}))
+                } else {
+                    //@ts-ignore
+                    const lastFetch: number = state.lastKeyFetch
+                    if (lastFetch === n.level.length - 1) {
+                        return ops
+                    }
+                    ops.push(ow.getField({field_depth: n.level.length - lastFetch - 1}))
+                }
+                return ops
+                
+
             } else {
                 return full_compiler(n.root)
             }
@@ -319,11 +364,6 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return arr
 
         case "Keys":
-            return [
-                ...full_compiler(n.target),
-                ow.getKeys,   
-            ]
-
         case "Push":
         case "Conditional":
         case "Finally":

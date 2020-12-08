@@ -14,8 +14,7 @@ export type ValueNode = PickNode<
     "GlobalObject" | 
     "Math" |
     "None" |
-    "ArrayLiteral" |
-    "Keys"
+    "ArrayLiteral"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -37,8 +36,8 @@ export type BaseNodeDefs = {
     }>,
     Math: Node<{
         sign: "+" | "-" | "*" | "/",
-        left: Exclude<ValueNode, {kind: "GlobalObject"}>,
-        right: Exclude<ValueNode, {kind: "GlobalObject"}>
+        left: ValueNode
+        right: ValueNode
     }>,
     BoolAlg: Node<{
         sign: "and" | "or", 
@@ -55,7 +54,7 @@ export type BaseNodeDefs = {
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
     String: Node<{value: string}>,
-    Selection: Node<{root: PickNode<"Saved" | "GlobalObject">, level: ValueNode[]}>
+    Selection: Node<{root: PickNode<"Saved" | "GlobalObject">, level: (ValueNode | PickNode<"Keys">)[]}>
     FieldExists: Node<{value: ValueNode, field: Key}>
     Save: Node<{value: ValueNode}, "root">
     Update: Node<
@@ -66,7 +65,7 @@ export type BaseNodeDefs = {
     }, "root">
     GlobalObject: Node<{name: string}>
     ArrayForEach: Node<{target: ValueNode, do: RootNode[]}, "root">
-    Keys: Node<{target: ValueNode}>
+    Keys: Node<{}>
     ArrayLiteral: Node<{values: ValueNode[]}>
     Push: Node<{values: ValueNode[]}>
 }
@@ -151,6 +150,7 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     DeleteField: n => n,
     None: _ => _,
     Noop: _ => _,
+    Keys: _ => _,
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {

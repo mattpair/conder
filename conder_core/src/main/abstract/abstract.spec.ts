@@ -196,15 +196,31 @@ describe("basic functionality", () => {
                             a: schemaFactory.Any
                         })],
                         computation: [
-                            {kind: "Return", value: {
-                                kind: "Keys",
-                                target: {kind: "Saved", index: 0}
-                            }}
+                            {kind: "Return", value: {kind: "Selection", root: {kind: "Saved", index: 0}, level: [{kind: "Keys"}]}}
                         ]
                     }
                 },
                 async server => {
                     expect(await server.getKeys({a: "yada yada"})).toEqual(["a"])
+                }
+            )
+    )
+
+    it("allows directly indexing into object keys",
+            withInputHarness(
+                "no storage",
+                {
+                    getKeys: {
+                        input: [schemaFactory.Object({
+                            a: schemaFactory.Any
+                        })],
+                        computation: [
+                            {kind: "Return", value: {kind: "Selection", root: {kind: "Saved", index: 0}, level: [{kind: "Keys"}, {kind: "Int", value: 0}]}}
+                        ]
+                    }
+                },
+                async server => {
+                    expect(await server.getKeys({a: "yada yada"})).toEqual("a")
                 }
             )
     )
@@ -676,10 +692,7 @@ describe("global objects", () => {
         noInputHarness({
             getKeys: [{
                 kind: "Return",
-                value: {
-                    kind: "Keys",
-                    target: GLOBAL
-                }
+                value: {kind: "Selection", root: GLOBAL, level: [{kind: "Keys"}]}
             }],
             setKeys: [{
                 kind: "Update",
@@ -874,7 +887,7 @@ describe("global objects", () => {
                     },
                     {
                         kind: "ArrayForEach",
-                        target: {kind: "Keys", target: GLOBAL},
+                        target: {kind: "Selection", root: GLOBAL, level: [{kind: "Keys"}]},
                         do: [
                             {
                                 kind: "Update", 

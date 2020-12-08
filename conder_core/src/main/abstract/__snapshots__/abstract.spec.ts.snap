@@ -12,6 +12,12 @@ Map {
 }
 `;
 
+exports[`basic functionality allows directly indexing into object keys: Required locks 1`] = `
+Map {
+  "getKeys" => Map {},
+}
+`;
+
 exports[`basic functionality allows else ifs: Required locks 1`] = `
 Map {
   "elseIfs" => Map {},

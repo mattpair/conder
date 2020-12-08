@@ -115,28 +115,26 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     },
     
 
-    Keys(n, r) {
-        if (n.target.kind !== "GlobalObject") {
-            return {
-                kind: "Keys",
-                target: r(n.target)
-            }
-        }
-        return {
-            kind: "GetKeysOnly",
-            obj: n.target.name
-        }
-    },
     Selection(n, r) {
         switch (n.root.kind) {
             case "GlobalObject":
                 if (n.level.length > 0) {
+                    if (n.level[0].kind === "Keys") {
+                        return {
+                            kind: "Selection",
+                            root: {
+                                kind: "GetKeysOnly",
+                                obj: n.root.name
+                            },
+                            level: n.level.slice(1).map(r)
+                        }
+                    }
                     return {
                         kind: "GetKeyFromObject",
                         obj: n.root.name,
                         key: n.level.map(r)
                     }
-                } else {
+                } else {                     
                     return {
                         kind: "GetWholeObject",
                         name: n.root.name
