@@ -5,7 +5,14 @@ type DefAndName = AnyOpDef & {name: string}
 
 function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     return `
-    async fn conduit_byte_code_interpreter_internal(mut heap: Vec<InterpreterType>, ops: & Vec<Op>, schemas: &Vec<Schema>, db: Option<&mongodb::Database>, stores: &HashMap<String, Schema>) ->Result<InterpreterType, String> {
+    async fn conduit_byte_code_interpreter_internal(
+        mut heap: Vec<InterpreterType>, 
+        ops: & Vec<Op>, 
+        schemas: &Vec<Schema>, 
+        db: Option<&mongodb::Database>, 
+        stores: &HashMap<String, Schema>,
+        fns: &HashMap<String, Vec<Op>>
+    ) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
         while next_op_index < ops.len() {
@@ -136,8 +143,14 @@ export function writeOperationInterpreter(): string {
 
     ${writeInternalOpInterpreter(supportedOps)}
 
-    async fn conduit_byte_code_interpreter(state: Vec<InterpreterType>, ops: &Vec<Op>, schemas: &Vec<Schema>, db: Option<&mongodb::Database>, stores: &HashMap<String, Schema>) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops, schemas, db, stores).await;
+    async fn conduit_byte_code_interpreter(
+        state: Vec<InterpreterType>, 
+        ops: &Vec<Op>, 
+        schemas: &Vec<Schema>, 
+        db: Option<&mongodb::Database>, 
+        stores: &HashMap<String, Schema>, 
+        fns: &HashMap<String, Vec<Op>>) -> impl Responder {
+        let output = conduit_byte_code_interpreter_internal(state, ops, schemas, db, stores, fns).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),
             Err(s) => {

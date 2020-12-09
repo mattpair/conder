@@ -69,6 +69,17 @@ describe("conduit kernel", () => {
         },
       }
     );
+
+    kernelTest(
+      "cannot invoke private functions",
+      async server => {
+        expect(await server.invoke("echo", "hello")).toBeNull()
+      },
+      {
+        PROCEDURES: {echo: [ow.returnVariable(0)]},
+        PRIVATE_PROCEDURES: ["echo"]
+      }
+    )
     kernelTest(
       "math",
       async (server) => {

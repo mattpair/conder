@@ -13,6 +13,7 @@ type ConstDataAddition = {
 export enum Var {
     MONGO_CONNECTION_URI="MONGO_CONNECTION_URI",
     PROCEDURES="PROCEDURES",
+    PRIVATE_PROCEDURES="PRIVATE_PROCEDURES",
     SCHEMAS="SCHEMAS",
     STORES="STORES",
     DEPLOYMENT_NAME="DEPLOYMENT_NAME"
@@ -23,6 +24,7 @@ E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
 E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME ? string :
+E extends Var.PRIVATE_PROCEDURES ? string[] :
 never
 
 export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES | Var.DEPLOYMENT_NAME
@@ -52,6 +54,18 @@ export function generateServer(): string {
                     HashMap::with_capacity(0)
                 }
             }`
+        },
+        {
+            name: "privateFns",
+            type: "HashSet<String>",
+            initializer: `match env::var("${Var.PRIVATE_PROCEDURES}") {
+                Ok(str) => serde_json::from_str(&str).unwrap(),
+                Err(e) => {
+                    eprintln!("Did not find any private procedures: {}", e);
+                    HashSet::with_capacity(0)
+                }
+            }                
+            ` 
         },
         {
             name: "schemas",
@@ -117,6 +131,7 @@ export function generateServer(): string {
         use std::env;
         use serde::{Deserialize, Serialize};
         use std::collections::HashMap;
+        use std::collections::HashSet;
         use std::future::Future;
         use std::task::{Poll, Context};
         use std::pin::Pin;
@@ -159,14 +174,19 @@ export function generateServer(): string {
     
             let req = input.into_inner();
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores),
+                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
-                    Some(proc) => {
-                        conduit_byte_code_interpreter(arg, proc, &data.schemas, data.db.as_ref(), &data.stores)
+                    Some(ops) => {
+                        if data.privateFns.contains(&proc) {
+                            eprintln!("Attempting to invoke a private function {}", &proc);
+                            conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                        }else {
+                            conduit_byte_code_interpreter(arg, ops, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                        }
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores)
+                        conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
                     }
                 }
             }.await;
