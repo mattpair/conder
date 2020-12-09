@@ -1,7 +1,6 @@
-
-### Pick an issue off github
-### Assign it to yourself
-### Create a local branch
-Link your branch to the issue
-https://docs.github.com/en/free-pro-team@latest/github/managing-your-work-on-github/linking-a-pull-request-to-an-issue
-### When complete, submit pull request through whatever mechanism you prefer
+# Bugs or Feature Requests
+- Feel free to submit issues  
+# Contributing code
+- Get in touch with me (jerm at conder dot systems).
+- Alternatively assign the issue to yourself if it's not assigned to someone.
+- When done, submit a pull request.
