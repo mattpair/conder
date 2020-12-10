@@ -112,6 +112,8 @@ function extract_children(n: TargetNodes): TargetNodes[] {
     
         case "PushAtKeyOnObject":
             return [...n.key, ...n.values]
+        case "Call":
+            return [...n.args]
         default: 
             const ne: never = n
             

@@ -24,6 +24,15 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
             conditionally: n.conditionally.map(r)
         }
     },
+
+    Call(n, r) {
+        return {
+            kind: "Call",
+            function_name: n.function_name,
+            args: n.args.map(r)
+        }
+    },
+
     Else(n, r) {
         return {kind: "Else", do: n.do.map(r)}
     },

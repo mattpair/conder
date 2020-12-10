@@ -167,11 +167,17 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
 
         case "Return":
-            return [
-                ...(n.value ?  full_compiler(n.value) : [ ow.instantiate(null) ]),
+            return n.value ? [
+                ...full_compiler(n.value),
                 ow.returnStackTop
+            ] : [
+                ow.returnVoid
             ]
-
+        case "Call":       
+            return [
+                ...n.args.flatMap(full_compiler),
+                ow.invoke({name: n.function_name, args: n.args.length})
+            ]
         
         case "Save":
             return [...full_compiler(n.value), ow.moveStackTopToHeap]

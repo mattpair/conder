@@ -640,6 +640,23 @@ describe("global objects", () => {
         ]}
     }]
 
+    it("allows calling functions",
+        noInputHarness({
+            caller: [
+                {kind: "Return", value: {
+                    kind: "Call", function_name: "callee", args: []
+                }}
+            ],
+            callee: [
+                {kind: "Return", value: {kind: "String", value: "Hello"}}
+            ]
+        },
+        async server => {
+            expect(await server.caller()).toEqual("Hello")
+        }
+        )
+    )
+
     it("getting a key returns the value",
         noInputHarness({
             get,

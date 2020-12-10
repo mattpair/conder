@@ -127,6 +127,13 @@ Map {
 }
 `;
 
+exports[`global objects allows calling functions: Required locks 1`] = `
+Map {
+  "caller" => Map {},
+  "callee" => Map {},
+}
+`;
+
 exports[`global objects allows conditional updates: Required locks 1`] = `
 Map {
   "maybeSet" => Map {},
