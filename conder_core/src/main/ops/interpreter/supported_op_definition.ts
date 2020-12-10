@@ -21,6 +21,7 @@ type ProjectionOptions = mongodb.SchemaMember<undefined,  MongoBaseTypes | Mongo
 type Ops = 
 ParamOp<"returnVariable", number> |
 StaticOp<"returnStackTop"> |
+StaticOp<"returnVoid"> |
 ParamOp<"copyFromHeap", number > |
 ParamOp<"fieldAccess", string> |
 ParamOp<"offsetOpCursor", {offset: number, direction: "fwd" | "bwd"}> |
@@ -528,6 +529,22 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let value = ${popStack};
+            if callstack.len() == 0 {
+                return Ok(value);
+            }
+            let mut last = callstack.pop().unwrap();
+            last.stack.push(value);
+            heap = last.heap;
+            stack = last.stack;
+            next_op_index = last.restore_index;
+            these_ops = last.ops;
+            None
+            `
+        }
+    },
+    returnVoid: {
+        opDefinition: {
+            rustOpHandler: `
             if callstack.len() == 0 {
                 return Ok(value);
             }
