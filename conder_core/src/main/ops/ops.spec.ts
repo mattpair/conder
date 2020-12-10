@@ -16,7 +16,8 @@ describe("conduit kernel", () => {
   function kernelTest(
     descr: string,
     test: (server: Test.Server) => Promise<void>,
-    envOverride: Partial<StrongServerEnv> = {}
+    envOverride: Partial<StrongServerEnv> = {},
+    only?: "only"
   ) {
     const env: StrongServerEnv = {
       PROCEDURES: {},
@@ -28,7 +29,8 @@ describe("conduit kernel", () => {
       //@ts-ignore
       env[key] = envOverride[key];
     }
-    it(
+    const tester: jest.It = only ? it.only : it
+    tester(
       descr,
       async () => {
         const server = await Test.Server.start(env);
@@ -85,11 +87,14 @@ describe("conduit kernel", () => {
       "functions can invoke other functions",
       async server => {
         expect(await server.invoke("callsEcho", "hi")).toEqual("hi")
+        expect(await server.invoke("callsNoop")).toEqual("hi")
       },
       {
         PROCEDURES: {
           echo: [ow.returnVariable(0)],
-          callsEcho: [ow.copyFromHeap(0), ow.invoke({name: "echo", args: 1}), ow.returnStackTop]
+          noop: [ow.noop],
+          callsEcho: [ow.copyFromHeap(0), ow.invoke({name: "echo", args: 1}), ow.returnStackTop],
+          callsNoop: [ow.invoke({name: "noop", args: 0}), ow.instantiate("hi"), ow.returnStackTop]
         },
         PRIVATE_PROCEDURES: ["echo"]
       },

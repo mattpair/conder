@@ -49,6 +49,17 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                 Some(v) => return Err(format!("error: {}", v)),
                 _ => {}
             };
+            if next_op_index >= these_ops.len() {
+                match callstack.pop() {
+                    Some(next) => {
+                        stack = next.stack;
+                        heap = next.heap;
+                        next_op_index = next.restore_index + 1;
+                        these_ops = next.ops;
+                    },
+                    None => {}
+                };
+            }
         }
         
             
