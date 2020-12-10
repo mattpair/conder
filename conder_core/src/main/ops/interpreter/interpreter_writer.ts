@@ -5,6 +5,14 @@ type DefAndName = AnyOpDef & {name: string}
 
 function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     return `
+
+    struct Callstack<'a> {
+        heap: Vec<InterpreterType>,
+        ops: &'a Vec<Op>,
+        restore_index: usize,
+        stack: Vec<InterpreterType>
+    }
+
     async fn conduit_byte_code_interpreter_internal(
         mut heap: Vec<InterpreterType>, 
         ops: & Vec<Op>, 
@@ -15,9 +23,12 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     ) ->Result<InterpreterType, String> {
         let mut stack: Vec<InterpreterType> = vec![];
         let mut next_op_index = 0;
-        while next_op_index < ops.len() {
+        let mut callstack: Vec<Callstack> = vec![];
+        let mut these_ops = ops;
+        let mut dont_move_op_cursor = false;
+        while next_op_index < these_ops.len() {
 
-            let err: Option<String> = match &ops[next_op_index] {
+            let err: Option<String> = match &these_ops[next_op_index] {
                 ${supportedOps.map(o => {
                     let header = o.name
                     if ("paramType" in o) {
@@ -28,7 +39,11 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     }`
                 }).join(",\n")}
             };
-            next_op_index += 1;
+            if dont_move_op_cursor {
+                dont_move_op_cursor = false;
+            } else {
+                next_op_index += 1;
+            }
         
             match err {
                 Some(v) => return Err(format!("error: {}", v)),

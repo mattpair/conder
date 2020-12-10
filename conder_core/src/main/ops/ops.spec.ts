@@ -80,6 +80,20 @@ describe("conduit kernel", () => {
         PRIVATE_PROCEDURES: ["echo"]
       }
     )
+
+    kernelTest(
+      "functions can invoke other functions",
+      async server => {
+        expect(await server.invoke("callsEcho", "hi")).toEqual("hi")
+      },
+      {
+        PROCEDURES: {
+          echo: [ow.returnVariable(0)],
+          callsEcho: [ow.copyFromHeap(0), ow.invoke({name: "echo", args: 1}), ow.returnStackTop]
+        },
+        PRIVATE_PROCEDURES: ["echo"]
+      },
+    )
     kernelTest(
       "math",
       async (server) => {

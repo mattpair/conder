@@ -78,7 +78,8 @@ StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
 StaticOp<"getKeys"> |
-StaticOp<"repackageCollection">
+StaticOp<"repackageCollection"> |
+ParamOp<"invoke", {name: string, args: number}>
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -259,7 +260,7 @@ const lastStack = `stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
     return `
-    if ${varname} >= ops.len() {
+    if ${varname} >= these_ops.len() {
         panic!("Setting op index out of bounds");
     }
     next_op_index = ${varname};
@@ -507,13 +508,37 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {
             paramType: ["usize"],
-            rustOpHandler: ` return Ok(heap.swap_remove(*op_param))`
+            rustOpHandler: `
+            let value = heap.swap_remove(*op_param);
+            if callstack.len() == 0 {
+                return Ok(value);
+            }
+            let mut last = callstack.pop().unwrap();
+            last.stack.push(value);
+            heap = last.heap;
+            stack = last.stack;
+            these_ops = last.ops;
+            next_op_index = last.restore_index;
+            None
+            `
         }
     },
 
     returnStackTop: {
         opDefinition: {
-            rustOpHandler: `return Ok(${popStack})`
+            rustOpHandler: `
+            let value = ${popStack};
+            if callstack.len() == 0 {
+                return Ok(value);
+            }
+            let mut last = callstack.pop().unwrap();
+            last.stack.push(value);
+            heap = last.heap;
+            stack = last.stack;
+            next_op_index = last.restore_index;
+            these_ops = last.ops;
+            None
+            `
         }
     },
     
@@ -1079,6 +1104,29 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         }
+    },
+    invoke: {
+        
+        opDefinition: {
+            rustOpHandler: `
+                let args = stack.split_off(stack.len() - *param1);
+                let next_ops = fns.get(param0).unwrap();
+                callstack.push(Callstack {
+                    stack: stack,
+                    heap: heap,
+                    restore_index: next_op_index,
+                    ops: these_ops
+                });
+                heap = args;
+                stack = vec![];
+                these_ops = next_ops;
+                next_op_index = 0;
+                dont_move_op_cursor = true;
+                None
+            `,
+            paramType: ["String", "usize"]
+        },
+        factoryMethod: ({name, args}) => ({kind:"invoke", data: [name, args]})
     }
 }
 
