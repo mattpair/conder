@@ -152,7 +152,7 @@ export function generateServer(): string {
         use mongodb::{Database};
         use std::convert::TryFrom;
         mod storage;
-
+        mod locks;
 
         struct AppData {
             ${[app_data_adds.map(a => `${a.name}: ${a.type}`)].join(",\n")}
