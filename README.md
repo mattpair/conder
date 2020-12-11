@@ -23,4 +23,4 @@ If you want to build your own language on top of conder, feel free to reach out.
 
 ### Licensing
 
-All TypeScript code is under the NSCA license. The interpreter (rust code) is under the AGPL to ensure standardization within the community.
+All TypeScript code is under the NSCA license. The interpreter (rust code) is under the AGPL to ensure standardization within the community. If there is interest, it is my intention to assign ownership of the interpreter to some non-profit to ensure that all improvements in this layer are shared and we can all benefit from standardization.
