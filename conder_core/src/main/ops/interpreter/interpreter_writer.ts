@@ -12,23 +12,37 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         restore_index: usize,
         stack: Vec<InterpreterType>
     }
+    struct Context<'a> {
+        heap: Vec<InterpreterType>,
+        ops: &'a Vec<Op>,
+        next_op_index: usize,
+        stack: Vec<InterpreterType>
+    }
+
+    fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
+        return Context {
+            stack: vec![],
+            next_op_index: 0,
+            ops: ops,
+            heap: heap
+        }
+    }
 
     async fn conduit_byte_code_interpreter_internal(
-        mut heap: Vec<InterpreterType>, 
+        input_heap: Vec<InterpreterType>, 
         ops: & Vec<Op>, 
         schemas: &Vec<Schema>, 
         db: Option<&mongodb::Database>, 
         stores: &HashMap<String, Schema>,
         fns: &HashMap<String, Vec<Op>>
-    ) ->Result<InterpreterType, String> {
-        let mut stack: Vec<InterpreterType> = vec![];
-        let mut next_op_index = 0;
-        let mut callstack: Vec<Callstack> = vec![];
-        let mut these_ops = ops;
+    ) ->Result<InterpreterType, String> {        
         let mut dont_move_op_cursor = false;
-        while next_op_index < these_ops.len() {
 
-            let err: Option<String> = match &these_ops[next_op_index] {
+        let mut current = new_context(ops, input_heap);
+        let mut callstack: Vec<Context> = vec![];
+        while current.next_op_index < current.ops.len() {
+            let this_op = current.next_op_index;
+            let err: Option<String> = match &current.ops[this_op] {
                 ${supportedOps.map(o => {
                     let header = o.name
                     if ("paramType" in o) {
@@ -42,20 +56,18 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
             if dont_move_op_cursor {
                 dont_move_op_cursor = false;
             } else {
-                next_op_index += 1;
+                current.next_op_index += 1;
             }
-        
+            
             match err {
                 Some(v) => return Err(format!("error: {}", v)),
                 _ => {}
             };
-            if next_op_index >= these_ops.len() {
+            if current.next_op_index >= current.ops.len() {
                 match callstack.pop() {
                     Some(next) => {
-                        stack = next.stack;
-                        heap = next.heap;
-                        next_op_index = next.restore_index + 1;
-                        these_ops = next.ops;
+                        current = next;
+                        current.next_op_index += 1;
                     },
                     None => {}
                 };

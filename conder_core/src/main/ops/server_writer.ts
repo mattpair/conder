@@ -144,8 +144,6 @@ export function generateServer(): string {
         use std::collections::HashMap;
         use std::collections::HashSet;
         use std::future::Future;
-        use std::task::{Poll, Context};
-        use std::pin::Pin;
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
