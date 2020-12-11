@@ -227,7 +227,7 @@ function raiseErrorWithMessage(s: string): string {
     return `Some("${s}".to_string())`
 }
 
-const getDb = `db.unwrap()`
+const getDb = `globals.db.unwrap()`
 
 const popStack = `
     match current.stack.pop() {
@@ -588,7 +588,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param1], &schemas[*param0]))")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param1], &globals.schemas[*param0]))")};
             None`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
@@ -1114,7 +1114,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
-                let next_ops = fns.get(param0).unwrap();
+                let next_ops = globals.fns.get(param0).unwrap();
                 callstack.push(current);
                 current = new_context(next_ops, args);
                 dont_move_op_cursor = true;

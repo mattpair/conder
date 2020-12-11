@@ -19,6 +19,13 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         stack: Vec<InterpreterType>
     }
 
+    struct Globals<'a> {
+        schemas: &'a Vec<Schema>, 
+        db: Option<&'a mongodb::Database>, 
+        stores: &'a HashMap<String, Schema>,
+        fns: &'a HashMap<String, Vec<Op>>
+    }
+
     fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
         return Context {
             stack: vec![],
@@ -31,10 +38,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     async fn conduit_byte_code_interpreter_internal(
         input_heap: Vec<InterpreterType>, 
         ops: & Vec<Op>, 
-        schemas: &Vec<Schema>, 
-        db: Option<&mongodb::Database>, 
-        stores: &HashMap<String, Schema>,
-        fns: &HashMap<String, Vec<Op>>
+        globals: Globals<'_>
     ) ->Result<InterpreterType, String> {        
         let mut dont_move_op_cursor = false;
 
@@ -183,12 +187,9 @@ export function writeOperationInterpreter(): string {
 
     async fn conduit_byte_code_interpreter(
         state: Vec<InterpreterType>, 
-        ops: &Vec<Op>, 
-        schemas: &Vec<Schema>, 
-        db: Option<&mongodb::Database>, 
-        stores: &HashMap<String, Schema>, 
-        fns: &HashMap<String, Vec<Op>>) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops, schemas, db, stores, fns).await;
+        ops: &Vec<Op>,
+        globals: Globals<'_>) -> impl Responder {
+        let output = conduit_byte_code_interpreter_internal(state, ops, globals).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),
             Err(s) => {

@@ -182,20 +182,26 @@ export function generateServer(): string {
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
     
             let req = input.into_inner();
+            let g = Globals {
+                schemas: &data.schemas,
+                db: data.db.as_ref(),
+                stores: &data.stores,
+                fns: &data.procs
+            };
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs),
+                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, g),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(ops) => {
                         if data.privateFns.contains(&proc) {
                             eprintln!("Attempting to invoke a private function {}", &proc);
-                            conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                            conduit_byte_code_interpreter(vec![], &data.noop, g)
                         }else {
-                            conduit_byte_code_interpreter(arg, ops, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                            conduit_byte_code_interpreter(arg, ops, g)
                         }
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                        conduit_byte_code_interpreter(vec![], &data.noop, g)
                     }
                 }
             }.await;
