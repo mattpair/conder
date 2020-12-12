@@ -16,14 +16,15 @@ export enum Var {
     PRIVATE_PROCEDURES="PRIVATE_PROCEDURES",
     SCHEMAS="SCHEMAS",
     STORES="STORES",
-    DEPLOYMENT_NAME="DEPLOYMENT_NAME"
+    DEPLOYMENT_NAME="DEPLOYMENT_NAME",
+    ETCD_URL="ETCD_URL",
 }
 
 export type EnvVarType<E extends Var> = 
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
-E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME ? string :
+E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME | Var.ETCD_URL ? string :
 E extends Var.PRIVATE_PROCEDURES ? string[] :
 never
 
@@ -82,6 +83,28 @@ export function generateServer(): string {
                 Ok(r) => serde_json::from_str(&r).unwrap(),
                 Err(e) => panic!("Did not receive a definition for any stores")
             }`
+        },
+        {
+            name: "lm_client",
+            type: "Option<etcd_rs::Client>",
+            initializer: `
+            match env::var("${Var.ETCD_URL}") {
+                Ok(r) => {
+                    match etcd_rs::Client::connect(etcd_rs::ClientConfig {
+                        endpoints: vec![r],
+                        auth: None,
+                        tls: None,
+                    }).await {
+                        Ok(c) => Some(c),
+                        Err(e) => {
+                            eprintln!("Failure connecting to etcd: {}",e);
+                            None
+                        }
+                    }
+                },
+                Err(e) => None
+            }
+            `
         },
         {
             name: "db",
@@ -149,6 +172,7 @@ export function generateServer(): string {
         use bytes::Bytes;
         use mongodb::{Database};
         use std::convert::TryFrom;
+        use etcd_rs;
         mod storage;
         mod locks;
 
@@ -186,7 +210,8 @@ export function generateServer(): string {
                 schemas: &data.schemas,
                 db: data.db.as_ref(),
                 stores: &data.stores,
-                fns: &data.procs
+                fns: &data.procs,
+                lm: data.lm_client.as_ref()
             };
             return match req {
                 KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, g),

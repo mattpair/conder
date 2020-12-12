@@ -80,7 +80,8 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
 StaticOp<"getKeys"> |
 StaticOp<"repackageCollection"> |
-ParamOp<"invoke", {name: string, args: number}>
+ParamOp<"invoke", {name: string, args: number}> |
+ParamOp<"lock", {name: string}>
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -1124,6 +1125,22 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String", "usize"]
         },
         factoryMethod: ({name, args}) => ({kind:"invoke", data: [name, args]})
+    },
+    lock: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let res = locks::Mutex {
+                name: op_param.clone()
+            }.acquire(globals.lm.unwrap()).await;
+            match res {
+                Ok(_) => None,
+                Err(e) => Some(format!("Lock failure: {}", e))
+            }
+
+            `
+        },
+        factoryMethod: ({name}) => ({kind: "lock", data: name})
     }
 }
 

@@ -23,7 +23,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         schemas: &'a Vec<Schema>, 
         db: Option<&'a mongodb::Database>, 
         stores: &'a HashMap<String, Schema>,
-        fns: &'a HashMap<String, Vec<Op>>
+        fns: &'a HashMap<String, Vec<Op>>,
+        lm: Option<&'a etcd_rs::Client>,
     }
 
     fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {

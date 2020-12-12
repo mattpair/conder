@@ -17,7 +17,7 @@ use std::convert::TryInto;
 use tokio::stream::StreamExt;
 
 pub struct Mutex {
-    name: String
+    pub name: String
 }
 
 pub struct HeldMutex {
@@ -30,7 +30,7 @@ impl Mutex {
     fn next_key_range(&self) -> KeyRange {
         KeyRange::key(format!("{}.next", self.name))
     }
-    pub async fn acquire(&self, client: &mut Client) -> Result<HeldMutex> {
+    pub async fn acquire(&self, client: & Client) -> Result<HeldMutex> {
     
         let next_kr =self.next_key_range();
         let s_key = format!("{}.next", self.name);
@@ -103,7 +103,7 @@ impl HeldMutex {
     fn block_key(& self) -> KeyRange {
         KeyRange::key(self.block_str())
     }
-    pub async fn block_until_held(& self, client: &mut Client) -> Result<()> {
+    pub async fn block_until_held(& self, client: & Client) -> Result<()> {
         client.kv().put(PutRequest::new(self.block_str(), vec![0])).await?;
         let mut stream = client.watch(self.block_key()).await;
         while let Some(res) = stream.next().await {
@@ -122,7 +122,7 @@ impl HeldMutex {
         panic!("Unexpected escape from lock");
     }
 
-    pub async fn release(& self, client: &mut Client) -> Result<()> {
+    pub async fn release(& self, client: & Client) -> Result<()> {
         let next_kr = KeyRange::key(format!("{}.next", self.name));
         
         let reset_counter = PutRequest::new(format!("{}.next", self.name), vec![]);
