@@ -16,7 +16,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         heap: Vec<InterpreterType>,
         ops: &'a Vec<Op>,
         next_op_index: usize,
-        stack: Vec<InterpreterType>
+        stack: Vec<InterpreterType>,
+        locks: HashMap<String, locks::Mutex>
     }
 
     struct Globals<'a> {
@@ -32,7 +33,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
             stack: vec![],
             next_op_index: 0,
             ops: ops,
-            heap: heap
+            heap: heap,
+            locks: HashMap::new()
         }
     }
 

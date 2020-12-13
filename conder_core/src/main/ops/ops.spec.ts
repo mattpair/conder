@@ -667,5 +667,91 @@ describe("conduit kernel", () => {
         },
       }
     );
+
+    describe.only("locks", () => {
+      function lockTest(
+        test: (server: Test.Server) => Promise<void>,
+        envOverride: Partial<StrongServerEnv> = {},
+      ): jest.ProvidesCallback {
+        const env: StrongServerEnv = {
+          PROCEDURES: {},
+          STORES: {state: schemaFactory.Any},
+          SCHEMAS: [],
+          DEPLOYMENT_NAME: "testdeployment",
+        };
+        for (const key in envOverride) {
+          //@ts-ignore
+          env[key] = envOverride[key];
+        }
+
+        return async (cb) => {
+          const deps = [
+            Test.Mongo.start(env),
+            Test.EtcD.start(),
+          ]
+          const [mongo, etcd] = (await Promise.all(deps)) as [Test.Mongo, Test.EtcD]
+          env.MONGO_CONNECTION_URI = `mongodb://localhost:${mongo.port}`
+          env.ETCD_URL = `http://localhost:${etcd.port}`
+          const server = await Test.Server.start(env);
+          await test(server);
+          server.kill();
+          etcd.kill()
+          mongo.kill()
+          cb()
+        }
+      }
+    
+
+      it("locks prevent progress if held elsewhere",
+      lockTest(
+      
+        async server => {
+
+          await server.invoke("unsafeSet", 0)
+          expect(await server.invoke("unsafeGet")).toEqual(0)
+          const contesting_incr: (() => Promise<void>)[] = []
+          const num_iterations = 10
+          for (let i = 0; i < num_iterations; i++) {
+            contesting_incr.push(() =>  server.invoke("incr"))
+          }
+          await Promise.all(contesting_incr.map(f => f()))
+          expect(await server.invoke("unsafeGet")).toEqual(num_iterations)
+        },
+        {
+          PROCEDURES: {
+            unsafeSet: [
+              ow.instantiate({"$set": {}}),
+              ow.instantiate("$set"),
+              ow.instantiate("val"),
+              ow.copyFromHeap(0),
+              ow.setField({field_depth: 2}), // collapse the above into update doc
+              ow.instantiate({key: "shared"}), // query doc
+              ow.updateOne({store: "state", upsert: true})
+            ],
+            unsafeGet: [
+              ow.getAllFromStore("state"),
+              ow.popArray,
+              ow.instantiate("val"),
+              ow.getField({field_depth: 1}),
+              ow.returnStackTop
+            ],
+            incr: [
+              ow.instantiate(0),
+              ow.moveStackTopToHeap,
+              ow.instantiate("lock_name"),
+              ow.lock,
+              ow.invoke({name: 'unsafeGet', args: 0}),
+              ow.instantiate(1),
+              ow.nPlus,
+              ow.invoke({name: "unsafeGet", args: 1}),
+              ow.instantiate("lock_name"),
+              ow.release,
+              ow.returnVoid
+            ]
+          }
+        },
+      ), 100000)
+      
+    })
   });
 });

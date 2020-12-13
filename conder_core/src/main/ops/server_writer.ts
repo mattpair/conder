@@ -90,12 +90,21 @@ export function generateServer(): string {
             initializer: `
             match env::var("${Var.ETCD_URL}") {
                 Ok(r) => {
+                    println!("Attempting to connect to etcd: {}", r);
                     match etcd_rs::Client::connect(etcd_rs::ClientConfig {
                         endpoints: vec![r],
                         auth: None,
                         tls: None,
                     }).await {
-                        Ok(c) => Some(c),
+                        Ok(c) => {
+                            let mut range_req = etcd_rs::RangeRequest::new(etcd_rs::KeyRange::all());
+                            range_req.set_limit(1);
+                            match c.kv().range(range_req).await {
+                                Ok(e) => {},
+                                Err(e) => panic!("Failure connecting to etcd: {}",e)
+                            };
+                            Some(c)
+                        },
                         Err(e) => {
                             eprintln!("Failure connecting to etcd: {}",e);
                             None
@@ -131,7 +140,6 @@ export function generateServer(): string {
                     Some(client.database(&deploymentname))
                 },
                 Err(e) => {
-                    eprintln!("No mongo location specified. Running without storage.");
                     None
                 }
             }`

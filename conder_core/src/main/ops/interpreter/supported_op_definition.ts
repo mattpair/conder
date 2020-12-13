@@ -50,7 +50,7 @@ StaticOp<"ndArrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", {store: string, upsert: boolean}> |
-ParamOp<"replaceOne", string> |
+ParamOp<"replaceOne", {store: string, upsert: boolean}> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
 ParamOp<"extractFields", string[][]> | 
@@ -81,7 +81,8 @@ StaticOp<"nMult"> |
 StaticOp<"getKeys"> |
 StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
-ParamOp<"lock", {name: string}>
+StaticOp<"lock"> |
+StaticOp<"release">
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -878,7 +879,7 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: (p) => ({kind: "replaceOne", data: p})
+        factoryMethod: ({store, upsert}) => ({kind: "replaceOne", data: [store, upsert]})
     },
 
     setNestedField: {
@@ -1128,19 +1129,30 @@ export const OpSpec: CompleteOpSpec = {
     },
     lock: {
         opDefinition: {
-            paramType: ["String"],
             rustOpHandler: `
-            let res = locks::Mutex {
-                name: op_param.clone()
-            }.acquire(globals.lm.unwrap()).await;
-            match res {
-                Ok(_) => None,
+            let mutex = locks::Mutex {
+                name: ${popToString}
+            };
+            match mutex.acquire(globals.lm.unwrap()).await {
+                Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); None},
                 Err(e) => Some(format!("Lock failure: {}", e))
             }
 
             `
-        },
-        factoryMethod: ({name}) => ({kind: "lock", data: name})
+        }
+    },
+    release: {
+        opDefinition: {
+            rustOpHandler: `
+            let name = ${popToString};
+            let mutex = current.locks.remove(&name).unwrap();
+            match mutex.release(globals.lm.unwrap()).await {
+                Ok(_) => None,
+                Err(e) => Some(format!("Failure releasing lock: {}", e))
+            }
+
+            `
+        }
     }
 }
 

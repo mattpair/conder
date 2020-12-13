@@ -3,15 +3,26 @@ import * as child_process from 'child_process'
 import { StrongServerEnv, ServerEnv, Var } from '../server_writer'
 import { interpeterTypeFactory,  AnyInterpreterTypeInstance} from '../interpreter/interpreter_writer'
 import * as mongodb from "mongodb";
+import * as etcd from 'etcd3'
 import "isomorphic-fetch";
 
 export namespace Test {
-    export class Server {
+    class UniqueInstance {
+      private static next_port = new Uint8Array(new SharedArrayBuffer(16));
+      public readonly port: number
+      constructor() {
+        this.port = this.get_next_port()
+      }
+      
+      protected get_next_port(): number {
+        return 8080 + Atomics.add(UniqueInstance.next_port, 0, 1);
+      }
+    }
+
+    export class Server extends UniqueInstance {
         private process: child_process.ChildProcess;
-        private readonly port: number;
-        private static next_port = new Uint8Array(new SharedArrayBuffer(16));
         private constructor(env: StrongServerEnv) {
-          this.port = 8080 + Atomics.add(Server.next_port, 0, 1);
+          super()
           const string_env: Partial<ServerEnv> = {};
           for (const key in env) {
             //@ts-ignore
@@ -83,11 +94,9 @@ export namespace Test {
       
       export type Stores = Pick<StrongServerEnv, Var.STORES>;
       
-      export class Mongo {
-        readonly port: number;
-        private static next_port = new Uint32Array(new SharedArrayBuffer(16));
+      export class Mongo extends UniqueInstance {
         private constructor() {
-          this.port = 27017 + Atomics.add(Test.Mongo.next_port, 0, 1);
+          super()
           child_process.execSync(
             `docker run --rm --name mongo${this.port} -d  --mount type=tmpfs,destination=/data/db -p ${this.port}:27017 mongo:4.4 `
           );
@@ -114,4 +123,31 @@ export namespace Test {
       }
       
       
+
+      export class EtcD extends UniqueInstance {
+
+        public static async start(): Promise<Test.EtcD> {
+          const process = new EtcD()
+          const client = new etcd.Etcd3({hosts: `localhost:${process.port}`})
+          await client.put("a").value("b").exec()
+          await client.put("lock_name-lock").value("free")
+          console.log("etcd state", await client.getAll())
+          await client.delete().key("a").exec()
+          console.log()
+          return process
+        }
+        private constructor() {
+          super()
+          const second_port = this.get_next_port()
+          child_process.execSync(
+            `docker run -it --rm -d --name etcd${this.port} \
+            --env ALLOW_NONE_AUTHENTICATION=yes -p ${this.port}:2379 -p ${second_port}:2380 \
+            bitnami/etcd`
+          );
+        }
+
+        public kill() {
+          child_process.execSync(`docker kill etcd${this.port}`)
+        }
+      }
 }
