@@ -28,57 +28,25 @@ impl Mutex {
     }
 
     pub async fn acquire(&self, client: & Client) -> Result<()> {
-        let mut real_stream = client.watch(KeyRange::key(self.lock_name())).await;
-
         loop {
             let next_kr = KeyRange::key(self.lock_name());
             let initalize = PutRequest::new(self.lock_name(), vec![]);
             let txn = TxnRequest::new()
-            .when_value(next_kr, TxnCmp::Equal, "free")
+            .when_version(next_kr, TxnCmp::Equal, 0)
             .and_then(PutRequest::new(self.lock_name(), "held"));
             
             let grab_open_mutex: TxnResponse = client.kv().txn(txn).await?;
             if grab_open_mutex.is_success() {
-                println!("SUccess locking");
                 return Ok(());
-            } else {
-                while let Some(res) = real_stream.next().await {
-                    println!("lock is free");
-                    let mut last_was_free = false;
-                    match res {
-                        Ok(mut resp) => {
-                            for mut event in resp.take_events() {
-                                last_was_free = match event.event_type() {
-                                    EventType::Put => {
-                                        let mut kv: KeyValue =  event.take_kvs().unwrap();
-                                        "free" == String::from_utf8(kv.take_value()).unwrap()
-                                        
-                                    },
-                                    _ => false
-                                };
-                            }
-                        },
-                        Err(e) => {
-                            eprintln!("failure watching lock: {}", e);
-
-                        }
-                    };
-                    if last_was_free {
-                        break;
-                    } else {
-                        continue;
-                    }
-                }
             }
         }
     }
 
 
     pub async fn release(& self, client: & Client) -> Result<()> {
-        println!("releasing lock");
         
-        let release = PutRequest::new(self.lock_name(), "free");
-        client.kv().put(release).await?;
+        let release = DeleteRequest::new(KeyRange::key(self.lock_name()));
+        client.kv().delete(release).await?;
         Ok(())
     }
 }

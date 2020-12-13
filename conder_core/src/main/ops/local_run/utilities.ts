@@ -130,7 +130,6 @@ export namespace Test {
           const process = new EtcD()
           const client = new etcd.Etcd3({hosts: `localhost:${process.port}`})
           await client.put("a").value("b").exec()
-          await client.put("lock_name-lock").value("free")
           console.log("etcd state", await client.getAll())
           await client.delete().key("a").exec()
           console.log()

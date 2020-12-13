@@ -668,7 +668,7 @@ describe("conduit kernel", () => {
       }
     );
 
-    describe.only("locks", () => {
+    describe("locks", () => {
       function lockTest(
         test: (server: Test.Server) => Promise<void>,
         envOverride: Partial<StrongServerEnv> = {},
@@ -715,10 +715,16 @@ describe("conduit kernel", () => {
             contesting_incr.push(() =>  server.invoke("incr"))
           }
           await Promise.all(contesting_incr.map(f => f()))
+          // expect(await server.invoke("getAll")).toEqual([])
+
           expect(await server.invoke("unsafeGet")).toEqual(num_iterations)
         },
         {
           PROCEDURES: {
+            // getAll: [
+            //   ow.getAllFromStore("state"),
+            //   ow.returnStackTop
+            // ],
             unsafeSet: [
               ow.instantiate({"$set": {}}),
               ow.instantiate("$set"),
@@ -743,7 +749,7 @@ describe("conduit kernel", () => {
               ow.invoke({name: 'unsafeGet', args: 0}),
               ow.instantiate(1),
               ow.nPlus,
-              ow.invoke({name: "unsafeGet", args: 1}),
+              ow.invoke({name: "unsafeSet", args: 1}),
               ow.instantiate("lock_name"),
               ow.release,
               ow.returnVoid
