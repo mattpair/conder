@@ -24,7 +24,7 @@ class TestHarness {
     }
     withReq(req: TestReq): this {
         switch (req) {
-            case "requires storage":
+            case "storage":
                 this.resources.push(() => Test.Mongo.start(this.serverEnv).then(mongo => {                    
                     this.serverEnv.MONGO_CONNECTION_URI = `mongodb://localhost:${mongo.port}`
                     return mongo
@@ -64,7 +64,7 @@ class TestHarness {
 }
 
 type Killable = {kill: () => void}
-type TestReq = "requires storage"
+type TestReq = "storage"
 type ServerTest = (server: DagServer) => Promise<void>
 function withInputHarness(
     reqs: TestReq[],
@@ -560,7 +560,7 @@ describe("basic functionality", () => {
     ))
 
     it("allows indexing into arrays with an int", withInputHarness(
-        ["requires storage"],
+        ["storage"],
         {
             getFirst: {
                 input: [schemaFactory.Array(schemaFactory.Any)],
@@ -649,7 +649,7 @@ describe("global objects", () => {
         async server => {
             expect(await server.get()).toBeNull()
         }, 
-        ["requires storage"])
+        ["storage"])
     )
 
     const set: RootNode[] = [{
@@ -697,7 +697,7 @@ describe("global objects", () => {
             expect(await server.get()).toEqual({l2: 42})
             expect(await server.getWhole()).toEqual({l1: {l2: 42}})
         },
-        ["requires storage"]
+        ["storage"]
         )
     )
 
@@ -729,7 +729,7 @@ describe("global objects", () => {
         async server => {
             expect(await server.maybeSet()).toBeNull()
         },
-        ["requires storage"]
+        ["storage"]
     ))
 
 
@@ -760,7 +760,7 @@ describe("global objects", () => {
         expect(await server.set()).toBeNull()
         expect(await server.get()).toEqual("Number field")
     },
-    ["requires storage"]
+    ["storage"]
     ))
 
     it("can get keys from global objects", 
@@ -781,7 +781,7 @@ describe("global objects", () => {
             expect(await server.setKeys()).toBeNull()
             expect(await server.getKeys()).toEqual(["k1"])
         },
-        ["requires storage"])
+        ["storage"])
     )
 
     const getNested: RootNode[] = [
@@ -800,7 +800,7 @@ describe("global objects", () => {
         async server => {
             await expect(server.getNested()).rejects.toThrowError()
         },
-        ["requires storage"]
+        ["storage"]
         )
     )
 
@@ -824,7 +824,7 @@ describe("global objects", () => {
                 await expect(server.getNested()).rejects.toThrowError()
                 expect(await server.get()).toBeNull()
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -844,7 +844,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.getNested()).toEqual(42)
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -867,7 +867,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.checkL1()).toBe(true)
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -894,7 +894,7 @@ describe("global objects", () => {
                 expect(await server.delete()).toBeNull()
                 expect(await server.get()).toBeNull()
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -920,7 +920,7 @@ describe("global objects", () => {
                 expect(await server.delete()).toBeNull()
                 expect(await server.get()).toEqual({})
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -984,7 +984,7 @@ describe("global objects", () => {
                 expect(await server.push()).toBeNull()
                 expect(await server.get()).toEqual({arr: ["HELLO"], nested: {arr: ["HELLO"]}})
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -1032,7 +1032,7 @@ describe("global objects", () => {
                 expect(await server.init()).toBeNull()
                 expect(await server.update()).toEqual("ow")
             },
-            ["requires storage"]
+            ["storage"]
         )
     )
 
@@ -1105,7 +1105,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("can perform updates that depend on global state - ifs", noInputHarness(
@@ -1134,7 +1134,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setTo0If42()).toBeNull()
                 expect(await server.get()).toEqual({l2: 0})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("mutation conditional on same global state requires lock", noInputHarness(
@@ -1171,7 +1171,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setTo0If42()).toBeNull()
                 expect(await server.get()).toEqual({l2: 0})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("can perform updates that depend on some other global state", noInputHarness(
@@ -1203,7 +1203,7 @@ describe("global objects", () => {
                 expect(await server.setOther()).toBeNull()
                 expect(await server.setToOtherPlusOne()).toBeNull()
                 expect(await server.get()).toBe(735)
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
 
@@ -1236,7 +1236,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("global state taint is transitive through variables", noInputHarness(
@@ -1272,7 +1272,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("global state taint is applied on updates to variables", noInputHarness(
@@ -1310,7 +1310,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("iterating over an array of globals while writing requires a lock", noInputHarness({
@@ -1348,7 +1348,7 @@ describe("global objects", () => {
             expect(await server.setLookupKeys()).toBeNull()
             expect(await server.deleteLookupFields()).toBeNull()
             expect(await server.get()).toBeNull()
-        }, ["requires storage"])
+        }, ["storage"])
         )
         
         const create_user: FunctionData = {
@@ -1502,7 +1502,7 @@ describe("global objects", () => {
         }
         
 
-        it("should allow checks of existence with comparisons to none", withInputHarness(["requires storage"],
+        it("should allow checks of existence with comparisons to none", withInputHarness(["storage"],
         {
             get_user,
             create_user            
@@ -1515,7 +1515,7 @@ describe("global objects", () => {
             expect(await server.get_user("me")).toEqual({exists: true, val: {chats: []}})
         }))
 
-        it("pushing then returning", withInputHarness(["requires storage"], 
+        it("pushing then returning", withInputHarness(["storage"], 
         {
             push: {
                 input: [schemaFactory.string, schemaFactory.Any],
@@ -1587,7 +1587,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.updateWithPartialState()).toBeNull()
                 expect(await server.get()).toEqual({clean: 12, global_origin: {l2: 42}})
-            }, ["requires storage"])
+            }, ["storage"])
         )
 
         it("global state taint is erased on overwrites", noInputHarness(
@@ -1624,7 +1624,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.updateWithOverwrittenState()).toBeNull()
                 expect(await server.get()).toEqual(0)
-            }, ["requires storage"])
+            }, ["storage"])
         )
     })
 })
