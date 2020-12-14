@@ -111,7 +111,7 @@ describe("conduit kernel", () => {
           plus: [
             ow.instantiate(1),
             ow.instantiate(41),
-            ow.nPlus,
+            ow.plus,
             ow.returnStackTop,
           ],
           minus: [
@@ -297,13 +297,20 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.Object({}),
       schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int) })
     );
-    // #DuckTyping
     schemaTest(
-      "Object containing unspecified field is allowed",
+      "Object containing unspecified field is not allowed",
       "must exist",
       interpeterTypeFactory.Object({}),
-      interpeterTypeFactory.Object({ i: 12, d: [12, 12] }),
+      interpeterTypeFactory.Object({ i: 12}),
       schemaFactory.Object({ i: schemaFactory.int })
+    );
+
+    schemaTest(
+      "Optionals don't mean you can add other fields",
+      "must exist",
+      interpeterTypeFactory.Object({ d: [12, 12] }),
+      interpeterTypeFactory.Object({}),
+      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int)})
     );
 
     schemaTest(
@@ -745,7 +752,7 @@ describe("conduit kernel", () => {
               ow.lock,
               ow.invoke({name: 'unsafeGet', args: 0}),
               ow.instantiate(1),
-              ow.nPlus,
+              ow.plus,
               ow.invoke({name: "unsafeSet", args: 1}),
               ow.instantiate("lock_name"),
               ow.release,

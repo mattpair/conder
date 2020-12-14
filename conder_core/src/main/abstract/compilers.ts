@@ -56,7 +56,7 @@ const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> 
 }
 
 const mathLookup: Record<PickNode<"Math">["sign"], AnyOpInstance[]> = {
-    "+": [ow.nPlus],
+    "+": [ow.plus],
     "-": [ow.nMinus],
     "/": [ow.nDivide],
     "*": [ow.nMult],

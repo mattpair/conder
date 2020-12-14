@@ -74,7 +74,7 @@ ParamOp<"overwriteHeap", number> |
 ParamOp<"tryGetField", string> | 
 StaticOp<"isLastNone"> |
 ParamOp<"stringConcat", {nStrings: number, joiner: string}> | 
-StaticOp<"nPlus"> |
+StaticOp<"plus"> |
 StaticOp<"nMinus"> |
 StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
@@ -1081,9 +1081,36 @@ export const OpSpec: CompleteOpSpec = {
         }
     },
 
-    nPlus: {
+    plus: {
         opDefinition: {
-            rustOpHandler: mathOp("+")
+            rustOpHandler:`
+            let right = ${popStack};
+            let left = ${popStack};
+            let result = match left {
+                InterpreterType::int(i1) => match right {
+                    InterpreterType::int(i2) => InterpreterType::int(i1 + i2),
+                    InterpreterType::double(d2) => InterpreterType::double(i1 as f64 + d2),
+                    InterpreterType::string(s) => InterpreterType::string(format!("{}{}", i1, s)),
+                    _ => panic!("not addable")
+                },
+                InterpreterType::double(d1) => match right {
+                    InterpreterType::int(i2) => InterpreterType::double(d1 + (i2 as f64)),
+                    InterpreterType::double(d2) => InterpreterType::double(d1 + d2),
+                    InterpreterType::string(s) => InterpreterType::string(format!("{}{}", d1, s)),
+                    _ => panic!("not addable")
+                }, 
+                InterpreterType::string(s) => match right {
+                    InterpreterType::int(d) => InterpreterType::string(format!("{}{}", s, d)),
+                    InterpreterType::double(d) => InterpreterType::string(format!("{}{}", s, d)),
+                    InterpreterType::string(d) => InterpreterType::string(format!("{}{}", s, d)),
+                    _ =>panic!("not addable")
+                }
+                _ => panic!("not addable")
+            };
+            ${pushStack("result")};
+            None
+            `
+            
         }
     },
     nMinus: {
