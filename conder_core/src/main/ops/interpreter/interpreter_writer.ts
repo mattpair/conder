@@ -202,14 +202,40 @@ export function writeOperationInterpreter(): string {
         }
     }
 
-    fn adheres_to_schema(value: &InterpreterType, schema: &Schema) -> bool {
+    impl Schema {
+        fn is_optional(&self) -> bool {
+            match self {
+                Schema::Optional(_) => true,
+                _ => false
+            }
+        }
+    }
+
+    fn adheres_to_schema(value: & InterpreterType, schema: &Schema) -> bool {
         return match schema {
             
-            Schema::Object(internal) => match value {
-                InterpreterType::Object(internal_value) => internal.iter().all(|(k, v)| match internal_value.get(k) {
-                    Some(matching_val) => adheres_to_schema(matching_val, &v),
-                    None => adheres_to_schema(&InterpreterType::None, &v)              
-                }),
+            Schema::Object(internal_schema) => match value {
+                InterpreterType::Object(internal_value) => {
+                    let mut optionals_missing = 0;
+                    let mut adheres = true;
+                    for (k, v_schema) in internal_schema {
+                        adheres = match internal_value.get(k) {
+                            Some(v_value) => adheres_to_schema(v_value, v_schema),
+                            None => {
+                                if v_schema.is_optional() {
+                                    optionals_missing += 1;
+                                    true 
+                                } else {
+                                    false
+                                }
+                            }
+                        };
+                        if !adheres {
+                            break
+                        }
+                    }
+                    adheres && internal_schema.len() - optionals_missing >= internal_value.len()
+                },
                 _ => false
             },
             Schema::Array(internal) => match value {

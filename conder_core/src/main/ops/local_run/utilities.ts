@@ -8,7 +8,7 @@ import "isomorphic-fetch";
 
 export namespace Test {
     class UniqueInstance {
-      private static next_port = new Uint8Array(new SharedArrayBuffer(16));
+      private static next_port = new Uint16Array(new SharedArrayBuffer(16));
       public readonly port: number
       constructor() {
         this.port = this.get_next_port()

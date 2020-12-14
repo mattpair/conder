@@ -297,13 +297,20 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.Object({}),
       schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int) })
     );
-    // #DuckTyping
     schemaTest(
-      "Object containing unspecified field is allowed",
+      "Object containing unspecified field is not allowed",
       "must exist",
       interpeterTypeFactory.Object({}),
-      interpeterTypeFactory.Object({ i: 12, d: [12, 12] }),
+      interpeterTypeFactory.Object({ i: 12}),
       schemaFactory.Object({ i: schemaFactory.int })
+    );
+
+    schemaTest(
+      "Optionals don't mean you can add other fields",
+      "must exist",
+      interpeterTypeFactory.Object({ d: [12, 12] }),
+      interpeterTypeFactory.Object({}),
+      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int)})
     );
 
     schemaTest(
