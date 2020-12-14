@@ -1,3 +1,4 @@
+import { StrongServerEnv } from './../ops/server_writer';
 import { Compiler } from './compilers';
 import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
 
@@ -16,71 +17,63 @@ const testCompiler: Compiler<RootNode> =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
     })
     .then(MONGO_COMPILER)
 
-function withInputHarness(
-    maybeStorage: "requires storage" | "no storage",
-    proc_nodes: Record<string, FunctionData>,
-    test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
-    const getStoresAndProcedures = () => {
-        const map = new Map(
-            Object.entries(proc_nodes)
-            .map(([k, v]) => [k, new FunctionDescription(v)]))
-        const compiled = toOps(map, testCompiler)
-        const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
-        const STORES = {TEST_STORE: schemaFactory.Object({})}
-        return {PROCEDURES, STORES}
+class TestHarness {
+    private serverEnv: StrongServerEnv
+    private readonly resources: (() => Promise<Killable>)[] = []
+    constructor() {
     }
-    if (maybeStorage === "requires storage") {
-        return (cb) => {
-            const spec = getStoresAndProcedures()
-            return Test.Mongo.start({STORES: spec.STORES})
-            .then(mongo => Test.Server.start({
-                MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
-                SCHEMAS: [],
-                DEPLOYMENT_NAME: "statefultest",
-                ...spec
-            })
-            .then(async server => {
-                const testSurface: DagServer = {}
-                for (const key in spec.PROCEDURES) {
-                    testSurface[key] = (...args) => server.invoke(key, ...args)
-                }
-                return test(testSurface).then(() => {
-                    server.kill()
-                    mongo.kill()
-                    cb()
-                }).catch((e) => {
-                    server.kill()
-                    mongo.kill()
-                    throw e
-                })
-            })
-            
-        )
+    withReq(req: TestReq): this {
+        switch (req) {
+            case "requires storage":
+                this.resources.push(() => Test.Mongo.start(this.serverEnv).then(mongo => {                    
+                    this.serverEnv.MONGO_CONNECTION_URI = `mongodb://localhost:${mongo.port}`
+                    return mongo
+                })) 
+                return this
+            default: const n: never = req
         }
     }
-    return (cb) => {
-                            
-        const spec = getStoresAndProcedures()
-        // console.log(spec.PROCEDURES)
-        return Test.Server.start({
-            SCHEMAS: [],
-            DEPLOYMENT_NAME: "statefultest",
-            ...spec
-        })
-        .then(async server => {
+
+    test(test: ServerTest, proc_nodes: Record<string, FunctionData>): jest.ProvidesCallback {
+        return async (cb) => {
+            const map = new Map(
+                Object.entries(proc_nodes)
+                .map(([k, v]) => [k, new FunctionDescription(v)]))
+            const compiled = toOps(map, testCompiler)
+            const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
+            const STORES = {TEST_STORE: schemaFactory.Object({})}
+            this.serverEnv = {PROCEDURES, STORES, SCHEMAS: [], DEPLOYMENT_NAME: "test"}
+
+            const must_cleanup = await Promise.all(this.resources.map(f => f()))
+            const server = await Test.Server.start(this.serverEnv)
+            must_cleanup.push(server)
             const testSurface: DagServer = {}
-            for (const key in spec.PROCEDURES) {
+            for (const key in this.serverEnv.PROCEDURES) {
                 testSurface[key] = (...args) => server.invoke(key, ...args)
             }
+
             return test(testSurface).then(() => {
-                server.kill()
+                must_cleanup.forEach(r => r.kill())
                 cb()
             }).catch((e) => {
-                server.kill()
+                must_cleanup.forEach(r => r.kill())
                 throw e
             })
-        })
+        }
     }
+}
+
+type Killable = {kill: () => void}
+type TestReq = "requires storage"
+type ServerTest = (server: DagServer) => Promise<void>
+function withInputHarness(
+    reqs: TestReq[],
+    proc_nodes: Record<string, FunctionData>,
+    test: (server: DagServer) => Promise<void>): jest.ProvidesCallback {
+    
+    const builder = new TestHarness()
+    reqs.forEach(r => builder.withReq(r))
+    return builder.test(test, proc_nodes)
 }
 
     
@@ -88,7 +81,7 @@ function withInputHarness(
 function noInputHarness(
     proc_nodes: Record<string, RootNode[]>, 
     test: (server: DagServer) => Promise<void>,
-    maybeStorage: Parameters<typeof withInputHarness>[0]="no storage"
+    maybeStorage: Parameters<typeof withInputHarness>[0]=[]
     ): jest.ProvidesCallback {
     const PROCEDURES: Record<string, FunctionDescription> = {}
     for (const key in proc_nodes) {
@@ -165,7 +158,7 @@ describe("basic functionality", () => {
 
     it("allows deleting of fields on local objects",
         withInputHarness(
-            "no storage", 
+            [], 
             {
                 delete: {
                     input: [schemaFactory.Any], 
@@ -190,7 +183,7 @@ describe("basic functionality", () => {
 
     it("allows gathering of keys on objects",
             withInputHarness(
-                "no storage",
+                [],
                 {
                     getKeys: {
                         input: [schemaFactory.Object({
@@ -212,7 +205,7 @@ describe("basic functionality", () => {
 
     it("allows directly indexing into object keys",
             withInputHarness(
-                "no storage",
+                [],
                 {
                     getKeys: {
                         input: [schemaFactory.Object({
@@ -238,7 +231,7 @@ describe("basic functionality", () => {
 
     it("allows deleting of nested fields on locals",
         withInputHarness(
-            "no storage", 
+            [], 
             {
                 delete: {
                     input: [schemaFactory.Any], 
@@ -308,7 +301,7 @@ describe("basic functionality", () => {
         }]}
     }
     it("can compare numbers", 
-        withInputHarness("no storage",{
+        withInputHarness([],{
             geq: nComp(">=", 10),
             leq: nComp("<=", 10),
             l: nComp("<", 10),
@@ -506,7 +499,7 @@ describe("basic functionality", () => {
     )
 
     it("allows pushing to local arrays", withInputHarness(
-        "no storage",
+        [],
         {
             push: {
                 input: [schemaFactory.Array(schemaFactory.Any)],
@@ -533,7 +526,7 @@ describe("basic functionality", () => {
     ))
     
     it("allows pushing to nested local arrays", withInputHarness(
-        "no storage",
+        [],
         {
             push: {
                 input: [schemaFactory.Any],
@@ -567,7 +560,7 @@ describe("basic functionality", () => {
     ))
 
     it("allows indexing into arrays with an int", withInputHarness(
-        "requires storage",
+        ["requires storage"],
         {
             getFirst: {
                 input: [schemaFactory.Array(schemaFactory.Any)],
@@ -590,7 +583,7 @@ describe("basic functionality", () => {
 })
 
 describe("with input", () => {
-    it("validates input", withInputHarness("no storage",{
+    it("validates input", withInputHarness([],{
         accepts3any: {
             input: [
                 schemaFactory.Any,
@@ -611,7 +604,7 @@ describe("with input", () => {
         expect(await server.accepts3any("a", "b", "c")).toEqual("c")
     }))
 
-    it("check if field exists", withInputHarness("no storage",{
+    it("check if field exists", withInputHarness([],{
         checksField: {
             input: [
                 schemaFactory.Any
@@ -656,7 +649,7 @@ describe("global objects", () => {
         async server => {
             expect(await server.get()).toBeNull()
         }, 
-        "requires storage")
+        ["requires storage"])
     )
 
     const set: RootNode[] = [{
@@ -704,7 +697,7 @@ describe("global objects", () => {
             expect(await server.get()).toEqual({l2: 42})
             expect(await server.getWhole()).toEqual({l1: {l2: 42}})
         },
-        "requires storage"
+        ["requires storage"]
         )
     )
 
@@ -736,7 +729,7 @@ describe("global objects", () => {
         async server => {
             expect(await server.maybeSet()).toBeNull()
         },
-        "requires storage"
+        ["requires storage"]
     ))
 
 
@@ -767,7 +760,7 @@ describe("global objects", () => {
         expect(await server.set()).toBeNull()
         expect(await server.get()).toEqual("Number field")
     },
-    "requires storage"
+    ["requires storage"]
     ))
 
     it("can get keys from global objects", 
@@ -788,7 +781,7 @@ describe("global objects", () => {
             expect(await server.setKeys()).toBeNull()
             expect(await server.getKeys()).toEqual(["k1"])
         },
-        "requires storage")
+        ["requires storage"])
     )
 
     const getNested: RootNode[] = [
@@ -807,7 +800,7 @@ describe("global objects", () => {
         async server => {
             await expect(server.getNested()).rejects.toThrowError()
         },
-        "requires storage"
+        ["requires storage"]
         )
     )
 
@@ -831,7 +824,7 @@ describe("global objects", () => {
                 await expect(server.getNested()).rejects.toThrowError()
                 expect(await server.get()).toBeNull()
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -851,7 +844,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.getNested()).toEqual(42)
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -874,7 +867,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.checkL1()).toBe(true)
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -901,7 +894,7 @@ describe("global objects", () => {
                 expect(await server.delete()).toBeNull()
                 expect(await server.get()).toBeNull()
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -927,7 +920,7 @@ describe("global objects", () => {
                 expect(await server.delete()).toBeNull()
                 expect(await server.get()).toEqual({})
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -991,7 +984,7 @@ describe("global objects", () => {
                 expect(await server.push()).toBeNull()
                 expect(await server.get()).toEqual({arr: ["HELLO"], nested: {arr: ["HELLO"]}})
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
@@ -1039,14 +1032,14 @@ describe("global objects", () => {
                 expect(await server.init()).toBeNull()
                 expect(await server.update()).toEqual("ow")
             },
-            "requires storage"
+            ["requires storage"]
         )
     )
 
     describe("iterations", () => {
         it("can iterate over local arrays", () => {
             withInputHarness(
-                "no storage",
+                [],
                 {
                     sum: {
                         input: [schemaFactory.Array(schemaFactory.double)],
@@ -1112,7 +1105,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("can perform updates that depend on global state - ifs", noInputHarness(
@@ -1141,7 +1134,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setTo0If42()).toBeNull()
                 expect(await server.get()).toEqual({l2: 0})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("mutation conditional on same global state requires lock", noInputHarness(
@@ -1178,7 +1171,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setTo0If42()).toBeNull()
                 expect(await server.get()).toEqual({l2: 0})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("can perform updates that depend on some other global state", noInputHarness(
@@ -1210,7 +1203,7 @@ describe("global objects", () => {
                 expect(await server.setOther()).toBeNull()
                 expect(await server.setToOtherPlusOne()).toBeNull()
                 expect(await server.get()).toBe(735)
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
 
@@ -1243,7 +1236,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("global state taint is transitive through variables", noInputHarness(
@@ -1279,7 +1272,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("global state taint is applied on updates to variables", noInputHarness(
@@ -1317,7 +1310,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.setToSelfPlusOne()).toBeNull()
                 expect(await server.get()).toEqual({l2: 43})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("iterating over an array of globals while writing requires a lock", noInputHarness({
@@ -1355,7 +1348,7 @@ describe("global objects", () => {
             expect(await server.setLookupKeys()).toBeNull()
             expect(await server.deleteLookupFields()).toBeNull()
             expect(await server.get()).toBeNull()
-        }, "requires storage")
+        }, ["requires storage"])
         )
         
         const create_user: FunctionData = {
@@ -1509,7 +1502,7 @@ describe("global objects", () => {
         }
         
 
-        it("should allow checks of existence with comparisons to none", withInputHarness("requires storage",
+        it("should allow checks of existence with comparisons to none", withInputHarness(["requires storage"],
         {
             get_user,
             create_user            
@@ -1522,7 +1515,7 @@ describe("global objects", () => {
             expect(await server.get_user("me")).toEqual({exists: true, val: {chats: []}})
         }))
 
-        it("pushing then returning", withInputHarness("requires storage", 
+        it("pushing then returning", withInputHarness(["requires storage"], 
         {
             push: {
                 input: [schemaFactory.string, schemaFactory.Any],
@@ -1594,7 +1587,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.updateWithPartialState()).toBeNull()
                 expect(await server.get()).toEqual({clean: 12, global_origin: {l2: 42}})
-            }, "requires storage")
+            }, ["requires storage"])
         )
 
         it("global state taint is erased on overwrites", noInputHarness(
@@ -1631,8 +1624,7 @@ describe("global objects", () => {
                 expect(await server.set()).toBeNull()
                 expect(await server.updateWithOverwrittenState()).toBeNull()
                 expect(await server.get()).toEqual(0)
-            }, "requires storage")
+            }, ["requires storage"])
         )
     })
-
 })
