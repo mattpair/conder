@@ -111,7 +111,7 @@ describe("conduit kernel", () => {
           plus: [
             ow.instantiate(1),
             ow.instantiate(41),
-            ow.nPlus,
+            ow.plus,
             ow.returnStackTop,
           ],
           minus: [
@@ -745,7 +745,7 @@ describe("conduit kernel", () => {
               ow.lock,
               ow.invoke({name: 'unsafeGet', args: 0}),
               ow.instantiate(1),
-              ow.nPlus,
+              ow.plus,
               ow.invoke({name: "unsafeSet", args: 1}),
               ow.instantiate("lock_name"),
               ow.release,

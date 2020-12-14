@@ -9,8 +9,8 @@
     "gen": "node -e 'require(\"./dist/src/main/ops/index.js\").writeMain()'",
     "compile": "tsc -b && npm run gen && cd src/main/ops/rust && cargo build",
     "pretest": "npm run compile",
-    "quicktest": "tsc -b && jest --runInBand",
-    "test": "jest --runInBand"
+    "quicktest": "tsc -b && jest --maxWorkers=25%",
+    "test": "jest  --maxWorkers=25%"
   },
   "author": "Jeremy",
   "license": "ISC",

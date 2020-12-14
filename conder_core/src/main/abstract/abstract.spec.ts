@@ -1633,60 +1633,95 @@ describe("global objects", () => {
             }, ["storage"])
         )
     })
-})
 
-
-describe("Locks", () => {
-    it("locks prevent progress if not held", withInputHarness(
-        ["storage", "locks"],
+    describe("strings", () => {
+        it("allows concatenation with some types", withInputHarness([],
         {
-            unsafeGet: {
-                computation: [
-                {kind: "Return", value: {
-                    kind: "Selection",
-                    level: [{kind: "String", value: "data"}],
-                    root: GLOBAL
-                }}
-                ],
-                input: []
-            },
-            unsafeSet: {
+            add: {
+                input: [schemaFactory.Any, schemaFactory.Any],
                 computation: [
                     {
-                        kind: "Update",
-                        root: GLOBAL,
-                        level: [{kind: "String", value: "data"}],
-                        operation: {kind: "Saved", index: 0}
-                    },
-                ],
-                input: [schemaFactory.int]
-            },
-            incr: {
-                computation: [
-                    {kind: "Lock", name: {kind: "String", value: 'lock'}},
-                    {kind: "Call", function_name: "unsafeSet", args: [
-                        {
-                            kind: "Math", 
-                            left: {kind: "Call", function_name: "unsafeGet", args: []},
-                            right: {kind: "Int", value: 1},
+                        kind: "Return",
+                        value: {
+                            kind: 'Math',
+                            left: {kind: "Saved", index: 0},
+                            right: {kind: 'Saved', index: 1},
                             sign: "+"
                         }
-                    ]},
-                    {kind: "Release", name: {kind: "String", value: 'lock'}}
-                ],
-                input: []
+                    }
+                ]
             }
         },
         async server => {
-            expect(await server.unsafeSet(0)).toBeNull()
-            expect(await server.unsafeGet()).toBe(0)
-            const incrs: Promise<void>[] = []
-            for (let i = 0; i < 100; i++) {
-                incrs.push(server.incr())
-            }
-
-            await Promise.all(incrs)
-            expect(await server.unsafeGet()).toBe(100)
+            const tests: {l: string | number, r: string |number, e: string}[] = [
+                {l: "a", r: "B", e: "aB"},
+                {l: "a", r: 1, e: "a1"},
+                {l: "a", r: 1.1, e: "a1.1"},
+                {l: 1, r: "a", e: "1a"},
+                {l: 1.1, r: "a", e: "1.1a"}
+            ]
+            
+            const res: Promise<void>[] = tests.map(t => server.add(t.l, t.r).then(result => {
+                expect(result).toBe(t.e)
+            }))
+            await Promise.all(res)
         }
-    ), 10000)
+        ))
+    })
+    describe("Locks", () => {
+        it("locks prevent progress if not held", withInputHarness(
+            ["storage", "locks"],
+            {
+                unsafeGet: {
+                    computation: [
+                    {kind: "Return", value: {
+                        kind: "Selection",
+                        level: [{kind: "String", value: "data"}],
+                        root: GLOBAL
+                    }}
+                    ],
+                    input: []
+                },
+                unsafeSet: {
+                    computation: [
+                        {
+                            kind: "Update",
+                            root: GLOBAL,
+                            level: [{kind: "String", value: "data"}],
+                            operation: {kind: "Saved", index: 0}
+                        },
+                    ],
+                    input: [schemaFactory.int]
+                },
+                incr: {
+                    computation: [
+                        {kind: "Lock", name: {kind: "String", value: 'lock'}},
+                        {kind: "Call", function_name: "unsafeSet", args: [
+                            {
+                                kind: "Math", 
+                                left: {kind: "Call", function_name: "unsafeGet", args: []},
+                                right: {kind: "Int", value: 1},
+                                sign: "+"
+                            }
+                        ]},
+                        {kind: "Release", name: {kind: "String", value: 'lock'}}
+                    ],
+                    input: []
+                }
+            },
+            async server => {
+                expect(await server.unsafeSet(0)).toBeNull()
+                expect(await server.unsafeGet()).toBe(0)
+                const incrs: Promise<void>[] = []
+                for (let i = 0; i < 100; i++) {
+                    incrs.push(server.incr())
+                }
+    
+                await Promise.all(incrs)
+                expect(await server.unsafeGet()).toBe(100)
+            }
+        ), 10000)
+    })
 })
+
+
