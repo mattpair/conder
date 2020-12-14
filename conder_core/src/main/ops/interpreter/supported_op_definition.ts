@@ -50,7 +50,7 @@ StaticOp<"ndArrayLen"> |
 ParamOp<"storeLen", string> |
 ParamOp<"createUpdateDoc", mongodb.UpdateQuery<{}>> |
 ParamOp<"updateOne", {store: string, upsert: boolean}> |
-ParamOp<"replaceOne", string> |
+ParamOp<"replaceOne", {store: string, upsert: boolean}> |
 ParamOp<"setNestedField", string[]> |
 ParamOp<"copyFieldFromHeap", {heap_pos: number, fields: string[]}> |
 ParamOp<"extractFields", string[][]> | 
@@ -80,7 +80,9 @@ StaticOp<"nDivide"> |
 StaticOp<"nMult"> |
 StaticOp<"getKeys"> |
 StaticOp<"repackageCollection"> |
-ParamOp<"invoke", {name: string, args: number}>
+ParamOp<"invoke", {name: string, args: number}> |
+StaticOp<"lock"> |
+StaticOp<"release">
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -163,10 +165,10 @@ function againstField(
 
     return `
             ${atStart}
-            let mut fields = stack.split_off(stack.len() - ${data.depth});
+            let mut fields = current.stack.split_off(current.stack.len() - ${data.depth});
             let last_field = fields.pop().unwrap();
     
-            let mut o_or_a = ${data.location === "stack" ? `stack.last${mut}().unwrap()` : `heap.get${mut}(${data.location.save}).unwrap()`};
+            let mut o_or_a = ${data.location === "stack" ? `current.stack.last${mut}().unwrap()` : `current.heap.get${mut}(${data.location.save}).unwrap()`};
             for f in fields {
                 o_or_a = match o_or_a {
                     InterpreterType::Object(o) => match f {
@@ -227,10 +229,10 @@ function raiseErrorWithMessage(s: string): string {
     return `Some("${s}".to_string())`
 }
 
-const getDb = `db.unwrap()`
+const getDb = `globals.db.unwrap()`
 
 const popStack = `
-    match stack.pop() {
+    match current.stack.pop() {
         Some(v) => v,
         _ => panic!("Attempting to access non existent value")
     }
@@ -257,19 +259,19 @@ const popToObject = `
         _ => panic!("stack variable is not an object")
     }
 `
-const lastStack = `stack.last_mut().unwrap()`
+const lastStack = `current.stack.last_mut().unwrap()`
 
 function safeGoto(varname: string): string {
     return `
-    if ${varname} >= these_ops.len() {
+    if ${varname} >= current.ops.len() {
         panic!("Setting op index out of bounds");
     }
-    next_op_index = ${varname};
+    current.next_op_index = ${varname};
     None
     `
 }
 function pushStack(instance: string): string {
-    return `stack.push(${instance})`
+    return `current.stack.push(${instance})`
 }
 
 function applyAgainstNumbers(left: string, right: string, op: string, type: "number" | "bool"): string {
@@ -344,7 +346,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize"],
             rustOpHandler: `
-            heap[*op_param] = ${popStack};
+            current.heap[*op_param] = ${popStack};
             None
             `
         },
@@ -450,7 +452,7 @@ export const OpSpec: CompleteOpSpec = {
 
     truncateHeap: {
         opDefinition: {
-            rustOpHandler: `heap.truncate(heap.len() - *op_param);  None`,
+            rustOpHandler: `current.heap.truncate(current.heap.len() - *op_param);  None`,
             paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
@@ -461,9 +463,9 @@ export const OpSpec: CompleteOpSpec = {
             
             rustOpHandler: `
                 if *param1 {
-                    ${safeGoto("*param0 + next_op_index")}
+                    ${safeGoto("*param0 + current.next_op_index")}
                 } else {
-                    ${safeGoto("next_op_index - *param0 - 1")}
+                    ${safeGoto("current.next_op_index - *param0 - 1")}
                 }
                 
             `,
@@ -471,8 +473,8 @@ export const OpSpec: CompleteOpSpec = {
         },
         // here if p == -2    
         // here if p == -1
-        // start <--- this op, the offset.
-        // here if p == 0
+        // this_op <--- this op, the offset.
+        // next_op_index p == 0
         // here if p == 1
         factoryMethod: ({offset, direction}) => ({kind: "offsetOpCursor", data: [
             offset, direction === "fwd"
@@ -485,7 +487,7 @@ export const OpSpec: CompleteOpSpec = {
                 match ${popStack} {
                     InterpreterType::bool(b) => {
                         if b {
-                            ${safeGoto("*op_param + next_op_index")}
+                            ${safeGoto("*op_param + current.next_op_index")}
                         } else {
                             None
                         }
@@ -510,16 +512,12 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize"],
             rustOpHandler: `
-            let value = heap.swap_remove(*op_param);
+            let value = current.heap.swap_remove(*op_param);
             if callstack.len() == 0 {
                 return Ok(value);
             }
-            let mut last = callstack.pop().unwrap();
-            last.stack.push(value);
-            heap = last.heap;
-            stack = last.stack;
-            these_ops = last.ops;
-            next_op_index = last.restore_index;
+            current = callstack.pop().unwrap();
+            current.stack.push(value);
             None
             `
         }
@@ -532,12 +530,8 @@ export const OpSpec: CompleteOpSpec = {
             if callstack.len() == 0 {
                 return Ok(value);
             }
-            let mut last = callstack.pop().unwrap();
-            last.stack.push(value);
-            heap = last.heap;
-            stack = last.stack;
-            next_op_index = last.restore_index;
-            these_ops = last.ops;
+            current = callstack.pop().unwrap();
+            current.stack.push(value);
             None
             `
         }
@@ -548,11 +542,7 @@ export const OpSpec: CompleteOpSpec = {
             if callstack.len() == 0 {
                 return Ok(InterpreterType::None);
             }
-            let last = callstack.pop().unwrap();
-            heap = last.heap;
-            stack = last.stack;
-            next_op_index = last.restore_index;
-            these_ops = last.ops;
+            current = callstack.pop().unwrap();
             None
             `
         }
@@ -567,7 +557,7 @@ export const OpSpec: CompleteOpSpec = {
         },
         opDefinition: {                    
             paramType: ["usize"],
-            rustOpHandler: `match heap.get(*op_param) {
+            rustOpHandler: `match current.heap.get(*op_param) {
                 Some(d) => {${pushStack("d.clone()")}; None},
                 None => Some(format!("Echoing variable that does not exist {}", *op_param))
             }`
@@ -600,7 +590,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param1], &schemas[*param0]))")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param1], &globals.schemas[*param0]))")};
             None`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
@@ -609,7 +599,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "String"],
             rustOpHandler: `
-            match storage::append(${getDb}, &param1, &heap[*param0]).await {
+            match storage::append(${getDb}, &param1, &current.heap[*param0]).await {
                 InterpreterType::None => None,
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -646,7 +636,7 @@ export const OpSpec: CompleteOpSpec = {
     moveStackTopToHeap: {
         opDefinition: {
             rustOpHandler: `
-            heap.push(${popStack});
+            current.heap.push(${popStack});
             None
             `
         },
@@ -731,7 +721,7 @@ export const OpSpec: CompleteOpSpec = {
                 _ => panic!("Cannot flatten non array")
             };
             res.reverse();
-            stack.append(&mut res);
+            current.stack.append(&mut res);
             None
             `
         }
@@ -755,7 +745,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let p = ${popStack};
-            match heap.get_mut(*op_param).unwrap() {
+            match current.heap.get_mut(*op_param).unwrap() {
                 InterpreterType::Array(inner) => {
                     inner.push(p);
                     None
@@ -791,8 +781,8 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let pushme = ${popStack};
-            let pos = stack.len() - 1 - *op_param;
-            match stack.get_mut(pos).unwrap() {
+            let pos = current.stack.len() - 1 - *op_param;
+            match current.stack.get_mut(pos).unwrap() {
                 InterpreterType::Array(inner) => {
                     inner.push(pushme);
                     None
@@ -889,7 +879,7 @@ export const OpSpec: CompleteOpSpec = {
             None
             `
         },
-        factoryMethod: (p) => ({kind: "replaceOne", data: p})
+        factoryMethod: ({store, upsert}) => ({kind: "replaceOne", data: [store, upsert]})
     },
 
     setNestedField: {
@@ -928,7 +918,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Vec<String>"],
             rustOpHandler: `
-            let mut target: &InterpreterType = &heap[*param0];
+            let mut target: &InterpreterType = &current.heap[*param0];
             for f in param1 {
                 target = match target {
                     InterpreterType::Object(inner) => match inner.get(f) {
@@ -950,7 +940,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Schema"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&heap[*param0], param1))")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param0], param1))")};
             None
             `
         },
@@ -1057,8 +1047,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize"],
             rustOpHandler: `
-            if heap.len() != *op_param {
-                Some(format!("unexpected heap len {}, found {}", *op_param, heap.len()))
+            if current.heap.len() != *op_param {
+                Some(format!("unexpected heap len {}, found {}", *op_param, current.heap.len()))
             } else {
                 None
             }
@@ -1125,24 +1115,44 @@ export const OpSpec: CompleteOpSpec = {
         
         opDefinition: {
             rustOpHandler: `
-                let args = stack.split_off(stack.len() - *param1);
-                let next_ops = fns.get(param0).unwrap();
-                callstack.push(Callstack {
-                    stack: stack,
-                    heap: heap,
-                    restore_index: next_op_index,
-                    ops: these_ops
-                });
-                heap = args;
-                stack = vec![];
-                these_ops = next_ops;
-                next_op_index = 0;
+                let args = current.stack.split_off(current.stack.len() - *param1);
+                let next_ops = globals.fns.get(param0).unwrap();
+                callstack.push(current);
+                current = new_context(next_ops, args);
                 dont_move_op_cursor = true;
+
                 None
             `,
             paramType: ["String", "usize"]
         },
         factoryMethod: ({name, args}) => ({kind:"invoke", data: [name, args]})
+    },
+    lock: {
+        opDefinition: {
+            rustOpHandler: `
+            let mutex = locks::Mutex {
+                name: ${popToString}
+            };
+            match mutex.acquire(globals.lm.unwrap()).await {
+                Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); None},
+                Err(e) => Some(format!("Lock failure: {}", e))
+            }
+
+            `
+        }
+    },
+    release: {
+        opDefinition: {
+            rustOpHandler: `
+            let name = ${popToString};
+            let mutex = current.locks.remove(&name).unwrap();
+            match mutex.release(globals.lm.unwrap()).await {
+                Ok(_) => None,
+                Err(e) => Some(format!("Failure releasing lock: {}", e))
+            }
+
+            `
+        }
     }
 }
 

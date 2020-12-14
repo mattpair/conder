@@ -16,7 +16,7 @@ export type ValueNode = PickNode<
     "None" |
     "ArrayLiteral" |
     "Call" |
-    "Keys"
+    "Keys" 
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -71,6 +71,8 @@ export type BaseNodeDefs = {
     ArrayLiteral: Node<{values: ValueNode[]}>
     Push: Node<{values: ValueNode[]}>
     Call: Node<{function_name: string, args: ValueNode[]}, "root">
+    Lock: Node<{name: ValueNode}, "root">
+    Release: Node<{name: ValueNode}, "root">
 }
 
 export type NodeSet= {[K in string]: Node<{}, "not root" | "root">} 

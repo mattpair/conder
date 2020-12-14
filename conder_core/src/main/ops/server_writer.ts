@@ -16,14 +16,15 @@ export enum Var {
     PRIVATE_PROCEDURES="PRIVATE_PROCEDURES",
     SCHEMAS="SCHEMAS",
     STORES="STORES",
-    DEPLOYMENT_NAME="DEPLOYMENT_NAME"
+    DEPLOYMENT_NAME="DEPLOYMENT_NAME",
+    ETCD_URL="ETCD_URL",
 }
 
 export type EnvVarType<E extends Var> = 
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
 E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
-E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME ? string :
+E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME | Var.ETCD_URL ? string :
 E extends Var.PRIVATE_PROCEDURES ? string[] :
 never
 
@@ -84,6 +85,37 @@ export function generateServer(): string {
             }`
         },
         {
+            name: "lm_client",
+            type: "Option<etcd_rs::Client>",
+            initializer: `
+            match env::var("${Var.ETCD_URL}") {
+                Ok(r) => {
+                    println!("Attempting to connect to etcd: {}", r);
+                    match etcd_rs::Client::connect(etcd_rs::ClientConfig {
+                        endpoints: vec![r],
+                        auth: None,
+                        tls: None,
+                    }).await {
+                        Ok(c) => {
+                            let mut range_req = etcd_rs::RangeRequest::new(etcd_rs::KeyRange::all());
+                            range_req.set_limit(1);
+                            match c.kv().range(range_req).await {
+                                Ok(e) => {},
+                                Err(e) => panic!("Failure connecting to etcd: {}",e)
+                            };
+                            Some(c)
+                        },
+                        Err(e) => {
+                            eprintln!("Failure connecting to etcd: {}",e);
+                            None
+                        }
+                    }
+                },
+                Err(e) => None
+            }
+            `
+        },
+        {
             name: "db",
             type: "Option<mongodb::Database>",
             initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
@@ -108,7 +140,6 @@ export function generateServer(): string {
                     Some(client.database(&deploymentname))
                 },
                 Err(e) => {
-                    eprintln!("No mongo location specified. Running without storage.");
                     None
                 }
             }`
@@ -144,15 +175,14 @@ export function generateServer(): string {
         use std::collections::HashMap;
         use std::collections::HashSet;
         use std::future::Future;
-        use std::task::{Poll, Context};
-        use std::pin::Pin;
         use awc;
         use std::borrow::Borrow;
         use bytes::Bytes;
         use mongodb::{Database};
         use std::convert::TryFrom;
+        use etcd_rs;
         mod storage;
-
+        mod locks;
 
         struct AppData {
             ${[app_data_adds.map(a => `${a.name}: ${a.type}`)].join(",\n")}
@@ -184,20 +214,27 @@ export function generateServer(): string {
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
     
             let req = input.into_inner();
+            let g = Globals {
+                schemas: &data.schemas,
+                db: data.db.as_ref(),
+                stores: &data.stores,
+                fns: &data.procs,
+                lm: data.lm_client.as_ref()
+            };
             return match req {
-                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs),
+                KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, g),
                 KernelRequest::Exec{proc, arg} => match data.procs.get(&proc) {
                     Some(ops) => {
                         if data.privateFns.contains(&proc) {
                             eprintln!("Attempting to invoke a private function {}", &proc);
-                            conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                            conduit_byte_code_interpreter(vec![], &data.noop, g)
                         }else {
-                            conduit_byte_code_interpreter(arg, ops, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                            conduit_byte_code_interpreter(arg, ops, g)
                         }
                     },
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
-                        conduit_byte_code_interpreter(vec![], &data.noop, &data.schemas, data.db.as_ref(), &data.stores, &data.procs)
+                        conduit_byte_code_interpreter(vec![], &data.noop, g)
                     }
                 }
             }.await;

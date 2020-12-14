@@ -114,6 +114,10 @@ function extract_children(n: TargetNodes): TargetNodes[] {
             return [...n.key, ...n.values]
         case "Call":
             return [...n.args]
+        
+        case "Lock":
+        case "Release":
+            return [n.name]
         default: 
             const ne: never = n
             

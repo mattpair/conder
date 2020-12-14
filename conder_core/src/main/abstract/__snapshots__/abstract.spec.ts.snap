@@ -1,5 +1,13 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`Locks locks prevent progress if not held: Required locks 1`] = `
+Map {
+  "unsafeGet" => Map {},
+  "unsafeSet" => Map {},
+  "incr" => Map {},
+}
+`;
+
 exports[`basic functionality allows deleting of fields on local objects: Required locks 1`] = `
 Map {
   "delete" => Map {},
