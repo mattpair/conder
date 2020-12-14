@@ -128,7 +128,14 @@ export namespace Test {
 
         public static async start(): Promise<Test.EtcD> {
           const process = new EtcD()
-          const client = new etcd.Etcd3({hosts: `localhost:${process.port}`})
+          const backoff: etcd.IOptions["faultHandling"]["watchBackoff"] = {
+            duration: () => 1000,
+            next: () => backoff
+          }
+
+          const client = new etcd.Etcd3({hosts: `localhost:${process.port}`, faultHandling: {
+              watchBackoff: backoff
+          }})
           await client.put("a").value("b").exec()
           console.log("etcd state", await client.getAll())
           await client.delete().key("a").exec()

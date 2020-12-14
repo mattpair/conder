@@ -700,8 +700,9 @@ describe("conduit kernel", () => {
           cb()
         }
       }
-    
-
+      
+      // Disabling locks in this no longer pins the expectation
+      // to the number of writes.
       it("locks prevent progress if held elsewhere",
       lockTest(
       
@@ -710,21 +711,17 @@ describe("conduit kernel", () => {
           await server.invoke("unsafeSet", 0)
           expect(await server.invoke("unsafeGet")).toEqual(0)
           const contesting_incr: (() => Promise<void>)[] = []
-          const num_iterations = 10
+          const num_iterations = 100
           for (let i = 0; i < num_iterations; i++) {
             contesting_incr.push(() =>  server.invoke("incr"))
           }
           await Promise.all(contesting_incr.map(f => f()))
-          // expect(await server.invoke("getAll")).toEqual([])
 
           expect(await server.invoke("unsafeGet")).toEqual(num_iterations)
         },
         {
           PROCEDURES: {
-            // getAll: [
-            //   ow.getAllFromStore("state"),
-            //   ow.returnStackTop
-            // ],
+            
             unsafeSet: [
               ow.instantiate({"$set": {}}),
               ow.instantiate("$set"),
