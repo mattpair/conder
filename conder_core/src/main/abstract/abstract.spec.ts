@@ -10,6 +10,7 @@ import { FunctionData, FunctionDescription } from './function';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
+const GLOBAL: PickNode<"GlobalObject"> = {kind: "GlobalObject", name: TEST_STORE}
 const testCompiler: Compiler<RootNode> =  MONGO_GLOBAL_ABSTRACTION_REMOVAL
     .tap((nonAbstractRepresentation) => {
         const locks = MONGO_UNPROVIDED_LOCK_CALCULATOR.run(nonAbstractRepresentation)
@@ -29,6 +30,12 @@ class TestHarness {
                     this.serverEnv.MONGO_CONNECTION_URI = `mongodb://localhost:${mongo.port}`
                     return mongo
                 })) 
+                return this
+            case "locks":
+                this.resources.push(() => Test.EtcD.start().then(etcd => {
+                    this.serverEnv.ETCD_URL = `http://localhost:${etcd.port}`
+                    return etcd
+                }))
                 return this
             default: const n: never = req
         }
@@ -64,7 +71,7 @@ class TestHarness {
 }
 
 type Killable = {kill: () => void}
-type TestReq = "storage"
+type TestReq = "storage" | "locks"
 type ServerTest = (server: DagServer) => Promise<void>
 function withInputHarness(
     reqs: TestReq[],
@@ -627,7 +634,6 @@ describe("with input", () => {
 })
 
 describe("global objects", () => {
-    const GLOBAL: PickNode<"GlobalObject"> = {kind: "GlobalObject", name: TEST_STORE}
 
     const get: RootNode[] = [
         {
@@ -1627,4 +1633,60 @@ describe("global objects", () => {
             }, ["storage"])
         )
     })
+})
+
+
+describe("Locks", () => {
+    it("locks prevent progress if not held", withInputHarness(
+        ["storage", "locks"],
+        {
+            unsafeGet: {
+                computation: [
+                {kind: "Return", value: {
+                    kind: "Selection",
+                    level: [{kind: "String", value: "data"}],
+                    root: GLOBAL
+                }}
+                ],
+                input: []
+            },
+            unsafeSet: {
+                computation: [
+                    {
+                        kind: "Update",
+                        root: GLOBAL,
+                        level: [{kind: "String", value: "data"}],
+                        operation: {kind: "Saved", index: 0}
+                    },
+                ],
+                input: [schemaFactory.int]
+            },
+            incr: {
+                computation: [
+                    {kind: "Lock", name: {kind: "String", value: 'lock'}},
+                    {kind: "Call", function_name: "unsafeSet", args: [
+                        {
+                            kind: "Math", 
+                            left: {kind: "Call", function_name: "unsafeGet", args: []},
+                            right: {kind: "Int", value: 1},
+                            sign: "+"
+                        }
+                    ]},
+                    {kind: "Release", name: {kind: "String", value: 'lock'}}
+                ],
+                input: []
+            }
+        },
+        async server => {
+            expect(await server.unsafeSet(0)).toBeNull()
+            expect(await server.unsafeGet()).toBe(0)
+            const incrs: Promise<void>[] = []
+            for (let i = 0; i < 100; i++) {
+                incrs.push(server.incr())
+            }
+
+            await Promise.all(incrs)
+            expect(await server.unsafeGet()).toBe(100)
+        }
+    ), 10000)
 })

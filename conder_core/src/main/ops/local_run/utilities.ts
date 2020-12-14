@@ -129,7 +129,7 @@ export namespace Test {
         public static async start(): Promise<Test.EtcD> {
           const process = new EtcD()
           const backoff: etcd.IOptions["faultHandling"]["watchBackoff"] = {
-            duration: () => 1000,
+            duration: () => 3000,
             next: () => backoff
           }
 
@@ -137,9 +137,7 @@ export namespace Test {
               watchBackoff: backoff
           }})
           await client.put("a").value("b").exec()
-          console.log("etcd state", await client.getAll())
           await client.delete().key("a").exec()
-          console.log()
           return process
         }
         private constructor() {
