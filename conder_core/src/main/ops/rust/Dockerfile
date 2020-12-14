@@ -10,10 +10,10 @@ COPY ./Cargo.lock ./Cargo.lock
 COPY ./Cargo.toml ./Cargo.toml
 
 # this build step will cache your dependencies
+RUN rustup component add rustfmt --toolchain 1.45.2-x86_64-unknown-linux-gnu
 RUN cargo build --release
 
-COPY ./src/main.rs ./src/main.rs
-COPY ./src/storage.rs ./src/storage.rs
+COPY ./src/ ./src/
 
 # build for release
 RUN rm ./target/release/deps/app*
