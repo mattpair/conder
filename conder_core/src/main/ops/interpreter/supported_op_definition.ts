@@ -506,7 +506,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let value = current.heap.swap_remove(*op_param);
-            return OpResult::Return(value);
+            return OpResult::Return{value, from: current};
             `
         }
     },
@@ -515,14 +515,14 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let value = ${popStack};
-            return OpResult::Return(value);
+            return OpResult::Return{value, from: current};
             `
         }
     },
     returnVoid: {
         opDefinition: {
             rustOpHandler: `
-            return OpResult::Return(InterpreterType::None);
+            return OpResult::Return{value: InterpreterType::None, from: current};
             `
         }
     },
@@ -1123,9 +1123,8 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
                 let next_ops = globals.fns.get(param0).unwrap();
-                let start = new_context(next_ops, args);
 
-                OpResult::Start{new: start, old: current}
+                OpResult::Start(current.call(next_ops, args))
             `,
             paramType: ["String", "usize"]
         },

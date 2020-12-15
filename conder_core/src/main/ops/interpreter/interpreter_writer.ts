@@ -21,7 +21,14 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         heap: Vec<InterpreterType>,
         stack: Vec<InterpreterType>,
         locks: HashMap<String, locks::Mutex>,
-        exec: Execution<'a>
+        exec: Execution<'a>,
+        // Optionals don't work. Vec is size 0 or 1.
+        parent: Vec<Context<'a>>
+    }
+
+    enum ContextState<'a> {
+        Continue(Context<'a>),
+        Done(InterpreterType)
     }
 
     impl <'a> Context<'a>  {
@@ -32,8 +39,15 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         fn has_remaining_exec(&self) -> bool {
             self.exec.next_op_index < self.exec.ops.len()
         }
-        fn advance(&mut self) {
+        fn advance(mut self) -> ContextState<'a> {
             self.exec.next_op_index += 1;
+            if !self.has_remaining_exec() {
+                return match self.parent.pop() {
+                    Some(p) => p.advance(),
+                    None => ContextState::Done(InterpreterType::None)
+                };
+            }
+            return ContextState::Continue(self);
         }
 
         fn offset_cursor(&mut self, forward: bool, offset: usize) {
@@ -41,6 +55,29 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                 self.exec.next_op_index += offset;
             } else {
                 self.exec.next_op_index -= offset;
+            }
+        }
+
+        fn return_value(mut self, value: InterpreterType) -> ContextState<'a> {
+            match self.parent.pop() {
+                Some(mut parent) => {
+                    parent.stack.push(value);
+                    ContextState::Continue(parent)
+                },
+                None => ContextState::Done(value)
+            }
+        }
+
+        fn call(self, ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
+            Context {
+                stack: vec![],
+                exec: Execution {
+                    ops: ops,
+                    next_op_index: 0
+                },
+                heap: heap,
+                locks: HashMap::new(),
+                parent: vec![self]
             }
         }
     }
@@ -55,9 +92,9 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
 
     enum OpResult<'a> {
         Error(String),
-        Return(InterpreterType),
+        Return{value: InterpreterType, from: Context<'a>},
         Continue(Context<'a>),
-        Start{old: Context<'a>, new: Context<'a>},
+        Start(Context<'a>),
     }
     
 
@@ -76,71 +113,56 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         }
     }
 
-    fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
-        return Context {
-            stack: vec![],
-            exec: Execution {
-                ops: ops,
-                next_op_index: 0
-            },
-            heap: heap,
-            locks: HashMap::new()
-        }
-    }
+    
 
     async fn conduit_byte_code_interpreter_internal(
         input_heap: Vec<InterpreterType>, 
         ops: & Vec<Op>, 
         globals: Globals<'_>
     ) ->Result<InterpreterType, String> {        
-
-        let mut current = new_context(ops, input_heap);
-        let mut callstack: Vec<Context> = vec![];
-        while current.has_remaining_exec() {
+        
+        if ops.len() == 0 {
+            return Ok(InterpreterType::None);
+        }
+        let mut current = Context {
+            stack: vec![],
+            exec: Execution {
+                ops: ops,
+                next_op_index: 0
+            },
+            heap: input_heap,
+            locks: HashMap::new(),
+            parent: Vec::with_capacity(0)
+        }; 
+        loop {
             let res: OpResult = current.next_op().execute(current, &globals).await;
 
-            
-            match res {
-                OpResult::Return(data) => {
-                    match callstack.pop() {
-                        Some(next) => {
-                            current = next;
-                            current.stack.push(data);
-                            current.advance();
-                        },
-                        None => {
-                            return Ok(data);                            
-                        }
+            let state = match res {
+                OpResult::Return{from, value} => {
+                    current = match from.return_value(value) {
+                        ContextState::Done(data) => return Ok(data),
+                        ContextState::Continue(context) => context
                     };
+                    current.advance()
                 },
                 OpResult::Error(e) => {
                     return Err(e.to_string());
                 },
-                OpResult::Continue(context) => {
-                    current = context;
-                    current.advance();
-                    while !current.has_remaining_exec() {
-                        match callstack.pop() {
-                            Some(next) => {
-                                current = next;
-                                current.advance();
-                            },
-                            None => {break;}
-                        };
+                OpResult::Continue(context) => context.advance(),
+                OpResult::Start(new) => {
+                    if !new.has_remaining_exec() {
+                        new.advance()
+                    } else {
+                        ContextState::Continue(new)
                     }
-                },
-                OpResult::Start{old, new} => {
-                    callstack.push(old);
-                    current = new;
                 }
             };
 
-            
-        }
-        
-            
-        
-        return Ok(InterpreterType::None);
+            current = match state {
+                ContextState::Continue(cont) => cont,
+                ContextState::Done(data) => return Ok(data)
+            };
+        }        
     }`
 }
 
