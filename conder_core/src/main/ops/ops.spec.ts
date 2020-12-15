@@ -728,15 +728,16 @@ describe("conduit kernel", () => {
       }
       // Disabling locks in this no longer pins the expectation
       // to the number of writes.
-      it("locks prevent progress if held elsewhere",
+      it("locks prevent progress if held elsewhere and are automatically release upon exiting scope",
       lockTest(
       
         async server => {
 
           await server.invoke("unsafeSet", 0)
           expect(await server.invoke("unsafeGet")).toEqual(0)
-          const contesting_incr: (() => Promise<void>)[] = []
-          const without_release: (() => Promise<void>)[] = []
+          const force_error = () => server.invoke("lockThenFail").catch(() => {})
+          const contesting_incr: (() => Promise<void>)[] = [force_error]
+          const without_release: (() => Promise<void>)[] = [force_error]
           const num_iterations = 100
           for (let i = 0; i < num_iterations; i++) {
             contesting_incr.push(() =>  server.invoke("incr"))
@@ -768,10 +769,15 @@ describe("conduit kernel", () => {
               ow.returnStackTop
             ],
             incr: increment("with release"),
-            incrWO: increment("without release")
+            incrWO: increment("without release"),
+            lockThenFail: [
+              ow.instantiate("lock_name"),
+              ow.lock,
+              ow.raiseError("uh oh")
+            ]
           }
         },
-      ), 100000)
+      ), 1000000)
       
     })
   });

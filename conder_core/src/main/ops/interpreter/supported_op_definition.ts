@@ -227,7 +227,7 @@ export type OpInstance<S=string> = Readonly<{
 export type AnyOpInstance = OpInstance<Ops["kind"]>
 
 function raiseErrorWithMessage(s: string): string {
-    return `OpResult::Error("${s}".to_string())`
+    return `OpResult::Error("${s}".to_string(), current)`
 }
 
 const getDb = `globals.db.unwrap()`
@@ -348,7 +348,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            OpResult::Error(op_param.to_string())
+            OpResult::Error(op_param.to_string(), current)
             `
         },
         factoryMethod: (data) => ({kind: 'raiseError', data})
@@ -538,7 +538,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `match current.heap.get(*op_param) {
                 Some(d) => {${pushStack("d.clone()")}; OpResult::Continue(current)},
-                None => OpResult::Error(format!("Echoing variable that does not exist {}", *op_param))
+                None => OpResult::Error(format!("Echoing variable that does not exist {}", *op_param), current)
             }`
         }
     },
@@ -559,7 +559,7 @@ export const OpSpec: CompleteOpSpec = {
 
                     match res {
                         Ok(d) => {${pushStack("d")}; OpResult::Continue(current)},
-                        Err(e) => OpResult::Error(e.to_string())
+                        Err(e) => OpResult::Error(e.to_string(), current)
                     }
                         
             `
@@ -1027,7 +1027,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             if current.heap.len() != *op_param {
-                OpResult::Error(format!("unexpected heap len {}, found {}", *op_param, current.heap.len()))
+                OpResult::Error(format!("unexpected heap len {}, found {}", *op_param, current.heap.len()), current)
             } else {
                 OpResult::Continue(current)
             }
@@ -1138,7 +1138,7 @@ export const OpSpec: CompleteOpSpec = {
             };
             match mutex.acquire(globals.lm.unwrap()).await {
                 Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); OpResult::Continue(current)},
-                Err(e) => OpResult::Error(format!("Lock failure: {}", e))
+                Err(e) => OpResult::Error(format!("Lock failure: {}", e), current)
             }
 
             `
@@ -1151,7 +1151,7 @@ export const OpSpec: CompleteOpSpec = {
             let mutex = current.locks.remove(&name).unwrap();
             match mutex.release(globals.lm.unwrap()).await {
                 Ok(_) => OpResult::Continue(current),
-                Err(e) => OpResult::Error(format!("Failure releasing lock: {}", e))
+                Err(e) => OpResult::Error(format!("Failure releasing lock: {}", e), current)
             }
 
             `

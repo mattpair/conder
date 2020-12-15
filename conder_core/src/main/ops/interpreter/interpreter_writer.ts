@@ -57,9 +57,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                 self.exec.next_op_index -= offset;
             }
         }
-
-        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
-            for (_, lock) in self.locks {
+        async fn release_all_locks(&self, globals: &Globals<'a>) {
+            for lock in self.locks.values() {
                 match lock.release(globals.lm.unwrap()).await {
                     Ok(_) => {},
                     Err(e) => {
@@ -67,6 +66,10 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     }
                 };
             }
+        }
+
+        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
+            self.release_all_locks(globals).await;
             match self.parent.pop() {
                 Some(mut parent) => {
                     parent.stack.push(value);
@@ -74,6 +77,15 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                 },
                 None => ContextState::Done(value)
             }
+        }
+        async fn raise_error(self, globals: &Globals<'a>) {
+            let mut maybe_node = Some(self);
+
+            while let Some(mut this) = maybe_node {
+                this.release_all_locks(globals).await;
+                maybe_node = this.parent.pop();
+            }
+
         }
 
         fn call(self, ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
@@ -99,7 +111,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     }
 
     enum OpResult<'a> {
-        Error(String),
+        Error(String, Context<'a>),
         Return{value: InterpreterType, from: Context<'a>},
         Continue(Context<'a>),
         Start(Context<'a>),
@@ -153,8 +165,10 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     };
                     current.advance()
                 },
-                OpResult::Error(e) => {
-                    return Err(e.to_string());
+                OpResult::Error(msg, from) => {
+                    // We know there are no error handlers at the moment.
+                    from.raise_error(&globals).await;
+                    return Err(msg.to_string());
                 },
                 OpResult::Continue(context) => context.advance(),
                 OpResult::Start(new) => {
