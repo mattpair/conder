@@ -12,12 +12,37 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         restore_index: usize,
         stack: Vec<InterpreterType>
     }
+    struct Execution<'a> {
+        next_op_index: usize,
+        ops: &'a Vec<Op>,
+    }
+
     struct Context<'a> {
         heap: Vec<InterpreterType>,
-        ops: &'a Vec<Op>,
-        next_op_index: usize,
         stack: Vec<InterpreterType>,
-        locks: HashMap<String, locks::Mutex>
+        locks: HashMap<String, locks::Mutex>,
+        exec: Execution<'a>
+    }
+
+    impl <'a> Context<'a>  {
+        fn next_op(&self) -> &'a Op {
+            &self.exec.ops[self.exec.next_op_index]
+        }
+
+        fn has_remaining_exec(&self) -> bool {
+            self.exec.next_op_index < self.exec.ops.len()
+        }
+        fn advance(&mut self) {
+            self.exec.next_op_index += 1;
+        }
+
+        fn offset_cursor(&mut self, forward: bool, offset: usize) {
+            if forward {
+                self.exec.next_op_index += offset;
+            } else {
+                self.exec.next_op_index -= offset;
+            }
+        }
     }
 
     struct Globals<'a> {
@@ -32,7 +57,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         Error(String),
         Return(InterpreterType),
         Continue(Context<'a>),
-        Start{old: Context<'a>, new: Context<'a>}
+        Start{old: Context<'a>, new: Context<'a>},
     }
     
 
@@ -54,8 +79,10 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
         return Context {
             stack: vec![],
-            next_op_index: 0,
-            ops: ops,
+            exec: Execution {
+                ops: ops,
+                next_op_index: 0
+            },
             heap: heap,
             locks: HashMap::new()
         }
@@ -69,9 +96,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
 
         let mut current = new_context(ops, input_heap);
         let mut callstack: Vec<Context> = vec![];
-        while current.next_op_index < current.ops.len() {
-            let this_op = current.next_op_index;
-            let res: OpResult = current.ops[this_op].execute(current, &globals).await;
+        while current.has_remaining_exec() {
+            let res: OpResult = current.next_op().execute(current, &globals).await;
 
             
             match res {
@@ -80,7 +106,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                         Some(next) => {
                             current = next;
                             current.stack.push(data);
-                            current.next_op_index += 1;
+                            current.advance();
                         },
                         None => {
                             return Ok(data);                            
@@ -92,14 +118,14 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                 },
                 OpResult::Continue(context) => {
                     current = context;
-                    current.next_op_index += 1;
-                    if current.next_op_index >= current.ops.len() {
+                    current.advance();
+                    while !current.has_remaining_exec() {
                         match callstack.pop() {
                             Some(next) => {
                                 current = next;
-                                current.next_op_index += 1;
+                                current.advance();
                             },
-                            None => {}
+                            None => {break;}
                         };
                     }
                 },

@@ -83,6 +83,7 @@ StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release">
+// ParamOp<"registerContextMgr", {do: AnyOpInstance[], onClose: AnyOpInstance[]}>
 
 // stack top -> anything you want to pull off in at start
 //              fields
@@ -261,15 +262,6 @@ const popToObject = `
 `
 const lastStack = `current.stack.last_mut().unwrap()`
 
-function safeGoto(varname: string): string {
-    return `
-    if ${varname} >= current.ops.len() {
-        panic!("Setting op index out of bounds");
-    }
-    current.next_op_index = ${varname};
-    OpResult::Continue(current)
-    `
-}
 function pushStack(instance: string): string {
     return `current.stack.push(${instance})`
 }
@@ -462,11 +454,13 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             
             rustOpHandler: `
+
                 if *param1 {
-                    ${safeGoto("*param0 + current.next_op_index")}
+                    current.offset_cursor(true, *param0);
                 } else {
-                    ${safeGoto("current.next_op_index - *param0 - 1")}
+                    current.offset_cursor(false, *param0 + 1);
                 }
+                OpResult::Continue(current)
                 
             `,
             paramType: ["usize", "bool"]
@@ -487,10 +481,9 @@ export const OpSpec: CompleteOpSpec = {
                 match ${popStack} {
                     InterpreterType::bool(b) => {
                         if b {
-                            ${safeGoto("*op_param + current.next_op_index")}
-                        } else {
-                            OpResult::Continue(current)
+                            current.offset_cursor(true, *op_param);
                         }
+                        OpResult::Continue(current)
                     },
                     _ => ${raiseErrorWithMessage("Cannot evaluate variable as boolean")}
                 }
