@@ -28,6 +28,29 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         lm: Option<&'a etcd_rs::Client>,
     }
 
+    enum OpResult<'a> {
+        Error(String),
+        Return(InterpreterType),
+        Continue(Context<'a>),
+        Start{old: Context<'a>, new: Context<'a>}
+    }
+    
+
+    impl <'a> Op {
+        async fn execute(&self, mut current: Context<'a>, globals: &'a Globals<'a>) -> OpResult<'a> {
+            match self {${supportedOps.map(o => {
+                let header = o.name
+                if ("paramType" in o) {
+                    header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
+                }
+                return `Op::${header} => {
+                    ${o.rustOpHandler}
+                }`
+            }).join(",\n")}
+            }            
+        }
+    }
+
     fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
         return Context {
             stack: vec![],
@@ -43,42 +66,50 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         ops: & Vec<Op>, 
         globals: Globals<'_>
     ) ->Result<InterpreterType, String> {        
-        let mut dont_move_op_cursor = false;
 
         let mut current = new_context(ops, input_heap);
         let mut callstack: Vec<Context> = vec![];
         while current.next_op_index < current.ops.len() {
             let this_op = current.next_op_index;
-            let err: Option<String> = match &current.ops[this_op] {
-                ${supportedOps.map(o => {
-                    let header = o.name
-                    if ("paramType" in o) {
-                        header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
-                    }
-                    return `Op::${header} => {
-                        ${o.rustOpHandler}
-                    }`
-                }).join(",\n")}
-            };
-            if dont_move_op_cursor {
-                dont_move_op_cursor = false;
-            } else {
-                current.next_op_index += 1;
-            }
+            let res: OpResult = current.ops[this_op].execute(current, &globals).await;
+
             
-            match err {
-                Some(v) => return Err(format!("error: {}", v)),
-                _ => {}
+            match res {
+                OpResult::Return(data) => {
+                    match callstack.pop() {
+                        Some(next) => {
+                            current = next;
+                            current.stack.push(data);
+                            current.next_op_index += 1;
+                        },
+                        None => {
+                            return Ok(data);                            
+                        }
+                    };
+                },
+                OpResult::Error(e) => {
+                    return Err(e.to_string());
+                },
+                OpResult::Continue(context) => {
+                    current = context;
+                    current.next_op_index += 1;
+                    if current.next_op_index >= current.ops.len() {
+                        match callstack.pop() {
+                            Some(next) => {
+                                current = next;
+                                current.next_op_index += 1;
+                            },
+                            None => {}
+                        };
+                    }
+                },
+                OpResult::Start{old, new} => {
+                    callstack.push(old);
+                    current = new;
+                }
             };
-            if current.next_op_index >= current.ops.len() {
-                match callstack.pop() {
-                    Some(next) => {
-                        current = next;
-                        current.next_op_index += 1;
-                    },
-                    None => {}
-                };
-            }
+
+            
         }
         
             
