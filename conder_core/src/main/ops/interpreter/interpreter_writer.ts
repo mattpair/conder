@@ -58,7 +58,15 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
             }
         }
 
-        fn return_value(mut self, value: InterpreterType) -> ContextState<'a> {
+        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
+            for (_, lock) in self.locks {
+                match lock.release(globals.lm.unwrap()).await {
+                    Ok(_) => {},
+                    Err(e) => {
+                        eprintln!("Failure cleaning up locks: {}", e);
+                    }
+                };
+            }
             match self.parent.pop() {
                 Some(mut parent) => {
                     parent.stack.push(value);
@@ -139,7 +147,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
 
             let state = match res {
                 OpResult::Return{from, value} => {
-                    current = match from.return_value(value) {
+                    current = match from.return_value(value, &globals).await {
                         ContextState::Done(data) => return Ok(data),
                         ContextState::Continue(context) => context
                     };
