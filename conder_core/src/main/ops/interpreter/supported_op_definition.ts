@@ -84,15 +84,28 @@ ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release">
 
-const unwrap_or_error:(value: string) => string = (val) => `match ${val} {
+const unwrap_or_error:(value: string) => string = (val) => `
+    match ${val} {
     Some(__v) => __v,
-    None => return OpResult::Error("Val does not exist: ${val.replace(/"/g, "'")}".to_string(), current)
-}`
+    None => {
+        let base = r#"Val does not exist ${val}"#;
+        let msg = format!("{}", base);
+        return OpResult::Error(msg, current);
+    }
+    }`
 
-const get_or_err:(value: string) => string = (val) => `match ${val} {
-    Ok(__v) => __v,
-    Err(e) => return OpResult::Error(format!("Error getting ${val.replace(/"/g, "'")}: {}", e), current)
-}`
+
+const get_or_err:(value: string) => string = (val) => `
+
+    match ${val} {
+        Ok(__v) => __v,
+        Err(e) => {
+            let base = r#"Error getting ${val}:"#;
+            let msg = format!("{} {}", base, e);
+            return OpResult::Error(msg, current);
+        }
+    }`
+
 
 // ParamOp<"registerContextMgr", {do: AnyOpInstance[], onClose: AnyOpInstance[]}>
 
@@ -602,7 +615,9 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize", "String"],
             rustOpHandler: `
             let v = ${unwrap_or_error("current.heap.get(*param0)")};
-            match storage::append(${getDb}, &param1, v).await {
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::append(db, &param1, v).await`)};
+            match res {
                 InterpreterType::None => OpResult::Continue(current),
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -616,7 +631,8 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let insert_elt = ${popStack};
-            match storage::append(${getDb}, op_param, &insert_elt).await {
+            let db = ${getDb};
+            match ${get_or_err(`storage::append(db, op_param, &insert_elt).await`)} {
                 InterpreterType::None => OpResult::Continue(current),
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -629,7 +645,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, op_param, &HashMap::new(), &HashMap::new()).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::query(db, op_param, &HashMap::new(), &HashMap::new()).await`)};
             ${pushStack(`res`)};
             OpResult::Continue(current)
             `
@@ -648,7 +665,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, &param0, &param1, &${popToObject}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::query(db, &param0, &param1, &${popToObject}).await`)};
             ${pushStack("res")};
             OpResult::Continue(current)
             `
@@ -662,7 +680,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::find_one(${getDb}, &param0, &param1, &${popToObject}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::find_one(db, &param0, &param1, &${popToObject}).await`)};
             ${pushStack("res")};
             OpResult::Continue(current)
             `
@@ -673,7 +692,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::delete_one(db, op_param, &${popStack}).await`)};
             ${pushStack("res")};
             OpResult::Continue(current)
             `
@@ -848,7 +868,9 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let filter = ${popToObject};
-            ${pushStack(`storage::measure(${getDb}, op_param, &filter).await`)};
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::measure(db, op_param, &filter).await`)};
+            ${pushStack("res")};
             OpResult::Continue(current)
             `
         },
@@ -872,7 +894,9 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let query_doc = ${popStack};
             let update_doc =  ${popStack};
-            ${pushStack(`storage::find_and_update_one(${getDb}, param0, *param1, &query_doc, &update_doc).await`)};
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::find_and_update_one(db, param0, *param1, &query_doc, &update_doc).await`)};
+            ${pushStack("res")};
             OpResult::Continue(current)
             `
         },
@@ -885,7 +909,9 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let query_doc = ${popToObject};
             let update_doc =  ${popToObject};
-            ${pushStack(`InterpreterType::bool(storage::replace_one(${getDb}, param0, &query_doc, &update_doc, *param1).await)`)};
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::replace_one(db, param0, &query_doc, &update_doc, *param1).await`)};
+            ${pushStack(`InterpreterType::bool(res)`)};
             OpResult::Continue(current)
             `
         },
