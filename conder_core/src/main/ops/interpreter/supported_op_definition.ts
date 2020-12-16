@@ -84,6 +84,31 @@ ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release">
 
+const unwrap_or_error:(value: string) => string = (val) => `
+    match ${val} {
+    Some(__v) => __v,
+    None => {
+        let base = r#"Val does not exist ${val}"#;
+        let msg = format!("{}", base);
+        return OpResult::Error(msg, current);
+    }
+    }`
+
+
+const get_or_err:(value: string) => string = (val) => `
+
+    match ${val} {
+        Ok(__v) => __v,
+        Err(e) => {
+            let base = r#"Error getting ${val}:"#;
+            let msg = format!("{} {}", base, e);
+            return OpResult::Error(msg, current);
+        }
+    }`
+
+
+// ParamOp<"registerContextMgr", {do: AnyOpInstance[], onClose: AnyOpInstance[]}>
+
 // stack top -> anything you want to pull off in at start
 //              fields
 //              target entity if against stack
@@ -104,14 +129,14 @@ function againstField(
                         Some(val) => val.clone(),
                         None => InterpreterType::None 
                     },
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
-                    _ => panic!("Cannot index array with type")
+                    InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                    InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
+                    _ => ${raiseErrorWithMessage("Cannot index array with type")}
                 }.clone(),
-                _ => panic!("cannot index into type")   
+                _ => ${raiseErrorWithMessage("cannot index into type")}   
             };
             ${data.location === "stack" ? popStack : ""};
             ${pushStack(`push`)};
@@ -123,9 +148,9 @@ function againstField(
             match o_or_a {
                 InterpreterType::Object(o) => match last_field {
                     InterpreterType::string(s) => o.insert(s, set_to),
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
-                _ => panic!("cannot overwrite type")   
+                _ => ${raiseErrorWithMessage("cannot overwrite type")}
             };
             `
             break
@@ -134,9 +159,9 @@ function againstField(
             match o_or_a {
                 InterpreterType::Object(o) => match last_field {
                     InterpreterType::string(s) => o.remove(&s),
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
-                _ => panic!("cannot delete type")   
+                _ => ${raiseErrorWithMessage("cannot delete type")}   
             };
             `
             break
@@ -145,19 +170,19 @@ function againstField(
             withLastField = `
             let arr = match o_or_a {
                 InterpreterType::Object(o) => match last_field {
-                    InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
-                    _ => panic!("Cannot index object with this type")
+                    InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
-                    _ => panic!("Cannot index array with type")
+                    InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                    InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
+                    _ => ${raiseErrorWithMessage("Cannot index array with type")}
                 },
-                _ => panic!("cannot index into type")
+                _ => ${raiseErrorWithMessage("cannot index into type")}
             };
             match arr {
                 InterpreterType::Array(a) => a.append(&mut push),
-                _ => panic!("expected array")
+                _ => ${raiseErrorWithMessage("expected array")}
             };
             `
             break
@@ -166,26 +191,26 @@ function againstField(
     return `
             ${atStart}
             let mut fields = current.stack.split_off(current.stack.len() - ${data.depth});
-            let last_field = fields.pop().unwrap();
+            let last_field = ${unwrap_or_error(`fields.pop()`)};
     
-            let mut o_or_a = ${data.location === "stack" ? `current.stack.last${mut}().unwrap()` : `current.heap.get${mut}(${data.location.save}).unwrap()`};
+            let mut o_or_a = ${data.location === "stack" ? unwrap_or_error(`current.stack.last${mut}()`) : unwrap_or_error(`current.heap.get${mut}(${data.location.save})`)};
             for f in fields {
                 o_or_a = match o_or_a {
                     InterpreterType::Object(o) => match f {
-                        InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
-                        _ => panic!("Cannot index object with this type")
+                        InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
+                        _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                     },
                     InterpreterType::Array(a) => match f {
-                        InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                        InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
-                        _ => panic!("Cannot index array with type")
+                        InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                        InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
+                        _ => ${raiseErrorWithMessage("Cannot index array with type")}
                     },
-                    _ => panic!("cannot index into type")
+                    _ => ${raiseErrorWithMessage("cannot index into type")}
                 };
             }
             ${withLastField}
             
-            None`
+            OpResult::Continue(current)`
 }
 
 type ParamFactory<P, S> = (p: P) => OpInstance<S>
@@ -225,51 +250,43 @@ export type OpInstance<S=string> = Readonly<{
 }>
 export type AnyOpInstance = OpInstance<Ops["kind"]>
 
-function raiseErrorWithMessage(s: string): string {
-    return `Some("${s}".to_string())`
+function raiseErrorWithMessage(s: string, ...formatArgs: string[]): string {
+    const formatting: string = formatArgs.length > 0 ? "," + formatArgs.join(", ") : ""
+    return `return OpResult::Error(format!("${s}"${formatting}), current)`
 }
 
-const getDb = `globals.db.unwrap()`
+const getDb = `${unwrap_or_error(`globals.db`)}`
 
 const popStack = `
     match current.stack.pop() {
         Some(v) => v,
-        _ => panic!("Attempting to access non existent value")
+        _ => ${raiseErrorWithMessage("Attempting to access non existent value")}
     }
     `
 const popToBool = `match ${popStack} {
     InterpreterType::bool(s) => s, 
-    _ => panic!("Stack variable is not a bool")
+    _ => ${raiseErrorWithMessage("Stack variable is not a bool")}
 }
 `
 const popToArray = `match ${popStack} {
     InterpreterType::Array(a) => a,
-    _ => panic!("Expected an array")
+    _ => ${raiseErrorWithMessage("Expected an array")}
 }
 `
 
 const popToString = `
     match ${popStack} {
         InterpreterType::string(s) => s, 
-        _ => panic!("Stack variable is not a string")
+        _ => ${raiseErrorWithMessage("Stack variable is not a string")}
     }`
 const popToObject = `
     match ${popStack} {
         InterpreterType::Object(o) => o,
-        _ => panic!("stack variable is not an object")
+        _ => ${raiseErrorWithMessage("stack variable is not an object")}
     }
 `
-const lastStack = `current.stack.last_mut().unwrap()`
+const lastStack = `${unwrap_or_error(`current.stack.last_mut()`)}`
 
-function safeGoto(varname: string): string {
-    return `
-    if ${varname} >= current.ops.len() {
-        panic!("Setting op index out of bounds");
-    }
-    current.next_op_index = ${varname};
-    None
-    `
-}
 function pushStack(instance: string): string {
     return `current.stack.push(${instance})`
 }
@@ -288,14 +305,14 @@ function applyAgainstNumbers(left: string, right: string, op: string, type: "num
             InterpreterType::int(i1) => match ${right} {
                 InterpreterType::int(i2) => ${toType(`i1 ${op} i2`, "int")},
                 InterpreterType::double(d2) => ${toType(`(i1 as f64) ${op} d2`, "double")},
-                _ => panic!("not a number")
+                _ => ${raiseErrorWithMessage("not a number")}
             },
             InterpreterType::double(d1) => match ${right} {
                 InterpreterType::int(i2) => ${toType(`d1 ${op} (i2 as f64)`, "double")},
                 InterpreterType::double(d2) => ${toType(`d1 ${op} d2`, "double")},
-                _ => panic!("not a number")
+                _ => ${raiseErrorWithMessage("not a number")}
             }, 
-            _ => panic!("not a number")
+            _ => ${raiseErrorWithMessage("not a number")}
         }`
 }
 
@@ -303,7 +320,7 @@ export const OpSpec: CompleteOpSpec = {
     negatePrev: {
         opDefinition: {
             rustOpHandler: `match ${popStack} {
-                InterpreterType::bool(b) =>  {${pushStack("InterpreterType::bool(!b)")}; None},
+                InterpreterType::bool(b) =>  {${pushStack("InterpreterType::bool(!b)")}; OpResult::Continue(current)},
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
@@ -317,7 +334,7 @@ export const OpSpec: CompleteOpSpec = {
                 _ => false
             };
             ${pushStack("InterpreterType::bool(res)")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -329,11 +346,11 @@ export const OpSpec: CompleteOpSpec = {
                 InterpreterType::Object(mut o) => match o.remove(op_param) {
                     Some(f) => {
                         ${pushStack("f")};
-                        None
+                        OpResult::Continue(current)
                     },
                     None => {
                         ${pushStack("InterpreterType::None")};
-                        None
+                        OpResult::Continue(current)
                     }
                 },
                 _ =>${raiseErrorWithMessage("Not an object")}
@@ -346,8 +363,11 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize"],
             rustOpHandler: `
+            if current.heap.len() <= *op_param {
+                ${raiseErrorWithMessage("overwriting non existent heap variable")};
+            } 
             current.heap[*op_param] = ${popStack};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "overwriteHeap", data})
@@ -356,14 +376,14 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            Some(op_param.to_string())
+            OpResult::Error(op_param.to_string(), current)
             `
         },
         factoryMethod: (data) => ({kind: 'raiseError', data})
     },
     noop: {
         opDefinition: {
-            rustOpHandler: ` None`
+            rustOpHandler: ` OpResult::Continue(current)`
         },
     },
 
@@ -392,13 +412,13 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::string(s) => s,
                     InterpreterType::int(i) => i.to_string(),
                     InterpreterType::double(d) => d.to_string(),
-                    _ => panic!("Cannot convert to string")
+                    _ => ${raiseErrorWithMessage("Cannot convert to string")}
                 };
                 strings.push(str);
             }
             strings.reverse();
             ${pushStack("InterpreterType::string(strings.join(param1))")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (p) => ({kind: "stringConcat", data: [p.nStrings, p.joiner]})
@@ -445,14 +465,20 @@ export const OpSpec: CompleteOpSpec = {
                 },
                 None => false
             })`)};
-            None
+            OpResult::Continue(current)
             `
         }
     },
 
     truncateHeap: {
         opDefinition: {
-            rustOpHandler: `current.heap.truncate(current.heap.len() - *op_param);  None`,
+            rustOpHandler: `
+            if *op_param > current.heap.len() {
+                ${raiseErrorWithMessage("removing more variables than in existince")}
+            } 
+            current.heap.truncate(current.heap.len() - *op_param);  
+            OpResult::Continue(current)
+            `,
             paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
@@ -462,11 +488,13 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             
             rustOpHandler: `
+
                 if *param1 {
-                    ${safeGoto("*param0 + current.next_op_index")}
+                    current.offset_cursor(true, *param0);
                 } else {
-                    ${safeGoto("current.next_op_index - *param0 - 1")}
+                    current.offset_cursor(false, *param0 + 1);
                 }
+                OpResult::Continue(current)
                 
             `,
             paramType: ["usize", "bool"]
@@ -487,10 +515,9 @@ export const OpSpec: CompleteOpSpec = {
                 match ${popStack} {
                     InterpreterType::bool(b) => {
                         if b {
-                            ${safeGoto("*op_param + current.next_op_index")}
-                        } else {
-                            None
+                            current.offset_cursor(true, *op_param);
                         }
+                        OpResult::Continue(current)
                     },
                     _ => ${raiseErrorWithMessage("Cannot evaluate variable as boolean")}
                 }
@@ -513,12 +540,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let value = current.heap.swap_remove(*op_param);
-            if callstack.len() == 0 {
-                return Ok(value);
-            }
-            current = callstack.pop().unwrap();
-            current.stack.push(value);
-            None
+            return OpResult::Return{value, from: current};
             `
         }
     },
@@ -527,23 +549,14 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let value = ${popStack};
-            if callstack.len() == 0 {
-                return Ok(value);
-            }
-            current = callstack.pop().unwrap();
-            current.stack.push(value);
-            None
+            return OpResult::Return{value, from: current};
             `
         }
     },
     returnVoid: {
         opDefinition: {
             rustOpHandler: `
-            if callstack.len() == 0 {
-                return Ok(InterpreterType::None);
-            }
-            current = callstack.pop().unwrap();
-            None
+            return OpResult::Return{value: InterpreterType::None, from: current};
             `
         }
     },
@@ -558,8 +571,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {                    
             paramType: ["usize"],
             rustOpHandler: `match current.heap.get(*op_param) {
-                Some(d) => {${pushStack("d.clone()")}; None},
-                None => Some(format!("Echoing variable that does not exist {}", *op_param))
+                Some(d) => {${pushStack("d.clone()")}; OpResult::Continue(current)},
+                None => OpResult::Error(format!("Echoing variable that does not exist {}", *op_param), current)
             }`
         }
     },
@@ -579,8 +592,8 @@ export const OpSpec: CompleteOpSpec = {
                     };
 
                     match res {
-                        Ok(d) => {${pushStack("d")}; None},
-                        Err(e) => Some(e.to_string())
+                        Ok(d) => {${pushStack("d")}; OpResult::Continue(current)},
+                        Err(e) => OpResult::Error(e.to_string(), current)
                     }
                         
             `
@@ -590,8 +603,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param1], &globals.schemas[*param0]))")};
-            None`,
+            let v = ${unwrap_or_error("current.heap.get(*param1)")};
+            let s = ${unwrap_or_error("globals.schemas.get(*param0)")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, s))")};
+            OpResult::Continue(current)`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
     },
@@ -599,8 +614,11 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "String"],
             rustOpHandler: `
-            match storage::append(${getDb}, &param1, &current.heap[*param0]).await {
-                InterpreterType::None => None,
+            let v = ${unwrap_or_error("current.heap.get(*param0)")};
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::append(db, &param1, v).await`)};
+            match res {
+                InterpreterType::None => OpResult::Continue(current),
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
             `
@@ -613,8 +631,9 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let insert_elt = ${popStack};
-            match storage::append(${getDb}, op_param, &insert_elt).await {
-                InterpreterType::None => None,
+            let db = ${getDb};
+            match ${get_or_err(`storage::append(db, op_param, &insert_elt).await`)} {
+                InterpreterType::None => OpResult::Continue(current),
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
             `
@@ -626,9 +645,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, op_param, &HashMap::new(), &HashMap::new()).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::query(db, op_param, &HashMap::new(), &HashMap::new()).await`)};
             ${pushStack(`res`)};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (s) => ({kind: "getAllFromStore", data: s})
@@ -637,7 +657,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             current.heap.push(${popStack});
-            None
+            OpResult::Continue(current)
             `
         },
     },
@@ -645,9 +665,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::query(${getDb}, &param0, &param1, &${popToObject}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::query(db, &param0, &param1, &${popToObject}).await`)};
             ${pushStack("res")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (p) => ({
@@ -659,9 +680,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String", "HashMap<String, InterpreterType>"],
             rustOpHandler: `
-            let res = storage::find_one(${getDb}, &param0, &param1, &${popToObject}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::find_one(db, &param0, &param1, &${popToObject}).await`)};
             ${pushStack("res")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (d) => ({kind: "findOneInStore", data: d})
@@ -670,9 +692,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["String"],
             rustOpHandler: `
-            let res = storage::delete_one(${getDb}, op_param, &${popStack}).await;
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::delete_one(db, op_param, &${popStack}).await`)};
             ${pushStack("res")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "deleteOneInStore", data})
@@ -681,7 +704,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             ${popStack};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -692,7 +715,7 @@ export const OpSpec: CompleteOpSpec = {
             
             rustOpHandler: `
             ${pushStack("op_param.clone()")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "instantiate", data})
@@ -706,10 +729,10 @@ export const OpSpec: CompleteOpSpec = {
                     Some(v) => v,
                     None => InterpreterType::None
                 },
-                _ => panic!("Cannot pop from non-array")
+                _ => ${raiseErrorWithMessage("Cannot pop from non-array")}
             };
             ${pushStack("res")};
-            None
+            OpResult::Continue(current)
             `
         },
     },
@@ -718,11 +741,11 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut res = match ${popStack} {
                 InterpreterType::Array(inner) => inner,
-                _ => panic!("Cannot flatten non array")
+                _ => ${raiseErrorWithMessage("Cannot flatten non array")}
             };
             res.reverse();
             current.stack.append(&mut res);
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -735,7 +758,7 @@ export const OpSpec: CompleteOpSpec = {
                 _ => InterpreterType::bool(true)
             };
             ${pushStack("val")};
-            None
+            OpResult::Continue(current)
             `
         },
     },
@@ -745,10 +768,10 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let p = ${popStack};
-            match current.heap.get_mut(*op_param).unwrap() {
+            match ${unwrap_or_error(`current.heap.get_mut(*op_param)`)} {
                 InterpreterType::Array(inner) => {
                     inner.push(p);
-                    None
+                    OpResult::Continue(current)
                 }, 
                 _ => ${raiseErrorWithMessage("Cannot push to a non array variable")}
             }
@@ -763,7 +786,7 @@ export const OpSpec: CompleteOpSpec = {
             match ${lastStack} {
                 InterpreterType::Array(inner) => {
                     inner.push(pushme);
-                    None
+                    OpResult::Continue(current)
                 },
                 _ => ${raiseErrorWithMessage("Cannot push on non array")}
             }
@@ -782,10 +805,10 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let pushme = ${popStack};
             let pos = current.stack.len() - 1 - *op_param;
-            match current.stack.get_mut(pos).unwrap() {
+            match ${unwrap_or_error(`current.stack.get_mut(pos)`)} {
                 InterpreterType::Array(inner) => {
                     inner.push(pushme);
-                    None
+                    OpResult::Continue(current)
                 },
                 _ => ${raiseErrorWithMessage("Cannot push on non array")}
             }
@@ -802,7 +825,7 @@ export const OpSpec: CompleteOpSpec = {
             match ${lastStack} {
                 InterpreterType::Object(m) => {
                     m.insert(op_param.to_string(), value);
-                    None
+                    OpResult::Continue(current)
                 },
                 _ => ${raiseErrorWithMessage("Cannot add a field to a non-object")}
             }
@@ -815,7 +838,11 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             match ${popStack} {
-                InterpreterType::Array(a) => {${pushStack("InterpreterType::int(i64::try_from(a.len()).unwrap())")}; None},
+                InterpreterType::Array(a) => {
+                    let i = ${get_or_err(`i64::try_from(a.len())`)};
+                    ${pushStack("InterpreterType::int(i)")}; 
+                    OpResult::Continue(current)
+                },
                 _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             }
             `
@@ -825,11 +852,14 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let len = match ${lastStack} {
-                InterpreterType::Array(a) => InterpreterType::int(i64::try_from(a.len()).unwrap()),
-                _ => panic!("Cannot take len of non array object")
+                InterpreterType::Array(a) => {
+                    let r = ${get_or_err(`i64::try_from(a.len())`)};
+                    InterpreterType::int(r)
+                },
+                _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             };
             ${pushStack("len")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -838,8 +868,10 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let filter = ${popToObject};
-            ${pushStack(`storage::measure(${getDb}, op_param, &filter).await`)};
-            None
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::measure(db, op_param, &filter).await`)};
+            ${pushStack("res")};
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "storeLen", data})
@@ -850,7 +882,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["InterpreterType"],
             rustOpHandler: `
             ${pushStack("op_param.clone()")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "createUpdateDoc", data})
@@ -862,8 +894,10 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let query_doc = ${popStack};
             let update_doc =  ${popStack};
-            ${pushStack(`storage::find_and_update_one(${getDb}, param0, *param1, &query_doc, &update_doc).await`)};
-            None
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::find_and_update_one(db, param0, *param1, &query_doc, &update_doc).await`)};
+            ${pushStack("res")};
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (p) => ({kind: "updateOne", data: [p.store, p.upsert]})
@@ -875,8 +909,10 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let query_doc = ${popToObject};
             let update_doc =  ${popToObject};
-            ${pushStack(`InterpreterType::bool(storage::replace_one(${getDb}, param0, &query_doc, &update_doc, *param1).await)`)};
-            None
+            let db = ${getDb};
+            let res = ${get_or_err(`storage::replace_one(db, param0, &query_doc, &update_doc, *param1).await`)};
+            ${pushStack(`InterpreterType::bool(res)`)};
+            OpResult::Continue(current)
             `
         },
         factoryMethod: ({store, upsert}) => ({kind: "replaceOne", data: [store, upsert]})
@@ -888,22 +924,22 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let data = ${popStack};
             let mut target = ${lastStack};
-            let (last_field, earlier_fields) = op_param.split_last().unwrap();
+            let (last_field, earlier_fields) = ${unwrap_or_error(`op_param.split_last()`)};
             for f in earlier_fields {
                 match target {
                     InterpreterType::Object(inner) => {
-                        target = inner.get_mut(f).unwrap();
+                        target = ${unwrap_or_error(`inner.get_mut(f)`)};
                     },
-                    _ => panic!("Invalid field access")
+                    _ => ${raiseErrorWithMessage("Invalid field access")}
                 }
             }
             
             match target {
                 InterpreterType::Object(inner) => {
                     inner.insert(last_field.to_string(), data);
-                    None
+                    OpResult::Continue(current)
                 }
-                _ => panic!("Cannot set field on non object")
+                _ => ${raiseErrorWithMessage("Cannot set field on non object")}
             }
             `
         },
@@ -918,19 +954,19 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Vec<String>"],
             rustOpHandler: `
-            let mut target: &InterpreterType = &current.heap[*param0];
+            let mut target = ${unwrap_or_error("current.heap.get(*param0)")};
             for f in param1 {
                 target = match target {
                     InterpreterType::Object(inner) => match inner.get(f) {
                         Some(v) => v,
-                        None => panic!("Field does not exist: {}", f)
+                        None => ${raiseErrorWithMessage("Field does not exist: {}", "f")}
                     }
-                    _ => panic!("Accessing field on non object")
+                    _ => ${raiseErrorWithMessage("Accessing field on non object")}
                 };
             }
 
             ${pushStack("target.clone()")};
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (input) => ({kind: "copyFieldFromHeap", data: [input.heap_pos, input.fields]})
@@ -940,8 +976,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Schema"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param0], param1))")};
-            None
+            let v = ${unwrap_or_error("current.heap.get(*param0)")};
+
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, param1))")};
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (p) => ({kind: "enforceSchemaInstanceOnHeap", data: [p.heap_pos, p.schema]})
@@ -953,20 +991,20 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut original_object = match ${popStack} {
                 InterpreterType::Object(o) => o,
-                _ => panic!("Unexpected non object")
+                _ => ${raiseErrorWithMessage("Unexpected non object")}
             };
             for selector in op_param {
-                let (first, rest) = selector.split_first().unwrap();
-                let mut obj = original_object.remove(first).unwrap();
+                let (first, rest) = ${unwrap_or_error(`selector.split_first()`)};
+                let mut obj = ${unwrap_or_error(`original_object.remove(first)`)};
                 for field in rest {
                     obj = match obj {
-                        InterpreterType::Object(mut o) => o.remove(field).unwrap(),
-                        _ => panic!("Unexpected non object")
+                        InterpreterType::Object(mut o) => ${unwrap_or_error(`o.remove(field)`)},
+                        _ => ${raiseErrorWithMessage("Unexpected non object")}
                     };
                 }
                 ${pushStack("obj")};
             }
-            None
+            OpResult::Continue(current)
             `
         },
         factoryMethod: (data) => ({kind: "extractFields", data})
@@ -998,7 +1036,7 @@ export const OpSpec: CompleteOpSpec = {
 
                 _ => false
             })`)};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1008,7 +1046,7 @@ export const OpSpec: CompleteOpSpec = {
             let right = ${popStack};
             let left = ${popStack};
             ${pushStack(applyAgainstNumbers("left", "right", "<", "bool"))};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1018,7 +1056,7 @@ export const OpSpec: CompleteOpSpec = {
             let right = ${popStack};
             let left = ${popStack};
             ${pushStack(applyAgainstNumbers("left", "right", "<=", "bool"))};
-            None
+            OpResult::Continue(current)
             
             `
         }
@@ -1029,7 +1067,7 @@ export const OpSpec: CompleteOpSpec = {
             let first = ${popToBool};
             let second = ${popToBool};
             ${pushStack("InterpreterType::bool(first && second)")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1039,7 +1077,7 @@ export const OpSpec: CompleteOpSpec = {
             let first = ${popToBool};
             let second = ${popToBool};
             ${pushStack("InterpreterType::bool(first || second)")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1048,9 +1086,9 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             if current.heap.len() != *op_param {
-                Some(format!("unexpected heap len {}, found {}", *op_param, current.heap.len()))
+                OpResult::Error(format!("unexpected heap len {}, found {}", *op_param, current.heap.len()), current)
             } else {
-                None
+                OpResult::Continue(current)
             }
             `
         },
@@ -1065,18 +1103,19 @@ export const OpSpec: CompleteOpSpec = {
             while let Some(elt) = array.pop() {
                 match elt {
                     InterpreterType::Object(mut o) => {
-                        let key = match o.remove("_key").unwrap() {
+                        let t = ${unwrap_or_error(`o.remove("_key")`)};
+                        let key = match t {
                             InterpreterType::string(s) => s,
-                            _ => panic!("expected a string")
+                            _ => ${raiseErrorWithMessage("expected a string")}
                         };
-
-                        re.insert(key, o.remove("_val").unwrap())
+                        let v = ${unwrap_or_error(`o.remove("_val")`)};
+                        re.insert(key, v)
                     },
-                    _ => panic!("unexpected type during repackage")
+                    _ => ${raiseErrorWithMessage("unexpected type during repackage")}
                 };
             }
             ${pushStack("InterpreterType::Object(re)")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1091,24 +1130,24 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::int(i2) => InterpreterType::int(i1 + i2),
                     InterpreterType::double(d2) => InterpreterType::double(i1 as f64 + d2),
                     InterpreterType::string(s) => InterpreterType::string(format!("{}{}", i1, s)),
-                    _ => panic!("not addable")
+                    _ => ${raiseErrorWithMessage("not addable")}
                 },
                 InterpreterType::double(d1) => match right {
                     InterpreterType::int(i2) => InterpreterType::double(d1 + (i2 as f64)),
                     InterpreterType::double(d2) => InterpreterType::double(d1 + d2),
                     InterpreterType::string(s) => InterpreterType::string(format!("{}{}", d1, s)),
-                    _ => panic!("not addable")
+                    _ => ${raiseErrorWithMessage("not addable")}
                 }, 
                 InterpreterType::string(s) => match right {
                     InterpreterType::int(d) => InterpreterType::string(format!("{}{}", s, d)),
                     InterpreterType::double(d) => InterpreterType::string(format!("{}{}", s, d)),
                     InterpreterType::string(d) => InterpreterType::string(format!("{}{}", s, d)),
-                    _ =>panic!("not addable")
+                    _ =>${raiseErrorWithMessage("not addable")}
                 }
-                _ => panic!("not addable")
+                _ => ${raiseErrorWithMessage("not addable")}
             };
             ${pushStack("result")};
-            None
+            OpResult::Continue(current)
             `
             
         }
@@ -1134,7 +1173,7 @@ export const OpSpec: CompleteOpSpec = {
             let mut obj = ${popToObject};
             let keys = obj.drain().map(|(k, v)| InterpreterType::string(k)).collect();
             ${pushStack("InterpreterType::Array(keys)")};
-            None
+            OpResult::Continue(current)
             `
         }
     },
@@ -1143,12 +1182,9 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
-                let next_ops = globals.fns.get(param0).unwrap();
-                callstack.push(current);
-                current = new_context(next_ops, args);
-                dont_move_op_cursor = true;
+                let next_ops = ${unwrap_or_error(`globals.fns.get(param0)`)};
 
-                None
+                OpResult::Start(current.call(next_ops, args))
             `,
             paramType: ["String", "usize"]
         },
@@ -1160,9 +1196,10 @@ export const OpSpec: CompleteOpSpec = {
             let mutex = locks::Mutex {
                 name: ${popToString}
             };
-            match mutex.acquire(globals.lm.unwrap()).await {
-                Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); None},
-                Err(e) => Some(format!("Lock failure: {}", e))
+            let lm = ${unwrap_or_error(`globals.lm`)};
+            match mutex.acquire(lm).await {
+                Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); OpResult::Continue(current)},
+                Err(e) => OpResult::Error(format!("Lock failure: {}", e), current)
             }
 
             `
@@ -1172,10 +1209,11 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let name = ${popToString};
-            let mutex = current.locks.remove(&name).unwrap();
-            match mutex.release(globals.lm.unwrap()).await {
-                Ok(_) => None,
-                Err(e) => Some(format!("Failure releasing lock: {}", e))
+            let mutex = ${unwrap_or_error(`current.locks.remove(&name)`)};
+            let lm = ${unwrap_or_error(`globals.lm`)};
+            match mutex.release(lm).await {
+                Ok(_) => OpResult::Continue(current),
+                Err(e) => OpResult::Error(format!("Failure releasing lock: {}", e), current)
             }
 
             `
@@ -1188,5 +1226,5 @@ function mathOp(sym: string): string {
     return `let right = ${popStack};
     let left = ${popStack};
     ${pushStack(applyAgainstNumbers("left", "right", sym, "number"))};
-    None`
+    OpResult::Continue(current)`
 }

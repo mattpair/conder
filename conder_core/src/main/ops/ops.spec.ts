@@ -9,6 +9,7 @@ import {
   AnySchemaInstance,
   schemaFactory,
 } from "./index";
+import { AnyOpInstance } from "./interpreter/supported_op_definition";
 
 import { Test } from "./local_run/utilities";
 
@@ -707,24 +708,46 @@ describe("conduit kernel", () => {
           cb()
         }
       }
-      
+      function increment(release: "with release" | "without release"): AnyOpInstance[] {
+        return [
+          ow.instantiate(0),
+          ow.moveStackTopToHeap,
+          ow.instantiate("lock_name"),
+          ow.lock,
+          ow.invoke({name: 'unsafeGet', args: 0}),
+          ow.instantiate(1),
+          ow.plus,
+          ow.invoke({name: "unsafeSet", args: 1}),
+          ...release === "with release" ? [
+            ow.instantiate("lock_name"),
+            ow.release,
+          ] :
+          [],          
+          ow.returnVoid
+        ]
+      }
       // Disabling locks in this no longer pins the expectation
       // to the number of writes.
-      it("locks prevent progress if held elsewhere",
+      it("locks prevent progress if held elsewhere and are automatically release upon exiting scope",
       lockTest(
       
         async server => {
 
           await server.invoke("unsafeSet", 0)
           expect(await server.invoke("unsafeGet")).toEqual(0)
-          const contesting_incr: (() => Promise<void>)[] = []
+          const force_error = () => server.invoke("lockThenFail").catch(() => {})
+          const contesting_incr: (() => Promise<void>)[] = [force_error]
+          const without_release: (() => Promise<void>)[] = [force_error]
           const num_iterations = 100
           for (let i = 0; i < num_iterations; i++) {
             contesting_incr.push(() =>  server.invoke("incr"))
+            without_release.push(() => server.invoke("incrWO"))
           }
           await Promise.all(contesting_incr.map(f => f()))
+          await Promise.all(without_release.map(f=> f()))
 
-          expect(await server.invoke("unsafeGet")).toEqual(num_iterations)
+          expect(await server.invoke("unsafeGet")).toEqual(num_iterations * 2)
+
         },
         {
           PROCEDURES: {
@@ -745,22 +768,16 @@ describe("conduit kernel", () => {
               ow.getField({field_depth: 1}),
               ow.returnStackTop
             ],
-            incr: [
-              ow.instantiate(0),
-              ow.moveStackTopToHeap,
+            incr: increment("with release"),
+            incrWO: increment("without release"),
+            lockThenFail: [
               ow.instantiate("lock_name"),
               ow.lock,
-              ow.invoke({name: 'unsafeGet', args: 0}),
-              ow.instantiate(1),
-              ow.plus,
-              ow.invoke({name: "unsafeSet", args: 1}),
-              ow.instantiate("lock_name"),
-              ow.release,
-              ow.returnVoid
+              ow.raiseError("uh oh")
             ]
           }
         },
-      ), 100000)
+      ), 1000000)
       
     })
   });

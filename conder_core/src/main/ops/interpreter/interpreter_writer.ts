@@ -12,12 +12,94 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         restore_index: usize,
         stack: Vec<InterpreterType>
     }
+    struct Execution<'a> {
+        next_op_index: usize,
+        ops: &'a Vec<Op>,
+    }
+
     struct Context<'a> {
         heap: Vec<InterpreterType>,
-        ops: &'a Vec<Op>,
-        next_op_index: usize,
         stack: Vec<InterpreterType>,
-        locks: HashMap<String, locks::Mutex>
+        locks: HashMap<String, locks::Mutex>,
+        exec: Execution<'a>,
+        // Optionals don't work. Vec is size 0 or 1.
+        parent: Vec<Context<'a>>
+    }
+
+    enum ContextState<'a> {
+        Continue(Context<'a>),
+        Done(InterpreterType)
+    }
+
+    impl <'a> Context<'a>  {
+        fn next_op(&self) -> &'a Op {
+            &self.exec.ops[self.exec.next_op_index]
+        }
+
+        fn has_remaining_exec(&self) -> bool {
+            self.exec.next_op_index < self.exec.ops.len()
+        }
+        fn advance(mut self) -> ContextState<'a> {
+            self.exec.next_op_index += 1;
+            if !self.has_remaining_exec() {
+                return match self.parent.pop() {
+                    Some(p) => p.advance(),
+                    None => ContextState::Done(InterpreterType::None)
+                };
+            }
+            return ContextState::Continue(self);
+        }
+
+        fn offset_cursor(&mut self, forward: bool, offset: usize) {
+            if forward {
+                self.exec.next_op_index += offset;
+            } else {
+                self.exec.next_op_index -= offset;
+            }
+        }
+        async fn release_all_locks(&self, globals: &Globals<'a>) {
+            for lock in self.locks.values() {
+                match lock.release(globals.lm.unwrap()).await {
+                    Ok(_) => {},
+                    Err(e) => {
+                        eprintln!("Failure cleaning up locks: {}", e);
+                    }
+                };
+            }
+        }
+
+        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
+            self.release_all_locks(globals).await;
+            match self.parent.pop() {
+                Some(mut parent) => {
+                    parent.stack.push(value);
+                    ContextState::Continue(parent)
+                },
+                None => ContextState::Done(value)
+            }
+        }
+        async fn raise_error(self, globals: &Globals<'a>) {
+            let mut maybe_node = Some(self);
+
+            while let Some(mut this) = maybe_node {
+                this.release_all_locks(globals).await;
+                maybe_node = this.parent.pop();
+            }
+
+        }
+
+        fn call(self, ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
+            Context {
+                stack: vec![],
+                exec: Execution {
+                    ops: ops,
+                    next_op_index: 0
+                },
+                heap: heap,
+                locks: HashMap::new(),
+                parent: vec![self]
+            }
+        }
     }
 
     struct Globals<'a> {
@@ -28,62 +110,81 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         lm: Option<&'a etcd_rs::Client>,
     }
 
-    fn new_context(ops: &Vec<Op>, heap: Vec<InterpreterType>) -> Context {
-        return Context {
-            stack: vec![],
-            next_op_index: 0,
-            ops: ops,
-            heap: heap,
-            locks: HashMap::new()
+    enum OpResult<'a> {
+        Error(String, Context<'a>),
+        Return{value: InterpreterType, from: Context<'a>},
+        Continue(Context<'a>),
+        Start(Context<'a>),
+    }
+    
+
+    impl <'a> Op {
+        async fn execute(&self, mut current: Context<'a>, globals: &'a Globals<'a>) -> OpResult<'a> {
+            match self {${supportedOps.map(o => {
+                let header = o.name
+                if ("paramType" in o) {
+                    header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
+                }
+                return `Op::${header} => {
+                    ${o.rustOpHandler}
+                }`
+            }).join(",\n")}
+            }            
         }
     }
+
+    
 
     async fn conduit_byte_code_interpreter_internal(
         input_heap: Vec<InterpreterType>, 
         ops: & Vec<Op>, 
         globals: Globals<'_>
     ) ->Result<InterpreterType, String> {        
-        let mut dont_move_op_cursor = false;
-
-        let mut current = new_context(ops, input_heap);
-        let mut callstack: Vec<Context> = vec![];
-        while current.next_op_index < current.ops.len() {
-            let this_op = current.next_op_index;
-            let err: Option<String> = match &current.ops[this_op] {
-                ${supportedOps.map(o => {
-                    let header = o.name
-                    if ("paramType" in o) {
-                        header = `${o.name}(${o.paramType.length === 1 ? "op_param" : o.paramType.map((v, i) => `param${i}`).join(", ")})`
-                    }
-                    return `Op::${header} => {
-                        ${o.rustOpHandler}
-                    }`
-                }).join(",\n")}
-            };
-            if dont_move_op_cursor {
-                dont_move_op_cursor = false;
-            } else {
-                current.next_op_index += 1;
-            }
-            
-            match err {
-                Some(v) => return Err(format!("error: {}", v)),
-                _ => {}
-            };
-            if current.next_op_index >= current.ops.len() {
-                match callstack.pop() {
-                    Some(next) => {
-                        current = next;
-                        current.next_op_index += 1;
-                    },
-                    None => {}
-                };
-            }
+        
+        if ops.len() == 0 {
+            return Ok(InterpreterType::None);
         }
-        
-            
-        
-        return Ok(InterpreterType::None);
+        let mut current = Context {
+            stack: vec![],
+            exec: Execution {
+                ops: ops,
+                next_op_index: 0
+            },
+            heap: input_heap,
+            locks: HashMap::new(),
+            parent: Vec::with_capacity(0)
+        }; 
+        loop {
+            let res: OpResult = current.next_op().execute(current, &globals).await;
+
+            let state = match res {
+                OpResult::Return{from, value} => {
+                    current = match from.return_value(value, &globals).await {
+                        ContextState::Done(data) => return Ok(data),
+                        ContextState::Continue(context) => context
+                    };
+                    current.advance()
+                },
+                OpResult::Error(msg, from) => {
+                    // We know there are no error handlers at the moment.
+                    from.raise_error(&globals).await;
+                    return Err(msg.to_string());
+                },
+                OpResult::Continue(context) => context.advance(),
+                OpResult::Start(new) => {
+                    if !new.has_remaining_exec() {
+                        new.advance()
+                    } else {
+                        ContextState::Continue(new)
+                    }
+                }
+            };
+
+            current = match state {
+                ContextState::Continue(cont) => cont,
+                ContextState::Done(data) => return Ok(data)
+            };
+        }        
     }`
 }
 
