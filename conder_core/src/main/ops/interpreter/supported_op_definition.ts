@@ -83,6 +83,17 @@ StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release">
+
+const unwrap_or_error:(value: string) => string = (val) => `match ${val} {
+    Some(__v) => __v,
+    None => return OpResult::Error("Val does not exist: ${val.replace(/"/g, "'")}".to_string(), current)
+}`
+
+const get_or_err:(value: string) => string = (val) => `match ${val} {
+    Ok(__v) => __v,
+    Err(e) => return OpResult::Error(format!("Error getting ${val.replace(/"/g, "'")}: {}", e), current)
+}`
+
 // ParamOp<"registerContextMgr", {do: AnyOpInstance[], onClose: AnyOpInstance[]}>
 
 // stack top -> anything you want to pull off in at start
@@ -108,8 +119,8 @@ function againstField(
                     _ => panic!("Cannot index object with this type")
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                    InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                    InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
                     _ => panic!("Cannot index array with type")
                 }.clone(),
                 _ => panic!("cannot index into type")   
@@ -126,7 +137,7 @@ function againstField(
                     InterpreterType::string(s) => o.insert(s, set_to),
                     _ => panic!("Cannot index object with this type")
                 },
-                _ => panic!("cannot overwrite type")   
+                _ => panic!("cannot overwrite type")
             };
             `
             break
@@ -146,12 +157,12 @@ function againstField(
             withLastField = `
             let arr = match o_or_a {
                 InterpreterType::Object(o) => match last_field {
-                    InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                    InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
                     _ => panic!("Cannot index object with this type")
                 },
                 InterpreterType::Array(a) => match last_field {
-                    InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                    InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                    InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                    InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
                     _ => panic!("Cannot index array with type")
                 },
                 _ => panic!("cannot index into type")
@@ -167,18 +178,18 @@ function againstField(
     return `
             ${atStart}
             let mut fields = current.stack.split_off(current.stack.len() - ${data.depth});
-            let last_field = fields.pop().unwrap();
+            let last_field = ${unwrap_or_error(`fields.pop()`)};
     
-            let mut o_or_a = ${data.location === "stack" ? `current.stack.last${mut}().unwrap()` : `current.heap.get${mut}(${data.location.save}).unwrap()`};
+            let mut o_or_a = ${data.location === "stack" ? unwrap_or_error(`current.stack.last${mut}()`) : unwrap_or_error(`current.heap.get${mut}(${data.location.save})`)};
             for f in fields {
                 o_or_a = match o_or_a {
                     InterpreterType::Object(o) => match f {
-                        InterpreterType::string(s) => o.get${mut}(&s).unwrap(),
+                        InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
                         _ => panic!("Cannot index object with this type")
                     },
                     InterpreterType::Array(a) => match f {
-                        InterpreterType::int(i) => a.get${mut}(i as usize).unwrap(),
-                        InterpreterType::double(d) => a.get${mut}(d as usize).unwrap(),
+                        InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
+                        InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
                         _ => panic!("Cannot index array with type")
                     },
                     _ => panic!("cannot index into type")
@@ -230,7 +241,7 @@ function raiseErrorWithMessage(s: string): string {
     return `OpResult::Error("${s}".to_string(), current)`
 }
 
-const getDb = `globals.db.unwrap()`
+const getDb = `${unwrap_or_error(`globals.db`)}`
 
 const popStack = `
     match current.stack.pop() {
@@ -260,7 +271,7 @@ const popToObject = `
         _ => panic!("stack variable is not an object")
     }
 `
-const lastStack = `current.stack.last_mut().unwrap()`
+const lastStack = `${unwrap_or_error(`current.stack.last_mut()`)}`
 
 function pushStack(instance: string): string {
     return `current.stack.push(${instance})`
@@ -724,7 +735,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["usize"],
             rustOpHandler: `
             let p = ${popStack};
-            match current.heap.get_mut(*op_param).unwrap() {
+            match ${unwrap_or_error(`current.heap.get_mut(*op_param)`)} {
                 InterpreterType::Array(inner) => {
                     inner.push(p);
                     OpResult::Continue(current)
@@ -761,7 +772,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let pushme = ${popStack};
             let pos = current.stack.len() - 1 - *op_param;
-            match current.stack.get_mut(pos).unwrap() {
+            match ${unwrap_or_error(`current.stack.get_mut(pos)`)} {
                 InterpreterType::Array(inner) => {
                     inner.push(pushme);
                     OpResult::Continue(current)
@@ -794,7 +805,11 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             match ${popStack} {
-                InterpreterType::Array(a) => {${pushStack("InterpreterType::int(i64::try_from(a.len()).unwrap())")}; OpResult::Continue(current)},
+                InterpreterType::Array(a) => {
+                    let i = ${get_or_err(`i64::try_from(a.len())`)};
+                    ${pushStack("InterpreterType::int(i)")}; 
+                    OpResult::Continue(current)
+                },
                 _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             }
             `
@@ -804,7 +819,10 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let len = match ${lastStack} {
-                InterpreterType::Array(a) => InterpreterType::int(i64::try_from(a.len()).unwrap()),
+                InterpreterType::Array(a) => {
+                    let r = ${get_or_err(`i64::try_from(a.len())`)};
+                    InterpreterType::int(r)
+                },
                 _ => panic!("Cannot take len of non array object")
             };
             ${pushStack("len")};
@@ -867,11 +885,11 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let data = ${popStack};
             let mut target = ${lastStack};
-            let (last_field, earlier_fields) = op_param.split_last().unwrap();
+            let (last_field, earlier_fields) = ${unwrap_or_error(`op_param.split_last()`)};
             for f in earlier_fields {
                 match target {
                     InterpreterType::Object(inner) => {
-                        target = inner.get_mut(f).unwrap();
+                        target = ${unwrap_or_error(`inner.get_mut(f)`)};
                     },
                     _ => panic!("Invalid field access")
                 }
@@ -935,11 +953,11 @@ export const OpSpec: CompleteOpSpec = {
                 _ => panic!("Unexpected non object")
             };
             for selector in op_param {
-                let (first, rest) = selector.split_first().unwrap();
-                let mut obj = original_object.remove(first).unwrap();
+                let (first, rest) = ${unwrap_or_error(`selector.split_first()`)};
+                let mut obj = ${unwrap_or_error(`original_object.remove(first)`)};
                 for field in rest {
                     obj = match obj {
-                        InterpreterType::Object(mut o) => o.remove(field).unwrap(),
+                        InterpreterType::Object(mut o) => ${unwrap_or_error(`o.remove(field)`)},
                         _ => panic!("Unexpected non object")
                     };
                 }
@@ -1044,12 +1062,13 @@ export const OpSpec: CompleteOpSpec = {
             while let Some(elt) = array.pop() {
                 match elt {
                     InterpreterType::Object(mut o) => {
-                        let key = match o.remove("_key").unwrap() {
+                        let t = ${unwrap_or_error(`o.remove("_key")`)};
+                        let key = match t {
                             InterpreterType::string(s) => s,
                             _ => panic!("expected a string")
                         };
-
-                        re.insert(key, o.remove("_val").unwrap())
+                        let v = ${unwrap_or_error(`o.remove("_val")`)};
+                        re.insert(key, v)
                     },
                     _ => panic!("unexpected type during repackage")
                 };
@@ -1122,7 +1141,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
-                let next_ops = globals.fns.get(param0).unwrap();
+                let next_ops = ${unwrap_or_error(`globals.fns.get(param0)`)};
 
                 OpResult::Start(current.call(next_ops, args))
             `,
@@ -1136,7 +1155,8 @@ export const OpSpec: CompleteOpSpec = {
             let mutex = locks::Mutex {
                 name: ${popToString}
             };
-            match mutex.acquire(globals.lm.unwrap()).await {
+            let lm = ${unwrap_or_error(`globals.lm`)};
+            match mutex.acquire(lm).await {
                 Ok(_) => {current.locks.insert(mutex.name.clone(), mutex); OpResult::Continue(current)},
                 Err(e) => OpResult::Error(format!("Lock failure: {}", e), current)
             }
@@ -1148,8 +1168,9 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             rustOpHandler: `
             let name = ${popToString};
-            let mutex = current.locks.remove(&name).unwrap();
-            match mutex.release(globals.lm.unwrap()).await {
+            let mutex = ${unwrap_or_error(`current.locks.remove(&name)`)};
+            let lm = ${unwrap_or_error(`globals.lm`)};
+            match mutex.release(lm).await {
                 Ok(_) => OpResult::Continue(current),
                 Err(e) => OpResult::Error(format!("Failure releasing lock: {}", e), current)
             }
