@@ -116,14 +116,14 @@ function againstField(
                         Some(val) => val.clone(),
                         None => InterpreterType::None 
                     },
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
                 InterpreterType::Array(a) => match last_field {
                     InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
                     InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
-                    _ => panic!("Cannot index array with type")
+                    _ => ${raiseErrorWithMessage("Cannot index array with type")}
                 }.clone(),
-                _ => panic!("cannot index into type")   
+                _ => ${raiseErrorWithMessage("cannot index into type")}   
             };
             ${data.location === "stack" ? popStack : ""};
             ${pushStack(`push`)};
@@ -135,9 +135,9 @@ function againstField(
             match o_or_a {
                 InterpreterType::Object(o) => match last_field {
                     InterpreterType::string(s) => o.insert(s, set_to),
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
-                _ => panic!("cannot overwrite type")
+                _ => ${raiseErrorWithMessage("cannot overwrite type")}
             };
             `
             break
@@ -146,9 +146,9 @@ function againstField(
             match o_or_a {
                 InterpreterType::Object(o) => match last_field {
                     InterpreterType::string(s) => o.remove(&s),
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
-                _ => panic!("cannot delete type")   
+                _ => ${raiseErrorWithMessage("cannot delete type")}   
             };
             `
             break
@@ -158,18 +158,18 @@ function againstField(
             let arr = match o_or_a {
                 InterpreterType::Object(o) => match last_field {
                     InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
-                    _ => panic!("Cannot index object with this type")
+                    _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                 },
                 InterpreterType::Array(a) => match last_field {
                     InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
                     InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
-                    _ => panic!("Cannot index array with type")
+                    _ => ${raiseErrorWithMessage("Cannot index array with type")}
                 },
-                _ => panic!("cannot index into type")
+                _ => ${raiseErrorWithMessage("cannot index into type")}
             };
             match arr {
                 InterpreterType::Array(a) => a.append(&mut push),
-                _ => panic!("expected array")
+                _ => ${raiseErrorWithMessage("expected array")}
             };
             `
             break
@@ -185,14 +185,14 @@ function againstField(
                 o_or_a = match o_or_a {
                     InterpreterType::Object(o) => match f {
                         InterpreterType::string(s) => ${unwrap_or_error(`o.get${mut}(&s)`)},
-                        _ => panic!("Cannot index object with this type")
+                        _ => ${raiseErrorWithMessage("Cannot index object with this type")}
                     },
                     InterpreterType::Array(a) => match f {
                         InterpreterType::int(i) => ${unwrap_or_error(`a.get${mut}(i as usize)`)},
                         InterpreterType::double(d) => ${unwrap_or_error(`a.get${mut}(d as usize)`)},
-                        _ => panic!("Cannot index array with type")
+                        _ => ${raiseErrorWithMessage("Cannot index array with type")}
                     },
-                    _ => panic!("cannot index into type")
+                    _ => ${raiseErrorWithMessage("cannot index into type")}
                 };
             }
             ${withLastField}
@@ -237,8 +237,9 @@ export type OpInstance<S=string> = Readonly<{
 }>
 export type AnyOpInstance = OpInstance<Ops["kind"]>
 
-function raiseErrorWithMessage(s: string): string {
-    return `OpResult::Error("${s}".to_string(), current)`
+function raiseErrorWithMessage(s: string, ...formatArgs: string[]): string {
+    const formatting: string = formatArgs.length > 0 ? "," + formatArgs.join(", ") : ""
+    return `return OpResult::Error(format!("${s}"${formatting}), current)`
 }
 
 const getDb = `${unwrap_or_error(`globals.db`)}`
@@ -246,29 +247,29 @@ const getDb = `${unwrap_or_error(`globals.db`)}`
 const popStack = `
     match current.stack.pop() {
         Some(v) => v,
-        _ => panic!("Attempting to access non existent value")
+        _ => ${raiseErrorWithMessage("Attempting to access non existent value")}
     }
     `
 const popToBool = `match ${popStack} {
     InterpreterType::bool(s) => s, 
-    _ => panic!("Stack variable is not a bool")
+    _ => ${raiseErrorWithMessage("Stack variable is not a bool")}
 }
 `
 const popToArray = `match ${popStack} {
     InterpreterType::Array(a) => a,
-    _ => panic!("Expected an array")
+    _ => ${raiseErrorWithMessage("Expected an array")}
 }
 `
 
 const popToString = `
     match ${popStack} {
         InterpreterType::string(s) => s, 
-        _ => panic!("Stack variable is not a string")
+        _ => ${raiseErrorWithMessage("Stack variable is not a string")}
     }`
 const popToObject = `
     match ${popStack} {
         InterpreterType::Object(o) => o,
-        _ => panic!("stack variable is not an object")
+        _ => ${raiseErrorWithMessage("stack variable is not an object")}
     }
 `
 const lastStack = `${unwrap_or_error(`current.stack.last_mut()`)}`
@@ -291,14 +292,14 @@ function applyAgainstNumbers(left: string, right: string, op: string, type: "num
             InterpreterType::int(i1) => match ${right} {
                 InterpreterType::int(i2) => ${toType(`i1 ${op} i2`, "int")},
                 InterpreterType::double(d2) => ${toType(`(i1 as f64) ${op} d2`, "double")},
-                _ => panic!("not a number")
+                _ => ${raiseErrorWithMessage("not a number")}
             },
             InterpreterType::double(d1) => match ${right} {
                 InterpreterType::int(i2) => ${toType(`d1 ${op} (i2 as f64)`, "double")},
                 InterpreterType::double(d2) => ${toType(`d1 ${op} d2`, "double")},
-                _ => panic!("not a number")
+                _ => ${raiseErrorWithMessage("not a number")}
             }, 
-            _ => panic!("not a number")
+            _ => ${raiseErrorWithMessage("not a number")}
         }`
 }
 
@@ -395,7 +396,7 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::string(s) => s,
                     InterpreterType::int(i) => i.to_string(),
                     InterpreterType::double(d) => d.to_string(),
-                    _ => panic!("Cannot convert to string")
+                    _ => ${raiseErrorWithMessage("Cannot convert to string")}
                 };
                 strings.push(str);
             }
@@ -696,7 +697,7 @@ export const OpSpec: CompleteOpSpec = {
                     Some(v) => v,
                     None => InterpreterType::None
                 },
-                _ => panic!("Cannot pop from non-array")
+                _ => ${raiseErrorWithMessage("Cannot pop from non-array")}
             };
             ${pushStack("res")};
             OpResult::Continue(current)
@@ -708,7 +709,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut res = match ${popStack} {
                 InterpreterType::Array(inner) => inner,
-                _ => panic!("Cannot flatten non array")
+                _ => ${raiseErrorWithMessage("Cannot flatten non array")}
             };
             res.reverse();
             current.stack.append(&mut res);
@@ -823,7 +824,7 @@ export const OpSpec: CompleteOpSpec = {
                     let r = ${get_or_err(`i64::try_from(a.len())`)};
                     InterpreterType::int(r)
                 },
-                _ => panic!("Cannot take len of non array object")
+                _ => ${raiseErrorWithMessage("Cannot take len of non array object")}
             };
             ${pushStack("len")};
             OpResult::Continue(current)
@@ -891,7 +892,7 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::Object(inner) => {
                         target = ${unwrap_or_error(`inner.get_mut(f)`)};
                     },
-                    _ => panic!("Invalid field access")
+                    _ => ${raiseErrorWithMessage("Invalid field access")}
                 }
             }
             
@@ -900,7 +901,7 @@ export const OpSpec: CompleteOpSpec = {
                     inner.insert(last_field.to_string(), data);
                     OpResult::Continue(current)
                 }
-                _ => panic!("Cannot set field on non object")
+                _ => ${raiseErrorWithMessage("Cannot set field on non object")}
             }
             `
         },
@@ -920,9 +921,9 @@ export const OpSpec: CompleteOpSpec = {
                 target = match target {
                     InterpreterType::Object(inner) => match inner.get(f) {
                         Some(v) => v,
-                        None => panic!("Field does not exist: {}", f)
+                        None => ${raiseErrorWithMessage("Field does not exist: {}", "f")}
                     }
-                    _ => panic!("Accessing field on non object")
+                    _ => ${raiseErrorWithMessage("Accessing field on non object")}
                 };
             }
 
@@ -950,7 +951,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let mut original_object = match ${popStack} {
                 InterpreterType::Object(o) => o,
-                _ => panic!("Unexpected non object")
+                _ => ${raiseErrorWithMessage("Unexpected non object")}
             };
             for selector in op_param {
                 let (first, rest) = ${unwrap_or_error(`selector.split_first()`)};
@@ -958,7 +959,7 @@ export const OpSpec: CompleteOpSpec = {
                 for field in rest {
                     obj = match obj {
                         InterpreterType::Object(mut o) => ${unwrap_or_error(`o.remove(field)`)},
-                        _ => panic!("Unexpected non object")
+                        _ => ${raiseErrorWithMessage("Unexpected non object")}
                     };
                 }
                 ${pushStack("obj")};
@@ -1065,12 +1066,12 @@ export const OpSpec: CompleteOpSpec = {
                         let t = ${unwrap_or_error(`o.remove("_key")`)};
                         let key = match t {
                             InterpreterType::string(s) => s,
-                            _ => panic!("expected a string")
+                            _ => ${raiseErrorWithMessage("expected a string")}
                         };
                         let v = ${unwrap_or_error(`o.remove("_val")`)};
                         re.insert(key, v)
                     },
-                    _ => panic!("unexpected type during repackage")
+                    _ => ${raiseErrorWithMessage("unexpected type during repackage")}
                 };
             }
             ${pushStack("InterpreterType::Object(re)")};
@@ -1089,21 +1090,21 @@ export const OpSpec: CompleteOpSpec = {
                     InterpreterType::int(i2) => InterpreterType::int(i1 + i2),
                     InterpreterType::double(d2) => InterpreterType::double(i1 as f64 + d2),
                     InterpreterType::string(s) => InterpreterType::string(format!("{}{}", i1, s)),
-                    _ => panic!("not addable")
+                    _ => ${raiseErrorWithMessage("not addable")}
                 },
                 InterpreterType::double(d1) => match right {
                     InterpreterType::int(i2) => InterpreterType::double(d1 + (i2 as f64)),
                     InterpreterType::double(d2) => InterpreterType::double(d1 + d2),
                     InterpreterType::string(s) => InterpreterType::string(format!("{}{}", d1, s)),
-                    _ => panic!("not addable")
+                    _ => ${raiseErrorWithMessage("not addable")}
                 }, 
                 InterpreterType::string(s) => match right {
                     InterpreterType::int(d) => InterpreterType::string(format!("{}{}", s, d)),
                     InterpreterType::double(d) => InterpreterType::string(format!("{}{}", s, d)),
                     InterpreterType::string(d) => InterpreterType::string(format!("{}{}", s, d)),
-                    _ =>panic!("not addable")
+                    _ =>${raiseErrorWithMessage("not addable")}
                 }
-                _ => panic!("not addable")
+                _ => ${raiseErrorWithMessage("not addable")}
             };
             ${pushStack("result")};
             OpResult::Continue(current)
