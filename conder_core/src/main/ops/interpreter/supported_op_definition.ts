@@ -350,6 +350,9 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize"],
             rustOpHandler: `
+            if current.heap.len() <= *op_param {
+                ${raiseErrorWithMessage("overwriting non existent heap variable")};
+            } 
             current.heap[*op_param] = ${popStack};
             OpResult::Continue(current)
             `
@@ -456,7 +459,13 @@ export const OpSpec: CompleteOpSpec = {
 
     truncateHeap: {
         opDefinition: {
-            rustOpHandler: `current.heap.truncate(current.heap.len() - *op_param);  OpResult::Continue(current)`,
+            rustOpHandler: `
+            if *op_param > current.heap.len() {
+                ${raiseErrorWithMessage("removing more variables than in existince")}
+            } 
+            current.heap.truncate(current.heap.len() - *op_param);  
+            OpResult::Continue(current)
+            `,
             paramType: ["usize"]
         },
         factoryMethod: (p) => ({kind: "truncateHeap", data: p})
@@ -581,7 +590,9 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "usize"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param1], &globals.schemas[*param0]))")};
+            let v = ${unwrap_or_error("current.heap.get(*param1)")};
+            let s = ${unwrap_or_error("globals.schemas.get(*param0)")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, s))")};
             OpResult::Continue(current)`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
@@ -590,7 +601,8 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "String"],
             rustOpHandler: `
-            match storage::append(${getDb}, &param1, &current.heap[*param0]).await {
+            let v = ${unwrap_or_error("current.heap.get(*param0)")};
+            match storage::append(${getDb}, &param1, v).await {
                 InterpreterType::None => OpResult::Continue(current),
                 _ => ${raiseErrorWithMessage("unexpected return result")}
             }
@@ -916,7 +928,7 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Vec<String>"],
             rustOpHandler: `
-            let mut target: &InterpreterType = &current.heap[*param0];
+            let mut target = ${unwrap_or_error("current.heap.get(*param0)")};
             for f in param1 {
                 target = match target {
                     InterpreterType::Object(inner) => match inner.get(f) {
@@ -938,7 +950,9 @@ export const OpSpec: CompleteOpSpec = {
         opDefinition: {
             paramType: ["usize", "Schema"],
             rustOpHandler: `
-            ${pushStack("InterpreterType::bool(adheres_to_schema(&current.heap[*param0], param1))")};
+            let v = ${unwrap_or_error("current.heap.get(*param0)")};
+
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, param1))")};
             OpResult::Continue(current)
             `
         },
