@@ -1,26 +1,22 @@
 
 # Abstract
 
-This is a set of compiler technologies that can be used to build programming languages with non volatile state. 
+This is a set of compiler technologies that can be used to build programming languages where global state is stored in a database. The primary input to this compiler is the intermediate representation (IR).
 
-## Intermediate Representation (IR)
+# Conder Intermediate Representation
 
-The IR is the simplest way to describe some computation that runs with some mixture of global and local state. It's basically 1:1 with functionality a simple programming language could offer with the syntax boiled off and operations untangled. The IR is [decoupled from any specific storage](conder_core/src/main/abstract/IR.ts), so we could provide different global state backends in the future if so desired.
-
-The IR representation is compiled to executable ops. However, the IR can have any number of compile steps which can optimize or ensure correctness.
-
-## Ops
-
-Ops are what is actually executed by the stored procedure server. If one is crazy enough, they could build something that works with the op writing interface directly. However, you open yourself up to a host of runtime errors, so you better know what you're doing.
+The [IR](conder_core/src/main/abstract/IR.ts) is a simple way to describe some computation that runs with some mixture of global and local state. It is essentially a programming language but rather than loosely structured text, it is written in javascript objects. The IR and its compilers provides the following benefits:
+- Decoupling from storage providers
+- Transparently optimize the structure to take advantage of opportunities like query planning, caching, etc.
+- Type checking and inference
 
 # Building Your Own Language 
 
 If you want to build your own language on top of conder, feel free to reach out.
 
-#### See also
+#### Languages built on Conder
 
-[Tuna-lang](https://github.com/Conder-Systems/tuna-lang)
+-[Tuna-lang](https://github.com/Conder-Systems/tuna-lang)
 
 ### Licensing
-
-All TypeScript code is under the NSCA license. The interpreter (rust code) is under the AGPL to ensure standardization within the community. If there is interest, it is my intention to assign ownership of the interpreter to some non-profit to ensure that all improvements in this layer are shared and we can all benefit from standardization.
+All code is provided under the BSD 3-Clause license.

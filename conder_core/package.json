@@ -2,7 +2,7 @@
   "name": "conder_core",
   "licenses": [
     {
-      "license": "NCSA"
+      "license": "BSD-3-Clause"
     }
   ],
   "scripts": {
