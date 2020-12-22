@@ -10,7 +10,7 @@ import {
   schemaFactory,
 } from "./index";
 import { AnyOpInstance } from "./interpreter/supported_op_definition";
-
+import * as ed from 'noble-ed25519';
 import { Test } from "./local_run/utilities";
 
 describe("conduit kernel", () => {
@@ -20,20 +20,25 @@ describe("conduit kernel", () => {
     envOverride: Partial<StrongServerEnv> = {},
     only?: "only"
   ) {
-    const env: StrongServerEnv = {
-      PROCEDURES: {},
-      STORES: {},
-      SCHEMAS: [],
-      DEPLOYMENT_NAME: "testdeployment",
-    };
-    for (const key in envOverride) {
-      //@ts-ignore
-      env[key] = envOverride[key];
-    }
+    
     const tester: jest.It = only ? it.only : it
     tester(
       descr,
       async () => {
+        const key = ed.utils.randomPrivateKey(64)
+
+        const env: StrongServerEnv = {
+          PROCEDURES: {},
+          STORES: {},
+          SCHEMAS: [],
+          DEPLOYMENT_NAME: "testdeployment",
+          PRIVATE_KEY: key,
+          PUBLIC_KEY: await ed.getPublicKey(key)
+        };
+        for (const key in envOverride) {
+          //@ts-ignore
+          env[key] = envOverride[key];
+        }
         const server = await Test.Server.start(env);
         await test(server);
         server.kill();
@@ -357,16 +362,21 @@ describe("conduit kernel", () => {
       tester(
         descr,
         async () =>
-          Test.Mongo.start(params).then((mongo) =>
-            Test.Server.start({
+        
+          Test.Mongo.start(params).then(async (mongo) => {
+            const key = ed.utils.randomPrivateKey(64)
+
+            return Test.Server.start({
               MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
               ...params,
               SCHEMAS: [],
               DEPLOYMENT_NAME: "statefultest",
+              PUBLIC_KEY: (await ed.getPublicKey(key)),
+              PRIVATE_KEY: key
             })
-              .then((server) => test(server).finally(() => server.kill()))
-              .finally(() => mongo.kill())
-          ),
+            .then((server) => test(server).finally(() => server.kill()))
+            .finally(() => mongo.kill())
+          }),
         15000
       );
     }
@@ -681,18 +691,22 @@ describe("conduit kernel", () => {
         test: (server: Test.Server) => Promise<void>,
         envOverride: Partial<StrongServerEnv> = {},
       ): jest.ProvidesCallback {
-        const env: StrongServerEnv = {
-          PROCEDURES: {},
-          STORES: {state: schemaFactory.Any},
-          SCHEMAS: [],
-          DEPLOYMENT_NAME: "testdeployment",
-        };
-        for (const key in envOverride) {
-          //@ts-ignore
-          env[key] = envOverride[key];
-        }
-
         return async (cb) => {
+          const key = ed.utils.randomPrivateKey(64)
+          const env: StrongServerEnv = {
+            PROCEDURES: {},
+            STORES: {state: schemaFactory.Any},
+            SCHEMAS: [],
+            DEPLOYMENT_NAME: "testdeployment",
+            PRIVATE_KEY: key,
+            PUBLIC_KEY: await ed.getPublicKey(key)
+            
+          };
+          for (const key in envOverride) {
+            //@ts-ignore
+            env[key] = envOverride[key];
+          }
+
           const deps = [
             Test.Mongo.start(env),
             Test.EtcD.start(),

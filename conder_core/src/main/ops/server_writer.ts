@@ -18,6 +18,8 @@ export enum Var {
     STORES="STORES",
     DEPLOYMENT_NAME="DEPLOYMENT_NAME",
     ETCD_URL="ETCD_URL",
+    PUBLIC_KEY="PUBLIC_KEY",
+    PRIVATE_KEY="PRIVATE_KEY"
 }
 
 export type EnvVarType<E extends Var> = 
@@ -26,9 +28,10 @@ E extends Var.SCHEMAS ? AnySchemaInstance[] :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
 E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME | Var.ETCD_URL ? string :
 E extends Var.PRIVATE_PROCEDURES ? string[] :
+E extends Var.PRIVATE_KEY | Var.PUBLIC_KEY ? Uint8Array :
 never
 
-export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES | Var.DEPLOYMENT_NAME
+export type RequiredEnv = Var.SCHEMAS | Var.PROCEDURES | Var.STORES | Var.DEPLOYMENT_NAME | Var.PUBLIC_KEY | Var.PRIVATE_KEY
 
 // Strong refers to the fact that the type bounds are more specific.
 export type StrongServerEnv= {[E in Exclude<Var, RequiredEnv>]?: EnvVarType<E>} & {
@@ -116,6 +119,52 @@ export function generateServer(): string {
             `
         },
         {
+            name: "private_key",
+            type: "[u8; 64]",
+            initializer: `
+            match env::var("${Var.PRIVATE_KEY}") {
+                Ok(some_str) => {
+                    if some_str.len() != 64 * 3  - 1{
+                        panic!("Unexpected string length");
+                    }
+                    let mut u8s: Vec<u8> = Vec::with_capacity(64);                    
+                    for chunk in some_str.split_whitespace() {
+                        u8s.push(u8::from_str_radix(chunk, 16).unwrap());
+                    }
+                    let conv: [u8; 64] = match u8s.try_into() {
+                        Ok(r) => r,
+                        Err(e) => panic!("Failure getting private key: {:?}", e)
+                    };
+                    conv
+                },
+                Err(e) => panic!("Private key could not be read")
+            }
+            `
+        },
+        {
+            name: "public_key",
+            type: "[u8; 32]",
+            initializer: `
+            match env::var("${Var.PUBLIC_KEY}") {
+                Ok(some_str) => {
+                    if some_str.len() != 32 * 3 - 1 {
+                        panic!("Unexpected string length");
+                    }
+                    let mut u8s: Vec<u8> = Vec::with_capacity(32);                    
+                    for chunk in some_str.split_whitespace() {
+                        u8s.push(u8::from_str_radix(chunk, 16).unwrap());
+                    }
+                    let conv: [u8; 32] = match u8s.try_into() {
+                        Ok(r) => r,
+                        Err(e) => panic!("Failure getting public key: {:?}", e)
+                    };
+                    conv
+                },
+                Err(e) => panic!("Public key could not be read")
+            }
+            `
+        },
+        {
             name: "db",
             type: "Option<mongodb::Database>",
             initializer: `match env::var("${Var.MONGO_CONNECTION_URI}") {
@@ -166,6 +215,7 @@ export function generateServer(): string {
         use bytes::Bytes;
         use mongodb::{Database};
         use std::convert::TryFrom;
+        use std::convert::TryInto;
         use etcd_rs;
         mod storage;
         mod locks;

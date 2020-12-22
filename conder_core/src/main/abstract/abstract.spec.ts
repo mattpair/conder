@@ -7,6 +7,7 @@ import { AnyNode, RootNode } from 'src/main/abstract/IR'
 import {BaseNodeDefs, PickNode, toOps } from '../../../index'
 import { MONGO_UNPROVIDED_LOCK_CALCULATOR } from './mongo_logic/main';
 import { FunctionData, FunctionDescription } from './function';
+import * as ed from 'noble-ed25519';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
@@ -49,7 +50,15 @@ class TestHarness {
             const compiled = toOps(map, testCompiler)
             const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
             const STORES = {TEST_STORE: schemaFactory.Object({})}
-            this.serverEnv = {PROCEDURES, STORES, SCHEMAS: [], DEPLOYMENT_NAME: "test"}
+            const PRIVATE_KEY = ed.utils.randomPrivateKey(64)
+            this.serverEnv = {
+                PROCEDURES, 
+                STORES, 
+                SCHEMAS: [], 
+                DEPLOYMENT_NAME: "test",
+                PUBLIC_KEY: await ed.getPublicKey(PRIVATE_KEY),
+                PRIVATE_KEY
+            }
 
             const must_cleanup = await Promise.all(this.resources.map(f => f()))
             const server = await Test.Server.start(this.serverEnv)

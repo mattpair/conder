@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "isomorphic-fetch": "^2.2.1",
-    "mongodb": "^3.6.2"
+    "mongodb": "^3.6.2",
+    "noble-ed25519": "https://github.com/paulmillr/noble-ed25519/archive/1.0.2.tar.gz"
   },
   "jest": {
     "preset": "ts-jest",
