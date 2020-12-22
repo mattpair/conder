@@ -330,6 +330,24 @@ describe("conduit kernel", () => {
         o: schemaFactory.Object({ f: schemaFactory.int }),
       })
     );
+
+    kernelTest("Role schemas should be signed",
+    async server => {
+      expect(await server.invoke("validateRole", {})).toBe(false)
+      expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
+      expect(await server.invoke("validateRole", {_name: "something else"})).toBe(false)
+
+    }, {
+      PROCEDURES: {
+        validateRole: [
+          ow.enforceSchemaInstanceOnHeap({
+            heap_pos: 0, 
+            schema: schemaFactory.Role("admin")
+          }),
+          ow.returnStackTop
+        ]
+      }
+    })
   });
   type bsonType = "object" | "string" | "long" | "array" | "bool" | "double";
   type ObjectReqs = {
