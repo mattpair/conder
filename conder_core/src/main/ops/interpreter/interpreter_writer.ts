@@ -108,6 +108,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         stores: &'a HashMap<String, Schema>,
         fns: &'a HashMap<String, Vec<Op>>,
         lm: Option<&'a etcd_rs::Client>,
+        private_key: &'a[u8; 64],
+        public_key: &'a [u8; 32]
     }
 
     enum OpResult<'a> {
@@ -194,6 +196,7 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     // All these vecs should be of length 1.
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
+    Role: "HashMap<String, Schema>",
     Array: "Vec<Schema>",
 }
 
@@ -312,7 +315,7 @@ export function writeOperationInterpreter(): string {
         }
     }
 
-    fn adheres_to_schema(value: & InterpreterType, schema: &Schema) -> bool {
+    fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
             
             Schema::Object(internal_schema) => match value {
@@ -321,7 +324,7 @@ export function writeOperationInterpreter(): string {
                     let mut adheres = true;
                     for (k, v_schema) in internal_schema {
                         adheres = match internal_value.get(k) {
-                            Some(v_value) => adheres_to_schema(v_value, v_schema),
+                            Some(v_value) => adheres_to_schema(v_value, v_schema, globs),
                             None => {
                                 if v_schema.is_optional() {
                                     optionals_missing += 1;
@@ -340,16 +343,16 @@ export function writeOperationInterpreter(): string {
                 _ => false
             },
             Schema::Array(internal) => match value {
-                InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0])),
+                InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0], globs)),
                 _ => false
             },
             Schema::Optional(internal) => {
                 match value {
                     InterpreterType::None => true,
-                    _ => adheres_to_schema(value, &internal[0])
+                    _ => adheres_to_schema(value, &internal[0], globs)
                 }
             },
-
+            Schema::Role(inner) => true,
             Schema::Any => true,
             ${Primitives.map(p => {
                 if (p === "double") {

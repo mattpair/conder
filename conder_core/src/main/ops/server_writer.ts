@@ -255,7 +255,9 @@ export function generateServer(): string {
                 db: data.db.as_ref(),
                 stores: &data.stores,
                 fns: &data.procs,
-                lm: data.lm_client.as_ref()
+                lm: data.lm_client.as_ref(),
+                private_key: &data.private_key,
+                public_key: &data.public_key
             };
             return match req {
                 KernelRequest::Noop => conduit_byte_code_interpreter(vec![], &data.noop, g),

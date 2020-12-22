@@ -605,7 +605,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let v = ${unwrap_or_error("current.heap.get(*param1)")};
             let s = ${unwrap_or_error("globals.schemas.get(*param0)")};
-            ${pushStack("InterpreterType::bool(adheres_to_schema(v, s))")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, s, globals))")};
             OpResult::Continue(current)`,
         },
         factoryMethod: (p) => ({kind: "enforceSchemaOnHeap", data: [p.schema, p.heap_pos]})
@@ -978,7 +978,7 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
             let v = ${unwrap_or_error("current.heap.get(*param0)")};
 
-            ${pushStack("InterpreterType::bool(adheres_to_schema(v, param1))")};
+            ${pushStack("InterpreterType::bool(adheres_to_schema(v, param1, globals))")};
             OpResult::Continue(current)
             `
         },
