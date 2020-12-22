@@ -364,8 +364,32 @@ export function writeOperationInterpreter(): string {
                     },
                     None => return false
                 };
-                false
-                // name == role_name
+                let given_signature = match obj.get("_sig") {
+                    Some(sig) => match sig {
+                        InterpreterType::Array(a) => {
+                            let mut results = Vec::with_capacity(a.len());
+                            for i in a {
+                                let u: u8 = match i {
+                                    InterpreterType::int(_i) => match (*_i).try_into() {
+                                        Ok(v) => v,
+                                        Err(_) => {
+                                            eprintln!("Failed to convert back to u8");
+                                            return false;
+                                        }
+                                    },
+                                    _ => return false
+                                };
+                                results.push(u);
+                            }
+                            results
+                        },
+                        _ => return false
+                    },
+                    None => return false
+                };
+                println!("Checking signature");
+
+                ed25519::verify(name.as_bytes(), globs.public_key, given_signature.as_slice())
             },
             Schema::Any => true,
             ${Primitives.map(p => {

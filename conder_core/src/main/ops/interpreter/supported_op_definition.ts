@@ -82,7 +82,8 @@ StaticOp<"getKeys"> |
 StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
-StaticOp<"release">
+StaticOp<"release"> |
+StaticOp<"signRole">
 
 const unwrap_or_error:(value: string) => string = (val) => `
     match ${val} {
@@ -1216,6 +1217,28 @@ export const OpSpec: CompleteOpSpec = {
                 Err(e) => OpResult::Error(format!("Failure releasing lock: {}", e), current)
             }
 
+            `
+        }
+    },
+    signRole: {
+        opDefinition: {
+            rustOpHandler: `
+            let mut obj = ${popToObject};
+            let name_value = ${unwrap_or_error(`obj.get("_name")`)};
+            match name_value {
+                InterpreterType::string(s) => {
+                    let sig: [u8; 64] = ed25519::signature(s.as_bytes(), globals.private_key);
+                    if !ed25519::verify(s.as_bytes(), globals.public_key, &sig) {
+                        ${raiseErrorWithMessage(`Public key cannot validate signature.`)};
+                    }
+                    let all: Vec<InterpreterType> = sig.iter().map(|i| InterpreterType::int(*i as i64)).collect();
+                    obj.insert("_sig".to_string(), InterpreterType::Array(all));
+                    ${(pushStack("InterpreterType::Object(obj)"))};
+                    return OpResult::Continue(current);
+                },
+                _ => ${raiseErrorWithMessage("Expected to find a name for the role")}
+            };
+            
             `
         }
     }

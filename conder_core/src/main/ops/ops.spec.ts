@@ -25,15 +25,16 @@ describe("conduit kernel", () => {
     tester(
       descr,
       async () => {
-        const key = ed.utils.randomPrivateKey(64)
-
+        const key = ed.utils.randomPrivateKey()
+        const pub = await ed.getPublicKey(key)
+        
         const env: StrongServerEnv = {
           PROCEDURES: {},
           STORES: {},
           SCHEMAS: [],
           DEPLOYMENT_NAME: "testdeployment",
-          PRIVATE_KEY: key,
-          PUBLIC_KEY: await ed.getPublicKey(key)
+          PRIVATE_KEY:  new Uint8Array([...key, ...pub]),
+          PUBLIC_KEY: pub
         };
         for (const key in envOverride) {
           //@ts-ignore
@@ -333,12 +334,28 @@ describe("conduit kernel", () => {
 
     kernelTest("Role schemas should be signed",
     async server => {
+      const validRole = await server.invoke("getRole", {_name: "admin"})
       expect(await server.invoke("validateRole", {})).toBe(false)
       expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
+      expect(await server.invoke("validateRole", validRole)).toBe(true)
       expect(await server.invoke("validateRole", {_name: "something else"})).toBe(false)
-
+    
+      const priv = ed.utils.randomPrivateKey()
+      const pub = await ed.getPublicKey(priv)
+      const _sig = await ed.sign("admin", priv)
+      expect(await ed.verify(_sig, "admin", pub)).toBe(true)
+      const impersonator = {
+        _name: 'admin',
+        _sig
+      }
+      expect(await server.invoke("validateRole", impersonator)).toBe(false)
     }, {
       PROCEDURES: {
+        getRole: [
+          ow.copyFromHeap(0),
+          ow.signRole,
+          ow.returnStackTop
+        ],
         validateRole: [
           ow.enforceSchemaInstanceOnHeap({
             heap_pos: 0, 

@@ -217,6 +217,7 @@ export function generateServer(): string {
         use std::convert::TryFrom;
         use std::convert::TryInto;
         use etcd_rs;
+        use crypto::ed25519;
         mod storage;
         mod locks;
 
