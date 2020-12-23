@@ -1,4 +1,4 @@
-FROM rust:1.45 as builder
+FROM rust:1.48 as builder
 
 RUN USER=root cargo new --bin app
 

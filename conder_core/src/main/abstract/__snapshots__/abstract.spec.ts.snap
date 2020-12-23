@@ -357,6 +357,13 @@ Map {
 }
 `;
 
+exports[`roles functions can be guarded by roles: Required locks 1`] = `
+Map {
+  "adminsOnly" => Map {},
+  "getAdminId" => Map {},
+}
+`;
+
 exports[`with input check if field exists: Required locks 1`] = `
 Map {
   "checksField" => Map {},

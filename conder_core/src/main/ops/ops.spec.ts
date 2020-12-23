@@ -10,7 +10,7 @@ import {
   schemaFactory,
 } from "./index";
 import { AnyOpInstance } from "./interpreter/supported_op_definition";
-
+import * as ed from 'noble-ed25519';
 import { Test } from "./local_run/utilities";
 
 describe("conduit kernel", () => {
@@ -20,20 +20,26 @@ describe("conduit kernel", () => {
     envOverride: Partial<StrongServerEnv> = {},
     only?: "only"
   ) {
-    const env: StrongServerEnv = {
-      PROCEDURES: {},
-      STORES: {},
-      SCHEMAS: [],
-      DEPLOYMENT_NAME: "testdeployment",
-    };
-    for (const key in envOverride) {
-      //@ts-ignore
-      env[key] = envOverride[key];
-    }
+    
     const tester: jest.It = only ? it.only : it
     tester(
       descr,
       async () => {
+        const key = ed.utils.randomPrivateKey()
+        const pub = await ed.getPublicKey(key)
+        
+        const env: StrongServerEnv = {
+          PROCEDURES: {},
+          STORES: {},
+          SCHEMAS: [],
+          DEPLOYMENT_NAME: "testdeployment",
+          PRIVATE_KEY:  new Uint8Array([...key, ...pub]),
+          PUBLIC_KEY: pub
+        };
+        for (const key in envOverride) {
+          //@ts-ignore
+          env[key] = envOverride[key];
+        }
         const server = await Test.Server.start(env);
         await test(server);
         server.kill();
@@ -325,6 +331,40 @@ describe("conduit kernel", () => {
         o: schemaFactory.Object({ f: schemaFactory.int }),
       })
     );
+
+    kernelTest("Role schemas should be signed",
+    async server => {
+      const validRole = await server.invoke("getRole", {_name: "admin"})
+      expect(await server.invoke("validateRole", {})).toBe(false)
+      expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
+      expect(await server.invoke("validateRole", validRole)).toBe(true)
+      expect(await server.invoke("validateRole", {_name: "something else"})).toBe(false)
+    
+      const priv = ed.utils.randomPrivateKey()
+      const pub = await ed.getPublicKey(priv)
+      const _sig = await ed.sign("admin", priv)
+      expect(await ed.verify(_sig, "admin", pub)).toBe(true)
+      const impersonator = {
+        _name: 'admin',
+        _sig
+      }
+      expect(await server.invoke("validateRole", impersonator)).toBe(false)
+    }, {
+      PROCEDURES: {
+        getRole: [
+          ow.copyFromHeap(0),
+          ow.signRole,
+          ow.returnStackTop
+        ],
+        validateRole: [
+          ow.enforceSchemaInstanceOnHeap({
+            heap_pos: 0, 
+            schema: schemaFactory.Role("admin")
+          }),
+          ow.returnStackTop
+        ]
+      }
+    })
   });
   type bsonType = "object" | "string" | "long" | "array" | "bool" | "double";
   type ObjectReqs = {
@@ -357,16 +397,21 @@ describe("conduit kernel", () => {
       tester(
         descr,
         async () =>
-          Test.Mongo.start(params).then((mongo) =>
-            Test.Server.start({
+        
+          Test.Mongo.start(params).then(async (mongo) => {
+            const key = ed.utils.randomPrivateKey(64)
+
+            return Test.Server.start({
               MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
               ...params,
               SCHEMAS: [],
               DEPLOYMENT_NAME: "statefultest",
+              PUBLIC_KEY: (await ed.getPublicKey(key)),
+              PRIVATE_KEY: key
             })
-              .then((server) => test(server).finally(() => server.kill()))
-              .finally(() => mongo.kill())
-          ),
+            .then((server) => test(server).finally(() => server.kill()))
+            .finally(() => mongo.kill())
+          }),
         15000
       );
     }
@@ -681,18 +726,22 @@ describe("conduit kernel", () => {
         test: (server: Test.Server) => Promise<void>,
         envOverride: Partial<StrongServerEnv> = {},
       ): jest.ProvidesCallback {
-        const env: StrongServerEnv = {
-          PROCEDURES: {},
-          STORES: {state: schemaFactory.Any},
-          SCHEMAS: [],
-          DEPLOYMENT_NAME: "testdeployment",
-        };
-        for (const key in envOverride) {
-          //@ts-ignore
-          env[key] = envOverride[key];
-        }
-
         return async (cb) => {
+          const key = ed.utils.randomPrivateKey(64)
+          const env: StrongServerEnv = {
+            PROCEDURES: {},
+            STORES: {state: schemaFactory.Any},
+            SCHEMAS: [],
+            DEPLOYMENT_NAME: "testdeployment",
+            PRIVATE_KEY: key,
+            PUBLIC_KEY: await ed.getPublicKey(key)
+            
+          };
+          for (const key in envOverride) {
+            //@ts-ignore
+            env[key] = envOverride[key];
+          }
+
           const deps = [
             Test.Mongo.start(env),
             Test.EtcD.start(),

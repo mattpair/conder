@@ -340,6 +340,14 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ...full_compiler(n.from),
                 ow.getKeys
             ]
+
+        case "RoleInstance":
+            return [
+                ow.instantiate({
+                    _name: n.role.data
+                }),
+                ow.signRole
+            ]
         case "Push":
         case "Conditional":
         case "Finally":

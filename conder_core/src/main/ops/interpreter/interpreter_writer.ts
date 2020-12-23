@@ -108,6 +108,8 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         stores: &'a HashMap<String, Schema>,
         fns: &'a HashMap<String, Vec<Op>>,
         lm: Option<&'a etcd_rs::Client>,
+        private_key: &'a[u8; 64],
+        public_key: &'a [u8; 32]
     }
 
     enum OpResult<'a> {
@@ -194,6 +196,7 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     // All these vecs should be of length 1.
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
+    Role: "String",
     Array: "Vec<Schema>",
 }
 
@@ -312,7 +315,7 @@ export function writeOperationInterpreter(): string {
         }
     }
 
-    fn adheres_to_schema(value: & InterpreterType, schema: &Schema) -> bool {
+    fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
             
             Schema::Object(internal_schema) => match value {
@@ -321,7 +324,7 @@ export function writeOperationInterpreter(): string {
                     let mut adheres = true;
                     for (k, v_schema) in internal_schema {
                         adheres = match internal_value.get(k) {
-                            Some(v_value) => adheres_to_schema(v_value, v_schema),
+                            Some(v_value) => adheres_to_schema(v_value, v_schema, globs),
                             None => {
                                 if v_schema.is_optional() {
                                     optionals_missing += 1;
@@ -340,16 +343,52 @@ export function writeOperationInterpreter(): string {
                 _ => false
             },
             Schema::Array(internal) => match value {
-                InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0])),
+                InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0], globs)),
                 _ => false
             },
             Schema::Optional(internal) => {
                 match value {
                     InterpreterType::None => true,
-                    _ => adheres_to_schema(value, &internal[0])
+                    _ => adheres_to_schema(value, &internal[0], globs)
                 }
             },
-
+            Schema::Role(role_name) => {
+                let obj = match value {
+                    InterpreterType::Object(o) => o,
+                    _ => return false
+                };
+                let name = match obj.get("_name") {
+                    Some(name_val) => match name_val {
+                        InterpreterType::string(s) => s,
+                        _ => return false
+                    },
+                    None => return false
+                };
+                let given_signature = match obj.get("_sig") {
+                    Some(sig) => match sig {
+                        InterpreterType::Array(a) => {
+                            let mut results = Vec::with_capacity(a.len());
+                            for i in a {
+                                let u: u8 = match i {
+                                    InterpreterType::int(_i) => match (*_i).try_into() {
+                                        Ok(v) => v,
+                                        Err(_) => {
+                                            eprintln!("Failed to convert back to u8");
+                                            return false;
+                                        }
+                                    },
+                                    _ => return false
+                                };
+                                results.push(u);
+                            }
+                            results
+                        },
+                        _ => return false
+                    },
+                    None => return false
+                };
+                ed25519::verify(name.as_bytes(), globs.public_key, given_signature.as_slice())
+            },
             Schema::Any => true,
             ${Primitives.map(p => {
                 if (p === "double") {

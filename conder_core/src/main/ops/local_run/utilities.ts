@@ -18,17 +18,43 @@ export namespace Test {
         return 8080 + Atomics.add(UniqueInstance.next_port, 0, 1);
       }
     }
+    const byteToHex: string[] = [];
 
+    for (let n = 0; n <= 0xff; ++n)
+    {
+        const hexOctet = n.toString(16).padStart(2, "0");
+        byteToHex.push(hexOctet);
+    }
+    
+    function hex(arrayBuffer: ArrayBufferLike)
+    {
+        const buff = new Uint8Array(arrayBuffer);
+        const hexOctets = []; // new Array(buff.length) is even faster (preallocates necessary array size), then use hexOctets[i] instead of .push()
+    
+        for (let i = 0; i < buff.length; ++i)
+            hexOctets.push(byteToHex[buff[i]]);
+    
+        return hexOctets.join(" ");
+    }
     export class Server extends UniqueInstance {
         private process: child_process.ChildProcess;
         private constructor(env: StrongServerEnv) {
           super()
           const string_env: Partial<ServerEnv> = {};
           for (const key in env) {
-            //@ts-ignore
-            string_env[key] =
-            //@ts-ignore
-              typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
+            switch (key as keyof StrongServerEnv) {
+              case Var.PUBLIC_KEY:
+              case Var.PRIVATE_KEY:
+                //@ts-ignore
+                string_env[key] = hex(env[key])
+                break
+              default:
+                    //@ts-ignore
+                string_env[key] =
+                //@ts-ignore
+                  typeof env[key] === "string" ? env[key] : JSON.stringify(env[key]);
+            }
+            
           }
           this.process = child_process.exec(`./app ${this.port}`, {
             cwd: `./src/main/ops/rust/target/debug`,

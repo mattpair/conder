@@ -1,4 +1,4 @@
-import { AnyOpInstance, Utils } from '../ops/index';
+import { AnyOpInstance, SchemaInstance, Utils } from '../ops/index';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
 export type ValueNode = PickNode<
@@ -16,7 +16,8 @@ export type ValueNode = PickNode<
     "None" |
     "ArrayLiteral" |
     "Call" |
-    "Keys" 
+    "Keys" |
+    "RoleInstance"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -52,7 +53,7 @@ export type BaseNodeDefs = {
     If: Node<{
         conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
     }, "root">
-
+    RoleInstance: Node<{role: SchemaInstance<"Role">}>
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
     String: Node<{value: string}>,
@@ -155,6 +156,7 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     DeleteField: n => n,
     None: _ => _,
     Noop: _ => _,
+    RoleInstance: _ => _,
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {

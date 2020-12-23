@@ -7,6 +7,7 @@ import { AnyNode, RootNode } from 'src/main/abstract/IR'
 import {BaseNodeDefs, PickNode, toOps } from '../../../index'
 import { MONGO_UNPROVIDED_LOCK_CALCULATOR } from './mongo_logic/main';
 import { FunctionData, FunctionDescription } from './function';
+import * as ed from 'noble-ed25519';
 
 type DagServer = Record<string, (...arg: any[]) => Promise<any>>
 const TEST_STORE = "test"
@@ -49,7 +50,16 @@ class TestHarness {
             const compiled = toOps(map, testCompiler)
             const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
             const STORES = {TEST_STORE: schemaFactory.Object({})}
-            this.serverEnv = {PROCEDURES, STORES, SCHEMAS: [], DEPLOYMENT_NAME: "test"}
+            const secret = ed.utils.randomPrivateKey()
+            const pub = await ed.getPublicKey(secret)
+            this.serverEnv = {
+                PROCEDURES, 
+                STORES, 
+                SCHEMAS: [], 
+                DEPLOYMENT_NAME: "test",
+                PUBLIC_KEY: pub,
+                PRIVATE_KEY: new Uint8Array([...secret, ...pub])
+            }
 
             const must_cleanup = await Promise.all(this.resources.map(f => f()))
             const server = await Test.Server.start(this.serverEnv)
@@ -587,6 +597,27 @@ describe("basic functionality", () => {
             expect(await server.getFirst(["a", "b"])).toBe("a")
         }
     ))
+})
+
+describe("roles", () => {
+    it("functions can be guarded by roles", withInputHarness([], {
+        adminsOnly: {
+            input: [schemaFactory.Role("admin")],
+            computation: [
+                {kind: "Return", value: {kind: "String", value: "success"}}
+            ]
+        },
+        getAdminId: {
+            input: [],
+            computation: [
+                {kind: 'Return', value: {kind: "RoleInstance", role: {kind: "Role", data: "admin"}}}
+            ]
+        }
+    }, async server => {
+        await expect(server.adminsOnly({})).rejects.toThrowError()
+        const id = await server.getAdminId()
+        expect(await server.adminsOnly(id)).toEqual("success")
+    }))
 })
 
 describe("with input", () => {
