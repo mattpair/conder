@@ -218,6 +218,8 @@ export function generateServer(): string {
         use std::convert::TryInto;
         use etcd_rs;
         use crypto::ed25519;
+        use std::hash::{Hash, Hasher};
+        use std::collections::hash_map::DefaultHasher;
         mod storage;
         mod locks;
 

@@ -1,3 +1,4 @@
+import { SchemaInstance } from './../SchemaFactory';
 import { AnyInterpreterTypeInstance } from "./interpreter_writer"
 import * as mongodb from 'mongodb'
 import { AnySchemaInstance } from "../SchemaFactory"
@@ -1227,12 +1228,23 @@ export const OpSpec: CompleteOpSpec = {
             let name_value = ${unwrap_or_error(`obj.get("_name")`)};
             match name_value {
                 InterpreterType::string(s) => {
-                    let sig: [u8; 64] = ed25519::signature(s.as_bytes(), globals.private_key);
-                    if !ed25519::verify(s.as_bytes(), globals.public_key, &sig) {
+                    let mut hasher = DefaultHasher::new();
+                    hasher.write(s.as_bytes());
+                    match obj.get("_state") {
+                        Some(state) => {
+                            state.hash(&mut hasher);
+                        },
+                        None => {}
+                    };
+                    let msg: [u8; 8] = hasher.finish().to_be_bytes();
+                    let sig: [u8; 64] = ed25519::signature(&msg, globals.private_key);
+                    println!("SIGNATURE: {:?}", sig);
+                    if !ed25519::verify(&msg, globals.public_key, &sig) {
                         ${raiseErrorWithMessage(`Public key cannot validate signature.`)};
                     }
                     let all: Vec<InterpreterType> = sig.iter().map(|i| InterpreterType::int(*i as i64)).collect();
                     obj.insert("_sig".to_string(), InterpreterType::Array(all));
+                    
                     ${(pushStack("InterpreterType::Object(obj)"))};
                     return OpResult::Continue(current);
                 },

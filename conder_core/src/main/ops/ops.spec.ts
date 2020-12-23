@@ -333,37 +333,75 @@ describe("conduit kernel", () => {
     );
 
     kernelTest("Role schemas should be signed",
-    async server => {
-      const validRole = await server.invoke("getRole", {_name: "admin"})
-      expect(await server.invoke("validateRole", {})).toBe(false)
-      expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
-      expect(await server.invoke("validateRole", validRole)).toBe(true)
-      expect(await server.invoke("validateRole", {_name: "something else"})).toBe(false)
-    
-      const priv = ed.utils.randomPrivateKey()
-      const pub = await ed.getPublicKey(priv)
-      const _sig = await ed.sign("admin", priv)
-      expect(await ed.verify(_sig, "admin", pub)).toBe(true)
-      const impersonator = {
-        _name: 'admin',
-        _sig
-      }
-      expect(await server.invoke("validateRole", impersonator)).toBe(false)
-    }, {
-      PROCEDURES: {
-        getRole: [
-          ow.copyFromHeap(0),
-          ow.signRole,
-          ow.returnStackTop
-        ],
-        validateRole: [
-          ow.enforceSchemaInstanceOnHeap({
-            heap_pos: 0, 
-            schema: schemaFactory.Role("admin", {})
-          }),
-          ow.returnStackTop
-        ]
-      }
+      async server => {
+        const validRole = await server.invoke("getRole", {_name: "admin"})
+        expect(await server.invoke("validateRole", {})).toBe(false)
+        expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
+        expect(await server.invoke("validateRole", validRole)).toBe(true)
+        expect(await server.invoke("validateRole", {_name: "something else"})).toBe(false)
+      
+        const priv = ed.utils.randomPrivateKey()
+        const pub = await ed.getPublicKey(priv)
+        const _sig = await ed.sign("admin", priv)
+        expect(await ed.verify(_sig, "admin", pub)).toBe(true)
+        const impersonator = {
+          _name: 'admin',
+          _sig
+        }
+        expect(await server.invoke("validateRole", impersonator)).toBe(false)
+      }, {
+        PROCEDURES: {
+          getRole: [
+            ow.copyFromHeap(0),
+            ow.signRole,
+            ow.returnStackTop
+          ],
+          validateRole: [
+            ow.enforceSchemaInstanceOnHeap({
+              heap_pos: 0, 
+              schema: schemaFactory.Role("admin", schemaFactory.Object({}))
+            }),
+            ow.returnStackTop
+          ]
+        }
+    })
+
+    kernelTest("Roles can contain state",
+      async server => {
+        // Both adheres to state and is signed.
+        const validRole = await server.invoke("getRole", {_name: "admin", _state: {some_state: "hello"}})
+
+        // State is not necessary to sign. State is only checked on validation.
+        const stateless1 = await server.invoke("getRole", {_name: "admin", _state: {}})
+        const stateless2 = await server.invoke("getRole", {_name: "admin"})
+        expect(await server.invoke("validateRole", stateless1)).toBeFalsy()
+        expect(await server.invoke("validateRole", stateless2)).toBeFalsy()
+        
+        expect(await server.invoke("validateRole", {})).toBe(false)
+        expect(await server.invoke("validateRole", {_name: "admin"})).toBe(false)
+        expect(await server.invoke("validateRole", validRole)).toBe(true)
+        expect(await server.invoke("validateRole", {_name: "admin", _state: {}, _sig: []})).toBe(false)
+              
+        const switched_state = {
+          ...validRole,
+          _state: {some_state: "bye"}
+        }
+        expect(await server.invoke("validateRole", switched_state)).toBe(false)
+      }, {
+        PROCEDURES: {
+          getRole: [
+            ow.copyFromHeap(0),
+            ow.signRole,
+            ow.returnStackTop
+          ],
+          validateRole: [
+            ow.enforceSchemaInstanceOnHeap({
+              heap_pos: 0, 
+              schema: schemaFactory.Role("admin", schemaFactory.Object({some_state: schemaFactory.string}))
+            }),
+            ow.returnStackTop
+          ]
+        }
     })
   });
   type bsonType = "object" | "string" | "long" | "array" | "bool" | "double";

@@ -602,7 +602,7 @@ describe("basic functionality", () => {
 describe("roles", () => {
     it("functions can be guarded by roles", withInputHarness([], {
         adminsOnly: {
-            input: [schemaFactory.Role("admin", {})],
+            input: [schemaFactory.Role("admin", schemaFactory.Object({}))],
             computation: [
                 {kind: "Return", value: {kind: "String", value: "success"}}
             ]
@@ -610,7 +610,7 @@ describe("roles", () => {
         getAdminId: {
             input: [],
             computation: [
-                {kind: 'Return', value: {kind: "RoleInstance", role: {kind: "Role", data: ["admin", {}]}}}
+                {kind: 'Return', value: {kind: "RoleInstance", role: schemaFactory.Role("admin", schemaFactory.Object({}))}}
             ]
         }
     }, async server => {
