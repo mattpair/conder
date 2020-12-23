@@ -32,6 +32,13 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
     Release(n, r) {
         return {kind: "Release", name: r(n.name)}
     },
+    RoleInstance(n, r) {
+        return {
+            kind: "RoleInstance",
+            role: n.role,
+            state: n.state ? r(n.state) : undefined
+        }
+    },
     If(n, r) {
         return {
             kind: "If",

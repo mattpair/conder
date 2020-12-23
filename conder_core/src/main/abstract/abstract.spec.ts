@@ -1,3 +1,4 @@
+import { SchemaInstance } from './../ops/SchemaFactory';
 import { StrongServerEnv } from './../ops/server_writer';
 import { Compiler } from './compilers';
 import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
@@ -618,6 +619,47 @@ describe("roles", () => {
         const id = await server.getAdminId()
         expect(await server.adminsOnly(id)).toEqual("success")
     }))
+    const user_role: SchemaInstance<"Role"> = schemaFactory.Role("user", schemaFactory.Object({name: schemaFactory.string}))
+    it("allows use of stateful roles", 
+        withInputHarness([], {
+            usersOnly: {
+                input: [user_role],
+                computation: [
+                    {kind: 'Return', value: {
+                        kind: "Selection", 
+                        root: {kind: "Saved", index: 0}, 
+                        level: [{kind: "String", value: "_state"}, {kind: "String", value: "name"}]}
+                    }
+                ]
+            },
+            getUser: {
+                input: [schemaFactory.string],
+                computation: [
+                    {
+                        kind: "Return",
+                        value: {
+                            kind: "RoleInstance",
+                            role: user_role,
+                            state: {
+                                kind: "Object",
+                                fields: [
+                                    {
+                                        kind: "Field",
+                                        key: {kind: "String", value: "name"},
+                                        value: {kind: "Saved", index: 0}
+                                    }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        async server => {
+            const user = await server.getUser("me")
+            await expect(server.usersOnly({_name: "user", _state: {name: "me"}})).rejects.toThrowError()
+            expect(await server.usersOnly(user)).toEqual("me")
+        }))
 })
 
 describe("with input", () => {

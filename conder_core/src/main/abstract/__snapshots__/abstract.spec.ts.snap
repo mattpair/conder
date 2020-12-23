@@ -357,6 +357,13 @@ Map {
 }
 `;
 
+exports[`roles allows use of stateful roles: Required locks 1`] = `
+Map {
+  "usersOnly" => Map {},
+  "getUser" => Map {},
+}
+`;
+
 exports[`roles functions can be guarded by roles: Required locks 1`] = `
 Map {
   "adminsOnly" => Map {},

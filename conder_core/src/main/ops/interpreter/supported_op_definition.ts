@@ -1238,7 +1238,6 @@ export const OpSpec: CompleteOpSpec = {
                     };
                     let msg: [u8; 8] = hasher.finish().to_be_bytes();
                     let sig: [u8; 64] = ed25519::signature(&msg, globals.private_key);
-                    println!("SIGNATURE: {:?}", sig);
                     if !ed25519::verify(&msg, globals.public_key, &sig) {
                         ${raiseErrorWithMessage(`Public key cannot validate signature.`)};
                     }

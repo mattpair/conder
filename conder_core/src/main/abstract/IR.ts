@@ -53,7 +53,10 @@ export type BaseNodeDefs = {
     If: Node<{
         conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
     }, "root">
-    RoleInstance: Node<{role: SchemaInstance<"Role">}>
+    RoleInstance: Node<{
+        role: SchemaInstance<"Role">,
+        state?: PickNode<"Object">
+    }>
     Noop: Node<{}, "root">
     Saved: Node<{index: number}> 
     String: Node<{value: string}>,
@@ -156,7 +159,6 @@ const PASS_THROUGH_REPLACER: PassThroughReplacer = {
     DeleteField: n => n,
     None: _ => _,
     Noop: _ => _,
-    RoleInstance: _ => _,
 }
 
 export function make_replacer<R extends NodeSet>(repl: RequiredReplacer<R>): GenericReplacer<R> {
