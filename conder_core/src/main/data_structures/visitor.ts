@@ -98,6 +98,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "Noop":
         case "DeleteField":
         case "GetKeysOnly":
+        case "RoleInstance":
             return []
         case "ArrayForEach":
             return [n.target, ...n.do]

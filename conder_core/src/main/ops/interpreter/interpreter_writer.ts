@@ -387,8 +387,6 @@ export function writeOperationInterpreter(): string {
                     },
                     None => return false
                 };
-                println!("Checking signature");
-
                 ed25519::verify(name.as_bytes(), globs.public_key, given_signature.as_slice())
             },
             Schema::Any => true,
