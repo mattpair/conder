@@ -359,7 +359,7 @@ describe("conduit kernel", () => {
         validateRole: [
           ow.enforceSchemaInstanceOnHeap({
             heap_pos: 0, 
-            schema: schemaFactory.Role("admin")
+            schema: schemaFactory.Role("admin", {})
           }),
           ow.returnStackTop
         ]

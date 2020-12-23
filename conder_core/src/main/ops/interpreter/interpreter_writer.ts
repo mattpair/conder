@@ -196,7 +196,7 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     // All these vecs should be of length 1.
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
-    Role: "String",
+    Role: "String, HashMap<String, Schema>",
     Array: "Vec<Schema>",
 }
 
@@ -352,7 +352,7 @@ export function writeOperationInterpreter(): string {
                     _ => adheres_to_schema(value, &internal[0], globs)
                 }
             },
-            Schema::Role(role_name) => {
+            Schema::Role(role_name, _) => {
                 let obj = match value {
                     InterpreterType::Object(o) => o,
                     _ => return false

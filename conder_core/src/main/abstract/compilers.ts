@@ -342,9 +342,10 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
 
         case "RoleInstance":
+            const [_name, _] = n.role.data
             return [
                 ow.instantiate({
-                    _name: n.role.data
+                    _name
                 }),
                 ow.signRole
             ]
