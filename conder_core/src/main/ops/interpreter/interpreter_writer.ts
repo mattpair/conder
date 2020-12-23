@@ -196,7 +196,7 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     // All these vecs should be of length 1.
     Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
-    Role: "String",
+    Role: "String, Vec<Schema>",
     Array: "Vec<Schema>",
 }
 
@@ -288,7 +288,43 @@ export function writeOperationInterpreter(): string {
     enum InterpreterType {
         ${//@ts-ignore
         Object.keys(interpreterTypeDef).map(k => `${k}${interpreterTypeDef[k] === null ? "" : `(${interpreterTypeDef[k]})`}`).join(",\n")}
-    }
+    } 
+
+    impl Hash for InterpreterType {
+        fn hash<H: Hasher>(&self, state: &mut H) {
+            match self {
+                InterpreterType::double(d) => {
+                    state.write(b"d");
+                    state.write_u64(d.to_bits());
+                },
+                InterpreterType::Object(o) => {
+                    let mut sorted_keys: Vec<&String> = o.keys().collect();
+                    sorted_keys.sort();
+                    for k in sorted_keys {
+                        state.write(k.as_bytes());
+                        o.get(k).unwrap().hash(state);
+                    }
+                },
+                InterpreterType::int(i) => {
+                    state.write_i64(*i);
+                },
+                InterpreterType::bool(b) => {
+                    state.write_u8(*b as u8);
+                }
+                InterpreterType::string(s) => {
+                    state.write(s.as_bytes());
+                },
+                InterpreterType::Array(a) => {
+                    for entry in a {
+                        entry.hash(state);
+                    }
+                },
+                InterpreterType::None => {
+                }
+            };
+
+        }
+    } 
 
     ${writeInternalOpInterpreter(supportedOps)}
 
@@ -314,6 +350,7 @@ export function writeOperationInterpreter(): string {
             }
         }
     }
+
 
     fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
@@ -352,7 +389,7 @@ export function writeOperationInterpreter(): string {
                     _ => adheres_to_schema(value, &internal[0], globs)
                 }
             },
-            Schema::Role(role_name) => {
+            Schema::Role(role_name, state_schema) => {
                 let obj = match value {
                     InterpreterType::Object(o) => o,
                     _ => return false
@@ -387,7 +424,23 @@ export function writeOperationInterpreter(): string {
                     },
                     None => return false
                 };
-                ed25519::verify(name.as_bytes(), globs.public_key, given_signature.as_slice())
+                if given_signature.len() != 64 {
+                    return false
+                }
+                let mut hasher = DefaultHasher::new();
+                hasher.write(name.as_bytes());
+                let check_state = match obj.get("_state") {
+                    Some(state) => {
+                        state.hash(&mut hasher);
+                        Some(state)
+                    },
+                    None => None
+                };
+                let msg: [u8; 8] = hasher.finish().to_be_bytes();
+                ed25519::verify(&msg, globs.public_key, given_signature.as_slice()) && match check_state {
+                    Some(state) => adheres_to_schema(state, &state_schema[0], globs),
+                    None => adheres_to_schema(&InterpreterType::Object(HashMap::with_capacity(0)), &state_schema[0], globs)
+                }
             },
             Schema::Any => true,
             ${Primitives.map(p => {

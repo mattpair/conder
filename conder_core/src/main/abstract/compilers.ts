@@ -342,12 +342,26 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
 
         case "RoleInstance":
-            return [
-                ow.instantiate({
-                    _name: n.role.data
-                }),
-                ow.signRole
-            ]
+            const [_name, _] = n.role.data
+            if (n.state) {
+                return [
+                    ow.instantiate({
+                        _name
+                    }),
+                    ow.instantiate("_state"),
+                    ...full_compiler(n.state),
+                    ow.setField({field_depth: 1}),
+                    ow.signRole
+                ]
+            } else {
+                return [
+                    ow.instantiate({
+                        _name
+                    }),
+                    ow.signRole
+                ]
+            }
+            
         case "Push":
         case "Conditional":
         case "Finally":
