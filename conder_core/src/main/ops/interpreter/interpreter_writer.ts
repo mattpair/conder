@@ -197,7 +197,8 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     Object: "HashMap<String, Schema>",
     Role: "String, Vec<Schema>",
     Array: "Vec<Schema>",
-    Union: "Vec<Schema>"
+    Union: "Vec<Schema>",
+    Map: "Vec<Schema>"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | PrimitiveUnion
@@ -363,6 +364,10 @@ export function writeOperationInterpreter(): string {
     fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
             Schema::Union(options) => options.into_iter().any(|o| adheres_to_schema(value, o, globs)),
+            Schema::Map(entry_t) => match value {
+                InterpreterType::Object(internal_value) => internal_value.values().all(|v| adheres_to_schema(v, &entry_t[0], globs)),
+                _ => false
+            },
             Schema::Object(internal_schema) => match value {
                 InterpreterType::Object(internal_value) => {
                     let mut optionals_missing = 0;

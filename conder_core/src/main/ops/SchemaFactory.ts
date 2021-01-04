@@ -1,6 +1,6 @@
 
 
-export type SchemaType = "Object" | "Array"| "Any" | "Role" | "Union" | "none" | PrimitiveUnion
+export type SchemaType = "Object" | "Array"| "Any" | "Role" | "Union" | "none" | "Map" | PrimitiveUnion
 
 type SchemaFactory = Readonly<{
     [P in Exclude<SchemaType, PrimitiveUnion | "Any" | "none">]: 
@@ -17,6 +17,7 @@ export const schemaFactory: SchemaFactory = {
     Role: (name, sch) => ({ kind: "Role", data: [name, [sch]] }),
     Array: (r) => ({ kind: "Array", data: [r] }),
     Union: (data) => ({kind: 'Union', data}),
+    Map: (s) => ({kind: "Map", data: [s]}),
     Any: {kind: "Any", data: null},
     string: { kind: "string", data: null },
     bool: { kind: "bool", data: null},
@@ -44,6 +45,7 @@ export const Primitives: PrimitiveUnion[] = [
 
 export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion | "Any" | "none" ? { kind: P; data: undefined} : 
 P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : 
+P extends "Map" ? { kind: "Map"; data: [SchemaInstance<SchemaType>]; } : 
 P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : 
 P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } :
 P extends "Role" ? {kind: "Role", data: [string, [SchemaInstance<"Object">]]} :

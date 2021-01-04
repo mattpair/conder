@@ -303,6 +303,14 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.int(132),
       schemaFactory.double
     );
+
+    schemaTest("map types",
+      "must exist",
+      {foo: "string", baz: 12},
+      {foo: "string", bar: "also string"},
+      schemaFactory.Map(schemaFactory.string)
+    )
+
     schemaTest(
       "doubles may not be treated as ints",
       "must exist",
