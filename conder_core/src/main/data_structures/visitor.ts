@@ -52,7 +52,8 @@ function extract_children(n: TargetNodes): TargetNodes[] {
     // specify the traversal priority across the edges.
     // Then a generic visitor object could be initialized with that.
     switch (n.kind) {
-        case "Save":                
+        case "Save":  
+        case "GetType":
             return [n.value]
         case "Return":
             return n.value ? [n.value] : []

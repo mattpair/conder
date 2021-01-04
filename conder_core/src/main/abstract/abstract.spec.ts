@@ -174,6 +174,27 @@ describe("basic functionality", () => {
         })
     )
 
+    it("can get type info",
+        withInputHarness([], {
+            whatType: {
+                input: [schemaFactory.Any],
+                computation: [{
+                    kind: "Return",
+                    value: {kind: "GetType", value: {kind: 'Saved', index: 0}}
+                }]
+            }
+        },
+        async server => {
+            expect(await server.whatType([])).toEqual("arr")
+            expect(await server.whatType("a")).toEqual("str")
+            expect(await server.whatType(1)).toEqual("int")
+            expect(await server.whatType({})).toEqual("obj")
+            expect(await server.whatType(1.1)).toEqual("doub")
+            expect(await server.whatType(null)).toEqual("none")
+            expect(await server.whatType(true)).toEqual("bool")
+        })
+    )
+
     it("allows deleting of fields on local objects",
         withInputHarness(
             [], 

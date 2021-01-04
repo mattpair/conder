@@ -26,6 +26,9 @@ const MONGO_REPLACER: RequiredReplacer<MongoNodeSet> = {
         }
         return {kind: "Keys", from: r(n.from)}
     },
+    GetType(n, r) {
+        return {kind: "GetType", value: r(n.value)}
+    },
     Lock(n, r) {        
         return {kind: "Lock", name: r(n.name)}
     },

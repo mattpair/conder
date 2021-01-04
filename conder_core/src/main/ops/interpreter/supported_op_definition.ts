@@ -84,7 +84,8 @@ StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release"> |
-StaticOp<"signRole">
+StaticOp<"signRole"> |
+StaticOp<"getType">
 
 const unwrap_or_error:(value: string) => string = (val) => `
     match ${val} {
@@ -1250,6 +1251,24 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Expected to find a name for the role")}
             };
             
+            `
+        }
+    },
+    getType: {
+        opDefinition: {
+            rustOpHandler: `
+            let val = ${popStack};
+            let s = match val {
+                InterpreterType::None => "none",
+                InterpreterType::int(_) => "int",
+                InterpreterType::bool(_) => "bool",
+                InterpreterType::double(_) => "doub",
+                InterpreterType::Array(_) => "arr",
+                InterpreterType::string(_) => "str",
+                InterpreterType::Object(_) => "obj"
+            };
+            ${pushStack("InterpreterType::string(s.to_string())")};
+            OpResult::Continue(current)
             `
         }
     }

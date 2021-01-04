@@ -17,7 +17,8 @@ export type ValueNode = PickNode<
     "ArrayLiteral" |
     "Call" |
     "Keys" |
-    "RoleInstance"
+    "RoleInstance" |
+    "GetType"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -30,7 +31,8 @@ export type BaseNodeDefs = {
     Field: Node<{key: Key, value: ValueNode}>
     Object: Node<{fields: PickNode<"Field">[]}>
     Int: Node<{value: number}> 
-    None: Node<{}>
+    None: Node<{}>,
+    GetType: Node<{value: ValueNode}>
     Comparison: Node<
         {
         sign: "==" | "!=" | "<" | ">" | "<=" | ">="
