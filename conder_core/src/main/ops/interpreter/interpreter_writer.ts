@@ -190,14 +190,14 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any">, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any" | "none">, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
-    Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
     Role: "String, Vec<Schema>",
     Array: "Vec<Schema>",
+    Union: "Vec<Schema>"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | PrimitiveUnion
@@ -268,7 +268,8 @@ export function writeOperationInterpreter(): string {
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
             ...Primitives,
-            "Any"
+            "Any",
+            "none"
         ].join(",\n")}
     }
 
@@ -343,9 +344,16 @@ export function writeOperationInterpreter(): string {
     }
 
     impl Schema {
+        fn is_none(&self) -> bool {
+            match self {
+                Schema::none => true,
+                _ => false
+            }
+        }
+
         fn is_optional(&self) -> bool {
             match self {
-                Schema::Optional(_) => true,
+                Schema::Union(inner) => inner.into_iter().any(|o| o.is_none()),
                 _ => false
             }
         }
@@ -354,7 +362,7 @@ export function writeOperationInterpreter(): string {
 
     fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
-            
+            Schema::Union(options) => options.into_iter().any(|o| adheres_to_schema(value, o, globs)),
             Schema::Object(internal_schema) => match value {
                 InterpreterType::Object(internal_value) => {
                     let mut optionals_missing = 0;
@@ -383,12 +391,11 @@ export function writeOperationInterpreter(): string {
                 InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0], globs)),
                 _ => false
             },
-            Schema::Optional(internal) => {
-                match value {
-                    InterpreterType::None => true,
-                    _ => adheres_to_schema(value, &internal[0], globs)
-                }
+            Schema::none => match value {
+                InterpreterType::None => true,
+                _ => false
             },
+            
             Schema::Role(role_name, state_schema) => {
                 let obj = match value {
                     InterpreterType::Object(o) => o,

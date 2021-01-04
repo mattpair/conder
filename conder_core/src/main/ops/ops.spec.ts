@@ -236,6 +236,31 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.bool(true),
       schemaFactory.bool
     );
+
+    schemaTest(
+      "required union",
+      "must exist",
+      [{foo: "hi"}, {bar: 12}],
+      [{foo: 12}, {bar: "hi"}],
+      schemaFactory.Array(schemaFactory.Union([
+        schemaFactory.Object({foo: schemaFactory.int}),
+        schemaFactory.Object({bar: schemaFactory.string})
+      ]))
+    )
+
+    schemaTest(
+      "union with optional",
+      "can be none",      
+      {bar: "hi"},
+      {foo: "hi"},
+      schemaFactory.Union([
+        schemaFactory.Object({
+          foo: schemaFactory.Union([schemaFactory.string, schemaFactory.int])
+        }),
+        schemaFactory.none
+      ])
+    )
+
     schemaTest(
       "decimal",
       "must exist",
@@ -255,7 +280,7 @@ describe("conduit kernel", () => {
       "can be none",
       interpeterTypeFactory.bool(true),
       interpeterTypeFactory.None,
-      schemaFactory.Optional(schemaFactory.double)
+      schemaFactory.Union([schemaFactory.double, schemaFactory.none])
     );
     schemaTest(
       "array is empty",
@@ -302,7 +327,7 @@ describe("conduit kernel", () => {
       "must exist",
       interpeterTypeFactory.Object({ i: "abc" }),
       interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int) })
+      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none]) })
     );
     schemaTest(
       "Object containing unspecified field is not allowed",
@@ -317,7 +342,7 @@ describe("conduit kernel", () => {
       "must exist",
       interpeterTypeFactory.Object({ d: [12, 12] }),
       interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int)})
+      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none])})
     );
 
     schemaTest(
@@ -460,12 +485,13 @@ describe("conduit kernel", () => {
         STORES: {
           storeName: schemaFactory.Object({
             int: schemaFactory.int,
-            opt: schemaFactory.Optional(
-              schemaFactory.Object({
+            opt: schemaFactory.Union(
+              [schemaFactory.Object({
                 arr: schemaFactory.Array(
                   schemaFactory.Object({ b: schemaFactory.bool })
                 ),
-              })
+              }),
+              schemaFactory.none]
             ),
           }),
         },
