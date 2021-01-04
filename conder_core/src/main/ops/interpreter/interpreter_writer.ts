@@ -6,11 +6,6 @@ type DefAndName = AnyOpDef & {name: string}
 function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     return `
 
-    struct Callstack<'a> {
-        heap: Vec<InterpreterType>,
-        ops: &'a Vec<Op>,
-        stack: Vec<InterpreterType>
-    }
     struct Execution<'a> {
         next_op_index: usize,
         ops: &'a Vec<Op>,
