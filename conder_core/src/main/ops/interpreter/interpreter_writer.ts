@@ -16,8 +16,6 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         stack: Vec<InterpreterType>,
         locks: HashMap<String, locks::Mutex>,
         exec: Execution<'a>,
-        // Optionals don't work. Vec is size 0 or 1.
-        parent: Vec<Context<'a>>
     }
 
     enum ContextState<'a> {
@@ -36,10 +34,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         fn advance(mut self) -> ContextState<'a> {
             self.exec.next_op_index += 1;
             if !self.has_remaining_exec() {
-                return match self.parent.pop() {
-                    Some(p) => p.advance(),
-                    None => ContextState::Done(InterpreterType::None)
-                };
+                return ContextState::Done(InterpreterType::None)
             }
             return ContextState::Continue(self);
         }
@@ -60,29 +55,9 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     }
                 };
             }
-        }
+        }    
 
-        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
-            self.release_all_locks(globals).await;
-            match self.parent.pop() {
-                Some(mut parent) => {
-                    parent.stack.push(value);
-                    ContextState::Continue(parent)
-                },
-                None => ContextState::Done(value)
-            }
-        }
-        async fn raise_error(self, globals: &Globals<'a>) {
-            let mut maybe_node = Some(self);
-
-            while let Some(mut this) = maybe_node {
-                this.release_all_locks(globals).await;
-                maybe_node = this.parent.pop();
-            }
-
-        }
-
-        fn call(self, ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
+        fn new(ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
             Context {
                 stack: vec![],
                 exec: Execution {
@@ -90,8 +65,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     next_op_index: 0
                 },
                 heap: heap,
-                locks: HashMap::new(),
-                parent: vec![self]
+                locks: HashMap::new()
             }
         }
     }
@@ -110,7 +84,6 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         Error(String, Context<'a>),
         Return{value: InterpreterType, from: Context<'a>},
         Continue(Context<'a>),
-        Start(Context<'a>),
     }
     
 
@@ -131,56 +104,40 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
 
     
 
-    async fn conduit_byte_code_interpreter_internal(
-        input_heap: Vec<InterpreterType>, 
-        ops: & Vec<Op>, 
-        globals: Globals<'_>
-    ) ->Result<InterpreterType, String> {        
+    fn conduit_byte_code_interpreter_internal<'a>(
+        current: Context<'a>,
+        globals: &'a Globals<'a>
+    ) ->BoxFuture<'a, Result<InterpreterType, String>> {
         
-        if ops.len() == 0 {
-            return Ok(InterpreterType::None);
+        if current.exec.ops.len() == 0 {
+            return async {Ok(InterpreterType::None)}.boxed();
         }
-        let mut current = Context {
-            stack: vec![],
-            exec: Execution {
-                ops: ops,
-                next_op_index: 0
-            },
-            heap: input_heap,
-            locks: HashMap::new(),
-            parent: Vec::with_capacity(0)
-        }; 
-        loop {
+        
+        return async move {
             let res: OpResult = current.next_op().execute(current, &globals).await;
 
             let state = match res {
                 OpResult::Return{from, value} => {
-                    current = match from.return_value(value, &globals).await {
-                        ContextState::Done(data) => return Ok(data),
-                        ContextState::Continue(context) => context
-                    };
-                    current.advance()
+                    from.release_all_locks(&globals).await;
+                    return Ok(value);
                 },
                 OpResult::Error(msg, from) => {
                     // We know there are no error handlers at the moment.
-                    from.raise_error(&globals).await;
+                    from.release_all_locks(&globals).await;
                     return Err(msg.to_string());
                 },
-                OpResult::Continue(context) => context.advance(),
-                OpResult::Start(new) => {
-                    if !new.has_remaining_exec() {
-                        new.advance()
-                    } else {
-                        ContextState::Continue(new)
-                    }
-                }
+                OpResult::Continue(context) => context.advance()
             };
 
-            current = match state {
-                ContextState::Continue(cont) => cont,
-                ContextState::Done(data) => return Ok(data)
+            return match state {
+                // IDK if this means the interpreter memory utilization is O(ops). If it is, we should obviously refactor.
+                // My hope is that some form of tail recursion is occuring across the boxed future recursion.
+                ContextState::Continue(cont) => conduit_byte_code_interpreter_internal(cont, globals).await,
+                ContextState::Done(data) => Ok(data)
             };
-        }        
+        }.boxed();
+            
+          
     }`
 }
 
@@ -328,7 +285,7 @@ export function writeOperationInterpreter(): string {
         state: Vec<InterpreterType>, 
         ops: &Vec<Op>,
         globals: Globals<'_>) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops, globals).await;
+        let output = conduit_byte_code_interpreter_internal(Context::new(ops, state), &globals).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),
             Err(s) => {

@@ -1186,8 +1186,18 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
                 let next_ops = ${unwrap_or_error(`globals.fns.get(param0)`)};
-
-                OpResult::Start(current.call(next_ops, args))
+                let cntxt = Context::new(next_ops, args);
+                let res = conduit_byte_code_interpreter_internal(
+                    cntxt,
+                    globals
+                ).await;
+                match res {
+                    Ok(o) => {
+                        current.stack.push(o);
+                        OpResult::Continue(current)
+                    },
+                    Err(e) => OpResult::Error(e, current)
+                }
             `,
             paramType: ["String", "usize"]
         },

@@ -220,6 +220,8 @@ export function generateServer(): string {
         use crypto::ed25519;
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use futures::future::{BoxFuture, FutureExt};
+
         mod storage;
         mod locks;
 
