@@ -9,7 +9,6 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     struct Callstack<'a> {
         heap: Vec<InterpreterType>,
         ops: &'a Vec<Op>,
-        restore_index: usize,
         stack: Vec<InterpreterType>
     }
     struct Execution<'a> {
