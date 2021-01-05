@@ -31,7 +31,7 @@ describe("conduit kernel", () => {
         const env: StrongServerEnv = {
           PROCEDURES: {},
           STORES: {},
-          SCHEMAS: [],
+          SCHEMAS: {},
           DEPLOYMENT_NAME: "testdeployment",
           PRIVATE_KEY:  new Uint8Array([...key, ...pub]),
           PUBLIC_KEY: pub
@@ -191,11 +191,11 @@ describe("conduit kernel", () => {
         {
           PROCEDURES: {
             validateSchema: [
-              ow.enforceSchemaOnHeap({ schema: 0, heap_pos: 0 }),
+              ow.enforceSchemaOnHeap({ schema: "schema", heap_pos: 0 }),
               ow.returnStackTop,
             ],
           },
-          SCHEMAS: [schema],
+          SCHEMAS: {schema},
         }
       );
     }
@@ -475,7 +475,7 @@ describe("conduit kernel", () => {
             return Test.Server.start({
               MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
               ...params,
-              SCHEMAS: [],
+              SCHEMAS: {},
               DEPLOYMENT_NAME: "statefultest",
               PUBLIC_KEY: (await ed.getPublicKey(key)),
               PRIVATE_KEY: key
@@ -803,7 +803,7 @@ describe("conduit kernel", () => {
           const env: StrongServerEnv = {
             PROCEDURES: {},
             STORES: {state: schemaFactory.Any},
-            SCHEMAS: [],
+            SCHEMAS: {},
             DEPLOYMENT_NAME: "testdeployment",
             PRIVATE_KEY: key,
             PUBLIC_KEY: await ed.getPublicKey(key)

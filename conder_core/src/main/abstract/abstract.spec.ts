@@ -56,7 +56,7 @@ class TestHarness {
             this.serverEnv = {
                 PROCEDURES, 
                 STORES, 
-                SCHEMAS: [], 
+                SCHEMAS: {}, 
                 DEPLOYMENT_NAME: "test",
                 PUBLIC_KEY: pub,
                 PRIVATE_KEY: new Uint8Array([...secret, ...pub])

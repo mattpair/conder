@@ -30,7 +30,7 @@ ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
-ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
+ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: string}> |
 ParamOp<"enforceSchemaInstanceOnHeap", {heap_pos: number, schema: AnySchemaInstance}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
@@ -604,10 +604,10 @@ export const OpSpec: CompleteOpSpec = {
     },   
     enforceSchemaOnHeap: {
         opDefinition: {
-            paramType: ["usize", "usize"],
+            paramType: ["String", "usize"],
             rustOpHandler: `
             let v = ${unwrap_or_error("current.heap.get(*param1)")};
-            let s = ${unwrap_or_error("globals.schemas.get(*param0)")};
+            let s = ${unwrap_or_error("globals.schemas.get(param0)")};
             ${pushStack("InterpreterType::bool(adheres_to_schema(v, s, globals))")};
             OpResult::Continue(current)`,
         },

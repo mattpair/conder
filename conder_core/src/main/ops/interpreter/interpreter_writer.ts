@@ -71,7 +71,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     }
 
     struct Globals<'a> {
-        schemas: &'a Vec<Schema>, 
+        schemas: &'a HashMap<String, Schema>, 
         db: Option<&'a mongodb::Database>, 
         stores: &'a HashMap<String, Schema>,
         fns: &'a HashMap<String, Vec<Op>>,
