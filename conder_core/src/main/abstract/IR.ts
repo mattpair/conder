@@ -19,7 +19,8 @@ export type ValueNode = PickNode<
     "Keys" |
     "RoleInstance" |
     "GetType" |
-    "Not"
+    "Not" |
+    "Is"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -46,6 +47,7 @@ export type BaseNodeDefs = {
         left: ValueNode
         right: ValueNode
     }>,
+    Is: Node<{value: ValueNode, type: string}>
     BoolAlg: Node<{
         sign: "and" | "or", 
         left: ValueNode, 

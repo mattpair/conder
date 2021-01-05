@@ -372,7 +372,11 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ...full_compiler(n.value),
                 ow.negatePrev
             ]
-            
+        case "Is":
+            return [
+                ...full_compiler(n.value),
+                ow.stackTopMatches({schema: n.type})
+            ]
         case "Push":
         case "Conditional":
         case "Finally":
