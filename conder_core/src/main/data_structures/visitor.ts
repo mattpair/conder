@@ -55,6 +55,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
         case "Save":  
         case "GetType":
         case "Not":
+        case "Is":
             return [n.value]
         case "Return":
             return n.value ? [n.value] : []

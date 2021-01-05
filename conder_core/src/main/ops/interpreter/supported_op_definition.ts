@@ -335,7 +335,7 @@ export const OpSpec: CompleteOpSpec = {
             paramType: ["String"],
             rustOpHandler: `
             let b = match globals.schemas.get(op_param) {
-                Some(schema) => adheres_to_schema(${popStack}, schema, globals),
+                Some(schema) => adheres_to_schema(&${popStack}, schema, globals),
                 None => ${raiseErrorWithMessage("Schema does not exist")}
             };
             ${pushStack("InterpreterType::bool(b)")};
