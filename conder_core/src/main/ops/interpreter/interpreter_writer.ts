@@ -149,7 +149,8 @@ const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any
     Role: "String, Vec<Schema>",
     Array: "Vec<Schema>",
     Union: "Vec<Schema>",
-    Map: "Vec<Schema>"
+    Map: "Vec<Schema>",
+    TypeAlias: "String"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | PrimitiveUnion
@@ -315,6 +316,10 @@ export function writeOperationInterpreter(): string {
     fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
             Schema::Union(options) => options.into_iter().any(|o| adheres_to_schema(value, o, globs)),
+            Schema::TypeAlias(name) => match globs.schemas.get(name) {
+                Some(T) => adheres_to_schema(value, T, globs),
+                None => false
+            },
             Schema::Map(entry_t) => match value {
                 InterpreterType::Object(internal_value) => internal_value.values().all(|v| adheres_to_schema(v, &entry_t[0], globs)),
                 _ => false

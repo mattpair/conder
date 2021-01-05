@@ -261,6 +261,23 @@ describe("conduit kernel", () => {
       ])
     )
 
+    kernelTest("recursive types", 
+      async server => {
+        expect(await server.invoke("validate", {
+          child: {child: {child: {child: null}}} 
+        })).toBeTruthy()
+        expect(await server.invoke("validate", null)).toBeTruthy()
+        expect(await server.invoke("validate", {child: {left: {}, right: {}}})).toBeFalsy()
+      },
+      {
+        SCHEMAS: {
+          node: schemaFactory.Union([schemaFactory.Object({child: schemaFactory.TypeAlias("node")}), schemaFactory.none]),
+        },
+        PROCEDURES: {
+          validate: [ow.enforceSchemaOnHeap({schema: "node", heap_pos: 0}), ow.returnStackTop]
+        }
+      }
+    )
     schemaTest(
       "decimal",
       "must exist",
