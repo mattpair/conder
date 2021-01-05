@@ -54,6 +54,7 @@ function extract_children(n: TargetNodes): TargetNodes[] {
     switch (n.kind) {
         case "Save":  
         case "GetType":
+        case "Not":
             return [n.value]
         case "Return":
             return n.value ? [n.value] : []

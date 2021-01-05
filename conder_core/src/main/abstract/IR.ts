@@ -18,7 +18,8 @@ export type ValueNode = PickNode<
     "Call" |
     "Keys" |
     "RoleInstance" |
-    "GetType"
+    "GetType" |
+    "Not"
     >
 
 export type Key = PickNode<"String" | "Saved">
@@ -33,6 +34,7 @@ export type BaseNodeDefs = {
     Int: Node<{value: number}> 
     None: Node<{}>,
     GetType: Node<{value: ValueNode}>
+    Not: Node<{value: ValueNode}>
     Comparison: Node<
         {
         sign: "==" | "!=" | "<" | ">" | "<=" | ">="

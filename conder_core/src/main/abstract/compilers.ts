@@ -367,6 +367,11 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                     ow.signRole
                 ]
             }
+        case "Not":
+            return [
+                ...full_compiler(n.value),
+                ow.negatePrev
+            ]
             
         case "Push":
         case "Conditional":
