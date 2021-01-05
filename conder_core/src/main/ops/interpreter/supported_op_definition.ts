@@ -30,6 +30,7 @@ ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
+ParamOp<"lastMatches", {schema:string }> |
 ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: string}> |
 ParamOp<"enforceSchemaInstanceOnHeap", {heap_pos: number, schema: AnySchemaInstance}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
@@ -327,6 +328,21 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
+    },
+
+    lastMatches: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let b = match globals.schemas.get(op_param) {
+                Some(schema) => adheres_to_schema(${lastStack}, schema, globals),
+                None => ${raiseErrorWithMessage("Schema does not exist")}
+            };
+            ${pushStack("InterpreterType::bool(b)")};
+            OpResult::Continue(current)
+            `
+        },
+        factoryMethod: ({schema}) => ({kind: 'lastMatches', data: schema})
     },
 
     isLastNone: {
