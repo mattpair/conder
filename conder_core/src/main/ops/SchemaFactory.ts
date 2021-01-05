@@ -1,13 +1,15 @@
 
 
-export type SchemaType = "Optional" | "Object" | "Array"| "Any" | "Role" | PrimitiveUnion
+export type SchemaType = "Object" | "Array"| "Any" | "Role" | "Union" | "none" | "Map" | "TypeAlias" | PrimitiveUnion
 
 type SchemaFactory = Readonly<{
-    [P in Exclude<SchemaType, PrimitiveUnion | "Any">]: 
+    [P in Exclude<SchemaType, PrimitiveUnion | "Any" | "none">]: 
+    P extends "TypeAlias" ? (name: string) => SchemaInstance<"TypeAlias"> :
     P extends "Role" ? (name: string, r: SchemaInstance<"Object">) => SchemaInstance<"Role"> :
+    P extends "Union" ? (options: SchemaInstance<SchemaType>[]) => SchemaInstance<P> :
     P extends "Object" ? (r: Record<string, SchemaInstance<SchemaType>>) => SchemaInstance<P> : (i: SchemaInstance<SchemaType>) => SchemaInstance<P>;
 } & {
-        [P in PrimitiveUnion | "Any"]: SchemaInstance<P>;
+        [P in PrimitiveUnion | "Any" | "none"]: SchemaInstance<P>;
     }>;
 
 
@@ -15,12 +17,15 @@ export const schemaFactory: SchemaFactory = {
     Object: (r) => ({ kind: "Object", data: r }),
     Role: (name, sch) => ({ kind: "Role", data: [name, [sch]] }),
     Array: (r) => ({ kind: "Array", data: [r] }),
-    Optional: (r) => ({ kind: "Optional", data: [r] }),
+    Union: (data) => ({kind: 'Union', data}),
+    Map: (s) => ({kind: "Map", data: [s]}),
+    TypeAlias: (data) => ({kind: "TypeAlias", data}),
     Any: {kind: "Any", data: null},
     string: { kind: "string", data: null },
     bool: { kind: "bool", data: null},
     double: { kind: "double", data: null },
     int: { kind: "int", data: null },
+    none: {kind: "none", data: null}
 };
 
 export type TypeModifierUnion = "array" | "optional" | "none"
@@ -40,11 +45,13 @@ export const Primitives: PrimitiveUnion[] = [
 ]
 
 
-export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion | "Any" ? { kind: P; data: undefined} : 
+export type SchemaInstance<P extends SchemaType> = P extends PrimitiveUnion | "Any" | "none" ? { kind: P; data: undefined} : 
 P extends "Object" ? { kind: "Object"; data: Record<string, SchemaInstance<SchemaType>>; } : 
-P extends "Optional" ? { kind: "Optional"; data: [SchemaInstance<SchemaType>]; } : 
+P extends "Map" ? { kind: "Map"; data: [SchemaInstance<SchemaType>]; } : 
 P extends "Array" ? { kind: "Array"; data: [SchemaInstance<SchemaType>]; } :
 P extends "Role" ? {kind: "Role", data: [string, [SchemaInstance<"Object">]]} :
+P extends "Union" ? {kind: "Union",  data: SchemaInstance<SchemaType>[]}:
+P extends "TypeAlias" ? {kind: "TypeAlias", data: string} :
 never;
 
 export type AnySchemaInstance = SchemaInstance<SchemaType>

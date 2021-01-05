@@ -341,6 +341,12 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                 ow.getKeys
             ]
 
+        case "GetType":
+            return [
+                ...full_compiler(n.value),
+                ow.getType
+            ]
+
         case "RoleInstance":
             const [_name, _] = n.role.data
             if (n.state) {
@@ -361,7 +367,16 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
                     ow.signRole
                 ]
             }
-            
+        case "Not":
+            return [
+                ...full_compiler(n.value),
+                ow.negatePrev
+            ]
+        case "Is":
+            return [
+                ...full_compiler(n.value),
+                ow.stackTopMatches({schema: n.type})
+            ]
         case "Push":
         case "Conditional":
         case "Finally":

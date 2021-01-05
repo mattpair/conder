@@ -31,7 +31,7 @@ describe("conduit kernel", () => {
         const env: StrongServerEnv = {
           PROCEDURES: {},
           STORES: {},
-          SCHEMAS: [],
+          SCHEMAS: {},
           DEPLOYMENT_NAME: "testdeployment",
           PRIVATE_KEY:  new Uint8Array([...key, ...pub]),
           PUBLIC_KEY: pub
@@ -191,11 +191,11 @@ describe("conduit kernel", () => {
         {
           PROCEDURES: {
             validateSchema: [
-              ow.enforceSchemaOnHeap({ schema: 0, heap_pos: 0 }),
+              ow.enforceSchemaOnHeap({ schema: "schema", heap_pos: 0 }),
               ow.returnStackTop,
             ],
           },
-          SCHEMAS: [schema],
+          SCHEMAS: {schema},
         }
       );
     }
@@ -236,6 +236,48 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.bool(true),
       schemaFactory.bool
     );
+
+    schemaTest(
+      "required union",
+      "must exist",
+      [{foo: "hi"}, {bar: 12}],
+      [{foo: 12}, {bar: "hi"}],
+      schemaFactory.Array(schemaFactory.Union([
+        schemaFactory.Object({foo: schemaFactory.int}),
+        schemaFactory.Object({bar: schemaFactory.string})
+      ]))
+    )
+
+    schemaTest(
+      "union with optional",
+      "can be none",      
+      {bar: "hi"},
+      {foo: "hi"},
+      schemaFactory.Union([
+        schemaFactory.Object({
+          foo: schemaFactory.Union([schemaFactory.string, schemaFactory.int])
+        }),
+        schemaFactory.none
+      ])
+    )
+
+    kernelTest("recursive types", 
+      async server => {
+        expect(await server.invoke("validate", {
+          child: {child: {child: {child: null}}} 
+        })).toBeTruthy()
+        expect(await server.invoke("validate", null)).toBeTruthy()
+        expect(await server.invoke("validate", {child: {left: {}, right: {}}})).toBeFalsy()
+      },
+      {
+        SCHEMAS: {
+          node: schemaFactory.Union([schemaFactory.Object({child: schemaFactory.TypeAlias("node")}), schemaFactory.none]),
+        },
+        PROCEDURES: {
+          validate: [ow.enforceSchemaOnHeap({schema: "node", heap_pos: 0}), ow.returnStackTop]
+        }
+      }
+    )
     schemaTest(
       "decimal",
       "must exist",
@@ -255,7 +297,7 @@ describe("conduit kernel", () => {
       "can be none",
       interpeterTypeFactory.bool(true),
       interpeterTypeFactory.None,
-      schemaFactory.Optional(schemaFactory.double)
+      schemaFactory.Union([schemaFactory.double, schemaFactory.none])
     );
     schemaTest(
       "array is empty",
@@ -278,6 +320,14 @@ describe("conduit kernel", () => {
       interpeterTypeFactory.int(132),
       schemaFactory.double
     );
+
+    schemaTest("map types",
+      "must exist",
+      {foo: "string", baz: 12},
+      {foo: "string", bar: "also string"},
+      schemaFactory.Map(schemaFactory.string)
+    )
+
     schemaTest(
       "doubles may not be treated as ints",
       "must exist",
@@ -302,7 +352,7 @@ describe("conduit kernel", () => {
       "must exist",
       interpeterTypeFactory.Object({ i: "abc" }),
       interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int) })
+      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none]) })
     );
     schemaTest(
       "Object containing unspecified field is not allowed",
@@ -317,7 +367,7 @@ describe("conduit kernel", () => {
       "must exist",
       interpeterTypeFactory.Object({ d: [12, 12] }),
       interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Optional(schemaFactory.int)})
+      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none])})
     );
 
     schemaTest(
@@ -442,7 +492,7 @@ describe("conduit kernel", () => {
             return Test.Server.start({
               MONGO_CONNECTION_URI: `mongodb://localhost:${mongo.port}`,
               ...params,
-              SCHEMAS: [],
+              SCHEMAS: {},
               DEPLOYMENT_NAME: "statefultest",
               PUBLIC_KEY: (await ed.getPublicKey(key)),
               PRIVATE_KEY: key
@@ -460,12 +510,13 @@ describe("conduit kernel", () => {
         STORES: {
           storeName: schemaFactory.Object({
             int: schemaFactory.int,
-            opt: schemaFactory.Optional(
-              schemaFactory.Object({
+            opt: schemaFactory.Union(
+              [schemaFactory.Object({
                 arr: schemaFactory.Array(
                   schemaFactory.Object({ b: schemaFactory.bool })
                 ),
-              })
+              }),
+              schemaFactory.none]
             ),
           }),
         },
@@ -769,7 +820,7 @@ describe("conduit kernel", () => {
           const env: StrongServerEnv = {
             PROCEDURES: {},
             STORES: {state: schemaFactory.Any},
-            SCHEMAS: [],
+            SCHEMAS: {},
             DEPLOYMENT_NAME: "testdeployment",
             PRIVATE_KEY: key,
             PUBLIC_KEY: await ed.getPublicKey(key)

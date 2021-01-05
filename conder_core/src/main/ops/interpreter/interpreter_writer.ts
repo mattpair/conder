@@ -6,12 +6,6 @@ type DefAndName = AnyOpDef & {name: string}
 function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
     return `
 
-    struct Callstack<'a> {
-        heap: Vec<InterpreterType>,
-        ops: &'a Vec<Op>,
-        restore_index: usize,
-        stack: Vec<InterpreterType>
-    }
     struct Execution<'a> {
         next_op_index: usize,
         ops: &'a Vec<Op>,
@@ -22,8 +16,6 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         stack: Vec<InterpreterType>,
         locks: HashMap<String, locks::Mutex>,
         exec: Execution<'a>,
-        // Optionals don't work. Vec is size 0 or 1.
-        parent: Vec<Context<'a>>
     }
 
     enum ContextState<'a> {
@@ -42,10 +34,7 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         fn advance(mut self) -> ContextState<'a> {
             self.exec.next_op_index += 1;
             if !self.has_remaining_exec() {
-                return match self.parent.pop() {
-                    Some(p) => p.advance(),
-                    None => ContextState::Done(InterpreterType::None)
-                };
+                return ContextState::Done(InterpreterType::None)
             }
             return ContextState::Continue(self);
         }
@@ -66,29 +55,9 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     }
                 };
             }
-        }
+        }    
 
-        async fn return_value(mut self, value: InterpreterType, globals: &Globals<'a>) -> ContextState<'a> {
-            self.release_all_locks(globals).await;
-            match self.parent.pop() {
-                Some(mut parent) => {
-                    parent.stack.push(value);
-                    ContextState::Continue(parent)
-                },
-                None => ContextState::Done(value)
-            }
-        }
-        async fn raise_error(self, globals: &Globals<'a>) {
-            let mut maybe_node = Some(self);
-
-            while let Some(mut this) = maybe_node {
-                this.release_all_locks(globals).await;
-                maybe_node = this.parent.pop();
-            }
-
-        }
-
-        fn call(self, ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
+        fn new(ops: &'a Vec<Op>, heap: Vec<InterpreterType>) -> Context<'a> {
             Context {
                 stack: vec![],
                 exec: Execution {
@@ -96,14 +65,13 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
                     next_op_index: 0
                 },
                 heap: heap,
-                locks: HashMap::new(),
-                parent: vec![self]
+                locks: HashMap::new()
             }
         }
     }
 
     struct Globals<'a> {
-        schemas: &'a Vec<Schema>, 
+        schemas: &'a HashMap<String, Schema>, 
         db: Option<&'a mongodb::Database>, 
         stores: &'a HashMap<String, Schema>,
         fns: &'a HashMap<String, Vec<Op>>,
@@ -116,7 +84,6 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
         Error(String, Context<'a>),
         Return{value: InterpreterType, from: Context<'a>},
         Continue(Context<'a>),
-        Start(Context<'a>),
     }
     
 
@@ -137,67 +104,53 @@ function writeInternalOpInterpreter(supportedOps: DefAndName[]): string {
 
     
 
-    async fn conduit_byte_code_interpreter_internal(
-        input_heap: Vec<InterpreterType>, 
-        ops: & Vec<Op>, 
-        globals: Globals<'_>
-    ) ->Result<InterpreterType, String> {        
+    fn conduit_byte_code_interpreter_internal<'a>(
+        current: Context<'a>,
+        globals: &'a Globals<'a>
+    ) ->BoxFuture<'a, Result<InterpreterType, String>> {
         
-        if ops.len() == 0 {
-            return Ok(InterpreterType::None);
+        if current.exec.ops.len() == 0 {
+            return async {Ok(InterpreterType::None)}.boxed();
         }
-        let mut current = Context {
-            stack: vec![],
-            exec: Execution {
-                ops: ops,
-                next_op_index: 0
-            },
-            heap: input_heap,
-            locks: HashMap::new(),
-            parent: Vec::with_capacity(0)
-        }; 
-        loop {
+        
+        return async move {
             let res: OpResult = current.next_op().execute(current, &globals).await;
 
             let state = match res {
                 OpResult::Return{from, value} => {
-                    current = match from.return_value(value, &globals).await {
-                        ContextState::Done(data) => return Ok(data),
-                        ContextState::Continue(context) => context
-                    };
-                    current.advance()
+                    from.release_all_locks(&globals).await;
+                    return Ok(value);
                 },
                 OpResult::Error(msg, from) => {
                     // We know there are no error handlers at the moment.
-                    from.raise_error(&globals).await;
+                    from.release_all_locks(&globals).await;
                     return Err(msg.to_string());
                 },
-                OpResult::Continue(context) => context.advance(),
-                OpResult::Start(new) => {
-                    if !new.has_remaining_exec() {
-                        new.advance()
-                    } else {
-                        ContextState::Continue(new)
-                    }
-                }
+                OpResult::Continue(context) => context.advance()
             };
 
-            current = match state {
-                ContextState::Continue(cont) => cont,
-                ContextState::Done(data) => return Ok(data)
+            return match state {
+                // IDK if this means the interpreter memory utilization is O(ops). If it is, we should obviously refactor.
+                // My hope is that some form of tail recursion is occuring across the boxed future recursion.
+                ContextState::Continue(cont) => conduit_byte_code_interpreter_internal(cont, globals).await,
+                ContextState::Done(data) => Ok(data)
             };
-        }        
+        }.boxed();
+            
+          
     }`
 }
 
-const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any">, string> = {
+const rustSchemaTypeDefinition: Record<Exclude<SchemaType, PrimitiveUnion | "Any" | "none">, string> = {
     //Use vecs because it creates a layer of indirection allowing the type to be represented in rust.
     // Also, using vecs presents an opportunity to extend for union type support.
     // All these vecs should be of length 1.
-    Optional: "Vec<Schema>",
     Object: "HashMap<String, Schema>",
     Role: "String, Vec<Schema>",
     Array: "Vec<Schema>",
+    Union: "Vec<Schema>",
+    Map: "Vec<Schema>",
+    TypeAlias: "String"
 }
 
 type InterpreterType = "None" | "Object" | "Array" | PrimitiveUnion
@@ -268,7 +221,8 @@ export function writeOperationInterpreter(): string {
             //@ts-ignore
             ...Object.keys(rustSchemaTypeDefinition).map(k => `${k}(${rustSchemaTypeDefinition[k]})`),
             ...Primitives,
-            "Any"
+            "Any",
+            "none"
         ].join(",\n")}
     }
 
@@ -332,7 +286,7 @@ export function writeOperationInterpreter(): string {
         state: Vec<InterpreterType>, 
         ops: &Vec<Op>,
         globals: Globals<'_>) -> impl Responder {
-        let output = conduit_byte_code_interpreter_internal(state, ops, globals).await;
+        let output = conduit_byte_code_interpreter_internal(Context::new(ops, state), &globals).await;
         return match output {
             Ok(data) => HttpResponse::Ok().json(data),
             Err(s) => {
@@ -343,9 +297,16 @@ export function writeOperationInterpreter(): string {
     }
 
     impl Schema {
+        fn is_none(&self) -> bool {
+            match self {
+                Schema::none => true,
+                _ => false
+            }
+        }
+
         fn is_optional(&self) -> bool {
             match self {
-                Schema::Optional(_) => true,
+                Schema::Union(inner) => inner.into_iter().any(|o| o.is_none()),
                 _ => false
             }
         }
@@ -354,7 +315,15 @@ export function writeOperationInterpreter(): string {
 
     fn adheres_to_schema(value: & InterpreterType, schema: &Schema, globs: &Globals) -> bool {
         return match schema {
-            
+            Schema::Union(options) => options.into_iter().any(|o| adheres_to_schema(value, o, globs)),
+            Schema::TypeAlias(name) => match globs.schemas.get(name) {
+                Some(T) => adheres_to_schema(value, T, globs),
+                None => false
+            },
+            Schema::Map(entry_t) => match value {
+                InterpreterType::Object(internal_value) => internal_value.values().all(|v| adheres_to_schema(v, &entry_t[0], globs)),
+                _ => false
+            },
             Schema::Object(internal_schema) => match value {
                 InterpreterType::Object(internal_value) => {
                     let mut optionals_missing = 0;
@@ -383,12 +352,11 @@ export function writeOperationInterpreter(): string {
                 InterpreterType::Array(internal_value) => internal_value.iter().all(|val| adheres_to_schema(&val, &internal[0], globs)),
                 _ => false
             },
-            Schema::Optional(internal) => {
-                match value {
-                    InterpreterType::None => true,
-                    _ => adheres_to_schema(value, &internal[0], globs)
-                }
+            Schema::none => match value {
+                InterpreterType::None => true,
+                _ => false
             },
+            
             Schema::Role(role_name, state_schema) => {
                 let obj = match value {
                     InterpreterType::Object(o) => o,

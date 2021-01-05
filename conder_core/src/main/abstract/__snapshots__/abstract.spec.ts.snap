@@ -79,6 +79,12 @@ Map {
 }
 `;
 
+exports[`basic functionality can get type info: Required locks 1`] = `
+Map {
+  "whatType" => Map {},
+}
+`;
+
 exports[`basic functionality can handle boolean algebra: Required locks 1`] = `
 Map {
   "trueNtrue" => Map {},

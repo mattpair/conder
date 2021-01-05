@@ -30,7 +30,8 @@ ParamOp<"conditonallySkipXops", number>  |
 StaticOp<"negatePrev"> |
 StaticOp<"noop"> |
 ParamOp<"truncateHeap", number> |
-ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: number}> |
+ParamOp<"stackTopMatches", {schema:string }> |
+ParamOp<"enforceSchemaOnHeap", {heap_pos: number, schema: string}> |
 ParamOp<"enforceSchemaInstanceOnHeap", {heap_pos: number, schema: AnySchemaInstance}> |
 ParamOp<"insertFromHeap", {heap_pos: number, store: string}> |
 ParamOp<"getAllFromStore", string> |
@@ -84,7 +85,8 @@ StaticOp<"repackageCollection"> |
 ParamOp<"invoke", {name: string, args: number}> |
 StaticOp<"lock"> |
 StaticOp<"release"> |
-StaticOp<"signRole">
+StaticOp<"signRole"> |
+StaticOp<"getType">
 
 const unwrap_or_error:(value: string) => string = (val) => `
     match ${val} {
@@ -326,6 +328,21 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Negating a non boolean value")}
             }`
         },
+    },
+
+    stackTopMatches: {
+        opDefinition: {
+            paramType: ["String"],
+            rustOpHandler: `
+            let b = match globals.schemas.get(op_param) {
+                Some(schema) => adheres_to_schema(${popStack}, schema, globals),
+                None => ${raiseErrorWithMessage("Schema does not exist")}
+            };
+            ${pushStack("InterpreterType::bool(b)")};
+            OpResult::Continue(current)
+            `
+        },
+        factoryMethod: ({schema}) => ({kind: "stackTopMatches", data: schema})
     },
 
     isLastNone: {
@@ -603,10 +620,10 @@ export const OpSpec: CompleteOpSpec = {
     },   
     enforceSchemaOnHeap: {
         opDefinition: {
-            paramType: ["usize", "usize"],
+            paramType: ["String", "usize"],
             rustOpHandler: `
             let v = ${unwrap_or_error("current.heap.get(*param1)")};
-            let s = ${unwrap_or_error("globals.schemas.get(*param0)")};
+            let s = ${unwrap_or_error("globals.schemas.get(param0)")};
             ${pushStack("InterpreterType::bool(adheres_to_schema(v, s, globals))")};
             OpResult::Continue(current)`,
         },
@@ -1185,8 +1202,18 @@ export const OpSpec: CompleteOpSpec = {
             rustOpHandler: `
                 let args = current.stack.split_off(current.stack.len() - *param1);
                 let next_ops = ${unwrap_or_error(`globals.fns.get(param0)`)};
-
-                OpResult::Start(current.call(next_ops, args))
+                let cntxt = Context::new(next_ops, args);
+                let res = conduit_byte_code_interpreter_internal(
+                    cntxt,
+                    globals
+                ).await;
+                match res {
+                    Ok(o) => {
+                        current.stack.push(o);
+                        OpResult::Continue(current)
+                    },
+                    Err(e) => OpResult::Error(e, current)
+                }
             `,
             paramType: ["String", "usize"]
         },
@@ -1250,6 +1277,24 @@ export const OpSpec: CompleteOpSpec = {
                 _ => ${raiseErrorWithMessage("Expected to find a name for the role")}
             };
             
+            `
+        }
+    },
+    getType: {
+        opDefinition: {
+            rustOpHandler: `
+            let val = ${popStack};
+            let s = match val {
+                InterpreterType::None => "none",
+                InterpreterType::int(_) => "int",
+                InterpreterType::bool(_) => "bool",
+                InterpreterType::double(_) => "doub",
+                InterpreterType::Array(_) => "arr",
+                InterpreterType::string(_) => "str",
+                InterpreterType::Object(_) => "obj"
+            };
+            ${pushStack("InterpreterType::string(s.to_string())")};
+            OpResult::Continue(current)
             `
         }
     }

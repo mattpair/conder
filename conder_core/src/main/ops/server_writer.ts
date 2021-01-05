@@ -24,7 +24,7 @@ export enum Var {
 
 export type EnvVarType<E extends Var> = 
 E extends Var.STORES ? Record<string, AnySchemaInstance> :
-E extends Var.SCHEMAS ? AnySchemaInstance[] :
+E extends Var.SCHEMAS ? Record<string, AnySchemaInstance> :
 E extends Var.PROCEDURES ? Record<string, AnyOpInstance[]> :
 E extends Var.MONGO_CONNECTION_URI | Var.DEPLOYMENT_NAME | Var.ETCD_URL ? string :
 E extends Var.PRIVATE_PROCEDURES ? string[] :
@@ -70,12 +70,12 @@ export function generateServer(): string {
         },
         {
             name: "schemas",
-            type: "Vec<Schema>",
+            type: "HashMap<String, Schema>",
             initializer: `match env::var("${Var.SCHEMAS}") {
                 Ok(str) => serde_json::from_str(&str).unwrap(),
                 Err(e) => {
                     eprintln!("Did not find any schemas {}", e);
-                    Vec::with_capacity(0)
+                    HashMap::with_capacity(0)
                 }
             }`
         },
@@ -220,6 +220,8 @@ export function generateServer(): string {
         use crypto::ed25519;
         use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use futures::future::{BoxFuture, FutureExt};
+
         mod storage;
         mod locks;
 
