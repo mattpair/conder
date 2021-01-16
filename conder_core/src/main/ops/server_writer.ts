@@ -252,38 +252,8 @@ export function generateServer(): string {
             .run()
             .await
         }
-        async fn get_func(data: web::Data<AppData>, path: web::Path<String>, q: web::Query<HashMap<String, InterpreterType>>) -> impl Responder {
-            let func_name = path.into_inner();
-            let args = q.into_inner();
-            let g = Globals {
-                schemas: &data.schemas,
-                db: data.db.as_ref(),
-                stores: &data.stores,
-                fns: &data.procs,
-                lm: data.lm_client.as_ref(),
-                private_key: &data.private_key,
-                public_key: &data.public_key
-            };
-            return match data.procs.get(&func_name) {
-                Some(ops) => {
-                    if data.privateFns.contains(&func_name) {
-                        eprintln!("Attempting to invoke a private function {}", &func_name);
-                        conduit_byte_code_interpreter(vec![], &data.noop, g)
-                    }else {
-                        conduit_byte_code_interpreter(vec![InterpreterType::Object(args)], ops, g)
-                    }
-                },
-                None => {
-                    eprintln!("Invoking non-existent function {}", &func_name);
-                    conduit_byte_code_interpreter(vec![], &data.noop, g)
-                }                
-            }.await;
-        }
 
-
-        async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
-    
-            let req = input.into_inner();
+        async fn process_req(req: KernelRequest, data: web::Data<AppData>) -> impl Responder {
             let g = Globals {
                 schemas: &data.schemas,
                 db: data.db.as_ref(),
@@ -307,9 +277,21 @@ export function generateServer(): string {
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
                         conduit_byte_code_interpreter(vec![], &data.noop, g)
-                    }
+                    }                
                 }
             }.await;
+            
+        }
+        async fn get_func(data: web::Data<AppData>, path: web::Path<String>, q: web::Query<HashMap<String, InterpreterType>>) -> impl Responder {
+            let func_name = path.into_inner();
+            let args = q.into_inner();
+            return process_req(KernelRequest::Exec{proc: func_name, arg: vec![InterpreterType::Object(args)]}, data).await;
+        }
+
+
+        async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {    
+            let req = input.into_inner();            
+            return process_req(req, data).await;
         }
 
         async fn make_app_data() -> Result<AppData, ()> {
