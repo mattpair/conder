@@ -203,7 +203,7 @@ export function generateServer(): string {
         #![allow(unused_variables)]
         #![allow(dead_code)]
         #![allow(unused_imports)]
-        use actix_web::{web, App, HttpResponse, HttpServer, Responder, http};
+        use actix_web::{web, App, HttpResponse, HttpServer, Responder, http, guard};
         use actix_rt::System;
         use std::env;
         use serde::{Deserialize, Serialize};
@@ -241,20 +241,33 @@ export function generateServer(): string {
         #[actix_rt::main]
         async fn main() -> std::io::Result<()> {
             let args: Vec<String> = env::args().collect();
-
             HttpServer::new(|| {
                 App::new()
                     .data_factory(|| make_app_data())
-                    .route("/", web::put().to(index))
+                    .service(
+                        web::scope("/")
+                            .service(                        
+                                web::resource("{func_name}")
+                                .guard(guard::Get())
+                                .route(web::get().to(get_func))
+                            )  
+                            .service(
+                                web::resource("{func_name}")
+                                .guard(guard::Post())
+                                .route(web::post().to(post_func))
+                            )   
+                            .service(
+                                web::resource("").guard(guard::Put()).route(web::put().to(index))
+                            )                                                 
+                    )
+                
             })
             .bind(format!("0.0.0.0:{}", args[1]))?
             .run()
             .await
         }
 
-        async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
-    
-            let req = input.into_inner();
+        async fn process_req(req: KernelRequest, data: web::Data<AppData>) -> impl Responder {
             let g = Globals {
                 schemas: &data.schemas,
                 db: data.db.as_ref(),
@@ -278,9 +291,26 @@ export function generateServer(): string {
                     None => {
                         eprintln!("Invoking non-existent function {}", &proc);
                         conduit_byte_code_interpreter(vec![], &data.noop, g)
-                    }
+                    }                
                 }
             }.await;
+            
+        }
+        async fn get_func(data: web::Data<AppData>, path: web::Path<String>, q: web::Query<HashMap<String, InterpreterType>>) -> impl Responder {
+            let func_name = path.into_inner();
+            let args = q.into_inner();
+            return process_req(KernelRequest::Exec{proc: func_name, arg: vec![InterpreterType::Object(args)]}, data).await;
+        }
+
+        async fn post_func(data: web::Data<AppData>, input: web::Json<InterpreterType>, path: web::Path<String>) -> impl Responder {    
+            let args = vec![input.into_inner()]; 
+            let func_name = path.into_inner();        
+            return process_req(KernelRequest::Exec{proc: func_name, arg: args}, data).await;
+        }
+
+        async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {    
+            let req = input.into_inner();            
+            return process_req(req, data).await;
         }
 
         async fn make_app_data() -> Result<AppData, ()> {
