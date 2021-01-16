@@ -92,17 +92,37 @@ describe("conduit kernel", () => {
     kernelTest(
       "can use a get to call functions",
       async server => {
-        const result = await fetch(`http://localhost:${server.port}/returner?foo=bar&fix=12`, {
+        const result = await fetch(`http://localhost:${server.port}/returner?foo=bar&fix=12&a.b=1&a.c=2`, {
           method: "GET",
           headers: {
             "content-type": "application/json",
           },
         })
-        expect(await result.json()).toEqual({foo: "bar", fix: "12"})
+        expect(await result.json()).toEqual({foo: "bar", fix: "12", "a.b": "1", "a.c": "2"})
       },
       {
         PROCEDURES: {returner: [ow.returnVariable(0)]},
-      }
+      },
+    )
+    kernelTest(
+      "can use post to call functions",
+      async server => {
+        
+        const orig = {a: "12", b: {c: 12}}
+        const body = JSON.stringify(orig)
+        const result = await fetch(`http://localhost:${server.port}/returner`, {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "content-length": `${body.length}`,
+          },
+          body
+        })
+        expect(await result.json()).toEqual(orig)
+      },
+      {
+        PROCEDURES: {returner: [ow.returnVariable(0)]},
+      },
     )
 
     kernelTest(
