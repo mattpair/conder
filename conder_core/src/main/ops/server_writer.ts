@@ -246,11 +246,40 @@ export function generateServer(): string {
                 App::new()
                     .data_factory(|| make_app_data())
                     .route("/", web::put().to(index))
+                    .route("/{func_name}", web::get().to(get_func))
             })
             .bind(format!("0.0.0.0:{}", args[1]))?
             .run()
             .await
         }
+        async fn get_func(data: web::Data<AppData>, path: web::Path<String>, q: web::Query<HashMap<String, InterpreterType>>) -> impl Responder {
+            let func_name = path.into_inner();
+            let args = q.into_inner();
+            let g = Globals {
+                schemas: &data.schemas,
+                db: data.db.as_ref(),
+                stores: &data.stores,
+                fns: &data.procs,
+                lm: data.lm_client.as_ref(),
+                private_key: &data.private_key,
+                public_key: &data.public_key
+            };
+            return match data.procs.get(&func_name) {
+                Some(ops) => {
+                    if data.privateFns.contains(&func_name) {
+                        eprintln!("Attempting to invoke a private function {}", &func_name);
+                        conduit_byte_code_interpreter(vec![], &data.noop, g)
+                    }else {
+                        conduit_byte_code_interpreter(vec![InterpreterType::Object(args)], ops, g)
+                    }
+                },
+                None => {
+                    eprintln!("Invoking non-existent function {}", &func_name);
+                    conduit_byte_code_interpreter(vec![], &data.noop, g)
+                }                
+            }.await;
+        }
+
 
         async fn index(data: web::Data<AppData>, input: web::Json<KernelRequest>) -> impl Responder {
     

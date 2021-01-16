@@ -89,6 +89,21 @@ describe("conduit kernel", () => {
         PRIVATE_PROCEDURES: ["echo"]
       }
     )
+    kernelTest(
+      "can use a get to call functions",
+      async server => {
+        const result = await fetch(`http://localhost:${server.port}/returner?foo=bar&fix=12`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+          },
+        })
+        expect(await result.json()).toEqual({foo: "bar", fix: "12"})
+      },
+      {
+        PROCEDURES: {returner: [ow.returnVariable(0)]},
+      }
+    )
 
     kernelTest(
       "functions can invoke other functions",
