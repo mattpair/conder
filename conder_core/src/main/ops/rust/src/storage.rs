@@ -1,24 +1,10 @@
-// Copyright (C) 2020 Conder Systems
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU Affero General Public License as published
-// by the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU Affero General Public License for more details.
-
-// You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 use mongodb::{Database, options, options::{ClientOptions, FindOptions, FindOneOptions, InsertManyOptions, FindOneAndUpdateOptions, ReplaceOptions}, bson, bson::{doc}, results, Client};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use futures::stream::StreamExt;
-
-use crate::{InterpreterType, Schema};
+use crate::schemas::{Schema};
+use crate::data::{InterpreterType};
 
 trait bsonable {
     fn to_doc(&self) -> Result<bson::Document, String>;
@@ -45,7 +31,7 @@ impl unbsonable for bson::Document {
 }
 
 
-pub(crate) async fn append(db: &Database, storeName: &str, instance: &InterpreterType) -> Result<InterpreterType, String> {
+pub(crate) async fn append(db: &Database, storeName: &str, instance: &InterpreterType) -> Result<(), String> {
     let collection = db.collection(&storeName);
     match instance { 
         InterpreterType::Array(v) => {
@@ -55,12 +41,12 @@ pub(crate) async fn append(db: &Database, storeName: &str, instance: &Interprete
             }
             
             match collection.insert_many(bs, None).await {
-                Ok(_) => Ok(InterpreterType::None),
+                Ok(_) => Ok(()),
                 Err(e) => Err(format!("Failure inserting {}", e))
             }
         },
         _ => match collection.insert_one(instance.to_doc()?, None).await {
-            Ok(_) => Ok(InterpreterType::None),
+            Ok(_) => Ok(()),
             Err(e) => Err(format!("Failure inserting {}", e)) 
         }
     }
