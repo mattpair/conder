@@ -10,7 +10,7 @@ pub struct Obj(pub HashMap<String, InterpreterType>);
 
 impl TS for  Obj {
     fn name() -> String {
-        return "Record<string, InterpreterType>".to_string();
+        return "{ [K in string]: InterpreterType}".to_string();
     }
 
     fn dependencies() -> Vec<(TypeId, String)>{
@@ -22,7 +22,7 @@ impl TS for  Obj {
     }
 
     fn inline(indent: usize) -> String {
-        return "Record<string, InterpreterType>".to_string();
+        return "{ [K in string]: InterpreterType}".to_string();
     }
 }
 
@@ -88,5 +88,5 @@ impl Hash for InterpreterType {
 } 
 
 export! {
-    InterpreterType => "bindings.ts",
+    InterpreterType => "data.ts",
 }

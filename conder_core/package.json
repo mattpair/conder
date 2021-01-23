@@ -6,7 +6,10 @@
     }
   ],
   "scripts": {
-    "compile": "tsc -b && npm run gen && cd src/main/ops/rust && cargo build && cargo test",
+    "gen": "cd src/main/ops/rust && cargo build && cargo test && cat ops.ts > ../bindings.ts && cat schemas.ts >> ../bindings.ts && cat data.ts >> ../bindings.ts",
+    "postgen": "cd src/main/ops/rust && rm ops.ts schemas.ts data.ts",
+    "precompile" : "npm run gen",
+    "compile": "tsc -b",
     "pretest": "npm run compile",
     "quicktest": "tsc -b && jest --runInBand",
     "test": "jest --runInBand"

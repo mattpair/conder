@@ -18,30 +18,30 @@ use crate::locks;
 #[serde(tag = "kind", content= "data")]
 pub enum Op {
     negatePrev,
-    stackTopMatches(String),
+    stackTopMatches{schema: String},
     isLastNone,
     tryGetField(String),
     overwriteHeap(u64),
     raiseError(String),
     noop,
-    setField(u64),
-    setSavedField(u64, u64),
-    stringConcat(u64, String),
-    getField(u64),
+    setField{field_depth: u64},
+    setSavedField{field_depth: u64, index: u64},
+    stringConcat{nStrings: u64, joiner: String},
+    getField{field_depth: u64},
     getSavedField(u64, u64),
-    deleteSavedField(u64, u64),
-    pushSavedField(u64, u64),
+    deleteSavedField{field_depth: u64, index: u64},
+    pushSavedField{field_depth: u64, index: u64},
     fieldExists,
     truncateHeap(u64),
-    offsetOpCursor(u64, bool),
+    offsetOpCursor{offset: u64, fwd: bool},
     conditonallySkipXops(u64),
     returnVariable(u64),
     returnStackTop,
     returnVoid,
     copyFromHeap(u64),
     fieldAccess(String),
-    enforceSchemaOnHeap(String, u64),
-    insertFromHeap(u64, String),
+    enforceSchemaOnHeap{schema: String, heap_pos: u64},
+    insertFromHeap{heap_pos: u64, store: String},
     insertFromStack(String),
     getAllFromStore(String),
     moveStackTopToHeap,
@@ -55,17 +55,17 @@ pub enum Op {
     toBool,
     moveStackToHeapArray(u64),
     arrayPush,
-    pArrayPush(u64),
+    pArrayPush{stack_offset: u64},
     assignPreviousToField(String),
     arrayLen,
     ndArrayLen,
     storeLen(String),
     createUpdateDoc(InterpreterType),
-    updateOne(String, bool),
+    updateOne{store: String, upsert: bool},
     replaceOne(String, bool),
     setNestedField(Vec<String>),
     copyFieldFromHeap(u64, Vec<String>),
-    enforceSchemaInstanceOnHeap(u64, Schema),
+    enforceSchemaInstanceOnHeap{schema: Schema, heap_pos: u64},
     extractFields(Vec<Vec<String>>),
     equal,
     less,
@@ -79,7 +79,7 @@ pub enum Op {
     nDivide,
     nMult,
     getKeys,
-    invoke(String, u64),
+    invoke{name: String, args: u64},
     lock,
     release,
     signRole,
@@ -316,8 +316,8 @@ impl <'a> Context<'a>  {
                 InterpreterType::bool(b) =>  {self.stack.push(InterpreterType::bool(!b)); self.advance()},
                 _ => return Err(format!("Negating a non boolean value"))
             },
-            Op::stackTopMatches(op_param) => {                
-                let b = match globals.schemas.get(op_param) {
+            Op::stackTopMatches{schema} => {                
+                let b = match globals.schemas.get(schema) {
                     Some(schema) => schema.adheres(
                         &self.pop_stack()?,
                         globals.schemas,
@@ -362,33 +362,33 @@ impl <'a> Context<'a>  {
             },
             Op::raiseError(op_param) => Err(op_param.to_string()),
             Op::noop => self.advance(),
-            Op::setField(op_param) => {
+            Op::setField{field_depth} => {
                 
                 let set_to = self.pop_stack()?;
-                let fields = self.stack.split_off(self.stack.len() - (*op_param as usize));
+                let fields = self.stack.split_off(self.stack.len() - (*field_depth as usize));
                 self.last_stack()?.set(fields, set_to)?;
                 self.advance()
             },
-            Op::setSavedField(param0, param1) => {                
+            Op::setSavedField{index, field_depth} => {                
                 let set_to = self.pop_stack()?;
-                let mut fields = self.stack.split_off(self.stack.len() - *param0 as usize);
-                let target = self.heap.get_mut(*param1 as usize).safe_unwrap()?;
+                let fields = self.stack.split_off(self.stack.len() - *field_depth as usize);
+                let target = self.heap.get_mut(*index as usize).safe_unwrap()?;
                 target.set(fields, set_to)?;
                 self.advance()
             },
-            Op::stringConcat(param0, param1) => {
+            Op::stringConcat{nStrings, joiner} => {
                 
-                let mut strings = Vec::with_capacity(*param0 as usize);
-                for n in 1..=*param0 {
+                let mut strings = Vec::with_capacity(*nStrings as usize);
+                for n in 1..=*nStrings {
                     let str = self.pop_stack()?.to_str()?;
                     strings.push(str);
                 }
                 strings.reverse();
-                self.stack.push(InterpreterType::string(strings.join(param1)));
+                self.stack.push(InterpreterType::string(strings.join(joiner)));
                 self.advance()        
             },
-            Op::getField(op_param) => {        
-                let fields = self.stack.split_off(self.stack.len() - *op_param as usize);
+            Op::getField{field_depth} => {        
+                let fields = self.stack.split_off(self.stack.len() - *field_depth as usize);
                 let mut orig = self.pop_stack()?;
                 let mut target = Some(&mut orig);
                 for f in fields {
@@ -411,11 +411,11 @@ impl <'a> Context<'a>  {
                 self.stack.push(target.clone());                
                 self.advance()
             },
-            Op::deleteSavedField(param0, param1) => {        
-                let mut fields = self.stack.split_off(self.stack.len() - *param0 as usize);
+            Op::deleteSavedField{field_depth, index} => {        
+                let mut fields = self.stack.split_off(self.stack.len() - *field_depth as usize);
                 let last_field = fields.pop().safe_unwrap()?;
 
-                let mut o_or_a = self.heap.get_mut(*param1 as usize).safe_unwrap()?;
+                let mut o_or_a = self.heap.get_mut(*index as usize).safe_unwrap()?;
                 for f in fields {
                     o_or_a =  o_or_a.get(f)?.safe_unwrap()?;
                 }
@@ -428,12 +428,12 @@ impl <'a> Context<'a>  {
                 };
                 self.advance()
             },
-            Op::pushSavedField(param0, param1) => {
+            Op::pushSavedField{field_depth, index} => {
                 
                 let mut push = self.pop_stack()?.to_array()?;
-                let fields = self.stack.split_off(self.stack.len() - *param0 as usize);
+                let fields = self.stack.split_off(self.stack.len() - *field_depth as usize);
 
-                let mut o_or_a = self.heap.get_mut(*param1 as usize).safe_unwrap()?;
+                let mut o_or_a = self.heap.get_mut(*index as usize).safe_unwrap()?;
                 for f in fields {
                     o_or_a = o_or_a.get(f)?.safe_unwrap()?;
                 }
@@ -468,12 +468,12 @@ impl <'a> Context<'a>  {
                 self.advance()
         
             },
-            Op::offsetOpCursor(param0, param1) => {
+            Op::offsetOpCursor{offset, fwd} => {
                 
-                if *param1 {
-                    self.offset_cursor(true, *param0 as usize);
+                if *fwd {
+                    self.offset_cursor(true, *offset as usize);
                 } else {
-                    self.offset_cursor(false, *param0 as usize + 1);
+                    self.offset_cursor(false, *offset as usize + 1);
                 }
                 self.advance()
             },
@@ -500,16 +500,16 @@ impl <'a> Context<'a>  {
                 self.stack.push(res.clone());
                 self.advance()
             },
-            Op::enforceSchemaOnHeap(param0, param1) => {                
-                let v = self.heap.get(*param1 as usize).safe_unwrap()?;
-                let s = globals.schemas.get(param0).safe_unwrap()?;
+            Op::enforceSchemaOnHeap{schema, heap_pos} => {                
+                let v = self.heap.get(*heap_pos as usize).safe_unwrap()?;
+                let s = globals.schemas.get(schema).safe_unwrap()?;
                 self.stack.push(InterpreterType::bool(s.adheres(v, globals.schemas, globals.public_key)));
                 self.advance()
             },
-            Op::insertFromHeap(param0, param1) => {                
-                let v = self.heap.get(*param0 as usize).safe_unwrap()?;
+            Op::insertFromHeap{heap_pos, store} => {                
+                let v = self.heap.get(*heap_pos as usize).safe_unwrap()?;
                 let db = globals.db.safe_unwrap()?; 
-                storage::append(db, &param1, v).await?;
+                storage::append(db, store, v).await?;
                 self.advance()        
             },
             Op::insertFromStack(op_param) => {
@@ -590,10 +590,10 @@ impl <'a> Context<'a>  {
                 self.stack.last_mut().safe_unwrap()?.try_push(pushme)?;
                 self.advance()
             },
-            Op::pArrayPush(op_param) => {                
+            Op::pArrayPush{stack_offset} => {                
                 let pushme = self.pop_stack()?;
-                let pos = self.stack.len() - 1 - *op_param as usize;
-                self.stack.get_mut(pos).safe_unwrap()?.try_push(pushme);
+                let pos = self.stack.len() - 1 - *stack_offset as usize;
+                self.stack.get_mut(pos).safe_unwrap()?.try_push(pushme)?;
                 self.advance()        
             },
             Op::assignPreviousToField(op_param) => {                
@@ -634,11 +634,11 @@ impl <'a> Context<'a>  {
                 self.stack.push(op_param.clone());
                 self.advance()        
             },
-            Op::updateOne(param0, param1) => {                
+            Op::updateOne{store, upsert} => {
                 let query_doc = self.pop_stack()?;
                 let update_doc =  self.pop_stack()?;
                 let db = globals.db.safe_unwrap()?;
-                let res = storage::find_and_update_one(db, param0, *param1, &query_doc, &update_doc).await?;
+                let res = storage::find_and_update_one(db, store, *upsert, &query_doc, &update_doc).await?;
                 self.stack.push(res);
                 self.advance()        
             },
@@ -668,9 +668,9 @@ impl <'a> Context<'a>  {
                 self.stack.push(target.clone());
                 self.advance()
             },
-            Op::enforceSchemaInstanceOnHeap(param0, param1) => {                
-                let v = self.heap.get(*param0 as usize).safe_unwrap()?;
-                self.stack.push(InterpreterType::bool(param1.adheres(v, globals.schemas, globals.public_key)));
+            Op::enforceSchemaInstanceOnHeap{heap_pos, schema} => {                
+                let v = self.heap.get(*heap_pos as usize).safe_unwrap()?;
+                self.stack.push(InterpreterType::bool(schema.adheres(v, globals.schemas, globals.public_key)));
                 self.advance()        
             },
             Op::extractFields(op_param) => {                
@@ -787,9 +787,9 @@ impl <'a> Context<'a>  {
                 self.stack.push(InterpreterType::Array(keys));
                 self.advance()        
             },
-            Op::invoke(param0, param1) => {                
-                let args = self.stack.split_off(self.stack.len() - *param1 as usize);
-                let next_ops = globals.fns.get(param0).safe_unwrap()?;
+            Op::invoke{name, args} => {                
+                let args = self.stack.split_off(self.stack.len() - *args as usize);
+                let next_ops = globals.fns.get(name).safe_unwrap()?;
                 let cntxt = Context::new(next_ops, args);
                 let res = conduit_byte_code_interpreter_internal(
                     cntxt,
@@ -838,7 +838,7 @@ impl <'a> Context<'a>  {
                 }
                 let all: Vec<InterpreterType> = sig.iter().map(|i| InterpreterType::int(*i as i64)).collect();
                 obj.insert("_sig".to_string(), InterpreterType::Array(all));
-                
+                obj.insert("_name".to_string(), InterpreterType::string(name_value));
                 self.stack.push(InterpreterType::Object(Obj(obj)));
                 self.advance()
             },        
@@ -862,5 +862,5 @@ impl <'a> Context<'a>  {
 }
 
 export! {
-    Op => "bindings.ts"
+    Op => "ops.ts"
 }

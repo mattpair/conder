@@ -1,5 +1,5 @@
 
-import { AnyOpInstance, ow } from '../../ops/index';
+import { Op, ow } from '../../ops/index';
 import { AnyNode, make_replacer, Node, PickTargetNode, RequiredReplacer, TargetNodeSet, ValueNode, Key } from '../IR';
 import { base_compiler, Compiler, Transform, Transformer } from '../compilers';
 import { FunctionDescription } from '../function';
@@ -253,7 +253,7 @@ export const MONGO_GLOBAL_ABSTRACTION_REMOVAL: Transform<
 
 type MongoCompiler = Compiler<TargetNodeSet<MongoNodeSet>>
 
-function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
+function compile_function(n: TargetNodeSet<MongoNodeSet>): Op[] {
     switch (n.kind) {
         case "GetWholeObject": 
             return [
@@ -263,8 +263,8 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
         
         
         case "GetKeyFromObject":
-            const manyKeySuccess: AnyOpInstance[] = []
-            const manyKeyFail: AnyOpInstance[] = []
+            const manyKeySuccess: Op[] = []
+            const manyKeyFail: Op[] = []
             if (n.key.length > 1) {
                 manyKeySuccess.push(
                     ...n.key.slice(1).flatMap(compile_function),
@@ -285,12 +285,12 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(1 + manyKeySuccess.length + manyKeyFail.length),
                 ow.tryGetField("_val"),
                 ...manyKeySuccess,
-                ow.offsetOpCursor({offset: manyKeyFail.length + 1, direction: "fwd"}),
+                ow.offsetOpCursor({offset: manyKeyFail.length + 1, fwd: true}),
                 ...manyKeyFail,
                 ow.instantiate(null)
             ]
         case "PushAtKeyOnObject": {
-            const updateDocumentCreation: AnyOpInstance[] = []
+            const updateDocumentCreation: Op[] = []
             if (n.key.length > 1) {
                 updateDocumentCreation.push(
                     //The query doc
@@ -332,14 +332,14 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.isLastNone,
                 ow.conditonallySkipXops(2),
                 ow.popStack,
-                ow.offsetOpCursor({offset: 1, direction: "fwd"}),
+                ow.offsetOpCursor({offset: 1, fwd: true}),
                 ow.raiseError("Nested key does not exist"),
             ]
         }
 
             
         case "SetKeyOnObject":
-            const updateDocumentCreation: AnyOpInstance[] = []
+            const updateDocumentCreation: Op[] = []
             if (n.key.length > 1) {
                 updateDocumentCreation.push(
                     ow.instantiate({"$set": {}}),
@@ -371,7 +371,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.isLastNone,
                 ow.conditonallySkipXops(2),
                 ow.popStack,
-                ow.offsetOpCursor({offset: 1, direction: "fwd"}),
+                ow.offsetOpCursor({offset: 1, fwd: true}),
                 ow.raiseError("Nested key does not exist"),
             ]
         
@@ -389,7 +389,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.conditonallySkipXops(3),
                 ow.popStack,
                 ow.instantiate(true),
-                ow.offsetOpCursor({offset: 2, direction: "fwd"}),
+                ow.offsetOpCursor({offset: 2, fwd: true}),
                 ow.popStack,
                 ow.instantiate(false)
             ]
@@ -446,7 +446,7 @@ function compile_function(n: TargetNodeSet<MongoNodeSet>): AnyOpInstance[] {
                 ow.queryStore([n.obj, {_val: false}]), // supress the value
                 ...evalLength,
                 ...collectKey,
-                ow.offsetOpCursor({offset: collectKey.length + evalLength.length, direction: "bwd"}),
+                ow.offsetOpCursor({offset: collectKey.length + evalLength.length, fwd: false}),
                 ow.popStack
             ]
         }

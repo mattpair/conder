@@ -1,9 +1,8 @@
-import { SchemaInstance } from './../ops/SchemaFactory';
-import { StrongServerEnv } from './../ops/server_writer';
+import { Schema } from './../ops/bindings';
 import { Compiler } from './compilers';
 import { MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL } from './globals/mongo';
 
-import {Test, schemaFactory, AnyOpInstance} from '../ops/index'
+import {Op, StrongServerEnv, Test} from '../ops/index'
 import { AnyNode, RootNode } from 'src/main/abstract/IR'
 import {BaseNodeDefs, PickNode, toOps } from '../../../index'
 import { MONGO_UNPROVIDED_LOCK_CALCULATOR } from './mongo_logic/main';
@@ -49,8 +48,8 @@ class TestHarness {
                 Object.entries(proc_nodes)
                 .map(([k, v]) => [k, new FunctionDescription(v)]))
             const compiled = toOps(map, testCompiler)
-            const PROCEDURES: Record<string, AnyOpInstance[]> = Object.fromEntries(compiled.entries())
-            const STORES = {TEST_STORE: schemaFactory.Object({})}
+            const PROCEDURES: Record<string, Op[]> = Object.fromEntries(compiled.entries())
+            const STORES: StrongServerEnv["STORES"] = {TEST_STORE: {kind: "Object", data: {}}}
             const secret = ed.utils.randomPrivateKey()
             const pub = await ed.getPublicKey(secret)
             this.serverEnv = {
@@ -177,7 +176,7 @@ describe("basic functionality", () => {
     it("can get type info",
         withInputHarness([], {
             whatType: {
-                input: [schemaFactory.Any],
+                input: [{kind: "Any", data: null}],
                 computation: [{
                     kind: "Return",
                     value: {kind: "GetType", value: {kind: 'Saved', index: 0}}
@@ -200,7 +199,7 @@ describe("basic functionality", () => {
             [], 
             {
                 delete: {
-                    input: [schemaFactory.Any], 
+                    input: [{kind: "Any", data: null}], 
                     computation: [
                         {
                             kind: "Update", 
@@ -225,9 +224,7 @@ describe("basic functionality", () => {
                 [],
                 {
                     getKeys: {
-                        input: [schemaFactory.Object({
-                            a: schemaFactory.Any
-                        })],
+                        input: [{kind: "Object", data: {a: {kind: "Any", data: null}}}],
                         computation: [
                             {kind: "Return", value: {
                                 kind: 'Keys',
@@ -247,9 +244,7 @@ describe("basic functionality", () => {
                 [],
                 {
                     getKeys: {
-                        input: [schemaFactory.Object({
-                            a: schemaFactory.Any
-                        })],
+                        input: [{kind: "Object", data: {a: {kind: "Any", data: null}}}],
                         computation: [
                             {
                                 kind: "Return", 
@@ -273,7 +268,7 @@ describe("basic functionality", () => {
             [], 
             {
                 delete: {
-                    input: [schemaFactory.Any], 
+                    input: [{kind: "Any", data: null}], 
                     computation: [
                         {
                             kind: "Update", 
@@ -328,7 +323,7 @@ describe("basic functionality", () => {
 
     function nComp(sign: PickNode<"Comparison">["sign"], right: number): FunctionData {
         return {
-            input: [schemaFactory.int],
+            input: [{kind: "int", data: null}],
             computation: [{
             kind: "Return",
             value: {
@@ -541,7 +536,7 @@ describe("basic functionality", () => {
         [],
         {
             push: {
-                input: [schemaFactory.Array(schemaFactory.Any)],
+                input: [{kind: "Array", data: [{kind: "Any", data: null}]}],
                 computation: [
                     {
                         kind: "Update",
@@ -568,7 +563,7 @@ describe("basic functionality", () => {
         [],
         {
             push: {
-                input: [schemaFactory.Any],
+                input: [{kind: "Any", data: null}],
                 computation: [
                     {
                         kind: "Update",
@@ -602,7 +597,7 @@ describe("basic functionality", () => {
         ["storage"],
         {
             getFirst: {
-                input: [schemaFactory.Array(schemaFactory.Any)],
+                input: [{kind: "Array", data: [{kind: "Any", data: null}]}],
                 computation: [
                     {
                         kind: "Return",
@@ -624,7 +619,7 @@ describe("basic functionality", () => {
 describe("roles", () => {
     it("functions can be guarded by roles", withInputHarness([], {
         adminsOnly: {
-            input: [schemaFactory.Role("admin", schemaFactory.Object({}))],
+            input: [{kind: "Role", data: ["admin", [{kind: "Object", data: {}}]]}],
             computation: [
                 {kind: "Return", value: {kind: "String", value: "success"}}
             ]
@@ -632,7 +627,7 @@ describe("roles", () => {
         getAdminId: {
             input: [],
             computation: [
-                {kind: 'Return', value: {kind: "RoleInstance", role: schemaFactory.Role("admin", schemaFactory.Object({}))}}
+                {kind: 'Return', value: {kind: "RoleInstance", role: {kind: "Role", data: ["admin", [{kind: "Object", data: {}}]]}}}
             ]
         }
     }, async server => {
@@ -640,7 +635,8 @@ describe("roles", () => {
         const id = await server.getAdminId()
         expect(await server.adminsOnly(id)).toEqual("success")
     }))
-    const user_role: SchemaInstance<"Role"> = schemaFactory.Role("user", schemaFactory.Object({name: schemaFactory.string}))
+    
+    const user_role: Extract<Schema, {kind: "Role"}> = {kind: "Role", data: ["user", [{kind: "Object", data: {name: {kind: "string", data: null}}}]]}
     it("allows use of stateful roles", 
         withInputHarness([], {
             usersOnly: {
@@ -654,7 +650,7 @@ describe("roles", () => {
                 ]
             },
             getUser: {
-                input: [schemaFactory.string],
+                input: [{kind: "string", data: null}],
                 computation: [
                     {
                         kind: "Return",
@@ -687,9 +683,9 @@ describe("with input", () => {
     it("validates input", withInputHarness([],{
         accepts3any: {
             input: [
-                schemaFactory.Any,
-                schemaFactory.Any,
-                schemaFactory.Any
+                {kind: "Any", data: null},
+                {kind: "Any", data: null},
+                {kind: "Any", data: null}
             ],
             computation: [{
                 kind: "Return",
@@ -708,7 +704,7 @@ describe("with input", () => {
     it("check if field exists", withInputHarness([],{
         checksField: {
             input: [
-                schemaFactory.Any
+                {kind: "Any", data: null}
             ],
             computation: [{
                 kind: "Return",
@@ -1142,7 +1138,7 @@ describe("global objects", () => {
                 [],
                 {
                     sum: {
-                        input: [schemaFactory.Array(schemaFactory.double)],
+                        input: [{kind: "Array", data: [{kind: "double", data: null}]}],
                         computation: [
                             {
                                 kind: "Save",
@@ -1618,7 +1614,7 @@ describe("global objects", () => {
         it("pushing then returning", withInputHarness(["storage"], 
         {
             push: {
-                input: [schemaFactory.string, schemaFactory.Any],
+                input: [{kind: "string", data: null}, {kind: "Any", data: null}],
 
                 computation: [
                     {
@@ -1732,7 +1728,7 @@ describe("global objects", () => {
         it("allows concatenation with some types", withInputHarness([],
         {
             add: {
-                input: [schemaFactory.Any, schemaFactory.Any],
+                input: [{kind: "Any", data: null}, {kind: "Any", data: null}],
                 computation: [
                     {
                         kind: "Return",
@@ -1785,7 +1781,7 @@ describe("global objects", () => {
                             operation: {kind: "Saved", index: 0}
                         },
                     ],
-                    input: [schemaFactory.int]
+                    input: [{kind: "int", data: null}]
                 },
                 incr: {
                     computation: [

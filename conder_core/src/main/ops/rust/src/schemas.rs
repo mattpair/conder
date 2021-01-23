@@ -194,5 +194,5 @@ impl Schema {
 
 
 export! {
-    Schema => "bindings.ts"
+    Schema => "schemas.ts"
 }
