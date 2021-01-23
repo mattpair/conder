@@ -1,4 +1,5 @@
-import { AnyOpInstance, ow, Utils } from '../ops/index';
+import { Op } from '../ops/bindings';
+import { ow, Utils } from '../ops/index';
 import { FunctionDescription } from './function';
 import { BaseNodesFromTargetSet, PickNode, PickTargetNode, TargetNodeSet } from './IR';
 
@@ -10,7 +11,7 @@ export type Transform<I, O> = {
 }
 
 export type MapTransform<I, O> = Transform<Map<string, I>, Map<string, O>>
-export type Compiler<FROM> = Transform<Map<string, FunctionDescription<FROM>>, Map<string, FunctionDescription<AnyOpInstance>>>
+export type Compiler<FROM> = Transform<Map<string, FunctionDescription<FROM>>, Map<string, FunctionDescription<Op>>>
 
 
 
@@ -46,7 +47,7 @@ export class Transformer<I, O> implements Transform<I, O> {
     }
 }
 
-const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> = {
+const comparisonLookup: Record<PickNode<"Comparison">["sign"], Op[]> = {
     "!=": [ow.equal, ow.negatePrev],
     "==": [ow.equal],
     "<": [ow.less],
@@ -55,14 +56,14 @@ const comparisonLookup: Record<PickNode<"Comparison">["sign"], AnyOpInstance[]> 
     "<=": [ow.lesseq]
 }
 
-const mathLookup: Record<PickNode<"Math">["sign"], AnyOpInstance[]> = {
+const mathLookup: Record<PickNode<"Math">["sign"], Op[]> = {
     "+": [ow.plus],
     "-": [ow.nMinus],
     "/": [ow.nDivide],
     "*": [ow.nMult],
 }
 
-const boolAlg: Record<PickNode<"BoolAlg">["sign"], AnyOpInstance[]> = {
+const boolAlg: Record<PickNode<"BoolAlg">["sign"], Op[]> = {
     "and": [ow.boolAnd],
     "or": [ow.boolOr]
 }
@@ -124,7 +125,7 @@ function create_well_formed_branch(n: PickTargetNode<{}, "If">): PickTargetNode<
 
 }
 
-export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: TargetNodeSet<{}>) => AnyOpInstance[]): AnyOpInstance[] {
+export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: TargetNodeSet<{}>) => Op[]): Op[] {
     switch (n.kind) {
         case "Bool":
         case "Int":
@@ -247,13 +248,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             const wellFormed = create_well_formed_branch(n)
             const fin = wellFormed.pop().do.flatMap(full_compiler)
             const first_to_last = wellFormed.reverse()
-            const conditionals: (AnyOpInstance | "skip to finally")[] = []
+            const conditionals: (Op | "skip to finally")[] = []
             while (first_to_last.length > 0) {
                 const this_branch = wellFormed.pop()
                 const num_vars_in_branch = this_branch.do.filter(k => k.kind === "Save").length
                 const drop_vars = num_vars_in_branch > 0 ? [ow.truncateHeap(num_vars_in_branch)] : []
 
-                const this_branch_ops: (AnyOpInstance | "skip to finally")[] = [
+                const this_branch_ops: (Op | "skip to finally")[] = [
                     ...this_branch.do.flatMap(full_compiler), // do this
                     ...drop_vars,
                     "skip to finally" // then skip to finally,
@@ -279,7 +280,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             return [
                 ...conditionals.map((op, index) => {
                     if (op === "skip to finally") {
-                        return ow.offsetOpCursor({offset: conditionals.length - index, direction: "fwd"})
+                        return ow.offsetOpCursor({offset: conditionals.length - index, fwd: true})
                     } else {
                         return op
                     }
@@ -296,13 +297,13 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
         case "ArrayForEach":
             // Row variable is saved as well
             const num_vars = n.do.filter(d => d.kind === "Save").length + 1
-            const loop: AnyOpInstance[] = [
+            const loop: Op[] = [
                 ow.popArray,
                 ow.moveStackTopToHeap,
                 ...n.do.flatMap(full_compiler),
                 ow.truncateHeap(num_vars),
             ]
-            loop.push(ow.offsetOpCursor({offset: loop.length + 4, direction: "bwd"}))
+            loop.push(ow.offsetOpCursor({offset: loop.length + 4, fwd: false}))
             return[
                 ...full_compiler(n.target),
                 ow.ndArrayLen,
@@ -314,7 +315,7 @@ export function base_compiler(n: BaseNodesFromTargetSet<{}>, full_compiler: (a: 
             ]
 
         case "ArrayLiteral":
-            const arr: AnyOpInstance[] = [
+            const arr: Op[] = [
                 ow.instantiate([]),
             ]
             n.values.forEach(v => {

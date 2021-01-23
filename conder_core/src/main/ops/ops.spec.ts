@@ -1,18 +1,8 @@
-import {
-  ow,
-  Procedures,
-  interpeterTypeFactory,
-  AnyInterpreterTypeInstance,
-  ServerEnv,
-  Var,
-  StrongServerEnv,
-  AnySchemaInstance,
-  schemaFactory,
-} from "./index";
-import { AnyOpInstance } from "./interpreter/supported_op_definition";
+import { ow } from './index';
+import { StrongServerEnv } from './env';
 import * as ed from 'noble-ed25519';
 import { Test } from "./local_run/utilities";
-
+import * as bind from '../ops/bindings'
 describe("conduit kernel", () => {
   function kernelTest(
     descr: string,
@@ -57,9 +47,9 @@ describe("conduit kernel", () => {
       "invoking a custom noop",
       async (server) => {
         const res = await server.invoke("customNoop");
-        expect(res).toEqual(interpeterTypeFactory.None);
+        expect(res).toEqual(null);
       },
-      { PROCEDURES: { customNoop: [ow.noop] } }
+      { PROCEDURES: { customNoop: [{kind: "noop", data: null}] } }
     );
 
     kernelTest(
@@ -205,9 +195,9 @@ describe("conduit kernel", () => {
     function schemaTest(
       descr: string,
       allowsNone: "can be none" | "must exist",
-      invalidInput: AnyInterpreterTypeInstance,
-      validInput: AnyInterpreterTypeInstance,
-      schema: AnySchemaInstance
+      invalidInput: bind.InterpreterType,
+      validInput: bind.InterpreterType,
+      schema: bind.Schema
     ) {
       kernelTest(
         `schema test: ${descr}`,
@@ -246,15 +236,15 @@ describe("conduit kernel", () => {
           test: [
             ow.enforceSchemaInstanceOnHeap({
               heap_pos: 0,
-              schema: schemaFactory.bool,
+              schema: {kind: "bool", data: null},
             }),
             ow.enforceSchemaInstanceOnHeap({
               heap_pos: 1,
-              schema: schemaFactory.int,
+              schema: {kind: "int", data: null},
             }),
             ow.enforceSchemaInstanceOnHeap({
               heap_pos: 2,
-              schema: schemaFactory.Any,
+              schema: {kind: "Any", data: null},
             }),
             ow.boolAnd,
             ow.boolAnd,
@@ -267,9 +257,9 @@ describe("conduit kernel", () => {
     schemaTest(
       "boolean",
       "must exist",
-      interpeterTypeFactory.double(12),
-      interpeterTypeFactory.bool(true),
-      schemaFactory.bool
+      12,
+      true,
+      {kind: "bool", data: null}
     );
 
     schemaTest(
@@ -277,10 +267,12 @@ describe("conduit kernel", () => {
       "must exist",
       [{foo: "hi"}, {bar: 12}],
       [{foo: 12}, {bar: "hi"}],
-      schemaFactory.Array(schemaFactory.Union([
-        schemaFactory.Object({foo: schemaFactory.int}),
-        schemaFactory.Object({bar: schemaFactory.string})
-      ]))
+      {kind: "Array", data: [
+        {kind: "Union", data: [
+          {kind: "Object", data: {foo: {kind: "int", data: null}}},
+          {kind: "Object", data: {bar: {kind: "string", data: null}}},
+        ]}
+      ]}
     )
 
     schemaTest(
@@ -288,12 +280,13 @@ describe("conduit kernel", () => {
       "can be none",      
       {bar: "hi"},
       {foo: "hi"},
-      schemaFactory.Union([
-        schemaFactory.Object({
-          foo: schemaFactory.Union([schemaFactory.string, schemaFactory.int])
-        }),
-        schemaFactory.none
-      ])
+      {
+        kind: "Union",
+        data: [
+          {kind: "Object", data: {foo: {kind: "Union", data: [{kind: "int", data: null}, {kind: "string", data: null}]}}},
+          {kind: "none", data: null}
+        ]
+      }
     )
 
     kernelTest("recursive types", 
@@ -306,7 +299,10 @@ describe("conduit kernel", () => {
       },
       {
         SCHEMAS: {
-          node: schemaFactory.Union([schemaFactory.Object({child: schemaFactory.TypeAlias("node")}), schemaFactory.none]),
+          node: {kind: "Union", data: [
+            {kind: "Object", data: {child: {kind: "TypeAlias", data: "node"}}},
+            {kind: "none", data: null}
+          ]}
         },
         PROCEDURES: {
           validate: [ow.enforceSchemaOnHeap({schema: "node", heap_pos: 0}), ow.returnStackTop]
@@ -316,105 +312,116 @@ describe("conduit kernel", () => {
     schemaTest(
       "decimal",
       "must exist",
-      interpeterTypeFactory.string("-1"),
-      interpeterTypeFactory.double(12.12),
-      schemaFactory.double
+      "-1",
+      12.12,
+      {kind: "double", data: null},
     );
     schemaTest(
       "decimal vs string",
       "must exist",
-      interpeterTypeFactory.string("0.1"),
-      interpeterTypeFactory.double(0.1),
-      schemaFactory.double
+      "0.1",
+      0.1,
+      {kind: "double", data: null}
     );
     schemaTest(
       "Optional double but received none",
       "can be none",
-      interpeterTypeFactory.bool(true),
-      interpeterTypeFactory.None,
-      schemaFactory.Union([schemaFactory.double, schemaFactory.none])
+      true,
+      null,
+      {kind: "Union", data: [{kind: "double", data: null,}, {kind: "none", data: null}]}
     );
     schemaTest(
       "array is empty",
       "must exist",
-      interpeterTypeFactory.None,
-      interpeterTypeFactory.Array([]),
-      schemaFactory.Array(schemaFactory.int)
+      null,
+      [],
+      {kind: "Array", data: [{kind: "int", data: null}]}
     );
     schemaTest(
       "array tail is invalid",
       "must exist",
-      interpeterTypeFactory.Array([12, "abc"]),
-      interpeterTypeFactory.Array([12]),
-      schemaFactory.Array(schemaFactory.int)
+      [12, "abc"],
+      [12],
+      {kind: "Array", data: [{kind: "int", data: null}]}
     );
     schemaTest(
       "ints may be treated as doubles",
       "must exist",
-      interpeterTypeFactory.string("1"),
-      interpeterTypeFactory.int(132),
-      schemaFactory.double
+      "1",
+      132,
+      {kind: "double", data: null}
     );
 
     schemaTest("map types",
       "must exist",
       {foo: "string", baz: 12},
       {foo: "string", bar: "also string"},
-      schemaFactory.Map(schemaFactory.string)
+      {kind: "Map", data: [{kind: "string", data: null}]}
     )
 
     schemaTest(
       "doubles may not be treated as ints",
       "must exist",
-      interpeterTypeFactory.double(0.1),
-      interpeterTypeFactory.int(1.0),
-      schemaFactory.int
+      0.1,
+      1,
+      {kind: "int", data: null}
     );
     schemaTest(
       "Object containing primitives",
       "must exist",
-      interpeterTypeFactory.Object({}),
-      interpeterTypeFactory.Object({ i: 12, d: 12.12, b: true, s: "hello" }),
-      schemaFactory.Object({
-        i: schemaFactory.int,
-        d: schemaFactory.double,
-        b: schemaFactory.bool,
-        s: schemaFactory.string,
-      })
+      {},
+      { i: 12, d: 12.12, b: true, s: "hello" },
+      {kind: "Object", data: {
+        i: {kind: "int", data: null},
+        d: {kind: "double", data: null},
+        b: {kind: "bool", data: null},
+        s: {kind: "string", data: null}
+      }}
     );
     schemaTest(
       "Object containing optional field doesn't exist",
       "must exist",
-      interpeterTypeFactory.Object({ i: "abc" }),
-      interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none]) })
+      { i: "abc" },
+      {},
+      {kind: "Object", data: {
+        i: {kind: "Union", data: [
+          {kind: "none", data: null},
+          {kind: "int", data: null}
+        ]}
+      }}
     );
     schemaTest(
       "Object containing unspecified field is not allowed",
       "must exist",
-      interpeterTypeFactory.Object({}),
-      interpeterTypeFactory.Object({ i: 12}),
-      schemaFactory.Object({ i: schemaFactory.int })
+      {},
+      { i: 12},
+      {kind: "Object", data: {i: {kind: "int", data: null}}}
     );
 
     schemaTest(
       "Optionals don't mean you can add other fields",
       "must exist",
-      interpeterTypeFactory.Object({ d: [12, 12] }),
-      interpeterTypeFactory.Object({}),
-      schemaFactory.Object({ i: schemaFactory.Union([schemaFactory.int, schemaFactory.none])})
+      { d: [12, 12] },
+      {},
+      {kind: "Object", data: {
+        i: {kind: "Union", data: [
+          {kind: "none", data: null},
+          {kind: "int", data: null}
+        ]}
+      }}
     );
 
     schemaTest(
       "Object containing optional object",
       "must exist",
-      interpeterTypeFactory.None,
-      interpeterTypeFactory.Object({
-        o: interpeterTypeFactory.Object({ f: 12 }),
-      }),
-      schemaFactory.Object({
-        o: schemaFactory.Object({ f: schemaFactory.int }),
-      })
+      null,
+      {
+        o: {f: 12}
+      },
+      {
+        kind: "Object",
+        data: {o: {kind: "Object", data: {f: {kind: "int", data:null}}}}
+      }
     );
 
     kernelTest("Role schemas should be signed",
@@ -443,8 +450,8 @@ describe("conduit kernel", () => {
           ],
           validateRole: [
             ow.enforceSchemaInstanceOnHeap({
-              heap_pos: 0, 
-              schema: schemaFactory.Role("admin", schemaFactory.Object({}))
+              heap_pos: 0,
+              schema: {kind: "Role", data: ["admin", [{kind: "Object", data: {}}]]}
             }),
             ow.returnStackTop
           ]
@@ -482,7 +489,7 @@ describe("conduit kernel", () => {
           validateRole: [
             ow.enforceSchemaInstanceOnHeap({
               heap_pos: 0, 
-              schema: schemaFactory.Role("admin", schemaFactory.Object({some_state: schemaFactory.string}))
+              schema: {kind: "Role", data: ["admin",[ {kind: "Object", data: {some_state: {kind: "string", data: null}}}]]}
             }),
             ow.returnStackTop
           ]
@@ -511,7 +518,7 @@ describe("conduit kernel", () => {
   describe("mongo storage layer", () => {
     function storageTest(
       descr: string,
-      params: Pick<StrongServerEnv, Var.STORES | Var.PROCEDURES>,
+      params: Pick<StrongServerEnv, "STORES" | "PROCEDURES">,
       test: (server: Test.Server) => Promise<void>,
       only = false
     ) {
@@ -543,17 +550,16 @@ describe("conduit kernel", () => {
       "should be able to store a document",
       {
         STORES: {
-          storeName: schemaFactory.Object({
-            int: schemaFactory.int,
-            opt: schemaFactory.Union(
-              [schemaFactory.Object({
-                arr: schemaFactory.Array(
-                  schemaFactory.Object({ b: schemaFactory.bool })
-                ),
-              }),
-              schemaFactory.none]
-            ),
-          }),
+          storeName: {
+            kind: "Object",
+            data: {
+              int: {kind: "int", data: null},
+              opt: {kind: "Union", data: [
+                {kind: "Array", data: [{kind: "Object", data: {b: {kind: "bool", data: null}}}]},
+                {kind: "none", data: null}
+              ]}
+            }
+          }
         },
         PROCEDURES: {
           testStore: [
@@ -566,10 +572,7 @@ describe("conduit kernel", () => {
       async (server) => {
         const res = await server.invoke(
           "testStore",
-          interpeterTypeFactory.Object({
-            int: interpeterTypeFactory.int(12),
-            opt: interpeterTypeFactory.None,
-          })
+          {int: 12, opt: null}
         );
         expect(res).toMatchInlineSnapshot(`
           Array [
@@ -586,10 +589,10 @@ describe("conduit kernel", () => {
       "should be able to suppress fields in a query",
       {
         STORES: {
-          storeName: schemaFactory.Object({
-            left: schemaFactory.int,
-            right: schemaFactory.int,
-          }),
+          storeName: {kind: "Object", data: {
+            left: {kind: "int", data: null},
+            right: {kind: "int", data: null}
+          }}
         },
         PROCEDURES: {
           testStore: [
@@ -603,10 +606,10 @@ describe("conduit kernel", () => {
       async (server) => {
         const res = await server.invoke(
           "testStore",
-          interpeterTypeFactory.Object({
-            left: interpeterTypeFactory.int(-1),
-            right: interpeterTypeFactory.int(1),
-          })
+          {
+            left: -1,
+            right: 1
+          }
         );
         expect(res).toEqual([{ left: -1 }]);
       }
@@ -615,7 +618,7 @@ describe("conduit kernel", () => {
       "should be able to filter strings in query",
       {
         STORES: {
-          strings: schemaFactory.Object({ value: schemaFactory.string }),
+          strings: {kind: "Object", data: {value: {kind: "string", data: null}}}
         },
         PROCEDURES: {
           insert: [
@@ -645,7 +648,7 @@ describe("conduit kernel", () => {
       "should be able to filter numbers in query",
       {
         STORES: {
-          nums: schemaFactory.Object({ value: schemaFactory.int }),
+          nums: {kind: "Object", data: {value: {kind: "int", data: null}}},
         },
         PROCEDURES: {
           insert: [
@@ -677,10 +680,10 @@ describe("conduit kernel", () => {
       "find one",
       {
         STORES: {
-          users: schemaFactory.Object({
-            email: schemaFactory.string,
-            pwd: schemaFactory.string,
-          }),
+          users: {kind:  "Object", data: {
+            email: {kind: "string", data: null},
+            pwd: {kind: "string", data: null}
+          }}
         },
         PROCEDURES: {
           addUser: [
@@ -708,7 +711,7 @@ describe("conduit kernel", () => {
       "should be able to suppress objects in a query",
       {
         STORES: {
-          storeName: schemaFactory.Any,
+          storeName: {kind: "Any", data: null},
         },
         PROCEDURES: {
           testStore: [
@@ -722,10 +725,10 @@ describe("conduit kernel", () => {
       async (server) => {
         const res = await server.invoke(
           "testStore",
-          interpeterTypeFactory.Object({
-            left: interpeterTypeFactory.Object({ a: true, b: false }),
-            right: interpeterTypeFactory.Object({ c: false }),
-          })
+          {
+            left: {a: true, b: false},
+            right: {c: false}
+          }
         );
         expect(res).toEqual([{ left: { a: true, b: false } }]);
       }
@@ -734,10 +737,8 @@ describe("conduit kernel", () => {
     const insert = [ow.insertFromHeap({ heap_pos: 0, store: "test" })];
 
     const len = [ow.instantiate({}), ow.storeLen("test"), ow.returnStackTop];
-    const STORES = {
-      test: schemaFactory.Object({
-        data: schemaFactory.string,
-      }),
+    const STORES: Record<string, bind.Schema> = {
+      test: {kind: "Object", data: {test: {kind: "string", data: null}}},
     };
 
     storageTest(
@@ -753,7 +754,7 @@ describe("conduit kernel", () => {
 
     storageTest("should be able to delete fields an existing document", 
       {
-        STORES: {storeName: schemaFactory.Any},
+        STORES: {storeName: {kind: 'Any', data: null}},
         PROCEDURES: {
           insert: [ow.instantiate([{f1: 1, f2: 2}, {f1: 3, f2: 4}]), ow.insertFromStack("storeName")],
           deletes: [
@@ -783,7 +784,7 @@ describe("conduit kernel", () => {
       async (server) => {
         let len = await server.invoke(
           "measure",
-          interpeterTypeFactory.Array([0, 1])
+          [0, 1]
         );
         expect(len).toBe(2);
         len = await server.invoke("measure", []);
@@ -854,7 +855,7 @@ describe("conduit kernel", () => {
           const key = ed.utils.randomPrivateKey(64)
           const env: StrongServerEnv = {
             PROCEDURES: {},
-            STORES: {state: schemaFactory.Any},
+            STORES: {state: {kind: "Any", data: null}},
             SCHEMAS: {},
             DEPLOYMENT_NAME: "testdeployment",
             PRIVATE_KEY: key,
@@ -881,7 +882,7 @@ describe("conduit kernel", () => {
           cb()
         }
       }
-      function increment(release: "with release" | "without release"): AnyOpInstance[] {
+      function increment(release: "with release" | "without release"): bind.Op[] {
         return [
           ow.instantiate(0),
           ow.moveStackTopToHeap,

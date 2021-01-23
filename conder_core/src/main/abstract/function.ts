@@ -1,4 +1,4 @@
-import { AnySchemaInstance, AnyOpInstance, ow } from '../ops/index';
+import {Op, ow, Schema } from '../ops/index';
 import { AnyNode, AnyRootNodeFromSet, BaseNodeDefs, RootNode } from "./IR";
 import {MONGO_COMPILER, MONGO_GLOBAL_ABSTRACTION_REMOVAL} from './globals/mongo'
 import { Transformer, Compiler } from "./compilers";
@@ -12,12 +12,12 @@ export type Manifest<F=FunctionDescription> = {
 }
 
 export type FunctionData<COMP=RootNode> = {
-    readonly input: AnySchemaInstance[]
+    readonly input: Schema[]
     readonly computation: COMP[]
 }
 
 export class FunctionDescription<COMP=RootNode> implements FunctionData<COMP>{
-    public readonly input: AnySchemaInstance[]
+    public readonly input: Schema[]
     public readonly computation: COMP[]
     
     constructor(state: FunctionData<COMP>) {
@@ -34,14 +34,14 @@ export class FunctionDescription<COMP=RootNode> implements FunctionData<COMP>{
 }
 
 
-export function toOps(funcs: Map<string, FunctionDescription>, override:  Compiler<RootNode> | undefined=undefined): Map<string, AnyOpInstance[]> {
-    const ret: Map<string, AnyOpInstance[]> = new Map()
+export function toOps(funcs: Map<string, FunctionDescription>, override:  Compiler<RootNode> | undefined=undefined): Map<string, Op[]> {
+    const ret: Map<string, Op[]> = new Map()
     const compiler: Compiler<RootNode> = override ? override : MONGO_GLOBAL_ABSTRACTION_REMOVAL.then(MONGO_COMPILER)
     // const computationLookup: Record<string, RootNode[]> = {}
 
     // ops.push(...compiler.run(funcs[k].computation))
     funcs.forEach((func, func_name) => {
-        const ops: AnyOpInstance[] = [
+        const ops: Op[] = [
             ow.assertHeapLen(func.input.length)
         ]
         func.input.forEach((schema, index) => {
@@ -66,7 +66,7 @@ export function toOps(funcs: Map<string, FunctionDescription>, override:  Compil
 
 export const OPSIFY_MANIFEST = new Transformer<
     Manifest, 
-    Manifest<AnyOpInstance[]>>((man) => {
+    Manifest<Op[]>>((man) => {
         const funcs = toOps(man.funcs)
         return {
             funcs,

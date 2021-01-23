@@ -1,4 +1,4 @@
-import { AnyOpInstance, SchemaInstance, Utils } from '../ops/index';
+import {Op, Schema, Utils } from '../ops/index';
 
 export type Node<DATA={}, META extends "root" | "not root"="not root"> = DATA & {_meta: META}
 export type ValueNode = PickNode<
@@ -60,7 +60,7 @@ export type BaseNodeDefs = {
         conditionally: PickNode<"Conditional" | "Finally" | "Else">[]
     }, "root">
     RoleInstance: Node<{
-        role: SchemaInstance<"Role">,
+        role: Extract<Schema, {kind: "Role"}>,
         state?: PickNode<"Object">
     }>
     Noop: Node<{}, "root">
@@ -117,7 +117,7 @@ type FullyImplementedNode<Nodes, REPLACE extends NodeSet> = Exclude<TargetNode<N
 export type PickNodeFromSet<S extends NodeSet, K extends keyof S> = Extract<AnyNodeFromSet<S>, {kind: K}>
 
 export type CompleteCompiler<T extends NodeSet> = {
-    [K in keyof T]: (n: NodeInstance<T, K>) => AnyOpInstance[]
+    [K in keyof T]: (n: NodeInstance<T, K>) => Op[]
 }
 
 export type TargetNodeSet<Replacement extends NodeSet> = (FullyImplementedNode<AnyNode, Replacement> | AnyNodeFromSet<Replacement>)

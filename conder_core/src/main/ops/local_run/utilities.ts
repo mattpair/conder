@@ -1,10 +1,11 @@
+import { ServerEnv, StrongServerEnv } from './../env';
 import * as fs from 'fs'
 import * as child_process from 'child_process'
-import { StrongServerEnv, ServerEnv, Var } from '../server_writer'
-import { interpeterTypeFactory,  AnyInterpreterTypeInstance} from '../interpreter/interpreter_writer'
 import * as mongodb from "mongodb";
 import * as etcd from 'etcd3'
+
 import "isomorphic-fetch";
+import { InterpreterType } from '../bindings';
 
 export namespace Test {
     class UniqueInstance {
@@ -43,8 +44,8 @@ export namespace Test {
           const string_env: Partial<ServerEnv> = {};
           for (const key in env) {
             switch (key as keyof StrongServerEnv) {
-              case Var.PUBLIC_KEY:
-              case Var.PRIVATE_KEY:
+              case "PUBLIC_KEY":
+              case "PRIVATE_KEY":
                 //@ts-ignore
                 string_env[key] = hex(env[key])
                 break
@@ -90,7 +91,7 @@ export namespace Test {
             },
           }).then((data) => data.json());
       
-          expect(res).toEqual(interpeterTypeFactory.None);
+          expect(res).toEqual(null);
         }
       
         kill() {
@@ -99,7 +100,7 @@ export namespace Test {
       
         async invoke(
           name: string,
-          ...arg: AnyInterpreterTypeInstance[]
+          ...arg: InterpreterType[]
         ) {
           const body = JSON.stringify({ kind: "Exec", data: { proc: name, arg } });
           return fetch(`http://localhost:${this.port}/`, {
@@ -118,7 +119,7 @@ export namespace Test {
         }
       }
       
-      export type Stores = Pick<StrongServerEnv, Var.STORES>;
+      export type Stores = Pick<StrongServerEnv, "STORES">;
       
       export class Mongo extends UniqueInstance {
         private constructor() {
