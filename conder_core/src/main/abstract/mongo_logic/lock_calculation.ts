@@ -7,8 +7,8 @@
  * we can't work safely.
  * 
  * This same logic could eventually be used to calculate locks for another storage layer.
- * However, making a general purpose algorithm limits the usefulness and adds unnecessary. 
- * Complexity at this stage.
+ * However, making a general purpose algorithm limits the usefulness and adds unnecessary 
+ * complexity at this stage.
  */
 
 type MongoActions = {
